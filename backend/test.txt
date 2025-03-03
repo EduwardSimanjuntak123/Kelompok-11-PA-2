@@ -1,0 +1,23 @@
+package main
+
+
+import (
+    "fmt"
+    "golang.org/x/crypto/bcrypt"
+)
+func main() {
+
+storedHash := "$2a$10$ykaRTzFibtVsVPBTLSl5u.nJuZTjPb5Wl9ROJW7aw/MAdiHp5TpIy"
+
+// Masukkan password yang digunakan saat registrasi
+inputPassword := "password"
+
+// Cek apakah password cocok
+err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(inputPassword))
+if err != nil {
+	fmt.Println("❌ Password tidak cocok!")
+} else {
+	fmt.Println("✅ Password cocok!")
+}
+
+}

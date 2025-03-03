@@ -2,29 +2,33 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
 	"rental-backend/config"
-	"github.com/gorilla/mux"
-	handlers "rental-backend/controllers"
+	"rental-backend/routes"
 )
 
 func main() {
-	config.ConnectDB()
+	// Gunakan mode release agar log tidak terlalu banyak
+	gin.SetMode(gin.ReleaseMode)
 
-	r := mux.NewRouter()
+	// Koneksi ke Database
+	config.ConnectDatabase()
 
-	// Menambahkan rute
-	r.HandleFunc("/motors", handlers.GetMotors).Methods("GET") // Mendapatkan daftar motor
-	r.HandleFunc("/motors", handlers.CreateMotor).Methods("POST") // Mendapatkan detail motor
-	r.HandleFunc("/motors", handlers.UpdateMotor).Methods("PUT")
+	// Setup Router tanpa middleware logging default
+	router := gin.New()
+	router.Use(gin.Recovery()) // Tangani panic tanpa menampilkan log yang tidak perlu
 
-	//r.HandleFunc("/motors", controllers.CreateMotor).Methods("POST") // Menambahkan motor
-	// r.HandleFunc("/bookings", controllers.CreateBooking).Methods("POST") // Membuat booking
-	// r.HandleFunc("/bookings", controllers.GetBookings).Methods("GET") // Melihat daftar booking
+	// Register Routes
+	routes.SetupRoutes(router)
 
-	// Menjalankan server
-	fmt.Println("Server running on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	// Tentukan port server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Println("✅ Server berjalan di port", port)
+	router.Run(":" + port)
 }
- 

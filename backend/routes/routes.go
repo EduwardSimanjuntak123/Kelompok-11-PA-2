@@ -1,15 +1,14 @@
 package routes
 
 import (
-	"github.com/gorilla/mux"
-	handlers "rental-backend/controllers"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes() *mux.Router {
-	r := mux.NewRouter()
+func SetupRoutes(router *gin.Engine) {
+	CustomerRoutes(router)
+	VendorRoutes(router)
+	KecamatanRoutes(router)
+	AdminRoutes(router)
+	MotorRoutes(router)
 
-	// Endpoint untuk motor
-	r.HandleFunc("/motors", handlers.GetMotors).Methods("GET")
-
-	return r
 }
