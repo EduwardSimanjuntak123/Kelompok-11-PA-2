@@ -91,7 +91,7 @@ class _LoginState extends State<Login> {
                   Container(
                     alignment: Alignment.centerRight,
                     child: Text(
-                      "lupa Sandi?",
+                      "Lupa Sandi?",
                       style: TextStyle(color: Colors.grey),
                     ),
                   ),
