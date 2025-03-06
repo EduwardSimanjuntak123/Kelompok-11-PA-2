@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"rental-backend/config"
 	"rental-backend/routes"
+	"rental-backend/controllers"
 )
 
 func main() {
@@ -18,10 +19,12 @@ func main() {
 
 	// Setup Router tanpa middleware logging default
 	router := gin.New()
-	router.Use(gin.Recovery()) // Tangani panic tanpa menampilkan log yang tidak perlu
+	// router.Use(gin.Recovery()) // Tangani panic tanpa menampilkan log yang tidak perlu
 
 	// Register Routes
 	routes.SetupRoutes(router)
+	go controllers.StartAutoUpdateMotorStatus()
+
 
 	// Tentukan port server
 	port := os.Getenv("PORT")

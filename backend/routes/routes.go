@@ -10,5 +10,8 @@ func SetupRoutes(router *gin.Engine) {
 	KecamatanRoutes(router)
 	AdminRoutes(router)
 	MotorRoutes(router)
-
+	TransactionRoutes(router)
+	ChatRoutes(router)
+	
+	
 }

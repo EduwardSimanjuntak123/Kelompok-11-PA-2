@@ -26,13 +26,17 @@ func VendorLogin(c *gin.Context) {
 	var user models.User
 
 	if err := config.DB.Debug().Select("id, name, email, password, role, phone, address, status").Where("email = ? AND role = 'vendor'", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email tidak ditemukan atau bukan pelanggan"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email tidak ditemukan atau bukan vendor"})
 		return
 	}
 
 	// Verifikasi password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password salah"})
+		return
+	}
+	if user.Status=="inactive" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "akun anda sudah dinon-Aktifkan"})
 		return
 	}
 
@@ -46,7 +50,7 @@ func VendorLogin(c *gin.Context) {
 
 	// Kirim response sukses login
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Login berhasil sebagai vendoor",
+		"message": "Login berhasil sebagai vendor",
 		"token":   tokenString,
 	})
 }
@@ -133,38 +137,25 @@ func RegisterVendor(c *gin.Context) {
 }
 
 
-// Confirm Booking
-func ConfirmBooking(c *gin.Context) {
-	id := c.Param("id")
-	config.DB.Model(&models.Booking{}).Where("id = ?", id).Update("status", "confirmed")
-	c.JSON(http.StatusOK, gin.H{"message": "Booking diterima"})
-}
 
-// Reject Booking
-func RejectBooking(c *gin.Context) {
+func CompleteBooking(c *gin.Context) {
 	id := c.Param("id")
-	config.DB.Model(&models.Booking{}).Where("id = ?", id).Update("status", "canceled")
-	c.JSON(http.StatusOK, gin.H{"message": "Booking ditolak"})
-}
 
-// Upload Manual Transaction
-func AddManualTransaction(c *gin.Context) {
-	var transaction models.Transaction
-	if err := c.ShouldBindJSON(&transaction); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// Cek apakah booking yang dimaksud ada
+	var booking models.Booking
+	if err := config.DB.Where("id = ?", id).First(&booking).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
 		return
 	}
 
-	transaction.Type = "manual"
-	transaction.Status = "completed"
-	config.DB.Create(&transaction)
+	// Ubah status booking menjadi "completed"
+	if err := config.DB.Model(&models.Booking{}).Where("id = ?", id).Update("status", "completed").Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengubah status booking"})
+		return
+	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Transaksi manual berhasil ditambahkan"})
-}
+	// Setelah status booking menjadi "completed", buat transaksi otomatis
+	CreateTransaction(booking) // Panggil CreateTransaction dengan data booking yang telah selesai
 
-// Get Vendor Transactions
-func GetVendorTransactions(c *gin.Context) {
-	var transactions []models.Transaction
-	config.DB.Find(&transactions)
-	c.JSON(http.StatusOK, transactions)
+	c.JSON(http.StatusOK, gin.H{"message": "Booking selesai, transaksi dibuat otomatis"})
 }

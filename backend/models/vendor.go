@@ -3,7 +3,7 @@ package models
 import "time"
 
 type Vendor struct {
-	ID              uint      `gorm:"primaryKey;autoIncrement"`
+	ID              uint      `gorm:"primaryKey;autoIncrement;not null"`
 	UserID          uint      `gorm:"unique;not null"` // foreign key untuk users
 	IDKecamatan     *uint     `gorm:"index" `           // foreign key untuk kecamatan
 	ShopName        string    `gorm:"size:100;not null"`

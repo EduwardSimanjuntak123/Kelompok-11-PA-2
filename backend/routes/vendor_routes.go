@@ -15,15 +15,15 @@ func VendorRoutes(router *gin.Engine) {
 		vendor.POST("/register", controllers.RegisterVendor) // Vendor Register
 		vendor.Use(middleware.AuthMiddleware("vendor"))
 		{
-			
 			// Booking
-			vendor.GET("/bookings", controllers.GetVendorTransactions)
+			vendor.GET("/bookings", controllers.GetVendorBookings)
 			vendor.PUT("/bookings/:id/confirm", controllers.ConfirmBooking)
 			vendor.PUT("/bookings/:id/reject", controllers.RejectBooking)
+			// Transaksi Otomatis
+			vendor.PUT("/bookings/complete/:id", controllers.CompleteBooking)
 
 			// Transaksi Manual
-			vendor.POST("/transactions/manual", controllers.AddManualTransaction)
-			vendor.GET("/transactions", controllers.GetVendorTransactions)
+			// vendor.GET("/transactions", controllers.GetVendorBookings)
 		}
 	}
 }

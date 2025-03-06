@@ -16,5 +16,6 @@ type Booking struct {
 	KtpID          string    `gorm:"not null"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	Vendor         Vendor    `gorm:"foreignKey:VendorID"`
 }
 

@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"net/http"
-	"time"
-
 	"rental-backend/config"
 	"rental-backend/models"
+	"strconv"
+	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -83,9 +83,16 @@ func DeactivateVendor(c *gin.Context) {
 	var user models.User
 	id := c.Param("id")
 
+	// Validasi apakah ID adalah angka
+	vendorID, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID tidak valid"})
+		return
+	}
+
 	// Cari user berdasarkan ID
-	if err := config.DB.First(&user, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Pengguna tidak ditemukan"})
+	if err := config.DB.Where("id = ?", vendorID).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Pengguna (vendor) tidak ditemukan"})
 		return
 	}
 
@@ -95,11 +102,11 @@ func DeactivateVendor(c *gin.Context) {
 		return
 	}
 
-	// Update status user menjadi inactive
-	user.Status = "inactive"
-	user.UpdatedAt = time.Now()
-
-	if err := config.DB.Save(&user).Error; err != nil {
+	// Update hanya kolom yang diperlukan
+	if err := config.DB.Model(&user).Updates(map[string]interface{}{
+		"status":     "inactive",
+		"updated_at": time.Now(),
+	}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menonaktifkan vendor"})
 		return
 	}

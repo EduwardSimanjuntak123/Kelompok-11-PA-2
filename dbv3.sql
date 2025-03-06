@@ -30,14 +30,11 @@ DROP DATABASE rental2
 	    shop_address TEXT NOT NULL,
 	    shop_description TEXT NULL,
 	    STATUS ENUM('active', 'inactive') DEFAULT 'active',
+	    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 	    FOREIGN KEY (id_kecamatan) REFERENCES kecamatan(id_kecamatan) ON DELETE SET NULL ON UPDATE CASCADE
 	);
-
-	ALTER TABLE vendors
-	ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-
 
 
 	CREATE TABLE motor (
@@ -51,13 +48,10 @@ DROP DATABASE rental2
 	    color VARCHAR(50),
 	    STATUS ENUM('available', 'booked', 'unavailable') DEFAULT 'available',
 	    image VARCHAR(255),
+	    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	    FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
 	);
-	ALTER TABLE motor
-	ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-
-
 
 
 CREATE TABLE bookings (
@@ -69,23 +63,18 @@ CREATE TABLE bookings (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     pickup_location TEXT NOT NULL,
-    STATUS ENUM('pending', 'confirmed', 'canceled', 'completed') DEFAULT 'pending',
+    STATUS ENUM('pending', 'confirmed',, 'canceled', 'completed', 'rejected') DEFAULT 'pending',
     photo_id VARCHAR(255) NOT NULL,
     ktp_id VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
     FOREIGN KEY (motor_id) REFERENCES motor(id) ON DELETE CASCADE
 );
 
-ALTER TABLE bookings
-MODIFY COLUMN STATUS ENUM('pending', 'confirmed', 'canceled', 'completed', 'rejected') DEFAULT 'pending';
-
-ALTER TABLE bookings
-	ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
-
-
-
+-- ALTER TABLE bookings
+-- MODIFY COLUMN STATUS ENUM('pending', 'confirmed', 'canceled', 'completed', 'rejected') DEFAULT 'pending';
 
 CREATE TABLE transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -100,6 +89,7 @@ CREATE TABLE transactions (
     pickup_location TEXT NOT NULL,
     STATUS ENUM('completed', 'disputed') DEFAULT 'completed',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
     FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
     FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -116,8 +106,22 @@ CREATE TABLE notifications (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE chat_rooms (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    vendor_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (vendor_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
-SELECT id, email,PASSWORD PASSWORD FROM users WHERE email = 'user@gmail.com';
-SELECT * FROM users WHERE email = 'user@gmail.com' AND role = 'customer';
-
-
+CREATE TABLE messages (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    chat_room_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    message TEXT NOT NULL,
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);

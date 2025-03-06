@@ -12,7 +12,7 @@ type Motor struct {
 	Year      uint      `gorm:"not null" json:"year"`
 	Price     float64   `gorm:"type:decimal(10,2);not null" json:"price"`
 	Color     string    `gorm:"size:50" json:"color"`
-	Status    string    `gorm:"type:enum('available','booked','unavailable');default:'available'" json:"status"`
+	Status    string    `gorm:"type:enum('available','f','unavailable');default:'available'" json:"status"`
 	Image     string    `gorm:"size:255" json:"image"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
