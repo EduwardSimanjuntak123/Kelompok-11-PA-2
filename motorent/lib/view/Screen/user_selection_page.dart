@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:motorent2/Screen/sign_up_vendor_screen.dart';
-import 'package:motorent2/Screen/sign_up_customer.dart';
+import 'package:motorent2/view/Screen/sign_up_vendor_screen.dart';
+import 'package:motorent2/view/Screen/sign_up_customer.dart';
 
 class UserSelectionScreen extends StatelessWidget {
   const UserSelectionScreen({super.key});

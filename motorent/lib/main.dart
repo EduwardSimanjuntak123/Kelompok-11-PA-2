@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:motorent2/Screen/sign_in.dart';
-import 'package:motorent2/Screen/sign_up_customer.dart';
-import 'package:motorent2/Screen/sign_up_vendor_screen.dart';
-import 'package:motorent2/Screen/spash_screen.dart';
-import 'package:motorent2/Screen/user_selection_page.dart';
-import 'package:motorent2/auth/login.dart';
-import 'package:motorent2/auth/pesanan.dart';
-import 'package:motorent2/auth/registration.dart';
+// import 'package:motorent2/view/Screen/sign_in.dart';
+// import 'package:motorent2/view/Screen/sign_up_customer.dart';
+// import 'package:motorent2/view/Screen/sign_up_vendor_screen.dart';
+import 'package:motorent2/view/Screen/spash_screen.dart';
+// import 'package:motorent2/view/Screen/user_selection_page.dart';
+
 
 void main() {
   runApp(const MyApp());

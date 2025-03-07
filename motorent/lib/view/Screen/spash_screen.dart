@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:motorent2/Screen/sign_in.dart';// Import UserSelectionPage
-import 'package:motorent2/Screen/welcome_screen.dart';
-import 'package:motorent2/Utils/colors.dart';
+import 'package:motorent2/view/Screen/sign_in.dart';// Import UserSelectionPage
+import 'package:motorent2/view/Screen/welcome_screen.dart';
+import 'package:motorent2/view/Utils/colors.dart';
 
 class MySplashScreen extends StatefulWidget {
   const MySplashScreen({super.key});

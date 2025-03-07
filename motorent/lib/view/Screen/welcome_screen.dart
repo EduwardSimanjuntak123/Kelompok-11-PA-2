@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:motorent2/Screen/sign_in.dart';
-import 'package:motorent2/Screen/sign_up_customer.dart';
-import 'package:motorent2/Screen/sign_up_vendor_screen.dart';
+import 'sign_up_customer.dart';
+import 'sign_up_vendor_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
