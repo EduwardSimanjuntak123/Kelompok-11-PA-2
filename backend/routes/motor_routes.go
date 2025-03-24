@@ -3,22 +3,25 @@ package routes
 import (
 	"rental-backend/controllers"
 	"rental-backend/middleware"
+
 	"github.com/gin-gonic/gin"
 )
-
 
 func MotorRoutes(router *gin.Engine) {
 	motor := router.Group("/motor")
 	{
-		motor.GET("/", controllers.GetAllMotor)
-		motor.GET("/:id", controllers.GetMotorByID)
+		// Akses untuk semua user (tanpa login)
+		motor.GET("/", controllers.GetAllMotor)     // Semua user bisa melihat daftar motor
+		motor.GET("/:id", controllers.GetMotorByID) // Semua user bisa melihat detail motor
 
-		// Admin-only routes																	
-		motor.Use(middleware.AuthMiddleware("vendor"))
+		// Akses untuk vendor (dengan login)
+		motorVendor := router.Group("/motor/vendor")
+		motorVendor.Use(middleware.AuthMiddleware("vendor"))
 		{
-			motor.POST("/", controllers.CreateMotor)
-			motor.PUT("/:id", controllers.UpdateMotor)
-			motor.DELETE("/:id", controllers.DeleteMotor)
+			motorVendor.GET("/", controllers.GetAllMotorbyVendor) // Vendor hanya melihat motor mereka sendiri
+			motorVendor.POST("/", controllers.CreateMotor)        // Vendor bisa menambahkan motor
+			motorVendor.PUT("/:id", controllers.UpdateMotor)      // Vendor bisa mengupdate motor mereka
+			motorVendor.DELETE("/:id", controllers.DeleteMotor)   // Vendor bisa menghapus motor mereka
 		}
 	}
 }

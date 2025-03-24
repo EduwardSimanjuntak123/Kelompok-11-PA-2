@@ -12,13 +12,14 @@ func CustomerRoutes(router *gin.Engine) {
 	customer := router.Group("/customer")
 	{
 		customer.POST("/register", controllers.RegisterCustomer)
-		customer.POST("/login", controllers.LoginCustomer)
 
 		customer.GET("/motors", controllers.GetAllMotors)
 
 		customer.Use(middleware.AuthMiddleware("customer"))
 		{
 			customer.POST("/bookings", controllers.CreateBooking)
+			customer.POST("/review", controllers.CreateReview)
+
 			customer.PUT("/bookings/:id/cancel", controllers.CancelBooking)
 
 			customer.GET("/transactions", controllers.GetCustomerTransactions)

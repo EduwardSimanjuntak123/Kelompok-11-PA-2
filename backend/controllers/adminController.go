@@ -7,51 +7,70 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
-// Admin Login
-func AdminLogin(c *gin.Context) {
-	var input struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
-
-	// Validasi input JSON
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func GetDataAdmin(c *gin.Context) {
+	// Ambil user_id dari token JWT
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Admin tidak terautentikasi"})
 		return
 	}
 
 	var user models.User
 
-	if err := config.DB.Debug().Select("id, name, email, password, role, phone, address, status").Where("email = ? AND role = 'admin'", input.Email).First(&user).Error; err != nil {
-		// fmt.Println("❌ User tidak ditemukan di database:", input.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email tidak ditemukan atau bukan pelanggan"})
+	// Ambil data user yang sedang login tanpa preload Vendor atau Booking
+	if err := config.DB.Select("id, name, email, phone, address, profile_image, status, created_at, updated_at").
+		Where("id = ? AND role = ?", userID, "admin").
+		First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Admin tidak ditemukan"})
 		return
 	}
 
-	// Verifikasi password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password salah"})
+	// Format response hanya dengan data yang relevan
+	response := gin.H{
+		"id":            user.ID,
+		"name":          user.Name,
+		"email":         user.Email,
+		"phone":         user.Phone,
+		"address":       user.Address,
+		"profile_image": user.ProfileImage,
+		"status":        user.Status,
+		"created_at":    user.CreatedAt,
+		"updated_at":    user.UpdatedAt,
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+func EditDataAdmin(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Admin tidak terautentikasi"})
 		return
 	}
 
-	// Generate JWT token jika login berhasil
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"role":    user.Role,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	})
-	tokenString, _ := token.SignedString([]byte("secret123"))
+	var admin models.User
+	if err := config.DB.Where("id = ? AND role = ?", userID, "admin").First(&admin).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Data admin tidak ditemukan"})
+		return
+	}
 
-	// Kirim response sukses login
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login berhasil sebagai admin",
-		"token":   tokenString,
-	})
+	var input map[string]interface{}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format data tidak valid"})
+		return
+	}
+
+	// Perbarui data admin dengan data yang diberikan
+	input["updated_at"] = time.Now()
+	if err := config.DB.Model(&admin).Updates(input).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui data admin"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Data admin berhasil diperbarui", "admin": admin})
 }
 
 // Get All Transactions

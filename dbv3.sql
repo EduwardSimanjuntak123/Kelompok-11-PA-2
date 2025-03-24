@@ -35,6 +35,7 @@ DROP DATABASE rental2
 	    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 	    FOREIGN KEY (id_kecamatan) REFERENCES kecamatan(id_kecamatan) ON DELETE SET NULL ON UPDATE CASCADE
 	);
+	ALTER TABLE vendors ADD COLUMN rating FLOAT DEFAULT 0;
 
 
 	CREATE TABLE motor (
@@ -48,6 +49,7 @@ DROP DATABASE rental2
 	    color VARCHAR(50),
 	    STATUS ENUM('available', 'booked', 'unavailable') DEFAULT 'available',
 	    image VARCHAR(255),
+	    rating FLOAT DEFAULT 0 CHECK (rating >= 0 AND rating <= 5),
 	    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	    FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
@@ -73,8 +75,7 @@ CREATE TABLE bookings (
     FOREIGN KEY (motor_id) REFERENCES motor(id) ON DELETE CASCADE
 );
 
--- ALTER TABLE bookings
--- MODIFY COLUMN STATUS ENUM('pending', 'confirmed', 'canceled', 'completed', 'rejected') DEFAULT 'pending';
+
 
 CREATE TABLE transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -125,3 +126,19 @@ CREATE TABLE messages (
     FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE reviews (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    booking_id INT NOT NULL,
+    customer_id INT NOT NULL,
+    motor_id INT NOT NULL,
+    vendor_id INT NOT NULL,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    review TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+    FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (motor_id) REFERENCES motor(id) ON DELETE CASCADE,
+    FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
+);
+

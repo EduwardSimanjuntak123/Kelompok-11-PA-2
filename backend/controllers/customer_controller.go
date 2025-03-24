@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -66,65 +65,6 @@ func RegisterCustomer(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Pendaftaran pelanggan berhasil"})
 }
-func LoginCustomer(c *gin.Context) {
-	var input struct {
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=6"`
-	}
-
-	// Validasi input JSON
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	var user models.User
-	fmt.Println("🔍 Mencari user dengan email:", input.Email)
-
-	// Cari user berdasarkan email
-	if err := config.DB.Debug().Select("id, name, email, password, role, phone, address, status").Where("email = ?", input.Email).First(&user).Error; err != nil {
-		fmt.Println("❌ User tidak ditemukan di database:", input.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email tidak ditemukan"})
-		return
-	}
-
-	// Pastikan user adalah customer
-	if user.Role != "customer" {
-		fmt.Println("❌ Akses ditolak. User bukan customer:", user.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Akses ditolak"})
-		return
-	}
-
-	// Verifikasi password dengan bcrypt
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
-	if err != nil {
-		fmt.Println("❌ Password salah")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password salah"})
-		return
-	}
-
-	// **Buat token JWT**
-	claims := jwt.MapClaims{
-		"user_id": user.ID,
-		"role":    user.Role,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte("secret123"))
-	if err != nil {
-		fmt.Println("❌ Gagal membuat token:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat token"})
-		return
-	}
-
-	fmt.Println("✅ Login berhasil untuk:", user.Email)
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login berhasil untuk pelanggan",
-		"token":   tokenString,
-	})
-}
 
 // Get All Motors
 func GetAllMotors(c *gin.Context) {
@@ -133,57 +73,130 @@ func GetAllMotors(c *gin.Context) {
 	c.JSON(http.StatusOK, motors)
 }
 
-// Create Booking
 func CreateBooking(c *gin.Context) {
 	var booking models.Booking
 
-	// Bind the JSON payload to the 'booking' struct
+	// Bind JSON ke struct booking
 	if err := c.ShouldBindJSON(&booking); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("Error binding JSON: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
 		return
 	}
-	// Mengambil user dari token
+
+	log.Printf("Debug: Booking data received: %+v", booking)
+
+	// Mengambil user_id dari token
 	userID, exists := c.Get("user_id")
 	if !exists {
+		log.Printf("User not authenticated")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
 	booking.CustomerID = userID.(uint)
 
-	// Cek apakah sudah ada booking dengan rentang tanggal yang sama untuk vendor dan motor yang sama
-	var existingBooking models.Booking
-	err := config.DB.Debug().Where("vendor_id = ? AND motor_id = ? AND ((start_date <= ? AND end_date >= ?) OR (start_date <= ? AND end_date >= ?))",
-		booking.VendorID, booking.MotorID, booking.EndDate, booking.StartDate, booking.StartDate, booking.EndDate).
-		First(&existingBooking).Error
+	log.Printf("Debug: User ID dari token: %v", booking.CustomerID)
 
-	if err == nil {
-		// Debug: Tampilkan status booking yang ditemukan
-		log.Printf("Existing Booking Status: %s", existingBooking.Status)
+	// Mulai transaksi database
+	tx := config.DB.Begin()
 
-		// Jika ada booking yang tumpang tindih, cek status booking yang sudah ada
-		if existingBooking.Status != "canceled" && existingBooking.Status != "rejected" {
-			// Jika status bukan "completed" atau "canceled", blokir booking baru
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Motor tidak dapat dibooking karena status booking sebelumnya bukan 'rejected' atau 'canceled'"})
-			return
-		}
+	// Ambil data pelanggan berdasarkan user_id dari token
+	var customer models.User
+	if err := tx.Select("id, name").Where("id = ?", booking.CustomerID).First(&customer).Error; err != nil {
+		tx.Rollback()
+		log.Printf("Error fetching customer: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data pelanggan"})
+		return
 	}
-	if err == nil {
-		log.Printf("Existing Booking: %+v", existingBooking) // Menampilkan seluruh data existingBooking
-	} else {
-		log.Printf("Error fetching existing booking: %v", err)
-	}
-	
 
-	// Enable GORM Debug to log the SQL queries
-	if err := config.DB.Debug().Create(&booking).Error; err != nil {
-		// Log the error (optional)
+	log.Printf("Debug: Customer Data -> ID: %d, Name: %s", customer.ID, customer.Name)
+
+	// Validasi MotorID
+	if booking.MotorID == 0 {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "MotorID cannot be 0. Ensure you use 'motor_id' in JSON request."})
+		return
+	}
+
+	// Cari Motor berdasarkan MotorID
+	var motor models.Motor
+	if err := tx.Select("id, name, brand, model, year, price, vendor_id").Where("id = ?", booking.MotorID).First(&motor).Error; err != nil {
+		tx.Rollback()
+		log.Printf("Error fetching motor: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data motor"})
+		return
+	}
+
+	// Debugging log
+	log.Printf("Debug: Motor Data -> ID: %d, Name: '%s', VendorID: %d", motor.ID, motor.Name, motor.VendorID)
+
+	if motor.VendorID == 0 {
+		tx.Rollback()
+		log.Printf("Motor with ID %d does not have a valid VendorID", booking.MotorID)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Motor does not have a valid VendorID"})
+		return
+	}
+
+	booking.VendorID = motor.VendorID
+
+	// Validasi rentang tanggal
+	if booking.EndDate.Before(booking.StartDate) {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tanggal booking tidak valid: end_date tidak boleh lebih awal dari start_date"})
+		return
+	}
+
+	// Hitung total harga sewa berdasarkan jumlah hari
+	duration := int(booking.EndDate.Sub(booking.StartDate).Hours() / 24)
+	if duration <= 0 {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Durasi booking tidak valid"})
+		return
+	}
+	totalPrice := float64(duration) * motor.Price
+
+	// Set status default
+	booking.Status = "pending"
+	booking.BookingDate = time.Now()
+
+	// Insert booking
+	if err := tx.Create(&booking).Error; err != nil {
+		tx.Rollback()
 		log.Printf("Error inserting booking: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambahkan booking"})
 		return
 	}
 
-	// Respond with success and the newly created booking data
-	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dibuat", "data": booking})
+	// Commit transaksi
+	tx.Commit()
+
+	// Debug untuk memastikan data customer sudah tersedia sebelum dikirim ke response
+	if customer.Name == "" {
+		log.Printf("Warning: Customer Name is empty for CustomerID %d", customer.ID)
+	}
+
+	// Respond dengan data lengkap
+	response := gin.H{
+		"message":         "Booking berhasil dibuat",
+		"booking_id":      booking.ID,
+		"customer_name":   customer.Name, // Ambil dari User yang diambil dari token
+		"booking_date":    booking.BookingDate.Format("2006-01-02"),
+		"start_date":      booking.StartDate.Format("2006-01-02"),
+		"end_date":        booking.EndDate.Format("2006-01-02"),
+		"pickup_location": booking.PickupLocation,
+		"status":          booking.Status,
+		"motor": gin.H{
+			"id":            motor.ID,
+			"name":          motor.Name,
+			"brand":         motor.Brand,
+			"model":         motor.Model,
+			"year":          motor.Year,
+			"price_per_day": motor.Price,
+			"total_price":   totalPrice,
+		},
+	}
+
+	log.Printf("Booking successfully created: %+v", response)
+	c.JSON(http.StatusOK, response)
 }
 
 // Cancel Booking
@@ -211,7 +224,6 @@ func CancelBooking(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dibatalkan"})
 }
-
 
 // Get Customer Transactions
 func GetCustomerTransactions(c *gin.Context) {

@@ -2,68 +2,26 @@ package controllers
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
 	"strings"
-	"github.com/dgrijalva/jwt-go"
-	"time"
+
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
-func VendorLogin(c *gin.Context) {
-	var input struct {
-		Email    string `json:"email" binding:"required"`
-		Password string `json:"password" binding:"required"`
-	}
 
-	// Validasi input JSON
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	var user models.User
-
-	if err := config.DB.Debug().Select("id, name, email, password, role, phone, address, status").Where("email = ? AND role = 'vendor'", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Email tidak ditemukan atau bukan vendor"})
-		return
-	}
-
-	// Verifikasi password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password salah"})
-		return
-	}
-	if user.Status=="inactive" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "akun anda sudah dinon-Aktifkan"})
-		return
-	}
-
-	// Generate JWT token jika login berhasil
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": user.ID,
-		"role":    user.Role,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	})
-	tokenString, _ := token.SignedString([]byte("secret123"))
-
-	// Kirim response sukses login
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Login berhasil sebagai vendor",
-		"token":   tokenString,
-	})
-}
 func RegisterVendor(c *gin.Context) {
 	var input struct {
-		Name          string `json:"name" binding:"required"`
-		Email         string `json:"email" binding:"required,email"`
-		Password      string `json:"password" binding:"required,min=6"`
-		Phone         string `json:"phone" binding:"required"`
-		ShopName      string `json:"shop_name" binding:"required"`
-		ShopAddress   string `json:"shop_address" binding:"required"`
+		Name            string `json:"name" binding:"required"`
+		Email           string `json:"email" binding:"required,email"`
+		Password        string `json:"password" binding:"required,min=6"`
+		Phone           string `json:"phone" binding:"required"`
+		ShopName        string `json:"shop_name" binding:"required"`
+		ShopAddress     string `json:"shop_address" binding:"required"`
 		ShopDescription string `json:"shop_description"`
-		IDKecamatan   *uint  `json:"id_kecamatan"` // Menambahkan ID Kecamatan
+		IDKecamatan     *uint  `json:"id_kecamatan"` // Menambahkan ID Kecamatan
 	}
 
 	// Validasi input JSON
@@ -104,7 +62,7 @@ func RegisterVendor(c *gin.Context) {
 		Role:     "vendor", // Set role sebagai 'vendor'
 		Phone:    input.Phone,
 		Address:  input.ShopAddress, // Gunakan alamat toko untuk address user
-		Status:   "active",         // Status default aktif
+		Status:   "active",          // Status default aktif
 	}
 
 	// **Simpan ke database**
@@ -115,12 +73,12 @@ func RegisterVendor(c *gin.Context) {
 
 	// Setelah user berhasil dibuat, buat vendor terkait
 	vendor := models.Vendor{
-		UserID:       user.ID,           // Menghubungkan vendor dengan user
-		ShopName:     input.ShopName,    // Menyimpan nama toko
-		ShopAddress:  input.ShopAddress,
+		UserID:          user.ID,        // Menghubungkan vendor dengan user
+		ShopName:        input.ShopName, // Menyimpan nama toko
+		ShopAddress:     input.ShopAddress,
 		ShopDescription: input.ShopDescription,
-		Status:       "active",          // Status vendor aktif
-		IDKecamatan:  input.IDKecamatan, // Menyertakan ID kecamatan
+		Status:          "active",          // Status vendor aktif
+		IDKecamatan:     input.IDKecamatan, // Menyertakan ID kecamatan
 	}
 
 	// Simpan vendor ke database
@@ -135,8 +93,6 @@ func RegisterVendor(c *gin.Context) {
 	// Pastikan response yang benar
 	c.JSON(http.StatusOK, gin.H{"message": "Pendaftaran vendor berhasil"})
 }
-
-
 
 func CompleteBooking(c *gin.Context) {
 	id := c.Param("id")
@@ -158,4 +114,34 @@ func CompleteBooking(c *gin.Context) {
 	CreateTransaction(booking) // Panggil CreateTransaction dengan data booking yang telah selesai
 
 	c.JSON(http.StatusOK, gin.H{"message": "Booking selesai, transaksi dibuat otomatis"})
+}
+
+func GetVendorProfile(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan, harap login ulang"})
+		return
+	}
+
+	var user models.User
+	// Ambil data user beserta vendor
+	if err := config.DB.
+		Select("id, name, email, role, phone, address, profile_image, ktp_image, status, created_at, updated_at").
+		Preload("Vendor", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, user_id, id_kecamatan, shop_name, shop_address, shop_description, status, created_at, updated_at")
+		}).
+		Where("id = ? AND name IS NOT NULL AND email IS NOT NULL", userID).
+		First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan atau bukan vendor"})
+		return
+	}
+
+	// Pastikan user memiliki vendor
+	if user.Role != "vendor" || user.Vendor.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	// Mengembalikan JSON tanpa duplikasi
+	c.JSON(http.StatusOK, gin.H{"user": user})
 }

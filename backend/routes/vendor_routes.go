@@ -3,18 +3,21 @@ package routes
 import (
 	"rental-backend/controllers"
 	"rental-backend/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
 // Vendor Routes
 func VendorRoutes(router *gin.Engine) {
+
 	vendor := router.Group("/vendor")
 	{
 
-		vendor.POST("/login", controllers.VendorLogin) // Vendor Login
 		vendor.POST("/register", controllers.RegisterVendor) // Vendor Register
 		vendor.Use(middleware.AuthMiddleware("vendor"))
 		{
+			vendor.GET("/profile", controllers.GetVendorProfile)
+
 			// Booking
 			vendor.GET("/bookings", controllers.GetVendorBookings)
 			vendor.PUT("/bookings/:id/confirm", controllers.ConfirmBooking)
@@ -23,7 +26,7 @@ func VendorRoutes(router *gin.Engine) {
 			vendor.PUT("/bookings/complete/:id", controllers.CompleteBooking)
 
 			// Transaksi Manual
-			// vendor.GET("/transactions", controllers.GetVendorBookings)
+			vendor.GET("/transactions", controllers.GetVendorBookings)
 		}
 	}
 }

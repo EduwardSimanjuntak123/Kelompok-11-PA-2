@@ -46,6 +46,7 @@ CREATE TABLE motor (
     foto_motor VARCHAR(255),
     FOREIGN KEY (id_vendor) REFERENCES vendors(id_vendor) ON DELETE CASCADE
 );
+ALTER TABLE motor ADD COLUMN rating FLOAT DEFAULT 0;
 
 
 CREATE TABLE status_booking (
@@ -69,6 +70,13 @@ CREATE TABLE bookings (
     FOREIGN KEY (id_vendor) REFERENCES vendors(id_vendor) ON DELETE CASCADE,
     FOREIGN KEY (id_status) REFERENCES status_booking(id_status) ON DELETE SET NULL
 );
+ALTER TABLE bookings
+ADD COLUMN total_hari INT;
+
+UPDATE bookings
+SET total_hari = DATEDIFF(end_date, start_date);
+
+
 
 
 CREATE TABLE ulasan (

@@ -3,62 +3,177 @@ package controllers
 import (
 	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"rental-backend/config"
 	"rental-backend/models"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
+func saveImage(c *gin.Context, file *multipart.FileHeader) (string, error) {
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("%s%s", timestamp, filepath.Ext(file.Filename))
+	filePath := filepath.Join("./fileserver/motor", filename)
+
+	if err := os.MkdirAll("./fileserver/motor", os.ModePerm); err != nil {
+		return "", err
+	}
+
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		return "", err
+	}
+
+	return "/fileserver/motor/" + filename, nil
+}
+
 // Fungsi untuk menambah motor baru
 func CreateMotor(c *gin.Context) {
 	var motor models.Motor
 
-	// Validasi input JSON
-	if err := c.ShouldBindJSON(&motor); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Ambil user_id dari JWT token yang sudah diproses di middleware
+	// Ambil user ID dari token
 	userIDInt, exists := c.Get("user_id")
-	fmt.Printf("Debug: User ID dari token -> %#v\n", userIDInt)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan dalam token"})
 		return
 	}
-	fmt.Print(c.Get("user_id"))
 
-	// Cek apakah user memiliki vendor terkait
+	// Cek apakah user adalah vendor
 	var vendor models.Vendor
 	if err := config.DB.Where("user_id = ?", userIDInt).First(&vendor).Error; err != nil {
-		fmt.Println("❌ Vendor tidak ditemukan untuk user_id:", userIDInt)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User bukan vendor atau vendor tidak ditemukan"})
 		return
 	}
-	fmt.Printf("Debug: User ID dari token %d", vendor.ID)
 
-	// Set VendorID pada motor dan pastikan tidak nol
+	// Ambil data dari form-data
 	motor.VendorID = vendor.ID
-	if motor.VendorID == 0 {
-		fmt.Println("❌ Vendor ID tidak valid (0) untuk user_id:", userIDInt)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Vendor ID tidak valid"})
-		return
-	}
+	motor.Name = c.PostForm("name")
+	motor.Brand = c.PostForm("brand")
+	motor.Model = c.PostForm("model")
+	motor.Color = c.PostForm("color")
+	motor.Status = c.PostForm("status")
 
-	// Debugging sebelum menyimpan motor
-	fmt.Println("📌 Menyimpan motor untuk vendor ID:", motor.VendorID)
+	// Konversi nilai numerik
+	year, _ := strconv.Atoi(c.PostForm("year"))
+	price, _ := strconv.Atoi(c.PostForm("price"))
 
-	// Simpan data motor ke database
-	if err := config.DB.Debug().Create(&motor).Error; err != nil {
-		fmt.Println("❌ Gagal menyimpan motor ke database:", err)
+	motor.Year = uint(year)
+	motor.Price = float64(price)
+
+	// Simpan motor terlebih dahulu
+	if err := config.DB.Create(&motor).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambahkan motor"})
 		return
 	}
 
-	fmt.Println("✅ Motor berhasil ditambahkan oleh vendor:", vendor.ID)
+	// Ambil file gambar jika ada
+	file, err := c.FormFile("image")
+	if err == nil {
+		imagePath, err := saveImage(c, file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan gambar"})
+			return
+		}
+		motor.Image = imagePath
+		config.DB.Save(&motor)
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil ditambahkan", "data": motor})
+}
+
+// Fungsi untuk memperbarui motor
+func UpdateMotor(c *gin.Context) {
+	id := c.Param("id")
+	var motor models.Motor
+	var vendor models.Vendor
+	var input = make(map[string]interface{}) // Gunakan map untuk partial update
+
+	// Ambil user ID dari token
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan dalam token"})
+		return
+	}
+
+	// Cek apakah user adalah vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	// Cek apakah motor ada di database
+	if err := config.DB.First(&motor, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Motor tidak ditemukan"})
+		return
+	}
+
+	// Cek apakah motor milik vendor yang sedang login
+	if motor.VendorID != vendor.ID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk mengupdate motor ini"})
+		return
+	}
+
+	// Update hanya jika ada input baru
+	if name := c.PostForm("name"); name != "" {
+		input["name"] = name
+	}
+	if brand := c.PostForm("brand"); brand != "" {
+		input["brand"] = brand
+	}
+	if model := c.PostForm("model"); model != "" {
+		input["model"] = model
+	}
+	if color := c.PostForm("color"); color != "" {
+		input["color"] = color
+	}
+	if status := c.PostForm("status"); status != "" {
+		input["status"] = status
+	}
+
+	// **Perbaikan Year** -> Jangan set `0` ke database
+	if yearStr := c.PostForm("year"); yearStr != "" {
+		year, err := strconv.Atoi(yearStr)
+		if err == nil && year > 0 { // Hanya update jika lebih dari 0
+			input["year"] = year
+		}
+	}
+
+	// **Perbaikan Price** -> Hanya update jika ada input valid
+	if priceStr := c.PostForm("price"); priceStr != "" {
+		price, err := strconv.ParseFloat(priceStr, 64)
+		if err == nil {
+			input["price"] = price
+		}
+	}
+
+	// Ambil file gambar jika ada
+	file, err := c.FormFile("image")
+	if err == nil {
+		// Hapus gambar lama jika ada
+		if motor.Image != "" {
+			os.Remove(motor.Image)
+		}
+
+		// Simpan gambar baru
+		imagePath, err := saveImage(c, file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan gambar"})
+			return
+		}
+		input["image"] = imagePath
+	}
+
+	// **Gunakan GORM Updates agar hanya yang diubah yang tersimpan**
+	if err := config.DB.Model(&motor).Updates(input).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui motor"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil diperbarui", "data": motor})
 }
 
 // Fungsi untuk mendapatkan semua motor dari vendor yang login
@@ -85,49 +200,44 @@ func GetMotorByID(c *gin.Context) {
 	c.JSON(http.StatusOK, motor)
 }
 
-// Fungsi untuk memperbarui motor
-func UpdateMotor(c *gin.Context) {
-	id := c.Param("id")
-	var vendor models.Vendor
+// Fungsi untuk mendapatkan semua motor berdasarkan vendor yang login
+func GetAllMotorbyVendor(c *gin.Context) {
+	var motors []models.Motor
+
+	// Ambil user_id dari token
 	userID, exists := c.Get("user_id")
-	fmt.Printf("Debug: User ID dari token -> %#v\n", userID)
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan dalam token"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan dalam token"})
 		return
 	}
 
+	// Cek apakah user memiliki vendor terkait
+	var vendor models.Vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	// Ambil motor berdasarkan vendor_id dengan Preload Vendor
 	if err := config.DB.
-		Where("user_id = ?", userID).
-		Order("id").
-		First(&vendor).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "vendor tidak ditemukan"})
+		Select("id, vendor_id, name, brand, model, year, price, color, status, image, created_at, updated_at").
+		Where("vendor_id = ?", vendor.ID).
+		Find(&motors).Error; err != nil {
+		fmt.Printf("❌ Gagal mengambil data motor: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
 		return
 	}
 
-	var motor models.Motor
-
-	if err := config.DB.First(&motor, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Motor tidak ditemukan"})
-		return
-	}
-	fmt.Print(motor.VendorID)
-
-	// Ambil vendor_id dari token
-	// vendorID, exists := c.Get("vendor_id")
-	fmt.Print(vendor.ID)
-
-	if !exists || motor.VendorID != vendor.ID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk mengubah motor ini"})
+	// Cek apakah ada data motor yang ditemukan
+	if len(motors) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Tidak ada motor yang tersedia"})
 		return
 	}
 
-	if err := c.ShouldBindJSON(&motor); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	config.DB.Save(&motor)
-	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil diperbarui", "data": motor})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Berhasil mengambil data motor",
+		"data":    motors,
+	})
 }
 
 // Fungsi untuk menghapus motor
@@ -136,35 +246,37 @@ func DeleteMotor(c *gin.Context) {
 	var motor models.Motor
 	var vendor models.Vendor
 
+	// Pastikan user_id tersedia di middleware
 	userID, exists := c.Get("user_id")
-	fmt.Printf("Debug: User ID dari token -> %#v\n", userID)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan dalam token"})
 		return
 	}
 
-	if err := config.DB.
-		Where("user_id = ?", userID).
-		Order("id").
-		First(&vendor).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "vendor tidak ditemukan"})
+	// Cari vendor yang terkait dengan user
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
 		return
 	}
 
+	// Cari motor berdasarkan ID
 	if err := config.DB.First(&motor, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Motor tidak ditemukan"})
 		return
 	}
 
-	// Ambil vendor_id dari token
-	fmt.Print(vendor.ID)
-
-	if !exists || motor.VendorID != vendor.ID {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk mengubah motor ini"})
+	// Validasi apakah motor milik vendor yang sesuai
+	if motor.VendorID != vendor.ID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk menghapus motor ini"})
 		return
 	}
 
-	config.DB.Delete(&motor)
+	// Hapus motor dari database
+	if err := config.DB.Delete(&motor).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus motor"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil dihapus"})
 }
 

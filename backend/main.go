@@ -2,29 +2,34 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"rental-backend/config"
+	"rental-backend/controllers"
+	"rental-backend/middleware"
+	"rental-backend/routes"
 
 	"github.com/gin-gonic/gin"
-	"rental-backend/config"
-	"rental-backend/routes"
-	"rental-backend/controllers"
 )
 
 func main() {
-	// Gunakan mode release agar log tidak terlalu banyak
 	gin.SetMode(gin.ReleaseMode)
 
-	// Koneksi ke Database
+	// Koneksi ke database
 	config.ConnectDatabase()
 
-	// Setup Router tanpa middleware logging default
-	router := gin.New()
-	// router.Use(gin.Recovery()) // Tangani panic tanpa menampilkan log yang tidak perlu
+	router := gin.Default()
 
-	// Register Routes
+	router.Use(middleware.CORSMiddleware())
+	// ✅ Route untuk file statis
+	// Akan mengizinkan akses ke http://localhost:8080/fileserver/...
+	router.Static("/fileserver", "./fileserver")
+
+	// Setup routes
 	routes.SetupRoutes(router)
-	go controllers.StartAutoUpdateMotorStatus()
 
+	// Jalankan auto-update status motor
+	go controllers.StartAutoUpdateMotorStatus()
 
 	// Tentukan port server
 	port := os.Getenv("PORT")
@@ -32,6 +37,9 @@ func main() {
 		port = "8080"
 	}
 
+	// Log informasi server
 	fmt.Println("✅ Server berjalan di port", port)
-	router.Run(":" + port)
+	if err := router.Run(":" + port); err != nil {
+		log.Fatal("❌ Gagal menjalankan server:", err)
+	}
 }

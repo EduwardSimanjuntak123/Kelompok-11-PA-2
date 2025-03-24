@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-// Secret Key JWT
+// Secret Key JWT (Harus sama dengan yang digunakan saat generate token)
 var jwtSecret = []byte("secret123")
 
 // Auth Middleware dengan fleksibilitas untuk banyak role
@@ -35,6 +35,7 @@ func AuthMiddleware(allowedRoles ...string) gin.HandlerFunc {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			// Pastikan token menggunakan metode HS256
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				fmt.Println("Debug: Algoritma JWT tidak sesuai")
 				return nil, jwt.ErrSignatureInvalid
 			}
 			return jwtSecret, nil
@@ -42,7 +43,7 @@ func AuthMiddleware(allowedRoles ...string) gin.HandlerFunc {
 
 		// Jika token tidak valid atau error
 		if err != nil || !token.Valid {
-			fmt.Println("Debug: Token Parsing Error ->", err) // Debugging
+			fmt.Println("Debug: Token Parsing Error ->", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token tidak valid"})
 			c.Abort()
 			return
@@ -51,7 +52,7 @@ func AuthMiddleware(allowedRoles ...string) gin.HandlerFunc {
 		// Ambil claims dari token
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			fmt.Println("Debug: Gagal membaca claims dari token") // Debugging
+			fmt.Println("Debug: Gagal membaca claims dari token")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Token tidak valid"})
 			c.Abort()
 			return
@@ -61,22 +62,35 @@ func AuthMiddleware(allowedRoles ...string) gin.HandlerFunc {
 		fmt.Println("Debug: Token Claims ->", claims)
 
 		// Ambil `user_id`
-		userIDFloat, ok := claims["user_id"].(float64)
-		if !ok {
+		var userID uint
+		switch v := claims["user_id"].(type) {
+		case float64:
+			userID = uint(v) // Jika user_id berupa angka (float64), konversi ke uint
+		case string:
+			fmt.Println("Debug: User ID dalam token adalah string, seharusnya float64")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Format user_id salah"})
+			c.Abort()
+			return
+		default:
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID tidak ditemukan dalam token"})
 			c.Abort()
 			return
 		}
-		userID := uint(userIDFloat) // Konversi dari float64 ke uint
+
+		// Simpan user_id dalam context untuk digunakan di controller
 		c.Set("user_id", userID)
 
 		// Ambil `role`
 		userRole, ok := claims["role"].(string)
 		if !ok {
+			fmt.Println("Debug: Role tidak ditemukan dalam token")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Role tidak valid dalam token"})
 			c.Abort()
 			return
 		}
+
+		// Simpan role ke dalam context
+		c.Set("user_role", userRole)
 
 		// Jika role dibatasi, pastikan user memiliki salah satu role yang diizinkan
 		if len(allowedRoles) > 0 {
@@ -89,25 +103,17 @@ func AuthMiddleware(allowedRoles ...string) gin.HandlerFunc {
 			}
 
 			if !roleAllowed {
+				fmt.Println("Debug: Akses ditolak untuk role:", userRole)
 				c.JSON(http.StatusForbidden, gin.H{"error": "Tidak memiliki izin akses"})
 				c.Abort()
 				return
 			}
 		}
 
-		// // Jika role adalah "vendor", pastikan vendor_id ada
-		// if userRole == "vendor" {
-		// 	vendorIDFloat, ok := claims["vendor_id"].(float64)
-		// 	if !ok {
-		// 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor ID tidak ditemukan dalam token"})
-		// 		c.Abort()
-		// 		return
-		// 	}
-		// 	vendorID := uint(vendorIDFloat) // Konversi dari float64 ke uint
-		// 	c.Set("vendor_id", vendorID)
-		// }
+		// Debugging
+		fmt.Println("Debug: User ID dari token:", userID)
+		fmt.Println("Debug: User Role dari token:", userRole)
 
-		// Lanjut ke request berikutnya
 		c.Next()
 	}
 }
