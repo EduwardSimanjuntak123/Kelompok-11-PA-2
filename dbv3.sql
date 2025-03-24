@@ -65,7 +65,7 @@ CREATE TABLE bookings (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     pickup_location TEXT NOT NULL,
-    STATUS ENUM('pending', 'confirmed',, 'canceled', 'completed', 'rejected') DEFAULT 'pending',
+    STATUS ENUM('pending', 'confirmed','canceled', 'completed', 'rejected') DEFAULT 'pending',
     photo_id VARCHAR(255) NOT NULL,
     ktp_id VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

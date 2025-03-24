@@ -33,10 +33,10 @@
                                 <span class="text-gray-400 italic">Tidak ada gambar</span>
                             @endif
                         </td>
-                        <td class="px-4 py-2">{{ $motor['name'] ?: '-' }}</td>
+                        <td class="px-4 py-2">{{ $motor['name'] ?? '-' }}</td>
                         <td class="px-4 py-2">{{ $motor['brand'] }}</td>
                         <td class="px-4 py-2">{{ $motor['model'] }}</td>
-                        <td class="px-4 py-2">{{ $motor['year'] ?: '-' }}</td>
+                        <td class="px-4 py-2">{{ $motor['year'] ?? '-' }}</td>
                         <td class="px-4 py-2">{{ $motor['color'] }}</td>
                         <td class="px-4 py-2 font-bold text-green-600">
                             Rp {{ number_format($motor['price'], 0, ',', '.') }}
@@ -60,17 +60,16 @@
     @include('layouts.modal')
 
     <script>
-        // Function to open Add Modal
+        // Modal Tambah
         document.getElementById('openAddModalBtn').addEventListener('click', function() {
             document.getElementById('addModal').style.display = 'flex';
         });
 
-        // Function to close Add Modal
         function closeAddModal() {
             document.getElementById('addModal').style.display = 'none';
         }
 
-        // Function to open Edit Modal
+        // Modal Edit
         function openEditModal(motor) {
             document.getElementById('editModal').style.display = 'flex';
             document.getElementById('editMotorName').value = motor.name;
@@ -80,27 +79,30 @@
             document.getElementById('editMotorColor').value = motor.color;
             document.getElementById('editMotorPrice').value = motor.price;
             document.getElementById('editMotorStatus').value = motor.status;
-
-            // Set dynamic form action URL
-            let formAction = '/motor/vendor/' + motor.id;
-            document.getElementById('editMotorForm').action = formAction;
-            console.log(formAction); // Correct PUT route
+            setEditFormAction(motor.id);
         }
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
         }
 
-
-        // Function to open Delete Modal
+        // Modal Delete
         function openDeleteModal(motor) {
             document.getElementById('deleteModal').style.display = 'flex';
-            document.getElementById('deleteMotorId').value = motor.id;
+            setDeleteFormAction(motor.id);
         }
 
-        // Function to close Delete Modal
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        // Set action URL untuk form edit dan delete
+        function setEditFormAction(id) {
+            document.getElementById('editMotorForm').action = `/vendor/motor/${id}`;
+        }
+
+        function setDeleteFormAction(id) {
+            document.getElementById('deleteMotorForm').action = `/vendor/motor/${id}`;
         }
     </script>
 @endsection

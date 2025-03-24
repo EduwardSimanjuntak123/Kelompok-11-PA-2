@@ -13,6 +13,7 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         '/login',
+        'vendor/motor',
         'bookings/*/confirm',
         'bookings/*/reject',
         'bookings/*/complete'
