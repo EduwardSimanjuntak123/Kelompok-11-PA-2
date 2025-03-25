@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -110,6 +109,8 @@ func RejectBooking(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil ditolak"})
 }
+
+
 func GetVendorBookings(c *gin.Context) {
 	// Ambil user_id dari token JWT
 	userID, exists := c.Get("user_id")
@@ -194,9 +195,9 @@ func GetVendorBookings(c *gin.Context) {
 		bookingData := map[string]interface{}{
 			"id":              booking.ID,
 			"customer_name":   customerName, // Dipastikan tidak kosong
-			"booking_date":    booking.BookingDate.Format("2006-01-02"),
-			"start_date":      booking.StartDate.Format("2006-01-02"),
-			"end_date":        booking.EndDate.Format("2006-01-02"),
+			"booking_date":    booking.BookingDate,
+			"start_date":      booking.StartDate,
+			"end_date":        booking.EndDate,
 			"status":          booking.Status,
 			"message":         "Booking berhasil diambil",
 			"pickup_location": booking.PickupLocation,

@@ -13,6 +13,7 @@ class KelolaBookingController extends Controller
 
     public function index($id)
     {
+        // dd($id);
         try {
             $token = session('token');
 

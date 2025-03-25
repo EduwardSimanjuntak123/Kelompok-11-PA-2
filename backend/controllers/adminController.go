@@ -1,11 +1,16 @@
 package controllers
 
 import (
+	"fmt"
+	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
+	"time"
+"strconv"
 	"rental-backend/config"
 	"rental-backend/models"
-	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,53 +25,176 @@ func GetDataAdmin(c *gin.Context) {
 
 	var user models.User
 
-	// Ambil data user yang sedang login tanpa preload Vendor atau Booking
-	if err := config.DB.Select("id, name, email, phone, address, profile_image, status, created_at, updated_at").
+	// Ambil data user (admin) dengan semua atribut yang relevan
+	if err := config.DB.
+		Select("id, name, email, phone, address, profile_image, ktp_image, status, role, created_at, updated_at").
 		Where("id = ? AND role = ?", userID, "admin").
 		First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Admin tidak ditemukan"})
 		return
 	}
 
-	// Format response hanya dengan data yang relevan
-	response := gin.H{
+	// Siapkan base URL untuk membangun URL gambar lengkap
+	baseURL := "http://localhost:8080"
+
+	// Buat URL gambar lengkap untuk profile_image
+	var profileImageURL string
+	if user.ProfileImage != "" {
+		profileImageURL = baseURL + user.ProfileImage
+	} else {
+		profileImageURL = "https://via.placeholder.com/150"
+	}
+
+	// Buat URL gambar lengkap untuk ktp_image
+	var ktpImageURL string
+	if user.KtpImage != "" {
+		ktpImageURL = baseURL + user.KtpImage
+	} else {
+		ktpImageURL = "https://via.placeholder.com/150"
+	}
+
+	// Kembalikan respons JSON dengan semua atribut
+	c.JSON(http.StatusOK, gin.H{
 		"id":            user.ID,
 		"name":          user.Name,
 		"email":         user.Email,
 		"phone":         user.Phone,
 		"address":       user.Address,
-		"profile_image": user.ProfileImage,
+		"profile_image": profileImageURL,
+		"ktp_image":     ktpImageURL,
 		"status":        user.Status,
+		"role":          user.Role,
 		"created_at":    user.CreatedAt,
 		"updated_at":    user.UpdatedAt,
-	}
-
-	c.JSON(http.StatusOK, response)
+	})
 }
 
+
+func saveImageAdmin(c *gin.Context, file *multipart.FileHeader) (string, error) {
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("%s%s", timestamp, filepath.Ext(file.Filename))
+	filePath := filepath.Join("./fileserver/admin", filename)
+
+	if err := os.MkdirAll("./fileserver/admin", os.ModePerm); err != nil {
+		return "", err
+	}
+
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		return "", err
+	}
+
+	// Kembalikan URL relatif, misalnya "/fileserver/admin/filename.jpg"
+	return "/fileserver/admin/" + filename, nil
+}
+
+// saveImageKtp menyimpan file KTP image ke folder ./fileserver/admin
+func saveImageKtp(c *gin.Context, file *multipart.FileHeader) (string, error) {
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("ktp_%s%s", timestamp, filepath.Ext(file.Filename))
+	filePath := filepath.Join("./fileserver/admin", filename)
+
+	if err := os.MkdirAll("./fileserver/admin", os.ModePerm); err != nil {
+		return "", err
+	}
+
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		return "", err
+	}
+
+	return "/fileserver/admin/" + filename, nil
+}
+
+// EditDataAdmin mengupdate data admin berdasarkan input form-data.
+// Bila ada file gambar baru, file gambar lama akan dihapus dari folder.
 func EditDataAdmin(c *gin.Context) {
+	// Ambil user_id dari context (diperoleh dari token)
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Admin tidak terautentikasi"})
 		return
 	}
 
+	// Cari data admin berdasarkan user_id dan pastikan role adalah 'admin'
 	var admin models.User
 	if err := config.DB.Where("id = ? AND role = ?", userID, "admin").First(&admin).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Data admin tidak ditemukan"})
 		return
 	}
 
-	var input map[string]interface{}
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format data tidak valid"})
+	// Gunakan map untuk update parsial
+	input := make(map[string]interface{})
+
+	// Update atribut jika ada input baru dari form-data
+	if name := c.PostForm("name"); name != "" {
+		input["name"] = name
+	}
+	if email := c.PostForm("email"); email != "" {
+		input["email"] = email
+	}
+	if password := c.PostForm("password"); password != "" {
+		// Pastikan untuk meng-hash password sebelum disimpan. (HashPassword harus diimplementasikan)
+		hashedPassword := password // Gantikan ini dengan fungsi hashing password Anda
+		input["password"] = hashedPassword
+	}
+	if phone := c.PostForm("phone"); phone != "" {
+		input["phone"] = phone
+	}
+	if address := c.PostForm("address"); address != "" {
+		input["address"] = address
+	}
+	if status := c.PostForm("status"); status != "" {
+		input["status"] = status
+	}
+	if role := c.PostForm("role"); role != "" {
+		input["role"] = role
+	}
+
+	// Tangani file profile_image jika ada
+	if file, err := c.FormFile("profile_image"); err == nil {
+		// Hapus file lama jika ada
+		if admin.ProfileImage != "" {
+			// Ubah URL relatif menjadi path file di sistem dengan menambahkan titik (.)
+			oldPath := "." + admin.ProfileImage
+			if err := os.Remove(oldPath); err != nil {
+				log.Printf("Gagal menghapus file profile_image lama: %v", err)
+			}
+		}
+		imagePath, err := saveImageAdmin(c, file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan profile image"})
+			return
+		}
+		input["profile_image"] = imagePath
+	}
+
+	// Tangani file ktp_image jika ada
+	if file, err := c.FormFile("ktp_image"); err == nil {
+		if admin.KtpImage != "" {
+			oldPath := "." + admin.KtpImage
+			if err := os.Remove(oldPath); err != nil {
+				log.Printf("Gagal menghapus file ktp_image lama: %v", err)
+			}
+		}
+		ktpPath, err := saveImageKtp(c, file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan KTP image"})
+			return
+		}
+		input["ktp_image"] = ktpPath
+	}
+
+	// Update waktu perubahan
+	input["updated_at"] = time.Now()
+
+	// Lakukan update data admin secara partial
+	if err := config.DB.Model(&admin).Updates(input).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui data admin", "details": err.Error()})
 		return
 	}
 
-	// Perbarui data admin dengan data yang diberikan
-	input["updated_at"] = time.Now()
-	if err := config.DB.Model(&admin).Updates(input).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui data admin"})
+	// Refresh data admin agar respons mengembalikan data terbaru
+	if err := config.DB.First(&admin, admin.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data admin setelah update"})
 		return
 	}
 

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Vendor Rental')
+@section('title', 'motor Vendor Rental')
 
 @section('content')
     <button id="openAddModalBtn" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition mb-4">

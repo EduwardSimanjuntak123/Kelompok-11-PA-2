@@ -90,7 +90,7 @@ func UpdateMotor(c *gin.Context) {
 	id := c.Param("id")
 	var motor models.Motor
 	var vendor models.Vendor
-	var input = make(map[string]interface{}) // Gunakan map untuk partial update
+	input := make(map[string]interface{}) // Gunakan map untuk partial update
 
 	// Ambil user ID dari token
 	userID, exists := c.Get("user_id")
@@ -117,7 +117,7 @@ func UpdateMotor(c *gin.Context) {
 		return
 	}
 
-	// Update hanya jika ada input baru
+	// Update hanya jika ada input baru dari form-data
 	if name := c.PostForm("name"); name != "" {
 		input["name"] = name
 	}
@@ -134,15 +134,15 @@ func UpdateMotor(c *gin.Context) {
 		input["status"] = status
 	}
 
-	// **Perbaikan Year** -> Jangan set `0` ke database
+	// Update Year jika valid (jangan set 0)
 	if yearStr := c.PostForm("year"); yearStr != "" {
 		year, err := strconv.Atoi(yearStr)
-		if err == nil && year > 0 { // Hanya update jika lebih dari 0
+		if err == nil && year > 0 {
 			input["year"] = year
 		}
 	}
 
-	// **Perbaikan Price** -> Hanya update jika ada input valid
+	// Update Price jika valid
 	if priceStr := c.PostForm("price"); priceStr != "" {
 		price, err := strconv.ParseFloat(priceStr, 64)
 		if err == nil {
@@ -150,14 +150,16 @@ func UpdateMotor(c *gin.Context) {
 		}
 	}
 
-	// Ambil file gambar jika ada
-	file, err := c.FormFile("image")
-	if err == nil {
+	// Tangani file gambar jika ada
+	if file, err := c.FormFile("image"); err == nil {
 		// Hapus gambar lama jika ada
 		if motor.Image != "" {
-			os.Remove(motor.Image)
+			// Ubah URL relatif menjadi path file sistem, misal: "/fileserver/motor/filename.jpg" -> "./fileserver/motor/filename.jpg"
+			oldPath := "." + motor.Image
+			if err := os.Remove(oldPath); err != nil {
+				log.Printf("Gagal menghapus file gambar lama: %v", err)
+			}
 		}
-
 		// Simpan gambar baru
 		imagePath, err := saveImage(c, file)
 		if err != nil {
@@ -167,7 +169,7 @@ func UpdateMotor(c *gin.Context) {
 		input["image"] = imagePath
 	}
 
-	// **Gunakan GORM Updates agar hanya yang diubah yang tersimpan**
+	// Gunakan GORM Updates agar hanya field yang diubah yang tersimpan
 	if err := config.DB.Model(&motor).Updates(input).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui motor"})
 		return

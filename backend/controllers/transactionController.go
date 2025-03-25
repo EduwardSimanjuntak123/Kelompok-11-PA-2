@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Fungsi untuk menambahkan transaksi manual dan menghitung harga berdasarkan motor dan durasi
@@ -32,7 +32,7 @@ func AddManualTransaction(c *gin.Context) {
 	// Cek apakah sudah ada transaksi dengan motor_id dan durasi yang sama
 	var existingTransaction models.Transaction
 	if err := config.DB.Where("motor_id = ? AND DATE(start_date) = ? AND DATE(end_date) = ?",
-		transaction.MotorID, startDate.Format("2006-01-02"), endDate.Format("2006-01-02")).First(&existingTransaction).Error; err == nil {
+		transaction.MotorID, startDate, endDate).First(&existingTransaction).Error; err == nil {
 		// Jika transaksi sudah ada, kembalikan error bahwa transaksi duplikat
 		c.JSON(http.StatusConflict, gin.H{"error": "Transaksi dengan motor, tanggal mulai, dan tanggal selesai yang sama sudah ada"})
 		return
@@ -74,60 +74,30 @@ func AddManualTransaction(c *gin.Context) {
 	// Jika berhasil, kirimkan response sukses
 	c.JSON(http.StatusOK, gin.H{"message": "Transaksi manual berhasil ditambahkan", "transaction": transaction})
 }
-// Fungsi untuk membuat transaksi otomatis setelah booking selesai
 
-func CreateTransaction(booking models.Booking) {
-	// Pastikan status booking adalah "completed"
-	if booking.Status != "completed" {
-		log.Println("Error: Booking belum selesai")
-		return
-	}
 
-	// Cek apakah transaksi sudah ada untuk booking ini
-	var existingTransaction models.Transaction
-	if err := config.DB.Where("booking_id = ?", booking.ID).First(&existingTransaction).Error; err == nil {
-		// Jika transaksi sudah ada, jangan buat transaksi baru
-		log.Println("Error: Transaksi sudah ada untuk booking ini")
-		return
-	}
+func GetVendorTransactions(c *gin.Context) {
+    // Ambil user_id dari token JWT
+    userID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+        return
+    }
 
-	// Tentukan tipe transaksi berdasarkan booking
-	transactionType := models.BookingType
-	if booking.Status != "completed" {
-		transactionType = models.ManualType // Jika manual transaksi
-	}
+    // Cari vendor berdasarkan user_id
+    var vendor models.Vendor
+    if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak ditemukan"})
+        return
+    }
 
-	// Ambil harga motor berdasarkan motorID
-	var motor models.Motor
-	if err := config.DB.Where("id = ?", booking.MotorID).First(&motor).Error; err != nil {
-		log.Printf("Motor tidak ditemukan: %v", err)
-		return
-	}
+    // Query transaksi berdasarkan vendor_id
+    var transactions []models.Transaction
+    if err := config.DB.Where("vendor_id = ?", vendor.ID).Find(&transactions).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data transaksi"})
+        return
+    }
 
-	// Hitung durasi rental dalam hari
-	duration := booking.EndDate.Sub(booking.StartDate).Hours() / 24
-	totalPrice := duration * float64(motor.Price)
-
-	// Buat transaksi berdasarkan data booking
-	transaction := models.Transaction{
-		BookingID:      &booking.ID, // Menggunakan pointer ke uint
-		VendorID:       booking.VendorID,
-		CustomerID:     &booking.CustomerID, // Menggunakan pointer ke uint
-		MotorID:        booking.MotorID,
-		Type:           transactionType, // 'booking' atau 'manual'
-		TotalPrice:     totalPrice,      // Total harga berdasarkan motor dan durasi
-		StartDate:      booking.StartDate,
-		EndDate:        booking.EndDate,
-		PickupLocation: booking.PickupLocation,
-		Status:         models.Completed, // Status transaksi menjadi 'completed'
-	}
-
-	// Simpan transaksi ke database
-	if err := config.DB.Create(&transaction).Error; err != nil {
-		log.Printf("Gagal membuat transaksi: %v", err)
-	} else {
-		log.Printf("Transaksi berhasil dibuat: %+v", transaction)
-	}
+    // Kembalikan data transaksi sebagai JSON
+    c.JSON(http.StatusOK, transactions)
 }
-
-// Fungsi untuk menghitung total harga berdasarkan motor dan durasi

@@ -20,7 +20,7 @@ type Transaction struct {
 	VendorID       uint      `gorm:"not null" json:"vendor_id"`
 	CustomerID     *uint     `gorm:"foreignKey:CustomerID" json:"customer_id"` // Pointer karena nullable
 	MotorID        uint      `gorm:"not null" json:"motor_id"`
-	Type           string    `gorm:"type:varchar(255);not null" json:"type"` // 'booking' or 'manual'
+	Type           string    `gorm:"type:varchar(255);not null" json:"type"` // 'transaction' or 'manual'
 	TotalPrice     float64   `gorm:"not null" json:"total_price"`
 	StartDate      time.Time `gorm:"not null" json:"start_date"`
 	EndDate        time.Time `gorm:"not null" json:"end_date"`

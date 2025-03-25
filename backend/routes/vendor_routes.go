@@ -17,6 +17,7 @@ func VendorRoutes(router *gin.Engine) {
 		vendor.Use(middleware.AuthMiddleware("vendor"))
 		{
 			vendor.GET("/profile", controllers.GetVendorProfile)
+			vendor.PUT("/profile/edit", controllers.EditProfileVendor)
 
 			// Booking
 			vendor.GET("/bookings", controllers.GetVendorBookings)
@@ -26,7 +27,6 @@ func VendorRoutes(router *gin.Engine) {
 			vendor.PUT("/bookings/complete/:id", controllers.CompleteBooking)
 
 			// Transaksi Manual
-			vendor.GET("/transactions", controllers.GetVendorBookings)
 		}
 	}
 }

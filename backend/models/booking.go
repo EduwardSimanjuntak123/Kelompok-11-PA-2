@@ -7,12 +7,12 @@ type Booking struct {
 	ID             uint      `gorm:"primaryKey" json:"id"`
 	CustomerID     uint      `gorm:"not null" json:"customer_id"`
 	VendorID       uint      `gorm:"not null" json:"vendor_id"`
-	MotorID        uint      `gorm:"not null" json:"motor_id"`
+	MotorID        uint      `gorm:"not null" json:"motor_id" form:"motor_id"`
 	BookingDate    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"booking_date"`
-	StartDate      time.Time `gorm:"not null" json:"start_date"`
-	EndDate        time.Time `gorm:"not null" json:"end_date"`
-	PickupLocation string    `gorm:"not null" json:"pickup_location"`
-	Status         string    `gorm:"type:enum('pending', 'confirmed','rejected', 'canceled', 'completed');default:'pending'" json:"status"`
+	StartDate      time.Time `gorm:"not null" json:"start_date" form:"start_date"`
+	EndDate        time.Time `gorm:"not null" json:"end_date" form:"end_date"`
+	PickupLocation string    `gorm:"not null" json:"pickup_location" form:"pickup_location"`
+	Status 		   string 	 `gorm:"type:enum('pending', 'confirmed', 'rejected', 'canceled', 'completed');not null;default:'pending'" json:"`
 	PhotoID        string    `gorm:"not null" json:"photo_id"`
 	KtpID          string    `gorm:"not null" json:"ktp_id"`
 	CreatedAt      time.Time `json:"created_at"`

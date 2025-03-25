@@ -5,7 +5,7 @@
 @section('content')
     <div class="container mx-auto p-8">
         <h2 class="text-4xl font-extrabold mb-6 text-center text-gray-800">📋 Kelola Pemesanan</h2>
-        
+
         <div class="mb-6 flex justify-center">
             <select id="filterStatus" class="border p-2 rounded-md">
                 <option value="all">Semua</option>
@@ -14,8 +14,8 @@
                 <option value="rejected">Rejected</option>
             </select>
         </div>
-      {{-- @dd($bookings) --}}
-        
+        {{-- @dd($bookings) --}}
+
         @if (empty($bookings) || count($bookings) == 0)
             <p class="text-center text-gray-500">Tidak ada pemesanan untuk ditampilkan.</p>
         @else
@@ -26,20 +26,29 @@
                             {{ $pesanan['motor']['brand'] ?? 'Unknown' }} {{ $pesanan['motor']['model'] ?? '' }}
                         </h3>
                         <p class="text-gray-600 text-sm">Status:
-                            <strong class="{{ $pesanan['status'] == 'pending' ? 'text-yellow-600' : ($pesanan['status'] == 'rejected' ? 'text-red-600' : 'text-green-600') }}">
+                            <strong
+                                class="{{ $pesanan['status'] == 'pending' ? 'text-yellow-600' : ($pesanan['status'] == 'rejected' ? 'text-red-600' : 'text-green-600') }}">
                                 {{ ucfirst($pesanan['status']) }}
                             </strong>
                         </p>
-                        <p class="text-gray-600 text-sm">Mulai: <strong>{{ \Carbon\Carbon::parse($pesanan['start_date'])->format('d M Y') }}</strong></p>
-                        <p class="text-gray-600 text-sm">Selesai: <strong>{{ \Carbon\Carbon::parse($pesanan['end_date'])->format('d M Y') }}</strong></p>
-                        
+                        <p class="text-gray-600 text-sm">Mulai:
+                            <strong>{{ \Carbon\Carbon::parse($pesanan['start_date'])->format('d M Y') }}</strong>
+                        </p>
+                        <p class="text-gray-600 text-sm">Selesai:
+                            <strong>{{ \Carbon\Carbon::parse($pesanan['end_date'])->format('d M Y') }}</strong>
+                        </p>
+
                         <div class="mt-4 flex space-x-2">
-                            <button onclick='showDetails(@json($pesanan))' class="bg-gray-600 text-white px-3 py-1 rounded-lg">Detail</button>
+                            <button onclick='showDetails(@json($pesanan))'
+                                class="bg-gray-600 text-white px-3 py-1 rounded-lg">Detail</button>
                             @if ($pesanan['status'] == 'pending')
-                                <button onclick="updateBooking({{ $pesanan['id'] }}, 'confirm')" class="bg-green-600 text-white px-3 py-1 rounded-lg">Setujui</button>
-                                <button onclick="updateBooking({{ $pesanan['id'] }}, 'reject')" class="bg-red-600 text-white px-3 py-1 rounded-lg">Tolak</button>
+                                <button onclick="updateBooking({{ $pesanan['id'] }}, 'confirm')"
+                                    class="bg-green-600 text-white px-3 py-1 rounded-lg">Setujui</button>
+                                <button onclick="updateBooking({{ $pesanan['id'] }}, 'reject')"
+                                    class="bg-red-600 text-white px-3 py-1 rounded-lg">Tolak</button>
                             @elseif ($pesanan['status'] == 'confirmed')
-                                <button onclick="completeBooking({{ $pesanan['id'] }})" class="bg-blue-600 text-white px-3 py-1 rounded-lg">Selesaikan</button>
+                                <button onclick="completeBooking({{ $pesanan['id'] }})"
+                                    class="bg-blue-600 text-white px-3 py-1 rounded-lg">Selesaikan</button>
                             @endif
                         </div>
                     </div>
@@ -47,7 +56,7 @@
             </div>
         @endif
     </div>
-    
+
     <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
         <div class="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 class="text-xl font-bold mb-4">Detail Pemesanan</h2>
@@ -65,31 +74,45 @@
 
     <script>
         const BASE_API = "http://localhost:8080";
-        
+
         function updateBooking(bookingId, action) {
             if (!confirm(`Apakah Anda yakin ingin ${action} booking ini?`)) return;
             fetch(`${BASE_API}/vendor/bookings/${bookingId}/${action}`, {
-                method: "PUT",
-                headers: { "Authorization": "Bearer {{ session('token') }}", "Content-Type": "application/json" }
-            }).then(response => response.json())
-              .then(data => { alert(data.message); location.reload(); })
-              .catch(error => alert("Terjadi kesalahan: " + error.message));
+                    method: "PUT",
+                    headers: {
+                        "Authorization": "Bearer {{ session('token') }}",
+                        "Content-Type": "application/json"
+                    }
+                }).then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    location.reload();
+                })
+                .catch(error => alert("Terjadi kesalahan: " + error.message));
         }
 
         function completeBooking(bookingId) {
             if (!confirm("Apakah Anda yakin ingin menyelesaikan booking ini?")) return;
             fetch(`${BASE_API}/vendor/bookings/complete/${bookingId}`, {
-                method: "PUT",
-                headers: { "Authorization": "Bearer {{ session('token') }}", "Content-Type": "application/json" }
-            }).then(response => response.json())
-              .then(data => { alert("Booking berhasil diselesaikan!"); location.reload(); })
-              .catch(error => alert("Terjadi kesalahan: " + error.message));
+                    method: "PUT",
+                    headers: {
+                        "Authorization": "Bearer {{ session('token') }}",
+                        "Content-Type": "application/json"
+                    }
+                }).then(response => response.json())
+                .then(data => {
+                    alert("Booking berhasil diselesaikan!");
+                    location.reload();
+                })
+                .catch(error => alert("Terjadi kesalahan: " + error.message));
         }
-        
+
         function showDetails(pesanan) {
             document.getElementById("detailCustomer").textContent = pesanan.customer_name || "-";
-            document.getElementById("detailMotor").textContent = (pesanan.motor?.brand || "Unknown") + " " + (pesanan.motor?.model || "");
-            document.getElementById("detailPricePerDay").textContent = pesanan.motor?.price_per_day?.toLocaleString() || "0";
+            document.getElementById("detailMotor").textContent = (pesanan.motor?.brand || "Unknown") + " " + (pesanan.motor
+                ?.model || "");
+            document.getElementById("detailPricePerDay").textContent = pesanan.motor?.price_per_day?.toLocaleString() ||
+                "0";
             document.getElementById("detailTotalPrice").textContent = pesanan.motor?.total_price?.toLocaleString() || "0";
             document.getElementById("detailPickupLocation").textContent = pesanan.pickup_location || "-";
             document.getElementById("detailStatus").textContent = pesanan.status || "-";
@@ -97,7 +120,7 @@
             document.getElementById("detailEnd").textContent = pesanan.end_date || "-";
             document.getElementById("detailModal").classList.remove("hidden");
         }
-        
+
         function closeModal() {
             document.getElementById("detailModal").classList.add("hidden");
         }

@@ -3,14 +3,18 @@ package controllers
 import (
 	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"rental-backend/config"
 	"rental-backend/models"
-	"strings"
 	"time"
+	"golang.org/x/crypto/bcrypt"
+
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func RegisterCustomer(c *gin.Context) {
@@ -72,14 +76,29 @@ func GetAllMotors(c *gin.Context) {
 	config.DB.Where("status = ?", "available").Find(&motors)
 	c.JSON(http.StatusOK, motors)
 }
+// saveBookingImage menyimpan file gambar booking ke folder ./fileserver/booking
+func saveBookingImage(c *gin.Context, file *multipart.FileHeader) (string, error) {
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("%s%s", timestamp, filepath.Ext(file.Filename))
+	filePath := filepath.Join("./fileserver/booking", filename)
+
+	if err := os.MkdirAll("./fileserver/booking", os.ModePerm); err != nil {
+		return "", err
+	}
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		return "", err
+	}
+	return "/fileserver/booking/" + filename, nil
+}
+
 
 func CreateBooking(c *gin.Context) {
 	var booking models.Booking
 
-	// Bind JSON ke struct booking
-	if err := c.ShouldBindJSON(&booking); err != nil {
-		log.Printf("Error binding JSON: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+	// Bind JSON ke struct booking (pastikan request dikirim sebagai multipart/form-data)
+	if err := c.ShouldBind(&booking); err != nil {
+		log.Printf("Error binding request: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Format request tidak valid"})
 		return
 	}
 
@@ -113,7 +132,7 @@ func CreateBooking(c *gin.Context) {
 	// Validasi MotorID
 	if booking.MotorID == 0 {
 		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "MotorID cannot be 0. Ensure you use 'motor_id' in JSON request."})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "MotorID tidak boleh 0. Pastikan gunakan 'motor_id' dalam request."})
 		return
 	}
 
@@ -126,7 +145,6 @@ func CreateBooking(c *gin.Context) {
 		return
 	}
 
-	// Debugging log
 	log.Printf("Debug: Motor Data -> ID: %d, Name: '%s', VendorID: %d", motor.ID, motor.Name, motor.VendorID)
 
 	if motor.VendorID == 0 {
@@ -145,7 +163,7 @@ func CreateBooking(c *gin.Context) {
 		return
 	}
 
-	// Hitung total harga sewa berdasarkan jumlah hari
+	// Hitung durasi booking dalam hari
 	duration := int(booking.EndDate.Sub(booking.StartDate).Hours() / 24)
 	if duration <= 0 {
 		tx.Rollback()
@@ -154,11 +172,35 @@ func CreateBooking(c *gin.Context) {
 	}
 	totalPrice := float64(duration) * motor.Price
 
-	// Set status default
+	// Set status default dan booking date
 	booking.Status = "pending"
 	booking.BookingDate = time.Now()
 
-	// Insert booking
+	// Tangani file gambar untuk PhotoID (jika ada)
+	if file, err := c.FormFile("photo_id"); err == nil {
+		photoPath, err := saveBookingImage(c, file)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Error saving photo_id: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan foto ID"})
+			return
+		}
+		booking.PhotoID = photoPath
+	}
+
+	// Tangani file gambar untuk KtpID (jika ada)
+	if file, err := c.FormFile("ktp_id"); err == nil {
+		ktpPath, err := saveBookingImage(c, file)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Error saving ktp_id: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan foto KTP"})
+			return
+		}
+		booking.KtpID = ktpPath
+	}
+
+	// Insert booking ke database
 	if err := tx.Create(&booking).Error; err != nil {
 		tx.Rollback()
 		log.Printf("Error inserting booking: %v", err)
@@ -169,21 +211,16 @@ func CreateBooking(c *gin.Context) {
 	// Commit transaksi
 	tx.Commit()
 
-	// Debug untuk memastikan data customer sudah tersedia sebelum dikirim ke response
-	if customer.Name == "" {
-		log.Printf("Warning: Customer Name is empty for CustomerID %d", customer.ID)
-	}
-
-	// Respond dengan data lengkap
+	// Siapkan respons
 	response := gin.H{
 		"message":         "Booking berhasil dibuat",
 		"booking_id":      booking.ID,
-		"customer_name":   customer.Name, // Ambil dari User yang diambil dari token
-		"booking_date":    booking.BookingDate.Format("2006-01-02"),
-		"start_date":      booking.StartDate.Format("2006-01-02"),
-		"end_date":        booking.EndDate.Format("2006-01-02"),
+		"customer_name":   customer.Name,
+		"booking_date":    booking.BookingDate,
+		"start_date":      booking.StartDate,
+		"end_date":        booking.EndDate,
 		"pickup_location": booking.PickupLocation,
-		"status":          booking.Status,
+		"status":          "pending" ,
 		"motor": gin.H{
 			"id":            motor.ID,
 			"name":          motor.Name,
@@ -193,12 +230,13 @@ func CreateBooking(c *gin.Context) {
 			"price_per_day": motor.Price,
 			"total_price":   totalPrice,
 		},
+		"photo_id": booking.PhotoID,
+		"ktp_id":   booking.KtpID,
 	}
 
 	log.Printf("Booking successfully created: %+v", response)
 	c.JSON(http.StatusOK, response)
 }
-
 // Cancel Booking
 func CancelBooking(c *gin.Context) {
 	id := c.Param("id")

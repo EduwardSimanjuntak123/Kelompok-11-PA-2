@@ -29,6 +29,7 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::get('/admin', function () {
             return view('admin.admin');
         })->name('admin');
+        Route::put('/admin/profile/edit', [AdminController::class, 'updateProfile'])->name('admin.update');
         Route::get('/admin/profile/{id}', [AdminController::class, 'profile'])->name('admin.profile');
         Route::view('/nonaktif', 'nonaktif')->name('nonaktif');
     });
@@ -39,7 +40,9 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::get('/dashboard/{id?}', [VendorController::class, 'dashboard'])->name('vendor.dashboard');
 
         // Kelola Motor
-        Route::get('/motor', [MotorController::class, 'index'])->name('vendor.motor'); // Menampilkan daftar motor
+        Route::get('/motor', [MotorController::class, 'index'])->name('vendor.motor');
+        Route::get('/transaksi', [MotorController::class, 'index'])->name('vendor.transaksi'); // Menampilkan daftar motor
+         // Menampilkan daftar motor
         Route::post('/motor', [MotorController::class, 'store'])->name('motor.store');  // Menambah motor baru
         Route::get('/motor/{id}/edit', [MotorController::class, 'edit'])->name('motor.edit'); // Edit motor
         Route::put('/motor/{id}', [MotorController::class, 'update'])->name('motor.update'); // Update motor
@@ -47,15 +50,16 @@ Route::middleware([CheckAuth::class])->group(function () {
 
         // Vendor Profile
         Route::get('/profile/{id}', [VendorController::class, 'profile'])->name('vendor.profile'); // Melihat profil vendor
-
+        Route::put('/profile/edit', [VendorController::class, 'updateProfile'])->name('vendor.profile.edit');
         // Cetak Laporan
         Route::view('/cetak', 'cetak')->name('cetak'); // Halaman cetak laporan
 
         // Kelola Booking
-        Route::get('/bookings', [KelolaBookingController::class, 'index'])->name('vendor.kelola'); // Halaman booking
-        // Route::put('/bookings/{id}/confirm', [KelolaBookingController::class, 'confirm'])->name('vendor.booking.confirm');
-        // Route::put('/bookings/{id}/reject', [KelolaBookingController::class, 'rejectBooking'])->name('vendor.booking.reject');
-        // Route::put('/bookings/{id}/complete', [KelolaBookingController::class, 'complete'])->name('vendor.booking.complete');
+        Route::get('/bookings/{id}', [KelolaBookingController::class, 'index'])->name('vendor.kelola');
+
+        Route::put('/bookings/{id}/confirm', [KelolaBookingController::class, 'confirm'])->name('vendor.booking.confirm');
+        Route::put('/bookings/{id}/reject', [KelolaBookingController::class, 'rejectBooking'])->name('vendor.booking.reject');
+        Route::put('/bookings/{id}/complete', [KelolaBookingController::class, 'complete'])->name('vendor.booking.complete');
 
         // Halaman Tambahan
         Route::view('/harga', 'harga')->name('harga');
