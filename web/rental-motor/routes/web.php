@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KelolaBookingController;
 use App\Http\Controllers\MotorController;
+use App\Http\Controllers\nonaktifController;
+use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\VendorController;
 use App\Http\Middleware\CheckAuth;
 use App\Http\Middleware\RoleMiddleware;
@@ -29,6 +31,8 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::get('/admin', function () {
             return view('admin.admin');
         })->name('admin');
+        Route::get('/admin/vendors', [nonaktifController::class, 'index'])->name('admin.nonaktif');
+        Route::post('/admin/deactivate/{id}', [nonaktifController::class, 'deactivate'])->name('vendor.deactivate');
         Route::put('/admin/profile/edit', [AdminController::class, 'updateProfile'])->name('admin.update');
         Route::get('/admin/profile/{id}', [AdminController::class, 'profile'])->name('admin.profile');
         Route::view('/nonaktif', 'nonaktif')->name('nonaktif');
@@ -41,7 +45,9 @@ Route::middleware([CheckAuth::class])->group(function () {
 
         // Kelola Motor
         Route::get('/motor', [MotorController::class, 'index'])->name('vendor.motor');
-        Route::get('/transaksi', [MotorController::class, 'index'])->name('vendor.transaksi'); // Menampilkan daftar motor
+        Route::get('/transaksi', [TransaksiController::class, 'index'])->name('vendor.transaksi'); // Menampilkan daftar motor
+        Route::get('/transaksi/export', [\App\Http\Controllers\TransaksiController::class, 'exportExcel'])->name('vendor.transactions.export');
+        Route::post('/transaksi/add', [TransaksiController::class, 'addTransactionManual'])->name('vendor.transaksi.store');
          // Menampilkan daftar motor
         Route::post('/motor', [MotorController::class, 'store'])->name('motor.store');  // Menambah motor baru
         Route::get('/motor/{id}/edit', [MotorController::class, 'edit'])->name('motor.edit'); // Edit motor

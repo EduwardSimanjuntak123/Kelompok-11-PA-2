@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
-"strconv"
 	"rental-backend/config"
 	"rental-backend/models"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -259,4 +259,73 @@ func DeactivateVendor(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Akun vendor berhasil dinonaktifkan"})
+}
+
+func GetAllVendors(c *gin.Context) {
+	// Ambil semua vendor dengan preload relasi Motors
+	var vendors []models.Vendor
+	// Preload Motors agar kita dapat menghitung jumlah motor
+	if err := config.DB.Preload("Motors").Find(&vendors).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data vendor"})
+		return
+	}
+
+	// Hasil akhir untuk dikembalikan
+	var result []gin.H
+
+	// Iterasi setiap vendor untuk menggabungkan data dari tabel users
+	for _, vendor := range vendors {
+		// Hitung jumlah motor yang dimiliki vendor (dari preload)
+		motorCount := len(vendor.Motors)
+
+		// Hitung jumlah transaksi vendor
+		var transactionCount int64
+		if err := config.DB.Model(&models.Transaction{}).Where("vendor_id = ?", vendor.ID).Count(&transactionCount).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung transaksi"})
+			return
+		}
+
+		// Ambil data user terkait vendor berdasarkan vendor.UserID
+		var user models.User
+		if err := config.DB.Where("id = ?", vendor.UserID).First(&user).Error; err != nil {
+			// Jika gagal mengambil data user, lewati vendor ini
+			log.Printf("Gagal mengambil user: %v\n", err)
+			continue
+		}
+
+		// Siapkan URL lengkap untuk gambar (misal: tambahkan base URL)
+		baseURL := "http://localhost:8080"
+		profileImage := user.ProfileImage
+		if profileImage == "" {
+			profileImage = "https://via.placeholder.com/150"
+		} else {
+			profileImage = baseURL + profileImage
+		}
+
+		ktpImage := user.KtpImage
+		if ktpImage == "" {
+			ktpImage = "https://via.placeholder.com/150"
+		} else {
+			ktpImage = baseURL + ktpImage
+		}
+
+		// Gabungkan data yang lengkap ke dalam response
+		result = append(result, gin.H{
+			"id":                user.ID,
+			"name":              user.Name,
+			"email":             user.Email,
+			"phone":             user.Phone,
+			"address":           user.Address,
+			"profile_image":     profileImage,
+			"ktp_image":         ktpImage,
+			"role":              user.Role,
+			"status":            user.Status,
+			"created_at":        user.CreatedAt,
+			"updated_at":        user.UpdatedAt,
+			"motor_count":       motorCount,
+			"transaction_count": transactionCount,
+		})
+	}
+
+	c.JSON(http.StatusOK, result)
 }

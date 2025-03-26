@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -127,22 +128,22 @@ func GetVendorBookings(c *gin.Context) {
 	}
 
 	// Ambil status dari query parameter
-	status := c.DefaultQuery("status", "")
+	// status := c.DefaultQuery("status", "")
 
-	// Validasi status
-	validStatuses := []string{"pending", "confirmed", "rejected", "canceled", "completed"}
-	isValidStatus := false
-	for _, s := range validStatuses {
-		if status == s {
-			isValidStatus = true
-			break
-		}
-	}
+	// // Validasi status
+	// validStatuses := []string{"pending", "confirmed", "rejected", "canceled", "completed"}
+	// isValidStatus := false
+	// for _, s := range validStatuses {
+	// 	if status == s {
+	// 		isValidStatus = true
+	// 		break
+	// 	}
+	// }
 
-	if status != "" && !isValidStatus {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Status tidak valid"})
-		return
-	}
+	// if status != "" && !isValidStatus {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Status tidak valid"})
+	// 	return
+	// }
 
 	var bookings []models.Booking
 
@@ -151,9 +152,9 @@ func GetVendorBookings(c *gin.Context) {
 		Preload("Customer", "id IS NOT NULL AND name IS NOT NULL"). // Pastikan nama customer valid
 		Preload("Motor", "id IS NOT NULL AND name IS NOT NULL")     // Pastikan nama motor valid
 
-	if status != "" {
-		query = query.Where("status = ?", status)
-	}
+	// if status != "" {
+	// 	query = query.Where("status = ?", status)
+	// }
 
 	if err := query.Find(&bookings).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan booking"})

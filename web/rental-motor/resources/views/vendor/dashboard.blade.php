@@ -45,7 +45,7 @@
             <h3 class="font-semibold mb-2">Data Transaksi</h3>
             <a href="{{ route('vendor.transaksi', ['id' => session('user.id')]) }}"
                 class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 block text-center">
-                Input Data
+                Lihat
             </a>
         </div>
 

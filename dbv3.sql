@@ -29,7 +29,7 @@ DROP DATABASE rental2
 	    shop_name VARCHAR(100) NOT NULL,
 	    shop_address TEXT NOT NULL,
 	    shop_description TEXT NULL,
-	    STATUS ENUM('active', 'inactive') DEFAULT 'active',
+	    STATUS ENUM('active','inactive') DEFAULT 'active',
 	    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -54,6 +54,7 @@ DROP DATABASE rental2
 	    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 	    FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
 	);
+	
 
 
 CREATE TABLE bookings (
@@ -74,8 +75,6 @@ CREATE TABLE bookings (
     FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
     FOREIGN KEY (motor_id) REFERENCES motor(id) ON DELETE CASCADE
 );
-
-
 
 CREATE TABLE transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,

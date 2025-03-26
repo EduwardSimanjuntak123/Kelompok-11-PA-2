@@ -7,208 +7,348 @@
         $vendor = $user['vendor'] ?? [];
     @endphp
 
-    <div class="container mx-auto px-4 py-8">
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header Section -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Profil Vendor</h1>
+            <div class="flex space-x-3">
+                <button onclick="openModal('editModal')"
+                    class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    {{-- Edit Profil --}}
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Profile Card -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
             <div class="md:flex">
-                <!-- Sidebar (Gambar dan Aksi) -->
-                <div class="md:w-1/3 bg-gray-100 p-6 flex flex-col items-center">
-                    <!-- Foto Profil -->
-                    <div class="relative w-40 h-40 mb-4">
-                        <img src="{{ 'http://localhost:8080' . ($user['profile_image'] ?: '/fileserver/vendor/placeholder.jpg') }}"
-                            alt="Foto Profil" class="w-full h-full object-cover rounded-full border">
+                <!-- Sidebar (Images and Actions) -->
+                <div class="md:w-1/3 bg-gray-50 p-6 flex flex-col items-center border-r border-gray-200">
+                    <!-- Profile Image -->
+                    <div class="relative mb-6">
+                        <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                            <img id="profileImagePreview"
+                                src="{{ 'http://localhost:8080' . ($user['profile_image'] ?: '/fileserver/vendor/placeholder.jpg') }}"
+                                alt="Foto Profil" class="w-full h-full object-cover">
+                        </div>
                         <button onclick="openPhotoModal('profile')"
-                            class="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full shadow hover:bg-blue-700">
+                            class="absolute bottom-2 right-2 bg-blue-600 p-2 rounded-full shadow-md hover:bg-blue-700 transition transform hover:scale-105">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 7h4l2-3h6l2 3h4v13H3V7z" />
+                                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 11a4 4 0 100 8 4 4 0 000-8z" />
+                                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                         </button>
                     </div>
-                    <!-- Foto KTP -->
-                    <div class="relative w-40 h-40 mb-4">
-                        <img src="{{ 'http://localhost:8080' . ($user['ktp_image'] ?: '/fileserver/vendor/placeholder.jpg') }}"
-                            alt="Foto KTP" class="w-full h-full object-cover rounded border">
-                        <button onclick="openPhotoModal('ktp')"
-                            class="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full shadow hover:bg-blue-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 7h4l2-3h6l2 3h4v13H3V7z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 11a4 4 0 100 8 4 4 0 000-8z" />
-                            </svg>
-                        </button>
+
+
+
+                    <!-- Status Badge -->
+                    <div
+                        class="mt-4 px-4 py-2 rounded-full 
+                        @if ($user['status'] === 'active') bg-green-100 text-green-800
+                        @elseif($user['status'] === 'pending') bg-yellow-100 text-yellow-800
+                        @else bg-red-100 text-red-800 @endif">
+                        {{ ucfirst($user['status']) }}
                     </div>
-                    <!-- Tombol Edit Profil -->
-                    <button onclick="openModal('editModal')"
-                        class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-                        Edit Profil
-                    </button>
                 </div>
-                <!-- Konten Utama (Data Vendor) -->
+
+                <!-- Main Content (Vendor Data) -->
                 <div class="md:w-2/3 p-6">
-                    <h2 class="text-2xl font-bold mb-4 border-b pb-2">Informasi Vendor</h2>
-                    <div class="grid grid-cols-1 gap-4">
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Nama</span>
-                            <span class="flex-1">{{ $user['name'] }}</span>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-200">Informasi Vendor</h2>
+
+                    <!-- Personal Information Section -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            Informasi Pribadi
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Nama Lengkap</p>
+                                <p class="text-gray-800 font-semibold">{{ $user['name'] }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Email</p>
+                                <p class="text-gray-800 font-semibold">{{ $user['email'] }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Telepon</p>
+                                <p class="text-gray-800 font-semibold">{{ $user['phone'] }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Alamat</p>
+                                <p class="text-gray-800 font-semibold">{{ $user['address'] }}</p>
+                            </div>
                         </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Email</span>
-                            <span class="flex-1">{{ $user['email'] }}</span>
+                    </div>
+
+                    <!-- Shop Information Section -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            Informasi Toko
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Nama Toko</p>
+                                <p class="text-gray-800 font-semibold">{{ $vendor['ShopName'] ?? '-' }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">ID Kecamatan</p>
+                                <p class="text-gray-800 font-semibold">{{ $vendor['IDKecamatan'] ?? '-' }}</p>
+                            </div>
+                            <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Alamat Toko</p>
+                                <p class="text-gray-800 font-semibold">{{ $vendor['ShopAddress'] ?? '-' }}</p>
+                            </div>
+                            <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Deskripsi Toko</p>
+                                <p class="text-gray-800">{{ $vendor['ShopDescription'] ?? '-' }}</p>
+                            </div>
                         </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Telepon</span>
-                            <span class="flex-1">{{ $user['phone'] }}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Alamat</span>
-                            <span class="flex-1">{{ $user['address'] }}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Nama Toko</span>
-                            <span class="flex-1">{{ $vendor['ShopName'] ?? '-' }}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Alamat Toko</span>
-                            <span class="flex-1">{{ $vendor['ShopAddress'] ?? '-' }}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Deskripsi Toko</span>
-                            <span class="flex-1">{{ $vendor['ShopDescription'] ?? '-' }}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">ID Kecamatan</span>
-                            <span class="flex-1">{{ $vendor['IDKecamatan'] ?? '-' }}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Status</span>
-                            <span class="flex-1">{{ $user['status'] }}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Dibuat</span>
-                            <span class="flex-1">{{ $user['created_at'] }}</span>
-                        </div>
-                        <div class="flex items-center">
-                            <span class="w-40 font-semibold">Diubah</span>
-                            <span class="flex-1">{{ $user['updated_at'] }}</span>
+                    </div>
+
+                    <!-- Timestamps -->
+                    <div class="text-sm text-gray-500 border-t border-gray-200 pt-4">
+                        <div class="flex justify-between">
+                            <span>Dibuat: {{ $user['created_at'] }}</span>
+                            <span>Diubah: {{ $user['updated_at'] }}</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Modal Edit Profil (data user & vendor) -->
-        <div id="editModal" class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-            <div class="bg-white p-6 rounded-lg shadow-lg w-96">
-                <h2 class="text-2xl font-semibold mb-4">Edit Profil Vendor</h2>
-                <form action="{{ route('vendor.profile.edit') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
-                    <!-- Data User -->
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">Nama</label>
-                        <input type="text" name="name" value="{{ $user['name'] }}"
-                            class="w-full p-2 border rounded-lg" required>
+        <!-- Edit Profile Modal -->
+        <div id="editModal"
+            class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50 p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-gray-800">Edit Profil Vendor</h2>
+                        <button onclick="closeModal('editModal')" class="text-gray-500 hover:text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">Email</label>
-                        <input type="email" name="email" value="{{ $user['email'] }}"
-                            class="w-full p-2 border rounded-lg bg-gray-100" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">Telepon</label>
-                        <input type="text" name="phone" value="{{ $user['phone'] }}"
-                            class="w-full p-2 border rounded-lg" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">Alamat</label>
-                        <input type="text" name="address" value="{{ $user['address'] }}"
-                            class="w-full p-2 border rounded-lg" required>
-                    </div>
-                    <!-- Data Vendor -->
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">Nama Toko</label>
-                        <input type="text" name="shop_name" value="{{ $vendor['ShopName'] ?? '' }}"
-                            class="w-full p-2 border rounded-lg" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">Alamat Toko</label>
-                        <input type="text" name="shop_address" value="{{ $vendor['ShopAddress'] ?? '' }}"
-                            class="w-full p-2 border rounded-lg" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">Deskripsi Toko</label>
-                        <textarea name="shop_description" class="w-full p-2 border rounded-lg" rows="3">{{ $vendor['ShopDescription'] ?? '' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">ID Kecamatan</label>
-                        <input type="text" name="id_kecamatan" value="{{ $vendor['IDKecamatan'] ?? '' }}"
-                            class="w-full p-2 border rounded-lg">
-                    </div>
-                    <div class="mb-3">
-                        <label class="block font-semibold mb-1">Password (kosongkan jika tidak diubah)</label>
-                        <input type="password" name="password" class="w-full p-2 border rounded-lg">
-                    </div>
-                    <div class="flex justify-end space-x-3 mt-4">
-                        <button type="button" onclick="closeModal('editModal')"
-                            class="px-4 py-2 bg-gray-500 text-white rounded-lg">Batal</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Simpan</button>
-                    </div>
-                </form>
+
+                    <form action="{{ route('vendor.profile.edit') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <!-- Personal Information -->
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Informasi Pribadi</h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                                    <input type="text" name="name" value="{{ $user['name'] }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                    <input type="email" name="email" value="{{ $user['email'] }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100" readonly>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Telepon</label>
+                                    <input type="text" name="phone" value="{{ $user['phone'] }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
+                                    <input type="text" name="address" value="{{ $user['address'] }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                            </div>
+
+                            <!-- Shop Information -->
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Informasi Toko</h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Toko</label>
+                                    <input type="text" name="shop_name" value="{{ $vendor['ShopName'] ?? '' }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Toko</label>
+                                    <input type="text" name="shop_address" value="{{ $vendor['ShopAddress'] ?? '' }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Kecamatan</label>
+                                    <input type="text" name="id_kecamatan" value="{{ $vendor['IDKecamatan'] ?? '' }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Toko</label>
+                                    <textarea name="shop_description" rows="3"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ $vendor['ShopDescription'] ?? '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Password Section -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Keamanan</h3>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru (kosongkan jika
+                                    tidak diubah)</label>
+                                <input type="password" name="password"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Masukkan password baru">
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="closeModal('editModal')"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
-        <!-- Modal Edit Foto (untuk profile_image dan ktp_image) -->
+        <!-- Edit Photo Modal -->
         <div id="editPhotoModal"
-            class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-            <div class="bg-white p-6 rounded-lg shadow-lg w-80">
-                <h2 id="photoModalTitle" class="text-2xl font-semibold mb-4"></h2>
-                <form id="photoForm" action="{{ route('vendor.profile.edit') }}" method="POST"
-                    enctype="multipart/form-data">
-                    @csrf
-                    @method('PUT')
-                    <div class="mb-4">
-                        <label class="block font-semibold mb-1">Pilih File</label>
-                        <input type="file" name="" id="photoInput" class="w-full p-2 border rounded-lg"
-                            required>
+            class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="photoModalTitle" class="text-xl font-bold text-gray-800"></h2>
+                        <button onclick="closeModal('editPhotoModal')" class="text-gray-500 hover:text-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" onclick="closeModal('editPhotoModal')"
-                            class="px-4 py-2 bg-gray-500 text-white rounded-lg">Batal</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Simpan Foto</button>
-                    </div>
-                </form>
+
+                    <form id="photoForm" action="{{ route('vendor.profile.edit') }}" method="POST"
+                        enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
+
+                        <div class="mb-4">
+                            <div class="flex justify-center mb-4">
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 w-full text-center">
+                                    <div id="imagePreviewContainer" class="mb-3 hidden">
+                                        <img id="imagePreview" src="#" alt="Preview" class="max-h-40 mx-auto">
+                                    </div>
+                                    <label for="photoInput" class="cursor-pointer">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                        </svg>
+                                        <p class="text-sm text-gray-600 mt-2">Klik untuk mengunggah gambar</p>
+                                        <p class="text-xs text-gray-500">Format: JPG, PNG (Maks. 2MB)</p>
+                                    </label>
+                                    <input type="file" name="" id="photoInput" class="hidden"
+                                        accept="image/*">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                            <button type="button" onclick="closeModal('editPhotoModal')"
+                                class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                Simpan Foto
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
         <script>
-            // Fungsi membuka modal berdasarkan ID
+            // Modal functions
             function openModal(modalId) {
                 document.getElementById(modalId).classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
             }
-            // Fungsi menutup modal berdasarkan ID
+
             function closeModal(modalId) {
                 document.getElementById(modalId).classList.add('hidden');
+                document.body.style.overflow = '';
             }
-            // Fungsi untuk membuka modal edit foto
-            // Parameter type: 'profile' atau 'ktp'
+
+            // Photo modal function
             function openPhotoModal(type) {
-                var title = '';
-                var inputName = '';
-                if (type === 'profile') {
-                    title = 'Edit Foto Profil';
-                    inputName = 'profile_image';
-                } else if (type === 'ktp') {
-                    title = 'Edit Foto KTP';
-                    inputName = 'ktp_image';
-                }
+                const title = type === 'profile' ? 'Edit Foto Profil' : 'Edit Foto KTP';
+                const inputName = type === 'profile' ? 'profile_image' : 'ktp_image';
+
                 document.getElementById('photoModalTitle').innerText = title;
                 document.getElementById('photoInput').name = inputName;
+
+                // Reset preview and file input
+                document.getElementById('imagePreviewContainer').classList.add('hidden');
+                document.getElementById('photoInput').value = '';
+
                 openModal('editPhotoModal');
+            }
+
+            // Image preview for file input
+            document.getElementById('photoInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const preview = document.getElementById('imagePreview');
+                        preview.src = event.target.result;
+                        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target.classList.contains('modal')) {
+                    const modals = document.querySelectorAll('.modal');
+                    modals.forEach(modal => {
+                        if (!modal.classList.contains('hidden')) {
+                            modal.classList.add('hidden');
+                            document.body.style.overflow = '';
+                        }
+                    });
+                }
             }
         </script>
     @endsection

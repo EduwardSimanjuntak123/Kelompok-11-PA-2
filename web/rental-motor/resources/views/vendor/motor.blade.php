@@ -57,7 +57,7 @@
         </table>
     </div>
 
-    @include('layouts.modal')
+    @include('layouts.modal_motor_vendor')
 
     <script>
         // Modal Tambah

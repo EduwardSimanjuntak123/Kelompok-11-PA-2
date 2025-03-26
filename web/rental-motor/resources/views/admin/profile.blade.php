@@ -3,141 +3,211 @@
 @section('title', 'Profil Admin')
 
 @section('content')
-    <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <h1 class="text-3xl font-semibold mb-6 text-gray-800">Profil Admin</h1>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Data Admin -->
-            <div class="space-y-3">
-                <p class="text-lg"><strong>Nama:</strong> {{ $adminData['name'] }}</p>
-                <p class="text-lg"><strong>Email:</strong> {{ $adminData['email'] }}</p>
-                <p class="text-lg"><strong>Telepon:</strong> {{ $adminData['phone'] }}</p>
-                <p class="text-lg"><strong>Alamat:</strong> {{ $adminData['address'] }}</p>
-                <p class="text-lg"><strong>Status:</strong> {{ $adminData['status'] }}</p>
-                <p class="text-lg"><strong>Dibuat:</strong>
-                    {{ \Carbon\Carbon::parse($adminData['created_at'])->format('d M Y, H:i') }}</p>
-                <p class="text-lg"><strong>Diubah:</strong>
-                    {{ \Carbon\Carbon::parse($adminData['updated_at'])->format('d M Y, H:i') }}</p>
-            </div>
-            <!-- Gambar Profil & KTP -->
-            <div class="space-y-4">
-                <div class="relative flex items-center justify-center">
-                    <img src="{{ $adminData['profile_image'] ?? 'https://via.placeholder.com/150' }}" alt="Foto Profil"
-                        class="w-40 h-40 rounded-full object-cover border">
-                    <button onclick="document.getElementById('editPhotoModal').style.display='flex'"
-                        class="absolute bottom-0 right-0 bg-blue-500 p-2 rounded-full shadow-lg hover:bg-blue-600">
-                        <!-- Icon camera -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 7h4l2-3h6l2 3h4v13H3V7z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 11a4 4 0 100 8 4 4 0 000-8z" />
-                        </svg>
-                    </button>
-                </div>
-                {{-- @dd($adminData); --}}
-                <div class="relative flex items-center justify-center">
-                    <img src="{{ $adminData['ktp_image'] ?? 'https://via.placeholder.com/150' }}" alt="Foto KTP"
-                        class="w-40 h-40 rounded object-cover border">
-                    <button onclick="document.getElementById('editKtpModal').style.display='flex'"
-                        class="absolute bottom-0 right-0 bg-blue-500 p-2 rounded-full shadow-lg hover:bg-blue-600">
-                        <!-- Icon camera -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M3 7h4l2-3h6l2 3h4v13H3V7z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 11a4 4 0 100 8 4 4 0 000-8z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="mt-6">
-            <button onclick="document.getElementById('editModal').style.display='flex'"
-                class="px-5 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <!-- Header Section -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-blue-600" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Profil Admin
+            </h1>
+            <button onclick="openModal('editModal')"
+                class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
                 Edit Profil
             </button>
         </div>
-    </div>
 
-    <!-- Modal Edit Profil (seluruh data kecuali foto) -->
-    <div id="editModal" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 class="text-2xl font-semibold mb-4">Edit Profil</h2>
-            <form action="{{ route('admin.update') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <!-- Nama -->
-                <label class="block mb-2">Nama:
-                    <input type="text" name="name" value="{{ old('name', $adminData['name']) }}"
-                        class="w-full p-2 border rounded-lg" required>
-                </label>
-                <!-- Email (readonly) -->
-                <label class="block mb-2">Email:
-                    <input type="email" name="email" value="{{ $adminData['email'] }}"
-                        class="w-full p-2 border rounded-lg bg-gray-100" readonly>
-                </label>
-                <!-- Telepon -->
-                <label class="block mb-2">Telepon:
-                    <input type="text" name="phone" value="{{ old('phone', $adminData['phone']) }}"
-                        class="w-full p-2 border rounded-lg" required>
-                </label>
-                <!-- Alamat -->
-                <label class="block mb-2">Alamat:
-                    <input type="text" name="address" value="{{ old('address', $adminData['address']) }}"
-                        class="w-full p-2 border rounded-lg" required>
-                </label>
-                <!-- Password -->
-                <label class="block mb-2">Password (kosongkan jika tidak diubah):
-                    <input type="password" name="password" class="w-full p-2 border rounded-lg">
-                </label>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="document.getElementById('editModal').style.display='none'"
-                        class="px-4 py-2 bg-gray-500 text-white rounded-lg">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Simpan</button>
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Profile Image Section -->
+            <div class="flex flex-col items-center">
+                <!-- Profile Picture -->
+                <div class="relative group mb-6">
+                    <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
+                        <img id="profileImage" src="{{ $adminData['profile_image'] ?? 'https://via.placeholder.com/150' }}"
+                            alt="Foto Profil" class="w-full h-full object-cover">
+                    </div>
+                    <button onclick="openPhotoModal('profile')"
+                        class="absolute bottom-3 right-3 bg-blue-600 p-2 rounded-full shadow-lg hover:bg-blue-700 transition opacity-0 group-hover:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 7h4l2-3h6l2 3h4v13H3V7z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 11a4 4 0 100 8 4 4 0 000-8z" />
+                        </svg>
+                    </button>
                 </div>
-            </form>
+            </div>
+
+            <!-- Admin Information Section -->
+            <div class="md:col-span-2">
+                <div class="bg-gray-50 p-6 rounded-xl">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Informasi Admin
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Personal Info -->
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Nama Lengkap</p>
+                                <p class="text-gray-800 font-semibold">{{ $adminData['name'] }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Email</p>
+                                <p class="text-gray-800 font-semibold">{{ $adminData['email'] }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Telepon</p>
+                                <p class="text-gray-800 font-semibold">{{ $adminData['phone'] }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Additional Info -->
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Alamat</p>
+                                <p class="text-gray-800">{{ $adminData['address'] }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Dibuat</p>
+                                <p class="text-gray-800">
+                                    {{ \Carbon\Carbon::parse($adminData['created_at'])->format('d M Y, H:i') }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Diubah</p>
+                                <p class="text-gray-800">
+                                    {{ \Carbon\Carbon::parse($adminData['updated_at'])->format('d M Y, H:i') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Modal Edit Foto Profil -->
-    <div id="editPhotoModal" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-80">
-            <h2 class="text-2xl font-semibold mb-4">Edit Foto Profil</h2>
-            <form action="{{ route('admin.update') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <!-- Hanya kirim file gambar untuk profile_image -->
-                <label class="block mb-4">Pilih Foto Profil:
-                    <input type="file" name="profile_image" class="w-full p-2 border rounded-lg" required>
-                </label>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="document.getElementById('editPhotoModal').style.display='none'"
-                        class="px-4 py-2 bg-gray-500 text-white rounded-lg">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Simpan Foto</button>
+    <!-- Edit Photo Modal -->
+    <div id="editPhotoModal"
+        class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="photoModalTitle" class="text-xl font-bold text-gray-800">Edit Foto</h2>
+                    <button onclick="closeModal('editPhotoModal')" class="text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-            </form>
+
+                <form action="{{ route('admin.update') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="mb-4">
+                        <div class="flex justify-center mb-4">
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 w-full text-center">
+                                <div id="imagePreviewContainer" class="mb-3 hidden">
+                                    <img id="imagePreview" src="#" alt="Preview" class="max-h-40 mx-auto">
+                                </div>
+                                <label for="photoInput" class="cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <p class="text-sm text-gray-600 mt-2">Klik untuk mengunggah gambar</p>
+                                    <p class="text-xs text-gray-500">Format: JPG, PNG (Maks. 2MB)</p>
+                                </label>
+                                <input type="file" name="profile_image" id="photoInput" class="hidden"
+                                    accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <button type="button" onclick="closeModal('editPhotoModal')"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Simpan Foto
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Modal Edit Foto KTP -->
-    <div id="editKtpModal" class="hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-80">
-            <h2 class="text-2xl font-semibold mb-4">Edit Foto KTP</h2>
-            <form action="{{ route('admin.update') }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
-                <!-- Hanya kirim file gambar untuk ktp_image -->
-                <label class="block mb-4">Pilih Foto KTP:
-                    <input type="file" name="ktp_image" class="w-full p-2 border rounded-lg" required>
-                </label>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="document.getElementById('editKtpModal').style.display='none'"
-                        class="px-4 py-2 bg-gray-500 text-white rounded-lg">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-lg">Simpan Foto</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <script>
+        // Fungsi untuk membuka modal berdasarkan id
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Fungsi untuk menutup modal berdasarkan id
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // Fungsi untuk membuka modal edit foto
+        // type: 'profile' atau 'ktp'
+        function openPhotoModal(type) {
+            let title = '';
+            let inputName = '';
+            if (type === 'profile') {
+                title = 'Edit Foto Profil';
+                inputName = 'profile_image';
+            } else if (type === 'ktp') {
+                title = 'Edit Foto KTP';
+                inputName = 'ktp_image';
+            }
+            document.getElementById('photoModalTitle').innerText = title;
+            document.getElementById('photoInput').name = inputName;
+            // Jika ada preview, reset preview
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+            document.getElementById('imagePreview').src = '#';
+            openModal('editPhotoModal');
+        }
+
+        // Event listener untuk preview gambar
+        document.getElementById('photoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = event.target.result;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Tutup modal ketika klik di luar konten modal
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target.id);
+            }
+        }
+    </script>
 @endsection

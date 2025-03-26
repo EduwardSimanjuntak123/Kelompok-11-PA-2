@@ -14,6 +14,7 @@ func AdminRoutes(router *gin.Engine) {
 
 		admin.Use(middleware.AuthMiddleware("admin"))
 		{
+			admin.GET("/vendors", controllers.GetAllVendors)
 			admin.GET("/transactions", controllers.GetAllTransactions)
 			admin.GET("/users", controllers.GetAllUsers)
 			admin.GET("/profile", controllers.GetDataAdmin)

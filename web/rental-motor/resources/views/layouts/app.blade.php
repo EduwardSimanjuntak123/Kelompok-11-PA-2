@@ -8,7 +8,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title')</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 </head>
 
 <body class="bg-gray-100 flex">
@@ -16,12 +15,10 @@
     <aside class="w-64 bg-blue-600 text-white min-h-screen p-6 space-y-6">
         <h1 class="text-2xl font-bold">Rental Motor</h1>
         <nav>
-
             <ul class="space-y-4">
                 @php
                     $userRole = session('role', 'guest');
-                    $userId = session('user_id') ?? null; // Tambahkan default NULL
-
+                    $userId = session('user_id') ?? null;
                     if ($userRole === 'admin') {
                         $dashboardUrl = route('admin');
                     } elseif ($userRole === 'vendor' && $userId) {
@@ -33,34 +30,77 @@
                 <li>
                     @if ($userId)
                         <a href="{{ $dashboardUrl }}"
-                            class="block px-4 py-2 rounded bg-white text-blue-600 font-semibold">Dashboard</a>
+                            class="block px-4 py-2 rounded font-semibold {{ request()->routeIs($userRole === 'admin' ? 'admin' : 'vendor.dashboard') ? 'bg-white text-blue-600' : 'hover:bg-white hover:text-blue-600' }}">
+                            Dashboard
+                        </a>
                     @else
-                        <span
-                            class="block px-4 py-2 rounded bg-gray-400 text-white font-semibold cursor-not-allowed">Dashboard</span>
+                        <span class="block px-4 py-2 rounded bg-gray-400 text-white font-semibold cursor-not-allowed">
+                            Dashboard
+                        </span>
                     @endif
                 </li>
                 @php
-                    $userRole = session('role', 'guest');
-                    $userId = session('user_id');
-
                     if ($userRole === 'admin') {
                         $profileUrl = route('admin.profile', ['id' => $userId]);
                     } elseif ($userRole === 'vendor' && $userId) {
                         $profileUrl = route('vendor.profile', ['id' => $userId]);
                     } else {
-                        $profileUrl = '#'; // Default jika role tidak dikenali
+                        $profileUrl = '#';
                     }
                 @endphp
-
                 <li>
-                    <a href="{{ $profileUrl }}" class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600">
+                    <a href="{{ $profileUrl }}"
+                        class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs($userRole === 'admin' ? 'admin.profile' : 'vendor.profile') ? 'bg-white text-blue-600' : '' }}">
                         Kelola Profil
                     </a>
                 </li>
+                @if ($userRole === 'admin')
+                    <!-- Menu untuk Admin -->
+                    <li>
+                        <a href="{{ route('admin.nonaktif', ['id' => $userId]) }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('admin.nonaktif') ? 'bg-white text-blue-600' : '' }}">
+                            Nonaktifkan Akun Vendor
+                        </a>
+                    </li>
+                @elseif ($userRole === 'vendor')
+                    <!-- Menu untuk Vendor -->
+                    <li>
+                        <a href="{{ route('vendor.motor', ['id' => $userId]) }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.motor') ? 'bg-white text-blue-600' : '' }}">
+                            Kelola Harga & Ketersediaan Motor
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('ulasan') }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('ulasan') ? 'bg-white text-blue-600' : '' }}">
+                            Ulasan Pelanggan
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('vendor.kelola', ['id' => $userId]) }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.kelola') ? 'bg-white text-blue-600' : '' }}">
+                            Setujui/Tolak Pesanan
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('vendor.transaksi', ['id' => $userId]) }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.transaksi') ? 'bg-white text-blue-600' : '' }}">
+                            Data Transaksi
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('cetak') }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('cetak') ? 'bg-white text-blue-600' : '' }}">
+                            Cetak Transaksi
+                        </a>
+                    </li>
+                @endif
                 <li>
                     <form method="GET" action="{{ url('logout') }}">
                         <button type="submit"
-                            class="w-full text-left px-4 py-2 rounded hover:bg-white hover:text-blue-600">Logout</button>
+                            class="w-full text-left px-4 py-2 rounded hover:bg-white hover:text-blue-600">
+                            Logout
+                        </button>
                     </form>
                 </li>
             </ul>
