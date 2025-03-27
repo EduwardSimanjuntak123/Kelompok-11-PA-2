@@ -3,6 +3,44 @@
 @section('title', 'motor Vendor Rental')
 
 @section('content')
+    <!-- Sertakan SweetAlert2 dari CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {{-- Flash message untuk alert sukses --}}
+    @if(session('success_add'))
+        <script>
+            Swal.fire({
+                title: 'Berhasil!',
+                text: '{{ session('success_add') }}',
+                icon: 'success',
+                confirmButtonColor: '#3085d6'
+            });
+        </script>
+    @endif
+
+    @if(session('success_edit'))
+        <script>
+            Swal.fire({
+                title: 'Berhasil!',
+                text: '{{ session('success_edit') }}',
+                icon: 'success',
+                confirmButtonColor: '#3085d6'
+            });
+        </script>
+    @endif
+
+    @if(session('success_delete'))
+        <script>
+            Swal.fire({
+                title: 'Berhasil!',
+                text: '{{ session('success_delete') }}',
+                icon: 'success',
+                confirmButtonColor: '#3085d6'
+            });
+        </script>
+    @endif
+
+    <!-- Tombol Tambah Motor -->
     <button id="openAddModalBtn" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition mb-4">
         Tambah Motor
     </button>
@@ -27,8 +65,7 @@
                     <tr class="border-b">
                         <td class="px-4 py-2">
                             @if (!empty($motor['image_url']))
-                                <img src="{{ $motor['image_url'] }}" alt="Gambar Motor"
-                                    class="w-24 h-16 object-cover rounded-md">
+                                <img src="{{ $motor['image_url'] }}" alt="Gambar Motor" class="w-24 h-16 object-cover rounded-md">
                             @else
                                 <span class="text-gray-400 italic">Tidak ada gambar</span>
                             @endif
@@ -57,39 +94,52 @@
         </table>
     </div>
 
+    <!-- Modal Tambah/Edit/Hapus Motor -->
     @include('layouts.modal_motor_vendor')
 
     <script>
-        // Modal Tambah
         document.getElementById('openAddModalBtn').addEventListener('click', function() {
-            document.getElementById('addModal').style.display = 'flex';
-        });
+    document.getElementById('addModal').style.display = 'flex';
+});
 
         function closeAddModal() {
             document.getElementById('addModal').style.display = 'none';
         }
 
-        // Modal Edit
+        // Modal Edit Motor
         function openEditModal(motor) {
-            document.getElementById('editModal').style.display = 'flex';
-            document.getElementById('editMotorName').value = motor.name;
-            document.getElementById('editMotorBrand').value = motor.brand;
-            document.getElementById('editMotorModel').value = motor.model;
-            document.getElementById('editMotorYear').value = motor.year;
-            document.getElementById('editMotorColor').value = motor.color;
-            document.getElementById('editMotorPrice').value = motor.price;
-            document.getElementById('editMotorStatus').value = motor.status;
-            setEditFormAction(motor.id);
-        }
+    document.getElementById('editModal').style.display = 'flex';
+    document.getElementById('editMotorName').value = motor.name;
+    document.getElementById('editMotorBrand').value = motor.brand;
+    document.getElementById('editMotorModel').value = motor.model;
+    document.getElementById('editMotorYear').value = motor.year;
+    document.getElementById('editMotorColor').value = motor.color;
+    document.getElementById('editMotorPrice').value = motor.price;
+    document.getElementById('editMotorStatus').value = motor.status;
+    setEditFormAction(motor.id);
+}
+
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
         }
 
-        // Modal Delete
+        // Modal Hapus Motor
         function openDeleteModal(motor) {
-            document.getElementById('deleteModal').style.display = 'flex';
-            setDeleteFormAction(motor.id);
+            Swal.fire({
+                title: 'Hapus Motor',
+                text: 'Apakah Anda yakin ingin menghapus motor ini?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if(result.isConfirmed){
+                    setDeleteFormAction(motor.id);
+                    document.getElementById('deleteMotorForm').submit();
+                }
+            });
         }
 
         function closeDeleteModal() {
@@ -103,6 +153,46 @@
 
         function setDeleteFormAction(id) {
             document.getElementById('deleteMotorForm').action = `/vendor/motor/${id}`;
+        }
+
+        // Event listener untuk form submit pada modal tambah
+        if(document.getElementById('addMotorForm')){
+            document.getElementById('addMotorForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Tambah Motor',
+                    text: 'Apakah Anda yakin ingin menyimpan motor baru ini?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, simpan!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if(result.isConfirmed){
+                        this.submit();
+                    }
+                });
+            });
+        }
+
+        // Event listener untuk form submit pada modal edit
+        if(document.getElementById('editMotorForm')){
+            document.getElementById('editMotorForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Edit Motor',
+                    text: 'Apakah Anda yakin ingin menyimpan perubahan pada motor ini?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, simpan!',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true
+                }).then((result) => {
+                    if(result.isConfirmed){
+                        this.submit();
+                    }
+                });
+            });
         }
     </script>
 @endsection

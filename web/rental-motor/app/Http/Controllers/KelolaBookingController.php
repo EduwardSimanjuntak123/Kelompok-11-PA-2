@@ -115,7 +115,7 @@ class KelolaBookingController extends Controller
             }
 
             $url = "{$this->apiBaseUrl}/bookings/{$id}/complete";
-
+            dd($url);
             Log::info("Mengirim request penyelesaian booking ke: {$url}");
 
             $response = Http::withHeaders([
