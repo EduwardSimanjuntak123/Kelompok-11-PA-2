@@ -19,53 +19,30 @@
             </div>
         </div>
         <!-- Tabel Transaksi -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full border-collapse border border-gray-200">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="py-2 px-4 border border-gray-200">ID</th>
-                        <th class="py-2 px-4 border border-gray-200">Booking Date</th>
-                        <th class="py-2 px-4 border border-gray-200">Customer Name</th>
-                        <th class="py-2 px-4 border border-gray-200">Start Date</th>
-                        <th class="py-2 px-4 border border-gray-200">End Date</th>
-                        <th class="py-2 px-4 border border-gray-200">Status</th>
-                        <th class="py-2 px-4 border border-gray-200">Pickup Location</th>
-                        <th class="py-2 px-4 border border-gray-200">Motor Details</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($transactions as $transaction)
-                        <tr>
-                            <td class="py-2 px-4 border border-gray-200">{{ $transaction['id'] }}</td>
-                            <td class="py-2 px-4 border border-gray-200">
-                                {{ \Carbon\Carbon::parse($transaction['booking_date'])->format('Y-m-d H:i:s') }}
-                            </td>
-                            <td class="py-2 px-4 border border-gray-200">{{ $transaction['customer_name'] }}</td>
-                            <td class="py-2 px-4 border border-gray-200">
-                                {{ \Carbon\Carbon::parse($transaction['start_date'])->format('Y-m-d H:i:s') }}
-                            </td>
-                            <td class="py-2 px-4 border border-gray-200">
-                                {{ \Carbon\Carbon::parse($transaction['end_date'])->format('Y-m-d H:i:s') }}
-                            </td>
-                            <td class="py-2 px-4 border border-gray-200">{{ $transaction['status'] }}</td>
-                            <td class="py-2 px-4 border border-gray-200">{{ trim($transaction['pickup_location']) }}</td>
-                            <td class="py-2 px-4 border border-gray-200">
-                                <ul class="list-disc list-inside text-sm">
-                                    <li><strong>ID:</strong> {{ $transaction['motor']['id'] }}</li>
-                                    <li><strong>Name:</strong> {{ $transaction['motor']['name'] }}</li>
-                                    <li><strong>Brand:</strong> {{ $transaction['motor']['brand'] }}</li>
-                                    <li><strong>Model:</strong> {{ $transaction['motor']['model'] }}</li>
-                                    <li><strong>Year:</strong> {{ $transaction['motor']['year'] }}</li>
-                                    <li><strong>Price/Day:</strong>
-                                        {{ number_format($transaction['motor']['price_per_day'], 0, ',', '.') }}</li>
-                                    <li><strong>Total Price:</strong>
-                                        {{ number_format($transaction['motor']['total_price'], 0, ',', '.') }}</li>
-                                </ul>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+        
+            
+            <!-- Daftar Transaksi -->
+            <div class="space-y-4">
+                @foreach ($transactions as $transaction)
+                    <div class="p-4 bg-white shadow rounded cursor-pointer" onclick="showTransactionDetails({{ json_encode($transaction) }})">
+                        <h3 class="text-lg font-semibold">{{ $transaction['customer_name'] }} - {{ $transaction['status'] }}</h3>
+                        <p class="text-sm text-gray-500">Booking: {{ \Carbon\Carbon::parse($transaction['booking_date'])->format('Y-m-d H:i:s') }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    
+        <!-- Modal Detail Transaksi -->
+        <div id="transactionDetailModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white rounded-lg shadow-lg w-1/2 p-6">
+                <h2 class="text-2xl font-bold mb-4">Detail Transaksi</h2>
+                <div id="transactionDetailContent"></div>
+                <div class="flex justify-end mt-4">
+                    <button onclick="closeModal('transactionDetailModal')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                        Tutup
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -159,13 +136,58 @@
 
     <script>
         function openModal(modalId) {
-            document.getElementById(modalId).classList.remove('hidden');
+            let modal = document.getElementById(modalId);
+            modal.classList.remove('hidden');
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-
+    
         function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
+            let modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+            modal.classList.add('hidden');
             document.body.style.overflow = '';
         }
+    
+        function showTransactionDetails(transaction) {
+            let motorDetails = transaction.motor
+                ? `
+                    <p><strong>Motor Details:</strong></p>
+                    <ul>
+                        <li><strong>ID:</strong> ${transaction.motor.id}</li>
+                        <li><strong>Name:</strong> ${transaction.motor.name}</li>
+                        <li><strong>Brand:</strong> ${transaction.motor.brand}</li>
+                        <li><strong>Model:</strong> ${transaction.motor.model}</li>
+                        <li><strong>Year:</strong> ${transaction.motor.year}</li>
+                        <li><strong>Price/Day:</strong> ${transaction.motor.price_per_day.toLocaleString()}</li>
+                        <li><strong>Total Price:</strong> ${transaction.motor.total_price.toLocaleString()}</li>
+                    </ul>
+                ` : `<p><strong>Motor Details:</strong> Data tidak tersedia</p>`;
+    
+            let content = `
+                <p><strong>ID:</strong> ${transaction.id}</p>
+                <p><strong>Booking Date:</strong> ${transaction.booking_date}</p>
+                <p><strong>Customer Name:</strong> ${transaction.customer_name}</p>
+                <p><strong>Start Date:</strong> ${transaction.start_date}</p>
+                <p><strong>End Date:</strong> ${transaction.end_date}</p>
+                <p><strong>Status:</strong> ${transaction.status}</p>
+                <p><strong>Pickup Location:</strong> ${transaction.pickup_location}</p>
+                ${motorDetails}
+            `;
+    
+            document.getElementById('transactionDetailContent').innerHTML = content;
+            openModal('transactionDetailModal');
+        }
     </script>
+    
+    <style>
+        .modal {
+            display: none !important;
+        }
+    
+        .modal.active {
+            display: flex !important;
+        }
+    </style>
+    
 @endsection
