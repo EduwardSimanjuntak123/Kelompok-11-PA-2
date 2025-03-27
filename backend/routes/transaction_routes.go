@@ -16,7 +16,7 @@ func TransactionRoutes(router *gin.Engine) {
 		// Admin-only routes																	
 		transaction.Use(middleware.AuthMiddleware("vendor"))
 		{
-			transaction.GET("/", controllers.GetVendorBookings)
+			transaction.GET("/", controllers.GetAllTransactions)
 
 			transaction.POST("/manual", controllers.AddManualTransaction)
 

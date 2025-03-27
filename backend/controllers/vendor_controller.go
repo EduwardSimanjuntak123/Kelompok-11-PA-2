@@ -94,17 +94,32 @@ func RegisterVendor(c *gin.Context) {
 func CompleteBooking(c *gin.Context) {
 	id := c.Param("id")
 
+	// Ambil data booking beserta relasi Motor
 	var booking models.Booking
 	if err := config.DB.Preload("Motor").Where("id = ?", id).First(&booking).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
 		return
 	}
 
+	// Pastikan status booking adalah "confirmed"
+	if booking.Status != "confirmed" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking hanya dapat diselesaikan jika statusnya 'confirmed'"})
+		return
+	}
+
+	// Ubah status booking menjadi "completed"
 	if err := config.DB.Model(&booking).Update("status", "completed").Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengubah status booking"})
 		return
 	}
 
+	// Reload data booking agar field ID dan relasi terisi dengan benar (jika perlu)
+	if err := config.DB.Preload("Motor").First(&booking, booking.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data booking terbaru"})
+		return
+	}
+
+	// Buat transaksi otomatis berdasarkan data booking yang sudah selesai
 	if err := CreateTransaction(booking); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat transaksi otomatis", "details": err.Error()})
 		return
@@ -113,36 +128,50 @@ func CompleteBooking(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Booking selesai, transaksi dibuat otomatis"})
 }
 
-// CreateTransaction membuat transaksi otomatis berdasarkan data booking
+
 func CreateTransaction(booking models.Booking) error {
+	// Pastikan relasi Motor sudah terisi
 	if booking.Motor == nil {
 		return fmt.Errorf("data motor tidak tersedia pada booking")
 	}
+
+	// Hitung durasi booking (dalam hari) dengan memanggil method GetDurationDays()
 	duration := booking.GetDurationDays()
 	totalPrice := booking.Motor.Price * float64(duration)
 
+	// Tentukan tipe transaksi berdasarkan apakah booking memiliki CustomerID
+	transactionType := "online"
+	if booking.CustomerID == nil || *booking.CustomerID == 0 {
+		transactionType = "manual"
+	}
+
+	// Buat objek transaksi dengan data yang sesuai
 	transaction := models.Transaction{
 		BookingID:      &booking.ID,
 		VendorID:       booking.VendorID,
 		MotorID:        booking.MotorID,
-		Type:           "online",
+		Type:           transactionType,
 		TotalPrice:     totalPrice,
 		StartDate:      booking.StartDate,
 		EndDate:        booking.EndDate,
 		PickupLocation: booking.PickupLocation,
-		Status:         "completed",
+		Status:         "completed", // atau status sesuai kebutuhan
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	// Jika CustomerID valid, masukkan juga (periksa apakah pointer tidak nil dan nilainya bukan 0)
+
+	// Jika CustomerID valid (non-nil dan tidak 0), masukkan juga
 	if booking.CustomerID != nil && *booking.CustomerID != 0 {
 		transaction.CustomerID = booking.CustomerID
 	}
+
+	// Simpan transaksi ke database
 	if err := config.DB.Create(&transaction).Error; err != nil {
 		return fmt.Errorf("error creating transaction: %w", err)
 	}
 	return nil
 }
+
 
 // GetVendorProfile mengambil data vendor beserta data user
 func GetVendorProfile(c *gin.Context) {
@@ -292,4 +321,55 @@ func saveImageVendor(c *gin.Context, file *multipart.FileHeader) (string, error)
 	}
 
 	return "/fileserver/vendor/" + filename, nil
+}
+
+func ReplyReview(c *gin.Context) {
+	// Ambil review ID dari parameter URL
+	reviewIDStr := c.Param("id")
+	reviewID, err := strconv.ParseUint(reviewIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Review ID tidak valid"})
+		return
+	}
+
+	// Ambil input JSON untuk balasan
+	var input struct {
+		Reply string `json:"reply" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Ambil user_id dari token (vendor)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+		return
+	}
+	vendorID := userID.(uint)
+
+	// Cari review berdasarkan ID
+	var review models.Review
+	if err := config.DB.Where("id = ?", reviewID).First(&review).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Review tidak ditemukan"})
+		return
+	}
+
+	// Pastikan vendor yang membalas adalah pemilik ulasan (berdasarkan VendorID)
+	if review.VendorID != vendorID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk membalas ulasan ini"})
+		return
+	}
+
+	// Update review dengan balasan vendor
+	if err := config.DB.Model(&review).Update("vendor_reply", input.Reply).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan balasan ulasan", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Balasan ulasan berhasil dikirim",
+		"review":  review,
+	})
 }

@@ -4,16 +4,25 @@ import (
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CreateReview(c *gin.Context) {
+	// Ambil booking_id dari parameter URL
+	bookingIDStr := c.Param("id")
+	bookingID, err := strconv.ParseUint(bookingIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking ID tidak valid"})
+		return
+	}
+
+	// Struct input hanya untuk rating dan review
 	var input struct {
-		BookingID uint   `json:"booking_id" binding:"required"`
-		Rating    int    `json:"rating" binding:"required,min=1,max=5"`
-		Review    string `json:"review"`
+		Rating int    `json:"rating" binding:"required,min=1,max=5"`
+		Review string `json:"review"`
 	}
 
 	// Validasi input JSON
@@ -22,16 +31,16 @@ func CreateReview(c *gin.Context) {
 		return
 	}
 
-	// Ambil user_id dari token
+	// Ambil user_id dari token (customer)
 	userID, exists := c.Get("user_id")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak terautentikasi"})
 		return
 	}
 
-	// Cek apakah booking milik customer yang sedang login
+	// Cek apakah booking tersebut milik customer yang sedang login
 	var booking models.Booking
-	if err := config.DB.Where("id = ? AND customer_id = ?", input.BookingID, userID).First(&booking).Error; err != nil {
+	if err := config.DB.Where("id = ? AND customer_id = ?", bookingID, userID).First(&booking).Error; err != nil {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Booking tidak ditemukan atau bukan milik Anda"})
 		return
 	}
@@ -44,14 +53,14 @@ func CreateReview(c *gin.Context) {
 
 	// Pastikan customer belum memberikan review untuk booking ini
 	var existingReview models.Review
-	if err := config.DB.Where("booking_id = ?", input.BookingID).First(&existingReview).Error; err == nil {
+	if err := config.DB.Where("booking_id = ?", bookingID).First(&existingReview).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Anda sudah memberikan ulasan untuk booking ini"})
 		return
 	}
 
 	// Buat review baru
 	review := models.Review{
-		BookingID:  input.BookingID,
+		BookingID:  uint(bookingID),
 		CustomerID: userID.(uint),
 		MotorID:    booking.MotorID,
 		VendorID:   booking.VendorID,
@@ -66,12 +75,27 @@ func CreateReview(c *gin.Context) {
 		return
 	}
 
-	// 🔽 **Update rata-rata rating vendor**
-	var avgRating float32
-	config.DB.Table("reviews").Select("COALESCE(AVG(rating), 0)").Where("vendor_id = ?", booking.VendorID).Scan(&avgRating)
+	// Update rata-rata rating vendor berdasarkan review-review yang ada
+	var avgVendorRating float32
+	config.DB.Table("reviews").
+		Select("COALESCE(AVG(rating), 0)").
+		Where("vendor_id = ?", booking.VendorID).
+		Scan(&avgVendorRating)
+	config.DB.Model(&models.Vendor{}).Where("id = ?", booking.VendorID).Update("rating", avgVendorRating)
 
-	// Simpan perubahan rating vendor ke database
-	config.DB.Model(&models.Vendor{}).Where("id = ?", booking.VendorID).Update("rating", avgRating)
+	// Update rata-rata rating motor berdasarkan review-review yang ada
+	var avgMotorRating float32
+	config.DB.Table("reviews").
+		Select("COALESCE(AVG(rating), 0)").
+		Where("motor_id = ?", booking.MotorID).
+		Scan(&avgMotorRating)
+	config.DB.Model(&models.Motor{}).Where("id = ?", booking.MotorID).Update("rating", avgMotorRating)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Review berhasil ditambahkan", "new_vendor_rating": avgRating})
+	c.JSON(http.StatusOK, gin.H{
+		"message":            "Review berhasil ditambahkan",
+		"new_vendor_rating":  avgVendorRating,
+		"new_motor_rating":   avgMotorRating,
+	})
 }
+
+

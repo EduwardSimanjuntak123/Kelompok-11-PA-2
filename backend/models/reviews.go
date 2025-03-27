@@ -11,6 +11,7 @@ type Review struct {
 	MotorID    uint      `gorm:"not null" json:"motor_id"`
 	Rating     float32   `gorm:"not null" json:"rating"`
 	Review     string    `gorm:"type:text" json:"review"`
+	VendorReply string    `gorm:"type:text" json:"vendor_reply"`
 	CreatedAt  time.Time `json:"created_at"`
 
 	Booking  *Booking `gorm:"foreignKey:BookingID" json:"booking"`

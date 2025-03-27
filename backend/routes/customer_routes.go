@@ -20,7 +20,7 @@ func CustomerRoutes(router *gin.Engine) {
 			customer.POST("/bookings", controllers.CreateBooking)
 			customer.GET("/bookings", controllers.GetCustomerBookings)
 
-			customer.POST("/review", controllers.CreateReview)
+			customer.POST("/review/:id", controllers.CreateReview)
 
 			customer.PUT("/bookings/:id/cancel", controllers.CancelBooking)
 

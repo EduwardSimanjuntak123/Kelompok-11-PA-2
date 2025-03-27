@@ -266,7 +266,7 @@ func GetCustomerBookings(c *gin.Context) {
 
 
 func CreateManualBooking(c *gin.Context) {
-	// Ambil data teks
+	// Ambil data teks dari form-data
 	motorIDStr := c.PostForm("motor_id")
 	customerName := c.PostForm("customer_name")
 	startDateStr := c.PostForm("start_date")
@@ -280,8 +280,8 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 
-	// Parse waktu start_date dan end_date
-	layout := "2006-01-02T15:04:05Z07:00" // Contoh format "2025-04-01T00:00:00Z"
+	// Parse waktu start_date dan end_date dengan format ISO8601
+	layout := "2006-01-02T15:04:05Z07:00" // Contoh: "2025-04-01T00:00:00Z"
 	startDate, err := time.Parse(layout, startDateStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "start_date tidak valid"})
@@ -305,7 +305,7 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 	vendorUserID := userID.(uint)
-
+	
 	// Pastikan user role = vendor
 	var user models.User
 	if err := config.DB.First(&user, vendorUserID).Error; err != nil {
@@ -327,7 +327,7 @@ func CreateManualBooking(c *gin.Context) {
 	// Mulai transaksi
 	tx := config.DB.Begin()
 
-	// Validasi customer_name
+	// Validasi customer_name jika CustomerID tidak ada (booking manual tanpa akun)
 	finalCustomerName := strings.TrimSpace(customerName)
 	if finalCustomerName == "" {
 		tx.Rollback()
@@ -343,7 +343,7 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 
-	// Pastikan motor dimiliki vendor
+	// Pastikan motor dimiliki oleh vendor yang sedang login
 	if motor.VendorID != vendor.ID {
 		tx.Rollback()
 		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk menyewakan motor ini"})
@@ -381,9 +381,9 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 
-	// Buat objek booking
+	// Buat objek booking dengan status otomatis "confirmed"
 	booking := models.Booking{
-		CustomerID:     nil, // karena booking manual
+		CustomerID:     nil, // Booking manual tanpa akun customer
 		CustomerName:   finalCustomerName,
 		VendorID:       vendor.ID,
 		MotorID:        uint(motorID),
@@ -391,10 +391,10 @@ func CreateManualBooking(c *gin.Context) {
 		StartDate:      startDate,
 		EndDate:        endDate,
 		PickupLocation: pickupLocation,
-		Status:         "confirmed",
+		Status:         "confirmed", // Status otomatis "confirmed"
 	}
 
-	// Ambil file photo_id jika ada
+	// Tangani file gambar untuk PhotoID (jika ada)
 	if file, err := c.FormFile("photo_id"); err == nil {
 		photoPath, err := saveBookingImage(c, file)
 		if err != nil {
@@ -406,7 +406,7 @@ func CreateManualBooking(c *gin.Context) {
 		booking.PhotoID = photoPath
 	}
 
-	// Ambil file ktp_id jika ada
+	// Tangani file gambar untuk KtpID (jika ada)
 	if file, err := c.FormFile("ktp_id"); err == nil {
 		ktpPath, err := saveBookingImage(c, file)
 		if err != nil {
@@ -418,7 +418,7 @@ func CreateManualBooking(c *gin.Context) {
 		booking.KtpID = ktpPath
 	}
 
-	// Simpan booking
+	// Simpan booking ke database
 	if err := tx.Create(&booking).Error; err != nil {
 		tx.Rollback()
 		log.Printf("Error inserting manual booking: %v", err)
@@ -427,7 +427,7 @@ func CreateManualBooking(c *gin.Context) {
 	}
 	tx.Commit()
 
-	// Response
+	// Siapkan respons
 	response := gin.H{
 		"message":         "Booking manual berhasil dibuat",
 		"booking_id":      booking.ID,
@@ -453,6 +453,7 @@ func CreateManualBooking(c *gin.Context) {
 	log.Printf("Manual booking successfully created: %+v", response)
 	c.JSON(http.StatusOK, response)
 }
+
 
 
 
