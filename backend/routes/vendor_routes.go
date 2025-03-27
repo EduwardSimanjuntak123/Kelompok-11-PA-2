@@ -17,6 +17,8 @@ func VendorRoutes(router *gin.Engine) {
 		vendor.Use(middleware.AuthMiddleware("vendor"))
 		{
 			vendor.GET("/profile", controllers.GetVendorProfile)
+			vendor.GET("/reviews", controllers.GetVendorReviews)
+			vendor.POST("/review/:id/reply", controllers.ReplyReview)
 			vendor.PUT("/profile/edit", controllers.EditProfileVendor)
 			vendor.POST("/manual/bookings", controllers.CreateManualBooking)
 

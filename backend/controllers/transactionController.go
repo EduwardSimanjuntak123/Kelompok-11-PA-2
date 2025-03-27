@@ -77,28 +77,89 @@ func AddManualTransaction(c *gin.Context) {
 
 
 func GetVendorTransactions(c *gin.Context) {
-    // Ambil user_id dari token JWT
-    userID, exists := c.Get("user_id")
-    if !exists {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
-        return
-    }
+	// Ambil user_id dari token JWT
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+		return
+	}
 
-    // Cari vendor berdasarkan user_id
-    var vendor models.Vendor
-    if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak ditemukan"})
-        return
-    }
+	// Cari vendor berdasarkan user_id
+	var vendor models.Vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
 
-    // Query transaksi berdasarkan vendor_id
-    var transactions []models.Transaction
-    if err := config.DB.Where("vendor_id = ?", vendor.ID).Find(&transactions).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data transaksi"})
-        return
-    }
+	// Query transaksi berdasarkan vendor_id
+	var transactions []models.Transaction
+	if err := config.DB.Where("vendor_id = ?", vendor.ID).Find(&transactions).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data transaksi"})
+		return
+	}
 
-    // Kembalikan data transaksi sebagai JSON
-    c.JSON(http.StatusOK, transactions)
+	// Siapkan response dengan menyertakan nama customer dan booking_date
+	var response []map[string]interface{}
+	for _, t := range transactions {
+		customerName := "Tidak Diketahui" // Default jika nama customer tidak ditemukan
+		bookingDate := ""                 // Default booking date kosong
+
+		if t.Type == "online" {
+			// Ambil nama dari tabel User jika transaksi online
+			if t.CustomerID != nil {
+				var user models.User
+				if err := config.DB.Select("name").Where("id = ?", *t.CustomerID).First(&user).Error; err == nil {
+					customerName = user.Name
+				}
+			}
+		} else if t.Type == "manual" {
+			// Ambil nama dan booking_date dari tabel Booking jika transaksi manual
+			if t.BookingID != nil {
+				var booking models.Booking
+				if err := config.DB.Select("customer_name, booking_date").Where("id = ?", *t.BookingID).First(&booking).Error; err == nil {
+					customerName = booking.CustomerName
+					bookingDate = booking.BookingDate.Format("2006-01-02") // Format YYYY-MM-DD
+				}
+			}
+		}
+
+		// Ambil detail motor
+		var motor models.Motor
+		if err := config.DB.Select("id, name, brand, model, year, price_per_day").Where("id = ?", t.MotorID).First(&motor).Error; err != nil {
+			motor = models.Motor{}
+		}
+
+		resp := map[string]interface{}{
+			"id":              t.ID,
+			"booking_id":      t.BookingID,
+			"vendor_id":       t.VendorID,
+			"customer_id":     t.CustomerID,
+			"motor_id":        t.MotorID,
+			"type":            t.Type,
+			"total_price":     t.TotalPrice,
+			"start_date":      t.StartDate,
+			"end_date":        t.EndDate,
+			"pickup_location": t.PickupLocation,
+			"status":          t.Status,
+			"created_at":      t.CreatedAt,
+			"updated_at":      t.UpdatedAt,
+			"customer_name":   customerName, // Nama customer ditambahkan
+			"booking_date":    bookingDate,  // Tanggal booking ditambahkan
+			"motor": map[string]interface{}{
+				"id":            motor.ID,
+				"name":          motor.Name,
+				"brand":         motor.Brand,
+				"model":         motor.Model,
+				"year":          motor.Year,
+				"price_per_day": motor.Price,
+			},
+		}
+		response = append(response, resp)
+	}
+
+	c.JSON(http.StatusOK, response)
 }
+
+
+
 

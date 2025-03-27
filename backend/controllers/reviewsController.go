@@ -98,4 +98,33 @@ func CreateReview(c *gin.Context) {
 	})
 }
 
+func GetVendorReviews(c *gin.Context) {
+	// Ambil user_id dari token JWT
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+		return
+	}
+
+	// Cari record vendor berdasarkan user_id
+	var vendor models.Vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	// Ambil semua ulasan (reviews) yang memiliki VendorID sesuai vendor
+	var reviews []models.Review
+	if err := config.DB.
+		Preload("Customer"). // Memuat data customer (jika ada)
+		Preload("Motor").    // Memuat data motor yang diulas
+		Where("vendor_id = ?", vendor.ID).
+		Find(&reviews).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data ulasan", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, reviews)
+}
+
 

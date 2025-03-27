@@ -332,7 +332,7 @@ func ReplyReview(c *gin.Context) {
 		return
 	}
 
-	// Ambil input JSON untuk balasan
+	// Struct input untuk balasan vendor
 	var input struct {
 		Reply string `json:"reply" binding:"required"`
 	}
@@ -341,23 +341,33 @@ func ReplyReview(c *gin.Context) {
 		return
 	}
 
-	// Ambil user_id dari token (vendor)
+	// Ambil user_id dari token (ini adalah ID user)
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
 		return
 	}
-	vendorID := userID.(uint)
 
-	// Cari review berdasarkan ID
+	// Cari record vendor berdasarkan user_id dari token
+	var vendor models.Vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+	// Gunakan vendor.ID sebagai vendor yang sebenarnya
+	log.Printf("Vendor ID dari token (dari record vendor): %d", vendor.ID)
+
+	// Cari review berdasarkan review ID
 	var review models.Review
 	if err := config.DB.Where("id = ?", reviewID).First(&review).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Review tidak ditemukan"})
 		return
 	}
+	// Log vendor id dari review
+	log.Printf("Review VendorID: %d", review.VendorID)
 
-	// Pastikan vendor yang membalas adalah pemilik ulasan (berdasarkan VendorID)
-	if review.VendorID != vendorID {
+	// Pastikan vendor yang membalas adalah vendor yang terkait dengan review
+	if review.VendorID != vendor.ID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk membalas ulasan ini"})
 		return
 	}
