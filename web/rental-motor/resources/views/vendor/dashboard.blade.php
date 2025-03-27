@@ -49,14 +49,7 @@
             </a>
         </div>
 
-        <!-- Cetak Data Transaksi -->
-        <div class="bg-gray-100 p-4 rounded-lg shadow-md">
-            <h3 class="font-semibold mb-2">Cetak Data Transaksi</h3>
-            <a href="{{ route('cetak') }}"
-                class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 block text-center">
-                Cetak Transaksi
-            </a>
-        </div>
+
     </div>
 
 @endsection

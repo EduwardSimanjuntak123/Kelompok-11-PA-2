@@ -10,7 +10,7 @@ type Motor struct {
 	Name      string    `gorm:"size:100;not null" json:"name" form:"name"`
 	Brand     string    `gorm:"size:50;not null" json:"brand" form:"brand"`
 	Model     string    `gorm:"size:50;not null" json:"model" form:"model"`
-	Year      uint      `gorm:"not null" column:YEAR json:"year" form:"year"`
+	Year      uint      `gorm:"not null" json:"year" form:"year"`
 	Price     float64   `gorm:"type:decimal(10,2);not null" json:"price" form:"price"`
 	Color     string    `gorm:"size:50" json:"color" form:"color"`
 	Status    string    `gorm:"size:20; default:'available'" json:"status" form:"status"`

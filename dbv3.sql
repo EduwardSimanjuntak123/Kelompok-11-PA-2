@@ -75,12 +75,14 @@ CREATE TABLE bookings (
     FOREIGN KEY (vendor_id) REFERENCES vendors(id) ON DELETE CASCADE,
     FOREIGN KEY (motor_id) REFERENCES motor(id) ON DELETE CASCADE
 );
+ALTER TABLE bookings MODIFY customer_id INT NULL;
+ALTER TABLE bookings ADD COLUMN customer_name VARCHAR(100) NOT NULL AFTER customer_id;
 
 CREATE TABLE transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
     booking_id INT NULL, -- NULL jika transaksi manual
     vendor_id INT NOT NULL,
-    customer_id INT NULL, -- NULL jika transaksi manual
+    customer_id INT NULL,
     motor_id INT NOT NULL,
     TYPE ENUM('online', 'manual') NOT NULL,
     total_price DECIMAL(10,2) NOT NULL,

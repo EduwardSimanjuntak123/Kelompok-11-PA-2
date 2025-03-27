@@ -10,6 +10,7 @@ import (
 	"rental-backend/config"
 	"rental-backend/models"
 	"time"
+
 	"golang.org/x/crypto/bcrypt"
 
 	"strings"
@@ -95,7 +96,7 @@ func saveBookingImage(c *gin.Context, file *multipart.FileHeader) (string, error
 func CreateBooking(c *gin.Context) {
 	var booking models.Booking
 
-	// Bind JSON ke struct booking (pastikan request dikirim sebagai multipart/form-data)
+	// Bind JSON ke struct booking
 	if err := c.ShouldBind(&booking); err != nil {
 		log.Printf("Error binding request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Format request tidak valid"})
@@ -111,23 +112,23 @@ func CreateBooking(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
-	booking.CustomerID = userID.(uint)
 
-	log.Printf("Debug: User ID dari token: %v", booking.CustomerID)
+	id := userID.(uint)
+	booking.CustomerID = &id
+
+	log.Printf("Debug: User ID dari token: %v", id)
 
 	// Mulai transaksi database
 	tx := config.DB.Begin()
 
 	// Ambil data pelanggan berdasarkan user_id dari token
 	var customer models.User
-	if err := tx.Select("id, name").Where("id = ?", booking.CustomerID).First(&customer).Error; err != nil {
+	if err := tx.Select("id, name").Where("id = ?", id).First(&customer).Error; err != nil {
 		tx.Rollback()
 		log.Printf("Error fetching customer: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data pelanggan"})
 		return
 	}
-
-	log.Printf("Debug: Customer Data -> ID: %d, Name: %s", customer.ID, customer.Name)
 
 	// Validasi MotorID
 	if booking.MotorID == 0 {
@@ -155,6 +156,16 @@ func CreateBooking(c *gin.Context) {
 	}
 
 	booking.VendorID = motor.VendorID
+
+	// **Validasi apakah motor sudah dibooking dalam rentang tanggal tersebut**
+	var existingBooking models.Booking
+	if err := tx.Where("motor_id = ? AND status = ? AND ((start_date <= ? AND end_date >= ?) OR (start_date <= ? AND end_date >= ?))",
+		booking.MotorID, "confirmed", booking.StartDate, booking.StartDate, booking.EndDate, booking.EndDate).
+		First(&existingBooking).Error; err == nil {
+		tx.Rollback()
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Motor sudah dibooking pada rentang tanggal tersebut"})
+		return
+	}
 
 	// Validasi rentang tanggal
 	if booking.EndDate.Before(booking.StartDate) {
@@ -220,7 +231,7 @@ func CreateBooking(c *gin.Context) {
 		"start_date":      booking.StartDate,
 		"end_date":        booking.EndDate,
 		"pickup_location": booking.PickupLocation,
-		"status":          "pending" ,
+		"status":          "pending",
 		"motor": gin.H{
 			"id":            motor.ID,
 			"name":          motor.Name,
@@ -237,6 +248,7 @@ func CreateBooking(c *gin.Context) {
 	log.Printf("Booking successfully created: %+v", response)
 	c.JSON(http.StatusOK, response)
 }
+
 // Cancel Booking
 func CancelBooking(c *gin.Context) {
 	id := c.Param("id")

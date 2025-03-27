@@ -88,12 +88,6 @@
                             Data Transaksi
                         </a>
                     </li>
-                    <li>
-                        <a href="{{ route('cetak') }}"
-                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('cetak') ? 'bg-white text-blue-600' : '' }}">
-                            Cetak Transaksi
-                        </a>
-                    </li>
                 @endif
                 <li>
                     <form method="GET" action="{{ url('logout') }}">
