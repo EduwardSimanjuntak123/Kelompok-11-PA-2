@@ -4,74 +4,87 @@
 
 @section('content')
     <div class="container mx-auto p-8">
-        <h2 class="text-4xl font-extrabold mb-6 text-center text-gray-800">📋 Kelola Pemesanan</h2>
-
-        <div class="mb-6 flex justify-center">
-            <select id="filterStatus" class="border p-2 rounded-md">
-                <option value="all">Semua</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="rejected">Rejected</option>
-            </select>
-        </div>
-        {{-- @dd($bookings) --}}
+        <h2 class="text-4xl font-extrabold text-center text-gray-800 mb-8">📋 Kelola Pemesanan</h2>
 
         @if (empty($bookings) || count($bookings) == 0)
             <p class="text-center text-gray-500">Tidak ada pemesanan untuk ditampilkan.</p>
         @else
-            <div id="bookingList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach ($bookings as $pesanan)
-                    <div class="booking-card bg-white shadow-lg rounded-xl p-6" data-status="{{ $pesanan['status'] }}">
-                        <h3 class="text-lg font-semibold text-gray-800">
-                            {{ $pesanan['motor']['brand'] ?? 'Unknown' }} {{ $pesanan['motor']['model'] ?? '' }}
-                        </h3>
-                        <p class="text-gray-600 text-sm">Status:
-                            <strong
-                                class="{{ $pesanan['status'] == 'pending' ? 'text-yellow-600' : ($pesanan['status'] == 'rejected' ? 'text-red-600' : 'text-green-600') }}">
-                                {{ ucfirst($pesanan['status']) }}
-                            </strong>
-                        </p>
-                        <p class="text-gray-600 text-sm">Mulai:
-                            <strong>{{ \Carbon\Carbon::parse($pesanan['start_date'])->format('d M Y') }}</strong>
-                        </p>
-                        <p class="text-gray-600 text-sm">Selesai:
-                            <strong>{{ \Carbon\Carbon::parse($pesanan['end_date'])->format('d M Y') }}</strong>
-                        </p>
-
-                        <div class="mt-4 flex space-x-2">
-                            <button onclick='showDetails(@json($pesanan))'
-                                class="bg-gray-600 text-white px-3 py-1 rounded-lg">Detail</button>
-                            @if ($pesanan['status'] == 'pending')
-                                <button onclick="updateBooking({{ $pesanan['id'] }}, 'confirm')"
-                                    class="bg-green-600 text-white px-3 py-1 rounded-lg">Setujui</button>
-                                <button onclick="updateBooking({{ $pesanan['id'] }}, 'reject')"
-                                    class="bg-red-600 text-white px-3 py-1 rounded-lg">Tolak</button>
-                            @elseif ($pesanan['status'] == 'confirmed')
-                                <button onclick="completeBooking({{ $pesanan['id'] }})"
-                                    class="bg-blue-600 text-white px-3 py-1 rounded-lg">Selesaikan</button>
-                            @endif
-                        </div>
-                    </div>
-                @endforeach
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-collapse border border-gray-200">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="py-2 px-4 border border-gray-200">ID</th>
+                            <th class="py-2 px-4 border border-gray-200">Booking Date</th>
+                            <th class="py-2 px-4 border border-gray-200">Customer</th>
+                            <th class="py-2 px-4 border border-gray-200">Start Date</th>
+                            <th class="py-2 px-4 border border-gray-200">End Date</th>
+                            <th class="py-2 px-4 border border-gray-200">Status</th>
+                            <th class="py-2 px-4 border border-gray-200">Pickup Location</th>
+                            <th class="py-2 px-4 border border-gray-200">Motor Details</th>
+                            <th class="py-2 px-4 border border-gray-200">Gambar Motor</th>
+                            <th class="py-2 px-4 border border-gray-200">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($bookings as $pesanan)
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-2 px-4 border border-gray-200">{{ $pesanan['id'] }}</td>
+                                <td class="py-2 px-4 border border-gray-200">
+                                    {{ \Carbon\Carbon::parse($pesanan['booking_date'])->format('Y-m-d H:i:s') }}
+                                </td>
+                                <td class="py-2 px-4 border border-gray-200">{{ $pesanan['customer_name'] }}</td>
+                                <td class="py-2 px-4 border border-gray-200">
+                                    {{ \Carbon\Carbon::parse($pesanan['start_date'])->format('Y-m-d H:i:s') }}
+                                </td>
+                                <td class="py-2 px-4 border border-gray-200">
+                                    {{ \Carbon\Carbon::parse($pesanan['end_date'])->format('Y-m-d H:i:s') }}
+                                </td>
+                                <td class="py-2 px-4 border border-gray-200">
+                                    <span
+                                        class="{{ $pesanan['status'] == 'pending' ? 'text-yellow-600' : ($pesanan['status'] == 'rejected' ? 'text-red-600' : 'text-green-600') }}">
+                                        {{ ucfirst($pesanan['status']) }}
+                                    </span>
+                                </td>
+                                <td class="py-2 px-4 border border-gray-200">{{ trim($pesanan['pickup_location']) }}</td>
+                                <td class="py-2 px-4 border border-gray-200">
+                                    <ul class="list-disc list-inside text-sm">
+                                        <li><strong>ID:</strong> {{ $pesanan['motor']['id'] }}</li>
+                                        <li><strong>Name:</strong> {{ $pesanan['motor']['name'] }}</li>
+                                        <li><strong>Brand:</strong> {{ $pesanan['motor']['brand'] }}</li>
+                                        <li><strong>Model:</strong> {{ $pesanan['motor']['model'] }}</li>
+                                        <li><strong>Year:</strong> {{ $pesanan['motor']['year'] }}</li>
+                                        <li><strong>Price/Day:</strong>
+                                            {{ number_format($pesanan['motor']['price_per_day'], 0, ',', '.') }}</li>
+                                        <li><strong>Total Price:</strong>
+                                            {{ number_format($pesanan['motor']['total_price'], 0, ',', '.') }}</li>
+                                    </ul>
+                                </td>
+                                <td class="py-2 px-4 border border-gray-200">
+                                    <img src="{{ $pesanan['motor']['image'] }}" alt="Gambar Motor"
+                                        class="w-16 h-16 object-cover">
+                                </td>
+                                <td class="py-2 px-4 border border-gray-200">
+                                    @if ($pesanan['status'] == 'pending')
+                                        <button onclick="updateBooking({{ $pesanan['id'] }}, 'confirm')"
+                                            class="bg-green-600 text-white px-2 py-1 rounded">Setujui</button>
+                                        <button onclick="updateBooking({{ $pesanan['id'] }}, 'reject')"
+                                            class="bg-red-600 text-white px-2 py-1 rounded">Tolak</button>
+                                    @elseif ($pesanan['status'] == 'confirmed')
+                                        <button onclick="completeBooking({{ $pesanan['id'] }})"
+                                            class="bg-blue-600 text-white px-2 py-1 rounded">Selesaikan</button>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         @endif
     </div>
 
-    <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-        <div class="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 class="text-xl font-bold mb-4">Detail Pemesanan</h2>
-            <p><strong>Nama Pelanggan:</strong> <span id="detailCustomer"></span></p>
-            <p><strong>Nama Motor:</strong> <span id="detailMotor"></span></p>
-            <p><strong>Harga per Hari:</strong> Rp<span id="detailPricePerDay"></span></p>
-            <p><strong>Total Harga:</strong> Rp<span id="detailTotalPrice"></span></p>
-            <p><strong>Lokasi Jemput:</strong> <span id="detailPickupLocation"></span></p>
-            <p><strong>Status:</strong> <span id="detailStatus"></span></p>
-            <p><strong>Tanggal Mulai:</strong> <span id="detailStart"></span></p>
-            <p><strong>Tanggal Selesai:</strong> <span id="detailEnd"></span></p>
-            <button onclick="closeModal()" class="mt-4 bg-red-500 text-white px-4 py-2 rounded">Tutup</button>
-        </div>
-    </div>
-
+    <!-- Skrip (tidak diubah) -->
     <script>
         const BASE_API = "http://localhost:8080";
 
@@ -105,24 +118,6 @@
                     location.reload();
                 })
                 .catch(error => alert("Terjadi kesalahan: " + error.message));
-        }
-
-        function showDetails(pesanan) {
-            document.getElementById("detailCustomer").textContent = pesanan.customer_name || "-";
-            document.getElementById("detailMotor").textContent = (pesanan.motor?.brand || "Unknown") + " " + (pesanan.motor
-                ?.model || "");
-            document.getElementById("detailPricePerDay").textContent = pesanan.motor?.price_per_day?.toLocaleString() ||
-                "0";
-            document.getElementById("detailTotalPrice").textContent = pesanan.motor?.total_price?.toLocaleString() || "0";
-            document.getElementById("detailPickupLocation").textContent = pesanan.pickup_location || "-";
-            document.getElementById("detailStatus").textContent = pesanan.status || "-";
-            document.getElementById("detailStart").textContent = pesanan.start_date || "-";
-            document.getElementById("detailEnd").textContent = pesanan.end_date || "-";
-            document.getElementById("detailModal").classList.remove("hidden");
-        }
-
-        function closeModal() {
-            document.getElementById("detailModal").classList.add("hidden");
         }
     </script>
 @endsection
