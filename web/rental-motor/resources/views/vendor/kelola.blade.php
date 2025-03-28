@@ -14,6 +14,7 @@
                 <option value="all">Semua</option>
                 <option value="pending">Pending</option>
                 <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
                 <option value="rejected">Rejected</option>
             </select>
             <!-- Button to open manual booking modal -->
