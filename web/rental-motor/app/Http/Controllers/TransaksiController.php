@@ -60,6 +60,7 @@ class TransaksiController extends Controller
     // Fungsi untuk menambahkan transaksi manual (sudah ada)
     public function addTransactionManual(Request $request)
     {
+        
         try {
             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
             if (!$token) {
@@ -115,11 +116,10 @@ class TransaksiController extends Controller
     }
 
     // Fungsi untuk mencetak laporan transaksi berdasarkan rentang (week atau month)
-    
-    public function exportExcel(Request $request)
+public function exportExcel(Request $request)
 {
     try {
-        $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
+        $token = session()->get('token');
         if (!$token) {
             return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
         }
@@ -129,6 +129,7 @@ class TransaksiController extends Controller
 
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
         $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+        $monthName = $startDate->translatedFormat('F'); // contoh: "Maret"
 
         $queryParams = [
             'start_date' => $startDate->toDateString(),
@@ -136,34 +137,33 @@ class TransaksiController extends Controller
         ];
 
         $url = "{$this->apiBaseUrl}/transaction";
-        Log::info("Mengambil laporan bulan: $month/$year | Params: " . json_encode($queryParams));
         $response = Http::withToken($token)->timeout(10)->get($url, $queryParams);
-        Log::info("Response laporan: " . $response->body());
 
         if ($response->successful()) {
             $jsonData = $response->json();
             $transactions = isset($jsonData['data']) ? $jsonData['data'] : $jsonData;
 
-            // ✅ Filter hanya data dengan booking_date di bulan & tahun yang dipilih
             $transactions = collect($transactions)->filter(function ($item) use ($month, $year) {
                 $bookingDate = Carbon::parse($item['booking_date']);
                 return $bookingDate->year === $year && $bookingDate->month === $month;
             })->values()->toArray();
 
-            // ✅ Validasi jika kosong
             if (empty($transactions)) {
-                return redirect()->back()->with('error', 'Tidak ada data transaksi di bulan yang dipilih.');
+                return redirect()->back()->with('error', 'Maaf, tidak ditemukan data transaksi untuk bulan dan tahun yang Anda pilih.');
             }
+
+            return Excel::download(
+                new TransactionExport($transactions, $monthName, $year),
+                "laporan_transaksi_{$month}_{$year}.xlsx"
+            );
         } else {
-            Log::error("Gagal mengambil data transaksi bulanan. HTTP Status: " . $response->status());
             return redirect()->back()->with('error', 'Gagal mengambil data transaksi.');
         }
     } catch (\Exception $e) {
-        Log::error("Kesalahan saat export transaksi: " . $e->getMessage());
         return redirect()->back()->with('error', 'Terjadi kesalahan saat mengekspor data.');
     }
-
-    return Excel::download(new TransactionExport($transactions), "transaksi_{$year}_{$month}.xlsx");
 }
+
+
 
 }
