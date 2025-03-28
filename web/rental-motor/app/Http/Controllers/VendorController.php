@@ -69,78 +69,98 @@ class VendorController extends Controller
     }
     // Mengupdate profil vendor dengan data form-data
     public function updateProfile(Request $request)
-    {
-        try {
-            $token = Session::get('token', 'TOKEN_KAMU_DI_SINI');
-            $multipart = [];
+{
+    try {
+        $token = Session::get('token', 'TOKEN_KAMU_DI_SINI');
+        $multipart = [];
 
-            // Data User
-            if ($name = $request->input('name')) {
-                $multipart[] = ['name' => 'name', 'contents' => $name];
-            }
-            if ($email = $request->input('email')) {
-                $multipart[] = ['name' => 'email', 'contents' => $email];
-            }
-            if ($phone = $request->input('phone')) {
-                $multipart[] = ['name' => 'phone', 'contents' => $phone];
-            }
-            if ($address = $request->input('address')) {
-                $multipart[] = ['name' => 'address', 'contents' => $address];
-            }
-            if ($password = $request->input('password')) {
-                // Disarankan untuk meng-hash password, sesuaikan kebutuhan Anda
-                $multipart[] = ['name' => 'password', 'contents' => $password];
-            }
+        // Data User
+        if ($name = $request->input('name')) {
+            $multipart[] = ['name' => 'name', 'contents' => $name];
+        }
+        if ($email = $request->input('email')) {
+            $multipart[] = ['name' => 'email', 'contents' => $email];
+        }
+        if ($phone = $request->input('phone')) {
+            $multipart[] = ['name' => 'phone', 'contents' => $phone];
+        }
+        if ($address = $request->input('address')) {
+            $multipart[] = ['name' => 'address', 'contents' => $address];
+        }
+        if ($password = $request->input('password')) {
+            $multipart[] = ['name' => 'password', 'contents' => $password];
+        }
 
-            // Data Vendor
-            if ($shopName = $request->input('shop_name')) {
-                $multipart[] = ['name' => 'shop_name', 'contents' => $shopName];
-            }
-            if ($shopAddress = $request->input('shop_address')) {
-                $multipart[] = ['name' => 'shop_address', 'contents' => $shopAddress];
-            }
-            if ($shopDescription = $request->input('shop_description')) {
-                $multipart[] = ['name' => 'shop_description', 'contents' => $shopDescription];
-            }
-            if ($idKecamatan = $request->input('id_kecamatan')) {
-                $multipart[] = ['name' => 'id_kecamatan', 'contents' => $idKecamatan];
-            }
+        // Data Vendor
+        if ($shopName = $request->input('shop_name')) {
+            $multipart[] = ['name' => 'shop_name', 'contents' => $shopName];
+        }
+        if ($shopAddress = $request->input('shop_address')) {
+            $multipart[] = ['name' => 'shop_address', 'contents' => $shopAddress];
+        }
+        if ($shopDescription = $request->input('shop_description')) {
+            $multipart[] = ['name' => 'shop_description', 'contents' => $shopDescription];
+        }
+        if ($idKecamatan = $request->input('id_kecamatan')) {
+            $multipart[] = ['name' => 'id_kecamatan', 'contents' => $idKecamatan];
+        }
 
-            // Tangani file profile_image jika ada
-            if ($request->hasFile('profile_image')) {
-                $image = $request->file('profile_image');
-                $multipart[] = [
-                    'name' => 'profile_image',
-                    'contents' => fopen($image->getPathname(), 'r'),
-                    'filename' => $image->getClientOriginalName()
-                ];
-            }
-            // Tangani file ktp_image jika ada
-            if ($request->hasFile('ktp_image')) {
-                $file = $request->file('ktp_image');
-                $multipart[] = [
-                    'name' => 'ktp_image',
-                    'contents' => fopen($file->getPathname(), 'r'),
-                    'filename' => $file->getClientOriginalName()
-                ];
-            }
+        // Upload file profile_image
+        if ($request->hasFile('profile_image')) {
+            $image = $request->file('profile_image');
+            $multipart[] = [
+                'name' => 'profile_image',
+                'contents' => fopen($image->getPathname(), 'r'),
+                'filename' => $image->getClientOriginalName()
+            ];
+        }
 
-            // Update waktu
-            $multipart[] = ['name' => 'updated_at', 'contents' => now()->toDateTimeString()];
+        // Upload file ktp_image
+        if ($request->hasFile('ktp_image')) {
+            $file = $request->file('ktp_image');
+            $multipart[] = [
+                'name' => 'ktp_image',
+                'contents' => fopen($file->getPathname(), 'r'),
+                'filename' => $file->getClientOriginalName()
+            ];
+        }
 
-            // Kirim request PUT ke API backend vendor
-            $response = Http::withToken($token)
-                ->asMultipart()
-                ->put($this->apiBaseUrl . '/vendor/profile/edit', $multipart);
+        // Update waktu
+        $multipart[] = ['name' => 'updated_at', 'contents' => now()->toDateTimeString()];
+
+        // Kirim request ke API backend
+        $response = Http::withToken($token)
+            ->asMultipart()
+            ->put($this->apiBaseUrl . '/vendor/profile/edit', $multipart);
 
             if ($response->successful()) {
-                return redirect()->back()->with('message', 'Profil vendor berhasil diperbarui')->with('type', 'success');
+                $redirect = redirect()->back();
+            
+                if ($request->hasFile('profile_image')) {
+                    $redirect = $redirect->with('message_photo', 'Foto profil berhasil diubah')
+                                         ->with('type_photo', 'success');
+                }
+            
+                $hasProfileData = collect($multipart)->filter(function ($item) {
+                    return !in_array($item['name'], ['profile_image', 'ktp_image', 'updated_at']);
+                })->isNotEmpty();
+            
+                if ($hasProfileData) {
+                    $redirect = $redirect->with('message_profile', 'Profil vendor berhasil diperbarui')
+                                         ->with('type_profile', 'success');
+                }
+            
+                return $redirect;
             }
-            Log::error("Gagal memperbarui profil vendor. Status: " . $response->status());
-            return redirect()->back()->with('message', 'Gagal memperbarui profil vendor')->with('type', 'error');
-        } catch (\Exception $e) {
-            Log::error("Terjadi kesalahan saat memperbarui profil vendor: " . $e->getMessage());
-            return redirect()->back()->with('message', 'Terjadi kesalahan server')->with('type', 'error');
-        }
+            
+
+        Log::error("Gagal memperbarui profil vendor. Status: " . $response->status());
+        return redirect()->back()->with('message', 'Gagal memperbarui profil vendor')->with('type', 'error');
+
+    } catch (\Exception $e) {
+        Log::error("Terjadi kesalahan saat memperbarui profil vendor: " . $e->getMessage());
+        return redirect()->back()->with('message', 'Terjadi kesalahan server')->with('type', 'error');
     }
+}
+
 }

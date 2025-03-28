@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+   
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -115,51 +115,55 @@ class TransaksiController extends Controller
     }
 
     // Fungsi untuk mencetak laporan transaksi berdasarkan rentang (week atau month)
-     // Fungsi untuk mengekspor transaksi ke Excel
-     public function exportExcel(Request $request)
-     {
-         try {
-             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
-             if (!$token) {
-                 return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
-             }
-             
-             // Ambil parameter rentang laporan, misalnya "week" atau "month"
-             $range = $request->query('range', 'week');
-             $endDate = Carbon::today();
-             if ($range === 'week') {
-                 $startDate = $endDate->copy()->subDays(7);
-             } elseif ($range === 'month') {
-                 $startDate = $endDate->copy()->subMonth();
-             } else {
-                 $startDate = $endDate->copy()->subDays(7);
-             }
-            //  dd($range);
-             
-             // Siapkan parameter untuk query API (misalnya, menggunakan query string)
-             $queryParams = [
-                 'start_date' => $startDate->toDateString(),
-                 'end_date'   => $endDate->toDateString(),
-             ];
-             
-             $url = "{$this->apiBaseUrl}/transaction";
-             Log::info("Mengirim request laporan ke: " . $url . " dengan parameter " . json_encode($queryParams));
-             $response = Http::withToken($token)->timeout(10)->get($url, $queryParams);
-             Log::info("Response laporan: " . $response->body());
-             
-             if ($response->successful()) {
-                 $jsonData = $response->json();
-                 $transactions = isset($jsonData['data']) ? $jsonData['data'] : $jsonData;
-             } else {
-                 Log::error("Gagal mengambil data laporan transaksi. HTTP Status: " . $response->status());
-                 $transactions = [];
-             }
-         } catch (\Exception $e) {
-             Log::error("Kesalahan saat mengambil data laporan transaksi: " . $e->getMessage());
-             $transactions = [];
-         }
-         
-         // Ekspor data ke Excel menggunakan TransactionExport
-         return Excel::download(new TransactionExport($transactions), 'transactions.xlsx');
-     }
+    
+    public function exportExcel(Request $request)
+{
+    try {
+        $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
+        if (!$token) {
+            return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
+        }
+
+        $month = (int) $request->query('month');
+        $year = (int) $request->query('year');
+
+        $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
+
+        $queryParams = [
+            'start_date' => $startDate->toDateString(),
+            'end_date'   => $endDate->toDateString(),
+        ];
+
+        $url = "{$this->apiBaseUrl}/transaction";
+        Log::info("Mengambil laporan bulan: $month/$year | Params: " . json_encode($queryParams));
+        $response = Http::withToken($token)->timeout(10)->get($url, $queryParams);
+        Log::info("Response laporan: " . $response->body());
+
+        if ($response->successful()) {
+            $jsonData = $response->json();
+            $transactions = isset($jsonData['data']) ? $jsonData['data'] : $jsonData;
+
+            // ✅ Filter hanya data dengan booking_date di bulan & tahun yang dipilih
+            $transactions = collect($transactions)->filter(function ($item) use ($month, $year) {
+                $bookingDate = Carbon::parse($item['booking_date']);
+                return $bookingDate->year === $year && $bookingDate->month === $month;
+            })->values()->toArray();
+
+            // ✅ Validasi jika kosong
+            if (empty($transactions)) {
+                return redirect()->back()->with('error', 'Tidak ada data transaksi di bulan yang dipilih.');
+            }
+        } else {
+            Log::error("Gagal mengambil data transaksi bulanan. HTTP Status: " . $response->status());
+            return redirect()->back()->with('error', 'Gagal mengambil data transaksi.');
+        }
+    } catch (\Exception $e) {
+        Log::error("Kesalahan saat export transaksi: " . $e->getMessage());
+        return redirect()->back()->with('error', 'Terjadi kesalahan saat mengekspor data.');
+    }
+
+    return Excel::download(new TransactionExport($transactions), "transaksi_{$year}_{$month}.xlsx");
+}
+
 }
