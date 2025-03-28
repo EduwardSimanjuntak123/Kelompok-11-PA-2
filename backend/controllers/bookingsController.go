@@ -264,7 +264,6 @@ func GetCustomerBookings(c *gin.Context) {
 }
 
 
-
 func CreateManualBooking(c *gin.Context) {
 	// Ambil data teks dari form-data
 	motorIDStr := c.PostForm("motor_id")
@@ -281,7 +280,8 @@ func CreateManualBooking(c *gin.Context) {
 	}
 
 	// Parse waktu start_date dan end_date dengan format ISO8601
-	layout := "2006-01-02T15:04:05Z07:00" // Contoh: "2025-04-01T00:00:00Z"
+	// Expected format from the form: "2025-04-01T00:00:00Z" (adjust layout if needed)
+	layout := "2006-01-02T15:04:05Z07:00"
 	startDate, err := time.Parse(layout, startDateStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "start_date tidak valid"})
@@ -293,10 +293,8 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 
-	log.Printf(
-		"Debug: Manual Booking Data => motor_id: %d, customer_name: %s, start_date: %v, end_date: %v, pickup_location: %s",
-		motorID, customerName, startDate, endDate, pickupLocation,
-	)
+	log.Printf("Debug: Manual Booking Data => motor_id: %d, customer_name: %s, start_date: %v, end_date: %v, pickup_location: %s",
+		motorID, customerName, startDate, endDate, pickupLocation)
 
 	// Ambil user_id dari token (ID vendor)
 	userID, exists := c.Get("user_id")
@@ -305,7 +303,7 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 	vendorUserID := userID.(uint)
-	
+
 	// Pastikan user role = vendor
 	var user models.User
 	if err := config.DB.First(&user, vendorUserID).Error; err != nil {
@@ -327,7 +325,7 @@ func CreateManualBooking(c *gin.Context) {
 	// Mulai transaksi
 	tx := config.DB.Begin()
 
-	// Validasi customer_name jika CustomerID tidak ada (booking manual tanpa akun)
+	// Validasi customer_name untuk booking manual tanpa akun
 	finalCustomerName := strings.TrimSpace(customerName)
 	if finalCustomerName == "" {
 		tx.Rollback()
@@ -364,7 +362,7 @@ func CreateManualBooking(c *gin.Context) {
 	}
 	totalPrice := float64(duration) * motor.Price
 
-	// **Validasi overlap**: cek apakah motor sudah dibooking (status "confirmed") pada periode ini
+	// Validasi overlap: cek apakah motor sudah dibooking (status "confirmed") pada periode ini
 	var overlappingCount int64
 	if err := tx.Model(&models.Booking{}).
 		Where("motor_id = ? AND status = 'confirmed'", motor.ID).
@@ -391,7 +389,7 @@ func CreateManualBooking(c *gin.Context) {
 		StartDate:      startDate,
 		EndDate:        endDate,
 		PickupLocation: pickupLocation,
-		Status:         "confirmed", // Status otomatis "confirmed"
+		Status:         "confirmed",
 	}
 
 	// Tangani file gambar untuk PhotoID (jika ada)
@@ -453,10 +451,3 @@ func CreateManualBooking(c *gin.Context) {
 	log.Printf("Manual booking successfully created: %+v", response)
 	c.JSON(http.StatusOK, response)
 }
-
-
-
-
-
-
-

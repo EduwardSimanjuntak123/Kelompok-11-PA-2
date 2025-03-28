@@ -7,6 +7,7 @@ use App\Http\Controllers\KelolaBookingController;
 use App\Http\Controllers\MotorController;
 use App\Http\Controllers\nonaktifController;
 use App\Http\Controllers\TransaksiController;
+use App\Http\Controllers\ulasanController;
 use App\Http\Controllers\VendorController;
 use App\Http\Middleware\CheckAuth;
 use App\Http\Middleware\RoleMiddleware;
@@ -62,6 +63,8 @@ Route::middleware([CheckAuth::class])->group(function () {
 
         // Kelola Booking
         Route::get('/bookings/{id}', [KelolaBookingController::class, 'index'])->name('vendor.kelola');
+        Route::get('/reviewss/{id}', [ulasanController::class, 'index'])->name('vendor.ulasan');
+
         Route::post('/booking/add', [KelolaBookingController::class, 'addManualBooking'])
         ->name('vendor.manual.booking.store');
         Route::put('/bookings/{id}/confirm', [KelolaBookingController::class, 'confirm'])->name('vendor.booking.confirm');
