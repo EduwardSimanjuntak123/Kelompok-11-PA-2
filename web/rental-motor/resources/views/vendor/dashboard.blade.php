@@ -3,53 +3,39 @@
 @section('title', 'Dashboard Vendor Rental')
 
 @section('content')
-
-    <div class="bg-white shadow-lg rounded-lg p-6 mb-4">
-        <h2 class="text-xl font-bold mb-4">
-            Dashboard Vendor Motor: {{ session('user.vendor.business_name') ?? 'Tidak tersedia' }}
+    <!-- Greeting -->
+    <div class="bg-white shadow-xl rounded-2xl p-6 mb-6">
+        <h2 class="text-2xl font-extrabold text-gray-800 mb-2">
+            Selamat Datang, {{ session('user.vendor.business_name') ?? 'Vendor' }}
         </h2>
-        <p>Selamat datang, Vendor dengan ID: {{ $id }}</p>
+        <p class="text-gray-600">ID Vendor Anda: <span class="font-semibold">{{ $id }}</span></p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Kelola Harga & Ketersediaan Motor -->
-        <div class="bg-green-100 p-4 rounded-lg shadow-md">
-            <h3 class="font-semibold mb-2">Kelola Harga & Ketersediaan Motor</h3>
-            <a href="{{ route('vendor.motor', ['id' => $id]) }}"
-                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 block text-center">
-                Atur Harga
-            </a>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white shadow rounded-xl p-4 text-center">
+            <p class="text-sm text-gray-500">Motor Aktif</p>
+            <h3 class="text-2xl font-bold text-indigo-600">{{ $jumlah_motor ?? 0 }}</h3>
         </div>
-
-        <!-- Melihat Ulasan -->
-        <div class="bg-blue-100 p-4 rounded-lg shadow-md">
-            <h3 class="font-semibold mb-2">Ulasan Pelanggan</h3>
-            <a href="{{ route('ulasan') }}"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 block text-center">
-                Lihat & Tanggapi Ulasan
-            </a>
+        <div class="bg-white shadow rounded-xl p-4 text-center">
+            <p class="text-sm text-gray-500">Pesanan Bulan Ini</p>
+            <h3 class="text-2xl font-bold text-green-600">{{ $pesanan_bulan_ini ?? 0 }}</h3>
         </div>
-
-        <!-- Menyetujui/Tolak Pesanan -->
-        <div class="bg-yellow-100 p-4 rounded-lg shadow-md">
-            <h3 class="font-semibold mb-2">Kelola Pemesanan</h3>
-            {{-- @dd(session('user.id')); --}}
-            <a href="{{ route('vendor.kelola', ['id' => session('user.id')]) }}"
-                class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 block text-center">
-                Setujui/Tolak Pesanan
-            </a>
+        <div class="bg-white shadow rounded-xl p-4 text-center">
+            <p class="text-sm text-gray-500">Pendapatan</p>
+            <h3 class="text-2xl font-bold text-yellow-600">Rp{{ number_format($pendapatan ?? 0, 0, ',', '.') }}</h3>
         </div>
-
-        <!-- Input Data Transaksi -->
-        <div class="bg-purple-100 p-4 rounded-lg shadow-md">
-            <h3 class="font-semibold mb-2">Data Transaksi</h3>
-            <a href="{{ route('vendor.transaksi', ['id' => session('user.id')]) }}"
-                class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 block text-center">
-                Lihat
-            </a>
+        <div class="bg-white shadow rounded-xl p-4 text-center">
+            <p class="text-sm text-gray-500">Rating Rata-Rata</p>
+            <h3 class="text-2xl font-bold text-purple-600">{{ $rating ?? '-' }}/5</h3>
         </div>
-
-
     </div>
 
+    <!-- Banner / Notification -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-6 rounded-2xl shadow-lg">
+        <h3 class="text-xl font-bold mb-2">Apa yang bisa kami bantu hari ini?</h3>
+        <p class="text-sm text-white/80">
+            Gunakan menu navigasi di atas untuk mengelola motor, memproses pesanan, memantau ulasan pelanggan, dan melihat riwayat transaksi Anda.
+        </p>
+    </div>
 @endsection

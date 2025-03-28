@@ -19,7 +19,7 @@
         {{ session('error') }}
     </div>
 @endif
-   <!-- Daftar Transaksi -->
+   <!-- Daftar Transaksi --> 
 <div class="space-y-4">
     {{-- @dd($transactions); --}}
     @if (!empty($transactions) && count($transactions) > 0)

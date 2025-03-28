@@ -11,6 +11,28 @@
 </head>
 
 <body class="bg-gray-100 flex">
+    @if(session('error'))
+    <script>
+        Swal.fire({
+            title: 'Error!',
+            text: '{{ session('error') }}',
+            icon: 'error',
+            confirmButtonColor: '#d33'
+        });
+    </script>
+@endif
+
+@if(session('success'))
+    <script>
+        Swal.fire({
+            title: 'Berhasil!',
+            text: '{{ session('success') }}',
+            icon: 'success',
+            confirmButtonColor: '#3085d6'
+        });
+    </script>
+@endif
+
     <!-- Sidebar -->
     <aside class="w-64 bg-blue-600 text-white min-h-screen p-6 space-y-6">
         <h1 class="text-2xl font-bold">Rental Motor</h1>
