@@ -7,41 +7,51 @@
     <h2 class="text-3xl font-bold mb-8 text-center text-gray-800"> Ulasan Pelanggan </h2>
 
     <div class="bg-gray-100 shadow-xl rounded-lg p-6">
-        @php
-            // Data ulasan statis (tanpa database)
-            $ulasan = [
-                ['nama' => 'Budi Santoso', 'rating' => 5, 'komentar' => 'Pelayanan sangat baik!', 'balasan' => 'Terima kasih atas ulasannya!'],
-                ['nama' => 'Ani Wijaya', 'rating' => 4, 'komentar' => 'Motor dalam kondisi bagus.', 'balasan' => null],
-                ['nama' => 'Joko Susilo', 'rating' => 3, 'komentar' => 'Harap lebih cepat dalam merespons.', 'balasan' => 'Baik, kami akan meningkatkan pelayanan.'],
-            ];
-        @endphp
-
-        @if(count($ulasan) > 0)
-            @foreach ($ulasan as $review)
+        @if(isset($Reviews) && count($Reviews) > 0)
+            @foreach ($Reviews as $review)
                 <div class="bg-white p-5 shadow-lg rounded-lg mb-6 transition duration-300 hover:scale-105">
                     <!-- Nama Pengguna -->
-                    <h3 class="text-lg font-semibold text-blue-700">{{ $review['nama'] }}</h3>
+                    <h3 class="text-lg font-semibold text-blue-700">
+                        {{ isset($review['customer']['name']) && $review['customer']['name'] ? $review['customer']['name'] : 'Anonymous' }}
+                    </h3>
 
-                    <!-- Rating -->
+                    <!-- Rating dengan bintang penuh, setengah, dan kosong -->
+                    @php
+                        $rating = (float) $review['rating'];
+                        $fullStars = floor($rating);
+                        $halfStar = ($rating - $fullStars) >= 0.5 ? 1 : 0;
+                        $emptyStars = 5 - ($fullStars + $halfStar);
+                    @endphp
+
                     <p class="text-yellow-500 flex items-center">
-                        @for ($i = 0; $i < $review['rating']; $i++)
-                            ⭐
+                        @for ($i = 0; $i < $fullStars; $i++)
+                            <i class="fas fa-star"></i>
                         @endfor
+
+                        @if ($halfStar)
+                            <i class="fas fa-star-half-alt"></i>
+                        @endif
+
+                        @for ($i = 0; $i < $emptyStars; $i++)
+                            <i class="far fa-star"></i>
+                        @endfor
+
                         <span class="ml-2 text-gray-700">{{ $review['rating'] }}/5</span>
                     </p>
 
                     <!-- Ulasan -->
-                    <p class="text-gray-700 mt-2 italic">"{{ $review['komentar'] }}"</p>
+                    <p class="text-gray-700 mt-2 italic">"{{ $review['review'] }}"</p>
 
                     <!-- Balasan Admin -->
-                    @if ($review['balasan'])
+                    @if (!empty($review['vendor_reply']))
                         <div class="bg-blue-100 p-4 mt-3 rounded border-l-4 border-blue-500">
-                            <p class="text-sm text-blue-700"><strong>Admin:</strong> {{ $review['balasan'] }}</p>
+                            <p class="text-sm text-blue-700"><strong>Admin:</strong> {{ $review['vendor_reply'] }}</p>
                         </div>
                     @endif
 
                     <!-- Form Balas Ulasan -->
                     <form action="#" method="POST" class="mt-4">
+                        @csrf
                         <label class="block text-sm font-medium text-gray-700">Balas Ulasan:</label>
                         <textarea
                             name="balasan"

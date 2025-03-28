@@ -39,69 +39,75 @@ class AdminController extends Controller
     
 
     public function updateProfile(Request $request)
-    {
-        try {
-            // Ambil token dari session
-            $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
-
-            // Kumpulkan input menggunakan metode yang sama seperti UpdateMotor
-            $multipart = [];
-            if ($name = $request->input('name')) {
-                $multipart[] = ['name' => 'name', 'contents' => $name];
-            }
-            if ($email = $request->input('email')) {
-                $multipart[] = ['name' => 'email', 'contents' => $email];
-            }
-            if ($phone = $request->input('phone')) {
-                $multipart[] = ['name' => 'phone', 'contents' => $phone];
-            }
-            if ($address = $request->input('address')) {
-                $multipart[] = ['name' => 'address', 'contents' => $address];
-            }
-            // Jika password disediakan, sebaiknya di-hash terlebih dahulu (sesuaikan dengan kebutuhan)
-            if ($password = $request->input('password')) {
-                $multipart[] = ['name' => 'password', 'contents' => $password];
-            }
-            if ($status = $request->input('status')) {
-                $multipart[] = ['name' => 'status', 'contents' => $status];
-            }
-            if ($role = $request->input('role')) {
-                $multipart[] = ['name' => 'role', 'contents' => $role];
-            }
-
-            // Tangani file profile_image jika ada
-            if ($request->hasFile('profile_image')) {
-                $image = $request->file('profile_image');
-                $multipart[] = [
-                    'name' => 'profile_image',
-                    'contents' => fopen($image->getPathname(), 'r'),
-                    'filename' => $image->getClientOriginalName()
-                ];
-            }
-            // Tangani file ktp_image jika ada
-            if ($request->hasFile('ktp_image')) {
-                $file = $request->file('ktp_image');
-                $multipart[] = [
-                    'name' => 'ktp_image',
-                    'contents' => fopen($file->getPathname(), 'r'),
-                    'filename' => $file->getClientOriginalName()
-                ];
-            }
-
-            // Kirim request PUT ke API backend Golang untuk update profil admin
-            $response = Http::withToken($token)
-                ->asMultipart()
-                ->put("{$this->apiBaseUrl}/admin/profile/edit", $multipart);
-
-            if ($response->successful()) {
-                return redirect()->back()->with('message', 'Profil berhasil diperbarui')->with('type', 'success');
-            }
-
-            Log::error("Gagal memperbarui profil. Status: " . $response->status());
-            return redirect()->back()->with('message', 'Gagal memperbarui profil')->with('type', 'error');
-        } catch (\Exception $e) {
-            Log::error("Terjadi kesalahan saat memperbarui profil: " . $e->getMessage());
-            return redirect()->back()->with('message', 'Terjadi kesalahan server')->with('type', 'error');
+{
+    try {
+        // Ambil token dari session
+        $token = session()->get('token');
+        if (!$token) {
+            return redirect()->route('login')->with('message', 'Anda harus login terlebih dahulu.')->with('type', 'error');
         }
+
+        $multipart = [];
+
+        // Ambil data input jika tersedia
+        if ($name = $request->input('name')) {
+            $multipart[] = ['name' => 'name', 'contents' => $name];
+        }
+        if ($email = $request->input('email')) {
+            $multipart[] = ['name' => 'email', 'contents' => $email];
+        }
+        if ($phone = $request->input('phone')) {
+            $multipart[] = ['name' => 'phone', 'contents' => $phone];
+        }
+        if ($address = $request->input('address')) {
+            $multipart[] = ['name' => 'address', 'contents' => $address];
+        }
+        if ($password = $request->input('password')) {
+            $multipart[] = ['name' => 'password', 'contents' => $password];
+        }
+        if ($status = $request->input('status')) {
+            $multipart[] = ['name' => 'status', 'contents' => $status];
+        }
+        if ($role = $request->input('role')) {
+            $multipart[] = ['name' => 'role', 'contents' => $role];
+        }
+
+        // Tangani upload foto profil
+        if ($request->hasFile('profile_image')) {
+            $image = $request->file('profile_image');
+            $multipart[] = [
+                'name' => 'profile_image',
+                'contents' => fopen($image->getPathname(), 'r'),
+                'filename' => $image->getClientOriginalName()
+            ];
+        }
+
+        // Tangani upload foto KTP
+        if ($request->hasFile('ktp_image')) {
+            $file = $request->file('ktp_image');
+            $multipart[] = [
+                'name' => 'ktp_image',
+                'contents' => fopen($file->getPathname(), 'r'),
+                'filename' => $file->getClientOriginalName()
+            ];
+        }
+
+        // Kirim PUT request ke API Golang
+        $response = Http::withToken($token)
+            ->asMultipart()
+            ->put("{$this->apiBaseUrl}/admin/profile/edit", $multipart);
+
+        // Jika berhasil
+        if ($response->successful()) {
+            return redirect()->back()->with('message', 'Profil berhasil diperbarui')->with('type', 'success');
+        }
+
+        // Jika gagal tapi bukan exception
+        Log::error("Gagal memperbarui profil. Status: " . $response->status());
+        return redirect()->back()->with('message', 'Gagal memperbarui profil')->with('type', 'error');
+    } catch (\Exception $e) {
+        Log::error("Terjadi kesalahan saat memperbarui profil: " . $e->getMessage());
+        return redirect()->back()->with('message', 'Terjadi kesalahan server')->with('type', 'error');
     }
+}
 }
