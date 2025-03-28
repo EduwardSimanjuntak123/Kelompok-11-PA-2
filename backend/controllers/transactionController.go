@@ -75,7 +75,6 @@ func AddManualTransaction(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Transaksi manual berhasil ditambahkan", "transaction": transaction})
 }
 
-
 func GetVendorTransactions(c *gin.Context) {
 	// Ambil user_id dari token JWT
 	userID, exists := c.Get("user_id")
@@ -101,34 +100,30 @@ func GetVendorTransactions(c *gin.Context) {
 	// Siapkan response dengan menyertakan nama customer dan booking_date
 	var response []map[string]interface{}
 	for _, t := range transactions {
-		customerName := "Tidak Diketahui" // Default jika nama customer tidak ditemukan
-		bookingDate := ""                 // Default booking date kosong
+		// Default nilai nama customer
+		customerName := "Tidak Diketahui"
 
-		if t.Type == "online" {
-			// Ambil nama dari tabel User jika transaksi online
-			if t.CustomerID != nil {
-				var user models.User
-				if err := config.DB.Select("name").Where("id = ?", *t.CustomerID).First(&user).Error; err == nil {
-					customerName = user.Name
-				}
+		// Jika CustomerID ada, ambil nama dari tabel users
+		if t.CustomerID != nil {
+			var user models.User
+			if err := config.DB.Select("name").Where("id = ?", *t.CustomerID).First(&user).Error; err == nil {
+				customerName = user.Name
 			}
-		} else if t.Type == "manual" {
-			// Ambil nama dan booking_date dari tabel Booking jika transaksi manual
-			if t.BookingID != nil {
-				var booking models.Booking
-				if err := config.DB.Select("customer_name, booking_date").Where("id = ?", *t.BookingID).First(&booking).Error; err == nil {
-					customerName = booking.CustomerName
-					bookingDate = booking.BookingDate.Format("2006-01-02") // Format YYYY-MM-DD
-				}
+		} else if t.BookingID != nil {
+			// Jika CustomerID null dan BookingID ada, ambil nama dari tabel bookings
+			var booking models.Booking
+			if err := config.DB.Select("customer_name, booking_date").Where("id = ?", *t.BookingID).First(&booking).Error; err == nil {
+				customerName = booking.CustomerName
 			}
 		}
 
-		// Ambil detail motor
+		// Ambil detail motor (pastikan field sesuai model Motor)
 		var motor models.Motor
-		if err := config.DB.Select("id, name, brand, model, year, price_per_day").Where("id = ?", t.MotorID).First(&motor).Error; err != nil {
+		if err := config.DB.Select("id, name, brand, model, year, price").Where("id = ?", t.MotorID).First(&motor).Error; err != nil {
 			motor = models.Motor{}
 		}
 
+		// Format response
 		resp := map[string]interface{}{
 			"id":              t.ID,
 			"booking_id":      t.BookingID,
@@ -141,10 +136,10 @@ func GetVendorTransactions(c *gin.Context) {
 			"end_date":        t.EndDate,
 			"pickup_location": t.PickupLocation,
 			"status":          t.Status,
+			"booking_date":    t.CreatedAt, // Jika booking_date tidak disimpan di transaksi, Anda bisa gunakan created_at
 			"created_at":      t.CreatedAt,
 			"updated_at":      t.UpdatedAt,
-			"customer_name":   customerName, // Nama customer ditambahkan
-			"booking_date":    bookingDate,  // Tanggal booking ditambahkan
+			"customer_name":   customerName,
 			"motor": map[string]interface{}{
 				"id":            motor.ID,
 				"name":          motor.Name,

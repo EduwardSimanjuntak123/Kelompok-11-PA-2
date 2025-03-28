@@ -96,7 +96,7 @@ func saveBookingImage(c *gin.Context, file *multipart.FileHeader) (string, error
 func CreateBooking(c *gin.Context) {
 	var booking models.Booking
 
-	// Bind JSON ke struct booking
+	// Bind request (dikirim sebagai multipart/form-data) ke struct booking
 	if err := c.ShouldBind(&booking); err != nil {
 		log.Printf("Error binding request: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Format request tidak valid"})
@@ -105,7 +105,7 @@ func CreateBooking(c *gin.Context) {
 
 	log.Printf("Debug: Booking data received: %+v", booking)
 
-	// Mengambil user_id dari token
+	// Ambil user_id dari token
 	userID, exists := c.Get("user_id")
 	if !exists {
 		log.Printf("User not authenticated")
@@ -113,6 +113,7 @@ func CreateBooking(c *gin.Context) {
 		return
 	}
 
+	// Karena CustomerID bertipe *uint, ambil pointer dari userID
 	id := userID.(uint)
 	booking.CustomerID = &id
 
@@ -121,7 +122,7 @@ func CreateBooking(c *gin.Context) {
 	// Mulai transaksi database
 	tx := config.DB.Begin()
 
-	// Ambil data pelanggan berdasarkan user_id dari token
+	// Ambil data pelanggan (customer) berdasarkan user_id dari token
 	var customer models.User
 	if err := tx.Select("id, name").Where("id = ?", id).First(&customer).Error; err != nil {
 		tx.Rollback()
@@ -129,6 +130,11 @@ func CreateBooking(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data pelanggan"})
 		return
 	}
+
+	log.Printf("Debug: Customer Data -> ID: %d, Name: %s", customer.ID, customer.Name)
+
+	// Set CustomerName di booking dari nama customer yang diambil
+	booking.CustomerName = customer.Name
 
 	// Validasi MotorID
 	if booking.MotorID == 0 {
@@ -156,16 +162,6 @@ func CreateBooking(c *gin.Context) {
 	}
 
 	booking.VendorID = motor.VendorID
-
-	// **Validasi apakah motor sudah dibooking dalam rentang tanggal tersebut**
-	var existingBooking models.Booking
-	if err := tx.Where("motor_id = ? AND status = ? AND ((start_date <= ? AND end_date >= ?) OR (start_date <= ? AND end_date >= ?))",
-		booking.MotorID, "confirmed", booking.StartDate, booking.StartDate, booking.EndDate, booking.EndDate).
-		First(&existingBooking).Error; err == nil {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Motor sudah dibooking pada rentang tanggal tersebut"})
-		return
-	}
 
 	// Validasi rentang tanggal
 	if booking.EndDate.Before(booking.StartDate) {
@@ -248,6 +244,7 @@ func CreateBooking(c *gin.Context) {
 	log.Printf("Booking successfully created: %+v", response)
 	c.JSON(http.StatusOK, response)
 }
+
 
 // Cancel Booking
 func CancelBooking(c *gin.Context) {
