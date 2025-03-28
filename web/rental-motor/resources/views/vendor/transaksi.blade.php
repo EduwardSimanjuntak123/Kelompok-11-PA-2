@@ -19,31 +19,36 @@
             </div>
         </div>
         <!-- Tabel Transaksi -->
-        
-            
-            <!-- Daftar Transaksi -->
-            <div class="space-y-4">
-                @foreach ($transactions as $transaction)
-                    <div class="p-4 bg-white shadow rounded cursor-pointer" onclick="showTransactionDetails({{ json_encode($transaction) }})">
-                        <h3 class="text-lg font-semibold">{{ $transaction['customer_name'] }} - {{ $transaction['status'] }}</h3>
-                        <p class="text-sm text-gray-500">Booking: {{ \Carbon\Carbon::parse($transaction['booking_date'])->format('Y-m-d H:i:s') }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    
-        <!-- Modal Detail Transaksi -->
-        <div id="transactionDetailModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center">
-            <div class="bg-white rounded-lg shadow-lg w-1/2 p-6">
-                <h2 class="text-2xl font-bold mb-4">Detail Transaksi</h2>
-                <div id="transactionDetailContent"></div>
-                <div class="flex justify-end mt-4">
-                    <button onclick="closeModal('transactionDetailModal')" class="px-4 py-2 bg-gray-500 text-white rounded">
-                        Tutup
-                    </button>
+
+
+        <!-- Daftar Transaksi -->
+        <div class="space-y-4">
+            {{-- @dd($transactions) --}}
+            @foreach ($transactions as $transaction)
+                <div class="p-4 bg-white shadow rounded cursor-pointer"
+                    onclick="showTransactionDetails({{ json_encode($transaction) }})">
+                    <h3 class="text-lg font-semibold">{{ $transaction['customer_name'] }} - {{ $transaction['status'] }}
+                    </h3>
+                    <p class="text-sm text-gray-500">Booking:
+                        {{ \Carbon\Carbon::parse($transaction['booking_date'])->format('Y-m-d H:i:s') }}</p>
                 </div>
+            @endforeach
+        </div>
+    </div>
+
+    <!-- Modal Detail Transaksi -->
+    <div id="transactionDetailModal"
+        class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-lg w-1/2 p-6">
+            <h2 class="text-2xl font-bold mb-4">Detail Transaksi</h2>
+            <div id="transactionDetailContent"></div>
+            <div class="flex justify-end mt-4">
+                <button onclick="closeModal('transactionDetailModal')" class="px-4 py-2 bg-gray-500 text-white rounded">
+                    Tutup
+                </button>
             </div>
         </div>
+    </div>
     </div>
 
     <!-- Modal Add Transaksi Manual -->
@@ -141,17 +146,17 @@
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-    
+
         function closeModal(modalId) {
             let modal = document.getElementById(modalId);
             modal.classList.remove('active');
             modal.classList.add('hidden');
             document.body.style.overflow = '';
         }
-    
+
         function showTransactionDetails(transaction) {
-            let motorDetails = transaction.motor
-                ? `
+            let motorDetails = transaction.motor ?
+                `
                     <p><strong>Motor Details:</strong></p>
                     <ul>
                         <li><strong>ID:</strong> ${transaction.motor.id}</li>
@@ -163,7 +168,7 @@
                         <li><strong>Total Price:</strong> ${transaction.motor.total_price.toLocaleString()}</li>
                     </ul>
                 ` : `<p><strong>Motor Details:</strong> Data tidak tersedia</p>`;
-    
+
             let content = `
                 <p><strong>ID:</strong> ${transaction.id}</p>
                 <p><strong>Booking Date:</strong> ${transaction.booking_date}</p>
@@ -174,20 +179,20 @@
                 <p><strong>Pickup Location:</strong> ${transaction.pickup_location}</p>
                 ${motorDetails}
             `;
-    
+
             document.getElementById('transactionDetailContent').innerHTML = content;
             openModal('transactionDetailModal');
         }
     </script>
-    
+
     <style>
         .modal {
             display: none !important;
         }
-    
+
         .modal.active {
             display: flex !important;
         }
     </style>
-    
+
 @endsection

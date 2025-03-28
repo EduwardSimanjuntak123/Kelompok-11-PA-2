@@ -1,47 +1,25 @@
 @extends('layouts.app')
 
-@section('title', 'motor Vendor Rental')
+@section('title', 'Motor Vendor Rental')
 
 @section('content')
     <!-- Sertakan SweetAlert2 dari CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    {{-- Flash message untuk alert sukses --}}
-    @if(session('success_add'))
-        <script>
-            Swal.fire({
-                title: 'Berhasil!',
-                text: {!! json_encode(session('success_add')) !!},
-                icon: 'success',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#3085d6'
-            });
-        </script>
-    @endif
-
-    @if(session('success_edit'))
-        <script>
-            Swal.fire({
-                title: 'Berhasil!',
-                text: {!! json_encode(session('success_edit')) !!},
-                icon: 'success',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#3085d6'
-            });
-        </script>
-    @endif
-
-    @if(session('success_delete'))
-        <script>
-            Swal.fire({
-                title: 'Berhasil!',
-                text: {!! json_encode(session('success_delete')) !!},
-                icon: 'success',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#3085d6'
-            });
-        </script>
-    @endif
+    {{-- Menampilkan pesan sukses atau error menggunakan SweetAlert2 --}}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            @if (session()->has('message'))
+                Swal.fire({
+                    title: "{{ session('type') == 'success' ? 'Berhasil!' : 'Gagal!' }}",
+                    text: {!! json_encode(session('message')) !!},
+                    icon: "{{ session('type') }}",
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3085d6'
+                });
+            @endif
+        });
+    </script>
 
     <!-- Tombol Tambah Motor -->
     <button id="openAddModalBtn" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition mb-4">
@@ -68,7 +46,8 @@
                     <tr class="border-b">
                         <td class="px-4 py-2">
                             @if (!empty($motor['image_url']))
-                                <img src="{{ $motor['image_url'] }}" alt="Gambar Motor" class="w-24 h-16 object-cover rounded-md">
+                                <img src="{{ $motor['image_url'] }}" alt="Gambar Motor"
+                                    class="w-24 h-16 object-cover rounded-md">
                             @else
                                 <span class="text-gray-400 italic">Tidak ada gambar</span>
                             @endif
@@ -102,8 +81,8 @@
 
     <script>
         document.getElementById('openAddModalBtn').addEventListener('click', function() {
-    document.getElementById('addModal').style.display = 'flex';
-});
+            document.getElementById('addModal').style.display = 'flex';
+        });
 
         function closeAddModal() {
             document.getElementById('addModal').style.display = 'none';
@@ -111,17 +90,16 @@
 
         // Modal Edit Motor
         function openEditModal(motor) {
-    document.getElementById('editModal').style.display = 'flex';
-    document.getElementById('editMotorName').value = motor.name;
-    document.getElementById('editMotorBrand').value = motor.brand;
-    document.getElementById('editMotorModel').value = motor.model;
-    document.getElementById('editMotorYear').value = motor.year;
-    document.getElementById('editMotorColor').value = motor.color;
-    document.getElementById('editMotorPrice').value = motor.price;
-    document.getElementById('editMotorStatus').value = motor.status;
-    setEditFormAction(motor.id);
-}
-
+            document.getElementById('editModal').style.display = 'flex';
+            document.getElementById('editMotorName').value = motor.name;
+            document.getElementById('editMotorBrand').value = motor.brand;
+            document.getElementById('editMotorModel').value = motor.model;
+            document.getElementById('editMotorYear').value = motor.year;
+            document.getElementById('editMotorColor').value = motor.color;
+            document.getElementById('editMotorPrice').value = motor.price;
+            document.getElementById('editMotorStatus').value = motor.status;
+            setEditFormAction(motor.id);
+        }
 
         function closeEditModal() {
             document.getElementById('editModal').style.display = 'none';
@@ -138,7 +116,7 @@
                 cancelButtonText: 'Batal',
                 reverseButtons: true
             }).then((result) => {
-                if(result.isConfirmed){
+                if (result.isConfirmed) {
                     setDeleteFormAction(motor.id);
                     document.getElementById('deleteMotorForm').submit();
                 }
@@ -159,7 +137,7 @@
         }
 
         // Event listener untuk form submit pada modal tambah
-        if(document.getElementById('addMotorForm')){
+        if (document.getElementById('addMotorForm')) {
             document.getElementById('addMotorForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 Swal.fire({
@@ -171,7 +149,7 @@
                     cancelButtonText: 'Batal',
                     reverseButtons: true
                 }).then((result) => {
-                    if(result.isConfirmed){
+                    if (result.isConfirmed) {
                         this.submit();
                     }
                 });
@@ -179,7 +157,7 @@
         }
 
         // Event listener untuk form submit pada modal edit
-        if(document.getElementById('editMotorForm')){
+        if (document.getElementById('editMotorForm')) {
             document.getElementById('editMotorForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 Swal.fire({
@@ -191,7 +169,7 @@
                     cancelButtonText: 'Batal',
                     reverseButtons: true
                 }).then((result) => {
-                    if(result.isConfirmed){
+                    if (result.isConfirmed) {
                         this.submit();
                     }
                 });
