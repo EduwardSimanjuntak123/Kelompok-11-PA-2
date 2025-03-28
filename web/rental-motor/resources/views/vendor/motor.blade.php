@@ -11,8 +11,9 @@
         <script>
             Swal.fire({
                 title: 'Berhasil!',
-                text: '{{ session('success_add') }}',
+                text: {!! json_encode(session('success_add')) !!},
                 icon: 'success',
+                confirmButtonText: 'OK',
                 confirmButtonColor: '#3085d6'
             });
         </script>
@@ -22,8 +23,9 @@
         <script>
             Swal.fire({
                 title: 'Berhasil!',
-                text: '{{ session('success_edit') }}',
+                text: {!! json_encode(session('success_edit')) !!},
                 icon: 'success',
+                confirmButtonText: 'OK',
                 confirmButtonColor: '#3085d6'
             });
         </script>
@@ -33,8 +35,9 @@
         <script>
             Swal.fire({
                 title: 'Berhasil!',
-                text: '{{ session('success_delete') }}',
+                text: {!! json_encode(session('success_delete')) !!},
                 icon: 'success',
+                confirmButtonText: 'OK',
                 confirmButtonColor: '#3085d6'
             });
         </script>
