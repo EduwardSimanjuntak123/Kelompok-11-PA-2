@@ -19,7 +19,7 @@ func AdminRoutes(router *gin.Engine) {
 			admin.GET("/users", controllers.GetAllUsers)
 			admin.GET("/profile", controllers.GetDataAdmin)
 			admin.PUT("/profile/edit", controllers.EditDataAdmin)
-
+			admin.PUT("/activate-vendor/:id", controllers.ActivateVendor)
 			admin.PUT("/deactivate-vendor/:id", controllers.DeactivateVendor)
 		}
 	}

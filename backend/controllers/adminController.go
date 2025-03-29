@@ -329,3 +329,44 @@ func GetAllVendors(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 }
+
+func ActivateVendor(c *gin.Context) {
+    var user models.User
+    id := c.Param("id")
+
+    // Validasi apakah ID adalah angka
+    vendorID, err := strconv.Atoi(id)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "ID tidak valid"})
+        return
+    }
+
+    // Cari user berdasarkan ID
+    if err := config.DB.Where("id = ?", vendorID).First(&user).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Pengguna (vendor) tidak ditemukan"})
+        return
+    }
+
+    // Pastikan user adalah vendor
+    if user.Role != "vendor" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Pengguna bukan vendor"})
+        return
+    }
+
+    // Periksa apakah vendor sudah aktif
+    if user.Status == "active" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Vendor sudah dalam status aktif"})
+        return
+    }
+
+    // Update status menjadi aktif
+    if err := config.DB.Model(&user).Updates(map[string]interface{}{
+        "status":     "active",
+        "updated_at": time.Now(),
+    }).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengaktifkan vendor"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Akun vendor berhasil diaktifkan kembali"})
+}
