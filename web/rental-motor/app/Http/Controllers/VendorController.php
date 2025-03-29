@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class VendorController extends Controller
 {
@@ -38,35 +39,77 @@ class VendorController extends Controller
 
         return view('vendor.profile', compact('user'));
     }
+
     public function dashboard($id = null)
     {
-        // Jika ID tidak diberikan, ambil dari session (user_id)
         if (!$id) {
             $id = session('user_id');
         }
-
-        // Jika ID masih tidak ditemukan, redirect ke halaman login
+    
         if (!$id) {
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
-
-        // Opsional: Ambil data dashboard dari API backend vendor
-        // Contoh: memanggil endpoint /vendor/dashboard/{id}
+    
         $token = session()->get('token');
-        $dashboardData = [];
+        $motorData = [];
+        $ratingData = [];
+        $bookingData = [];
+        $transactions = [];
+        $pendapatanBulanan = [];
+        $pesananBulanan = [];
+    
         if ($token) {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-            ])->get($this->apiBaseUrl . '/vendor/dashboard/' . $id);
-
-            if ($response->successful()) {
-                $dashboardData = $response->json();
+            try {
+                // Ambil daftar motor vendor
+                $motorResponse = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $token
+                ])->get('http://localhost:8080/motor/vendor/');
+    
+                if ($motorResponse->successful()) {
+                    $motorData = $motorResponse->json();
+                }
+    
+                // Ambil profil vendor (rating)
+                $ratingResponse = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $token
+                ])->get('http://localhost:8080/vendor/profile');
+    
+                if ($ratingResponse->successful()) {
+                    $ratingData = $ratingResponse->json();
+                }
+    
+                // Ambil daftar booking
+                $bookingResponse = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $token
+                ])->get('http://localhost:8080/vendor/bookings');
+    
+                if ($bookingResponse->successful()) {
+                    $bookingData = $bookingResponse->json();
+                }
+    
+                // Ambil data transaksi
+                $transactionResponse = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $token
+                ])->get('http://localhost:8080/transaction/');
+    
+                if ($transactionResponse->successful()) {
+                    $transactions = $transactionResponse->json();
+                }
+            } catch (\Exception $e) {
+                Log::error('Gagal mengambil data vendor: ' . $e->getMessage());
             }
         }
-
-        // Kembalikan view dashboard dengan data (jika ada) dan ID user
-        return view('vendor.dashboard', compact('dashboardData', 'id'));
+    
+        return view('vendor.dashboard', compact(
+            'motorData', 'ratingData', 'bookingData', 'id',
+            'transactions', 'pendapatanBulanan', 'pesananBulanan'
+        ));
     }
+
+    
+    
+
+
     // Mengupdate profil vendor dengan data form-data
     public function updateProfile(Request $request)
 {

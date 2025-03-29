@@ -6,36 +6,124 @@
     <!-- Greeting -->
     <div class="bg-white shadow-xl rounded-2xl p-6 mb-6">
         <h2 class="text-2xl font-extrabold text-gray-800 mb-2">
-            Selamat Datang, {{ session('user.vendor.business_name') ?? 'Vendor' }}
+            Selamat Datang, {{ session('user.vendor.shop_name') ?? 'Vendor' }}
         </h2>
         <p class="text-gray-600">ID Vendor Anda: <span class="font-semibold">{{ $id }}</span></p>
     </div>
+    @dd($ratingData)
+
+    @php
+        use Carbon\Carbon;
+
+        $userId = session('user_id') ?? null;
+
+        // Inisialisasi array pendapatan bulanan
+        $pendapatanBulanan = [];
+        $bulanSekarang = Carbon::now()->startOfMonth(); // Awal bulan sekarang
+        $bulanFormat = 'F Y';
+
+        // Rentang 2 bulan sebelum dan 2 bulan setelah bulan sekarang
+        $rentangBulan = [];
+        for ($i = -2; $i <= 2; $i++) {
+            $bulan = $bulanSekarang->copy()->addMonths($i)->format($bulanFormat);
+            $rentangBulan[] = $bulan;
+            $pendapatanBulanan[$bulan] = 0; // Inisialisasi pendapatan
+        }
+
+        // Hitung pendapatan berdasarkan transaksi
+        foreach ($transactions as $transaction) {
+            $bulan = Carbon::parse($transaction['created_at'])->format($bulanFormat);
+            if (isset($pendapatanBulanan[$bulan])) {
+                $pendapatanBulanan[$bulan] += $transaction['total_price'];
+            }
+        }
+
+        // Total pendapatan bulan ini
+        $bulanSekarangFormatted = $bulanSekarang->format($bulanFormat);
+        $pendapatanBulan = $pendapatanBulanan[$bulanSekarangFormatted] ?? 0;
+
+        // Hitung jumlah pesanan yang berstatus "pending"
+        $pesananPending = collect($bookingData ?? [])
+            ->where('status', 'pending')
+            ->count();
+    @endphp
 
     <!-- Summary Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white shadow rounded-xl p-4 text-center">
             <p class="text-sm text-gray-500">Motor Aktif</p>
-            <h3 class="text-2xl font-bold text-indigo-600">{{ $jumlah_motor ?? 0 }}</h3>
+            <h3 class="text-2xl font-bold text-indigo-600">
+                {{ count($motorData['data'] ?? []) }}
+            </h3>
         </div>
-        <div class="bg-white shadow rounded-xl p-4 text-center">
-            <p class="text-sm text-gray-500">Pesanan Bulan Ini</p>
-            <h3 class="text-2xl font-bold text-green-600">{{ $pesanan_bulan_ini ?? 0 }}</h3>
+
+        <a href="{{ route('vendor.kelola', ['id' => $userId]) }}">
+            <div class="bg-white shadow rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-500">Pesanan Masuk (Pending)</p>
+                <h3 class="text-2xl font-bold text-green-600">
+                    {{ $pesananPending }}
+                </h3>
+            </div>
+        </a>
+
+        <div class="bg-white shadow rounded-xl p-4 text-center border-l-4 border-green-500">
+            <p class="text-sm text-gray-500">Pendapatan Bulan {{ $bulanSekarangFormatted }}</p>
+            <h3 class="text-2xl font-bold text-green-600">
+                Rp {{ number_format($pendapatanBulan, 0, ',', '.') }}
+            </h3>
         </div>
-        <div class="bg-white shadow rounded-xl p-4 text-center">
-            <p class="text-sm text-gray-500">Pendapatan</p>
-            <h3 class="text-2xl font-bold text-yellow-600">Rp{{ number_format($pendapatan ?? 0, 0, ',', '.') }}</h3>
-        </div>
+
         <div class="bg-white shadow rounded-xl p-4 text-center">
             <p class="text-sm text-gray-500">Rating Rata-Rata</p>
-            <h3 class="text-2xl font-bold text-purple-600">{{ $rating ?? '-' }}/5</h3>
+            <h3 class="text-2xl font-bold text-purple-600">
+                {{ $ratingData['user']['vendor']['rating'] ?? '0' }}/5
+            </h3>
         </div>
     </div>
 
-    <!-- Banner / Notification -->
-    <div class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-6 rounded-2xl shadow-lg">
-        <h3 class="text-xl font-bold mb-2">Apa yang bisa kami bantu hari ini?</h3>
-        <p class="text-sm text-white/80">
-            Gunakan menu navigasi di atas untuk mengelola motor, memproses pesanan, memantau ulasan pelanggan, dan melihat riwayat transaksi Anda.
-        </p>
+    <!-- Grafik Pendapatan -->
+    <div class="bg-white shadow-xl rounded-2xl p-6 mb-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">Grafik Pendapatan Per Bulan</h3>
+        <canvas id="pendapatanChart"></canvas>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const pendapatanLabels = @json($rentangBulan);
+            const pendapatanData = @json(array_values($pendapatanBulanan));
+
+            const ctxPendapatan = document.getElementById('pendapatanChart').getContext('2d');
+            new Chart(ctxPendapatan, {
+                type: 'line',
+                data: {
+                    labels: pendapatanLabels,
+                    datasets: [{
+                        label: 'Pendapatan (Rp)',
+                        data: pendapatanData,
+                        borderColor: 'blue',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'blue',
+                        pointRadius: 6,
+                        fill: false,
+                        tension: 0.3,
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 @endsection
