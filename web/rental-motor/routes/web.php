@@ -34,6 +34,7 @@ Route::middleware([CheckAuth::class])->group(function () {
         })->name('admin');
         Route::get('/admin/vendors', [nonaktifController::class, 'index'])->name('admin.nonaktif');
         Route::post('/admin/deactivate/{id}', [nonaktifController::class, 'deactivate'])->name('vendor.deactivate');
+        Route::put('/admin/activate-vendor/{id}', [nonaktifController::class, 'activate'])->name('vendor.activate');
         Route::put('/admin/profile/edit', [AdminController::class, 'updateProfile'])->name('admin.update');
         Route::get('/admin/profile/{id}', [AdminController::class, 'profile'])->name('admin.profile');
         Route::view('/nonaktif', 'nonaktif')->name('nonaktif');
