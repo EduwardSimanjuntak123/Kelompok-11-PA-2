@@ -22,8 +22,8 @@
 
                     <!-- Status Vendor dengan warna dinamis -->
                     @php
-                        $statusText = $vendor['status'] == 'Aktif' ? '🟢 Aktif' : '🔴 Tidak Aktif';
-                        $statusColor = $vendor['status'] == 'Aktif' ? 'text-green-600' : 'text-red-600';
+                        $statusText = $vendor['status'] == 'active' ? '🟢 Aktif' : '🔴 Tidak Aktif';
+                        $statusColor = $vendor['status'] == 'active' ? 'text-green-600' : 'text-red-600';
                     @endphp
                     <p class="font-semibold mt-2 {{ $statusColor }}">
                         {{ $statusText }}
