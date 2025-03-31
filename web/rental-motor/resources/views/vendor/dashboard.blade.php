@@ -10,7 +10,7 @@
         </h2>
         <p class="text-gray-600">ID Vendor Anda: <span class="font-semibold">{{ $id }}</span></p>
     </div>
-    @dd($ratingData)
+    {{-- @dd($ratingData) --}}
 
     @php
         use Carbon\Carbon;

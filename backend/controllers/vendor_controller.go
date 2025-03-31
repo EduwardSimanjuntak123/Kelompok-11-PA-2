@@ -18,6 +18,30 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
+func GetVendorByID(c *gin.Context) {
+	// Ambil ID vendor dari parameter URL
+	vendorID := c.Param("id")
+
+	// Struct untuk menyimpan data vendor
+	var vendor models.Vendor
+
+	// Query database untuk mengambil vendor berdasarkan ID dengan user & motors terkait
+	if err := config.DB.
+		Preload("User").
+		Preload("Motors").
+		Where("id = ?", vendorID).
+		First(&vendor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	// Kirim data vendor sebagai respons
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Berhasil mengambil data vendor",
+		"data":    vendor,
+	})
+}
+
 
 // RegisterVendor mendaftarkan vendor baru
 func RegisterVendor(c *gin.Context) {
@@ -383,3 +407,26 @@ func ReplyReview(c *gin.Context) {
 		"review":  review,
 	})
 }
+
+// Fungsi untuk mendapatkan semua vendor
+func GetAllVendor(c *gin.Context) {
+	var vendors []models.Vendor
+
+	// Ambil semua vendor dengan informasi user dan motor terkait
+	if err := config.DB.Preload("User").Preload("Motors").Find(&vendors).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data vendor"})
+		return
+	}
+
+	// Periksa apakah ada data vendor
+	if len(vendors) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Tidak ada vendor yang tersedia"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Berhasil mengambil data vendor",
+		"data":    vendors,
+	})
+}
+

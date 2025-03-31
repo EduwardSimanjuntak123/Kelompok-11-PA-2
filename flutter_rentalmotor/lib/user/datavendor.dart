@@ -1,185 +1,217 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/user/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/ulasanpengguna.dart';
 import 'package:flutter_rentalmotor/user/akun.dart';
 import 'package:flutter_rentalmotor/user/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
+import 'package:intl/intl.dart';
 
 class DataVendor extends StatefulWidget {
+  final int vendorId;
+  const DataVendor({Key? key, required this.vendorId}) : super(key: key);
+
   @override
   _DataVendorState createState() => _DataVendorState();
 }
 
 class _DataVendorState extends State<DataVendor> {
   int _selectedIndex = 0;
+  Map<String, dynamic>? _vendorData;
+  List<Map<String, dynamic>> _motorList = [];
+  bool _isLoading = true;
+  String _errorMessage = '';
+  final String baseUrl = "http://192.168.189.159:8080";
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    await _fetchVendorData();
+    await _fetchMotorData();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _fetchVendorData() async {
+    final String apiUrl = "$baseUrl/vendor/${widget.vendorId}";
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        setState(() {
+          _vendorData = jsonResponse['data'];
+        });
+      } else {
+        throw Exception(
+            "Gagal mengambil data vendor (Status: ${response.statusCode})");
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Error fetching vendor data: $e";
+      });
+    }
+  }
+
+  Future<void> _fetchMotorData() async {
+    final String apiUrl = "$baseUrl/customer/motors/vendor/1";
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        setState(() {
+          _motorList = List<Map<String, dynamic>>.from(jsonResponse['data']);
+        });
+      } else {
+        throw Exception(
+            "Gagal mengambil data motor (Status: ${response.statusCode})");
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Error fetching motor data: $e";
+      });
+    }
+  }
 
   void _onItemTapped(int index) {
-  if (index == 0) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => HomePageUser()),
-    );
-  } else if (index == 1) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => DetailPesanan()),
-    );
-  } else if (index == 2) {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => Akun()),
-    );
+    if (index == 0) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => HomePageUser()));
+    } else if (index == 1) {
+      Navigator.push(
+          context, MaterialPageRoute(builder: (context) => DetailPesanan()));
+    } else if (index == 2) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => Akun()));
+    }
   }
-}
 
+  String formatRupiah(int amount) {
+    return NumberFormat.decimalPattern('id').format(amount);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                Image.asset(
-                  'assets/images/m4.png',
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
-                ),
-                Positioned(
-                  top: 30,
-                  left: 10,
-                  child: IconButton(
-                    icon: Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: EdgeInsets.all(15),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      appBar: AppBar(
+        title: Text("Data Vendor - ID: ${widget.vendorId}"),
+        backgroundColor: Color(0xFF2C567E),
+      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _errorMessage.isNotEmpty
+              ? Center(
+                  child:
+                      Text(_errorMessage, style: TextStyle(color: Colors.red)))
+              : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Stack(
                         children: [
-                          Text(
-                            'Gaol Rental',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                          Image.asset(
+                            'assets/images/m4.png',
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
+                          ),
+                          Positioned(
+                            top: 30,
+                            left: 10,
+                            child: IconButton(
+                              icon: Icon(Icons.arrow_back, color: Colors.white),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
                             ),
                           ),
-                          SizedBox(height: 5),
-                          Text('Balige, Toba Samosir', style: TextStyle(color: Colors.grey)),
                         ],
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
-                          borderRadius: BorderRadius.circular(8),
+                      Padding(
+                        padding: EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _vendorData?['shop_name'] ??
+                                  'Nama Tidak Diketahui',
+                              style: TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 5),
+                            Text(
+                              _vendorData?['shop_address'] ??
+                                  'Alamat Tidak Diketahui',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            SizedBox(height: 10),
+                            _motorList.isEmpty
+                                ? Center(
+                                    child: Text("Tidak ada motor tersedia."))
+                                : Column(
+                                    children: _motorList
+                                        .map((motor) =>
+                                            _motorListWidget(context, motor))
+                                        .toList(),
+                                  ),
+                            SizedBox(height: 15),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10)),
+                                minimumSize: Size(double.infinity, 50),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            UlasanPenggunaVendorScreen()));
+                              },
+                              child: Text('Ulasan Pengguna',
+                                  style: TextStyle(
+                                      color: Colors.white, fontSize: 16)),
+                            ),
+                          ],
                         ),
-                        child: Text('OPEN', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: List.generate(5, (index) => Icon(Icons.star, color: Colors.orange, size: 20)),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _infoBox('Ready', '2'),
-                      _infoBox('Booked', '2'),
-                      _infoBox('In-Use', '1'),
-                    ],
-                  ),
-                  SizedBox(height: 15),
-                  _motorList(context, 'Ready', 'assets/images/m1.png', Colors.green),
-                  _motorList(context, 'In-Use', 'assets/images/m2.png', Colors.red),
-                  _motorList(context, 'Booked', 'assets/images/m3.png', Colors.blue),
-                  SizedBox(height: 15),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      minimumSize: Size(double.infinity, 50),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => UlasanPenggunaVendorScreen()),
-                      );
-                    },
-                    child: Text('Ulasan Pengguna', style: TextStyle(color: Colors.white, fontSize: 16)),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+                ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: Color(0xFF2C567E),
         unselectedItemColor: Colors.grey,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
         onTap: _onItemTapped,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: "Beranda"),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: "Pesanan"),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: "Akun"),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long), label: "Pesanan"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
         ],
       ),
     );
   }
 
-  Widget _infoBox(String label, String value) {
-    return Column(
-      children: [
-        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(label, style: TextStyle(color: Colors.grey)),
-      ],
-    );
-  }
-
-  Widget _motorList(BuildContext context, String status, String imagePath, Color statusColor) {
+  Widget _motorListWidget(BuildContext context, Map<String, dynamic> motor) {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 5),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       child: ListTile(
-        leading: Image.asset(imagePath, width: 70),
-        title: Text('Honda Vario', style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('125cc'),
-        trailing: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text('95K/hari', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
-            SizedBox(height: 5),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(status, style: TextStyle(color: statusColor)),
-            ),
-          ],
-        ),
+        title: Text(motor['name'] ?? 'Nama Tidak Ada',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text('${formatRupiah(motor['price'])} IDR/hari'),
+        trailing: Text('Rating: ${motor['rating'] ?? '-'}'),
         onTap: () {
           Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => DetailMotorPage()),
-          );
+              context,
+              MaterialPageRoute(
+                  builder: (context) => DetailMotorPage(motor: motor)));
         },
       ),
     );

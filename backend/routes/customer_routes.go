@@ -14,6 +14,8 @@ func CustomerRoutes(router *gin.Engine) {
 		customer.POST("/register", controllers.RegisterCustomer)
 
 		customer.GET("/motors", controllers.GetAllMotors)
+		
+		customer.GET("/motors/vendor/:vendor_id", controllers.GetAllMotorByVendorID) 
 
 		customer.Use(middleware.AuthMiddleware("customer"))
 		{

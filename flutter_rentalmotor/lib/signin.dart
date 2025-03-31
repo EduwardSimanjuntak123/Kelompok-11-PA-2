@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/signup.dart';
-import 'package:flutter_rentalmotor/lupakatasandi.dart'; 
+import 'package:flutter_rentalmotor/lupakatasandi.dart';
+import 'package:flutter_rentalmotor/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -14,6 +16,8 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController passwordController = TextEditingController();
   bool _isEmailFilled = false;
   bool _isPasswordFilled = false;
+  bool _isLoading = false;
+  String _errorMessage = "";
 
   @override
   void initState() {
@@ -29,54 +33,78 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
+  Future<void> _handleLogin() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = "";
+    });
+
+    try {
+      print("Memulai proses login...");
+      final response = await loginUser(
+        emailController.text.trim(),
+        passwordController.text,
+      );
+
+      if (response.containsKey("error")) {
+        setState(() {
+          _errorMessage = response["error"];
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final user = response["user"];
+      final role = user["role"];
+      final token = response["token"];
+
+      if (role == "customer") {
+        // Simpan token, nama, dan id ke SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', token);
+        await prefs.setString('user_name', user["name"]);
+        await prefs.setInt('user_id', user["id"]);
+
+        _showSuccessDialog();
+      } else {
+        setState(() {
+          _errorMessage = "Akses ditolak! Hanya customer yang dapat login.";
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Terjadi kesalahan saat login. Coba lagi nanti.";
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+  }
+
   void _showSuccessDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: Colors.blue,
-                  size: 60,
-                ),
-                SizedBox(height: 10),
-                Text(
-                  "Successfully",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Tutup dialog
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => HomePageUser()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text("Oke", style: TextStyle(color: Colors.white)),
-                ),
-              ],
+        return AlertDialog(
+          title: Text("Login Berhasil"),
+          content: Text("Selamat datang di aplikasi rental motor."),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePageUser()),
+                );
+              },
+              child: Text("Lanjutkan"),
             ),
-          ),
+          ],
         );
       },
     );
@@ -94,38 +122,29 @@ class _LoginScreenState extends State<LoginScreen> {
               height: MediaQuery.of(context).size.height * 0.35,
               decoration: BoxDecoration(
                 color: Color(0xFF2C567E),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(30),
-                ),
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(30)),
               ),
               padding: EdgeInsets.only(top: 80, left: 20),
               alignment: Alignment.topLeft,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Hello!!",
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text("Hello!!",
+                      style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white)),
                   SizedBox(height: 5),
-                  Text(
-                    "Log In",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text("Log In",
+                      style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white)),
                 ],
               ),
             ),
-
             SizedBox(height: 30),
-
             // Input Email
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
@@ -133,18 +152,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: emailController,
                 decoration: InputDecoration(
                   labelText: "Email",
-                  labelStyle: TextStyle(color: Colors.black54),
-                  suffixIcon: Icon(
-                    Icons.check_circle,
-                    color: _isEmailFilled ? Colors.green : Colors.grey,
-                  ),
-                  border: UnderlineInputBorder(),
+                  suffixIcon: Icon(Icons.check_circle,
+                      color: _isEmailFilled ? Colors.green : Colors.grey),
                 ),
               ),
             ),
-
             SizedBox(height: 20),
-
             // Input Password
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
@@ -153,106 +166,52 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: _obscureText,
                 decoration: InputDecoration(
                   labelText: "Password",
-                  labelStyle: TextStyle(color: Colors.black54),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureText ? Icons.visibility_off : Icons.visibility,
-                      color: Colors.black54,
-                    ),
+                        _obscureText ? Icons.visibility_off : Icons.visibility),
                     onPressed: () {
                       setState(() {
                         _obscureText = !_obscureText;
                       });
                     },
                   ),
-                  border: UnderlineInputBorder(),
                 ),
               ),
             ),
-
-            // Forgot Password (TAMBAHAN NAVIGASI KE LupaKataSandi.dart)
-            Padding(
-              padding: EdgeInsets.only(right: 20, top: 10),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => LupaKataSandiScreen()),
-                    );
-                  },
-                  child: Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF2C567E),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
             SizedBox(height: 30),
-
             // Tombol Sign In
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: ElevatedButton(
-                onPressed: (_isEmailFilled && _isPasswordFilled)
-                    ? () {
-                        _showSuccessDialog();
-                      }
+                onPressed: (_isEmailFilled && _isPasswordFilled && !_isLoading)
+                    ? _handleLogin
                     : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: (_isEmailFilled && _isPasswordFilled)
-                      ? Color(0xFF2C567E)
-                      : Colors.grey,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  minimumSize: Size(double.infinity, 50),
-                ),
-                child: Text(
-                  "SIGN IN",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isLoading
+                    ? CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white))
+                    : Text("SIGN IN",
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
               ),
             ),
-
             SizedBox(height: 20),
-
             // Sign Up Text
-            Text(
-              "Anda Tidak Memiliki Akun?",
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
-              ),
-            ),
-
             GestureDetector(
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => SignUpScreen()),
-                );
+                    MaterialPageRoute(builder: (context) => SignUpScreen()));
               },
-              child: Text(
-                "Sign up",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
+              child: Text("Sign up",
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             ),
-
             SizedBox(height: 20),
+            if (_errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(_errorMessage, style: TextStyle(color: Colors.red)),
+              ),
           ],
         ),
       ),

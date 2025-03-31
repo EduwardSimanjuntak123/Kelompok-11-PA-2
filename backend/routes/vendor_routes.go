@@ -12,7 +12,8 @@ func VendorRoutes(router *gin.Engine) {
 
 	vendor := router.Group("/vendor")
 	{
-
+		vendor.GET("/:id", controllers.GetVendorByID)
+		vendor.GET("/", controllers.GetAllVendor)
 		vendor.POST("/register", controllers.RegisterVendor) // Vendor Register
 		vendor.Use(middleware.AuthMiddleware("vendor"))
 		{

@@ -5,6 +5,10 @@ import 'package:flutter_rentalmotor/user/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/akun.dart';
 
 class DetailMotorPage extends StatefulWidget {
+  final Map<String, dynamic> motor;
+
+  const DetailMotorPage({Key? key, required this.motor}) : super(key: key);
+
   @override
   _DetailMotorPageState createState() => _DetailMotorPageState();
 }
@@ -30,6 +34,8 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
 
   @override
   Widget build(BuildContext context) {
+    String imageUrl = widget.motor["image"] ?? "assets/images/default_motor.png";
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -42,7 +48,7 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
           },
         ),
         title: Text(
-          "Detail",
+          "Detail Motor",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -51,7 +57,6 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
         padding: EdgeInsets.symmetric(horizontal: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             // Gambar Motor
             Center(
@@ -62,29 +67,24 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
-                  child: Image.asset(
-                    "assets/images/m7.png",
-                    width: double.infinity,
-                    height: 200,
-                    fit: BoxFit.contain,
-                  ),
+                  child: imageUrl.startsWith("http")
+                      ? Image.network(imageUrl, width: double.infinity, height: 200, fit: BoxFit.cover)
+                      : Image.asset(imageUrl, width: double.infinity, height: 200, fit: BoxFit.cover),
                 ),
               ),
             ),
-
             SizedBox(height: 20),
 
             // Nama Motor
             Text(
-              "HONDA BEAT POP",
+              widget.motor["name"] ?? "Nama Tidak Diketahui",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 5),
             Text(
-              "Automatic/Manual",
+              widget.motor["transmission"] ?? "Automatic/Manual",
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
-
             SizedBox(height: 20),
 
             // Deskripsi
@@ -94,10 +94,9 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
             ),
             SizedBox(height: 5),
             Text(
-              "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
+              widget.motor["description"] ?? "Tidak ada deskripsi.",
               style: TextStyle(fontSize: 14, color: Colors.black),
             ),
-
             SizedBox(height: 15),
 
             // Informasi Harga dan Rating
@@ -117,13 +116,12 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildInfoBox(Icons.star, "5.0", "Rating", Colors.yellow),
-                  _buildInfoBox(Icons.attach_money, "Rp 150.000", "Price", Colors.green),
-                  _buildInfoBox(Icons.category, "1 Variant", "Variants", Colors.blue),
+                  _buildInfoBox(Icons.star, "${widget.motor["rating"] ?? "0.0"}", "Rating", Colors.yellow),
+                  _buildInfoBox(Icons.attach_money, "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}", "Harga", Colors.green),
+                  _buildInfoBox(Icons.category, "${widget.motor["variant"] ?? "1"} Variant", "Varian", Colors.blue),
                 ],
               ),
             ),
-
             Spacer(),
 
             // Tombol "Book Now"
@@ -132,7 +130,7 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SewaMotorPage()),
+                    MaterialPageRoute(builder: (context) => SewaMotorPage(motor: widget.motor)),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -148,7 +146,6 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                 ),
               ),
             ),
-
             SizedBox(height: 20),
           ],
         ),
