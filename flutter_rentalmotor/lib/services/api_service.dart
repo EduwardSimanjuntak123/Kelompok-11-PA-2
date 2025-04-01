@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 Future<Map<String, dynamic>> loginUser(String email, String password) async {
+  final String baseUrl = ApiConfig.baseUrl;
   final url =
-      Uri.parse('http://192.168.189.159:8080/login'); // Pastikan URL benar
+      Uri.parse('$baseUrl/login'); // Pastikan URL benar
 
   try {
     print("Mengirim request login ke: $url");

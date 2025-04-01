@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_rentalmotor/user/otp_verification.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_rentalmotor/user/welcome_signup_customer.dart';
 import 'package:flutter_rentalmotor/services/auth_service.dart';
 
 class SignUpCustomer extends StatefulWidget {
@@ -19,13 +21,37 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
   bool _isLoading = false;
   bool _isFormValid = false;
 
-  TextEditingController _fullNameController = TextEditingController();
-  TextEditingController _addressController = TextEditingController();
-  TextEditingController _phoneController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _dateOfBirthController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-  TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final TextEditingController _dateOfBirthController = TextEditingController();
+
+  File? _image;
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _dateOfBirthController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await ImagePicker().pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
 
   void _checkFormValidity() {
     setState(() {
@@ -49,84 +75,111 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
     }
   }
 
+  // Fungsi untuk melakukan registrasi ke backend
+  Future<void> _registerUser() async {
+    if (_formKey.currentState!.validate()) {
+      // Validasi tambahan: cek apakah password dan confirm password sama
+      if (_passwordController.text != _confirmPasswordController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Password dan Confirm Password tidak sama")),
+        );
+        return;
+      }
+
+      setState(() {
+        _isLoading = true;
+      });
+
+      AuthService authService = AuthService();
+      final response = await authService.registerCustomer(
+        name: _fullNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        phone: _phoneController.text.trim(),
+        address: _addressController.text.trim(),
+        birthDate: _dateOfBirthController.text.trim(),
+        profileImage: _image, // Kirim file gambar jika ada
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (response["success"]) {
+        // Setelah registrasi berhasil, arahkan ke halaman verifikasi OTP
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OTPVerificationScreen(
+              email: _emailController.text.trim(),
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response["message"])),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            height: double.infinity,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF1B4E75), Color(0xFF102A43)],
-              ),
-            ),
-            child: const Padding(
-              padding: EdgeInsets.only(top: 60.0, left: 22),
-              child: Text(
-                'Create Your\nAccount',
-                style: TextStyle(
-                    fontSize: 30,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 200.0),
-            child: Container(
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(40),
-                    topRight: Radius.circular(40)),
-                color: Colors.white,
-              ),
-              height: double.infinity,
-              width: double.infinity,
-              child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildTextField('Full Name', _fullNameController, false),
-                      _buildTextField('Address', _addressController, false),
-                      _buildTextField('Phone Number', _phoneController, false,
-                          TextInputType.phone),
-                      _buildTextField('Email', _emailController, false,
-                          TextInputType.emailAddress),
-                      _buildDatePickerField(
-                          'Date of Birth', _dateOfBirthController),
-                      _buildPasswordField(
-                          'Password', _passwordController, _obscurePassword,
-                          () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      }),
-                      _buildPasswordField(
-                          'Confirm Password',
-                          _confirmPasswordController,
-                          _obscureConfirmPassword, () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      }),
-                      const SizedBox(height: 40),
-                      _buildRegisterButton(),
-                      const SizedBox(height: 30),
-                      _buildSignInOption(context),
-                      const SizedBox(height: 20),
-                    ],
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                const Text("Create Your Account",
+                    style:
+                        TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () => _pickImage(ImageSource.gallery),
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundImage: _image != null
+                        ? FileImage(_image!)
+                        : const AssetImage("assets/default_avatar.png")
+                            as ImageProvider,
+                    child: _image == null
+                        ? const Icon(Icons.camera_alt,
+                            size: 40, color: Colors.white)
+                        : null,
                   ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                _buildTextField('Full Name', _fullNameController, false),
+                _buildTextField('Address', _addressController, false),
+                _buildTextField('Phone Number', _phoneController, false,
+                    TextInputType.phone),
+                _buildTextField('Email', _emailController, false,
+                    TextInputType.emailAddress),
+                _buildDatePickerField('Date of Birth', _dateOfBirthController),
+                _buildPasswordField(
+                    'Password', _passwordController, _obscurePassword, () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                }),
+                _buildPasswordField('Confirm Password',
+                    _confirmPasswordController, _obscureConfirmPassword, () {
+                  setState(() {
+                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                  });
+                }),
+                const SizedBox(height: 20),
+                _buildRegisterButton(),
+                const SizedBox(height: 20),
+                _buildSignInOption(context),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -138,25 +191,12 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
         controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle:
-              TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.blueGrey),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.green, width: 2),
-          ),
-        ),
+        decoration: InputDecoration(labelText: label),
         keyboardType: keyboardType,
         obscureText: isPassword,
-        validator: (value) => value!.isEmpty ? 'Enter your $label' : null,
-        onChanged: (value) {
-          setState(() {
-            _checkFormValidity();
-          });
-        },
+        validator: (value) =>
+            (value == null || value.isEmpty) ? 'Enter your $label' : null,
+        onChanged: (value) => _checkFormValidity(),
       ),
     );
   }
@@ -170,7 +210,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
         decoration: InputDecoration(
           labelText: label,
           suffixIcon: IconButton(
-            icon: Icon(Icons.calendar_today, color: Colors.blueGrey),
+            icon: const Icon(Icons.calendar_today),
             onPressed: () => _selectDate(context, controller),
           ),
         ),
@@ -179,7 +219,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
   }
 
   Widget _buildPasswordField(String label, TextEditingController controller,
-      bool obscure, Function onToggle) {
+      bool obscure, VoidCallback onToggle) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
@@ -188,99 +228,32 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
         decoration: InputDecoration(
           labelText: label,
           suffixIcon: IconButton(
-            icon: Icon(obscure ? Icons.visibility_off : Icons.visibility,
-                color: Colors.blueGrey),
-            onPressed: () {
-              onToggle();
-              setState(() {});
-            },
+            icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+            onPressed: onToggle,
           ),
         ),
-        validator: (value) => value!.isEmpty ? 'Enter your $label' : null,
-        onChanged: (value) {
-          setState(() {
-            _checkFormValidity();
-          });
-        },
+        validator: (value) =>
+            (value == null || value.isEmpty) ? 'Enter your $label' : null,
+        onChanged: (value) => _checkFormValidity(),
       ),
     );
   }
 
   Widget _buildRegisterButton() {
-    return GestureDetector(
-      onTap: _isFormValid
-          ? () async {
-              setState(() {
-                _isLoading = true;
-              });
-
-              AuthService authService = AuthService();
-              final response = await authService.registerCustomer(
-                name: _fullNameController.text,
-                email: _emailController.text,
-                password: _passwordController.text,
-                phone: _phoneController.text,
-                address: _addressController.text,
-                birthDate: _dateOfBirthController.text,
-              );
-
-              setState(() {
-                _isLoading = false;
-              });
-
-              if (response["success"]) {
-                if (mounted) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            const WelcomeSignupCustomerPage()),
-                  );
-                }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(response["message"])),
-                );
-              }
-            }
-          : null,
-      child: Container(
-        height: 55,
-        width: 300,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          color: _isFormValid ? const Color(0xFF225378) : Colors.grey,
-        ),
-        child: Center(
-          child: _isLoading
-              ? const SpinKitFadingCircle(color: Colors.white, size: 50.0)
-              : const Text('SIGN UP',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: Colors.white)),
-        ),
-      ),
+    return ElevatedButton(
+      onPressed: _isFormValid && !_isLoading ? _registerUser : null,
+      child: _isLoading
+          ? const SpinKitFadingCircle(color: Colors.white, size: 50.0)
+          : const Text("SIGN UP"),
     );
   }
 
   Widget _buildSignInOption(BuildContext context) {
-    return Column(
-      children: [
-        const Text("Already have an account?",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => LoginScreen()));
-          },
-          child: const Text("Sign in",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                  color: Color(0xFF1B4E75))),
-        ),
-      ],
+    return GestureDetector(
+      onTap: () => Navigator.push(
+          context, MaterialPageRoute(builder: (context) => LoginScreen())),
+      child: const Text("Sign in",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
     );
   }
 }

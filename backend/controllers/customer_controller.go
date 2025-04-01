@@ -13,68 +13,11 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"strings"
-
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterCustomer(c *gin.Context) {
-    var input struct {
-        Name         string     `form:"name" binding:"required"`
-        Email        string     `form:"email" binding:"required,email"`
-        Password     string     `form:"password" binding:"required,min=6"`
-        Phone        string     `form:"phone" binding:"required"`
-        Address      string     `form:"address"`
-        BirthDate    *time.Time `form:"birth_date" time_format:"2006-01-02"`
-    }
 
-    if err := c.ShouldBind(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
 
-    var existingUser models.User
-    if err := config.DB.Where("email = ? OR phone = ?", input.Email, input.Phone).First(&existingUser).Error; err == nil {
-        c.JSON(http.StatusConflict, gin.H{"error": "Email atau nomor telepon sudah digunakan"})
-        return
-    }
-
-    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(strings.TrimSpace(input.Password)), bcrypt.DefaultCost)
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Kesalahan dalam hashing password"})
-        return
-    }
-
-    profileImagePath, _ := saveUserImage(c, "profile_image")
-
-    user := models.User{
-        Name:         input.Name,
-        Email:        input.Email,
-        Password:     string(hashedPassword),
-        Role:         "customer",
-        Phone:        input.Phone,
-        Address:      input.Address,
-        BirthDate:    input.BirthDate,
-        ProfileImage: profileImagePath,
-        Status:       "active",
-    }
-
-    if err := config.DB.Create(&user).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data pelanggan"})
-        return
-    }
-
-    c.JSON(http.StatusOK, gin.H{
-        "message":       "Pendaftaran pelanggan berhasil",
-        "user_id":       user.ID,
-        "name":          user.Name,
-        "email":         user.Email,
-        "phone":         user.Phone,
-        "address":       user.Address,
-        "birth_date":    user.BirthDate,
-        "profile_image": user.ProfileImage,
-    })
-}
 
 func saveUserImage(c *gin.Context, field string) (string, error) {
     file, err := c.FormFile(field)
@@ -93,6 +36,29 @@ func saveUserImage(c *gin.Context, field string) (string, error) {
     return "/fileserver/users/" + filename, nil
 }
 
+func GetCustomerProfile(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan, harap login ulang"})
+		return
+	}
+
+	var user models.User
+	if err := config.DB.
+		Select("id, name, email, role,birth_date,password, phone, address, profile_image, status, created_at, updated_at").
+		Where("id = ? AND name IS NOT NULL AND email IS NOT NULL", userID).
+		First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan atau bukan customer"})
+		return
+	}
+
+	if user.Role != "customer" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Customer tidak ditemukan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
 
 // Get All Motors
 func GetAllMotors(c *gin.Context) {

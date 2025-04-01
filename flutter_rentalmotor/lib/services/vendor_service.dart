@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class VendorService {
-  final String baseUrl = "http://192.168.189.159:8080";
+  final String baseUrl = ApiConfig.baseUrl;
 
   Future<List<Map<String, dynamic>>> fetchVendors() async {
     final response = await http.get(Uri.parse("$baseUrl/vendor"));

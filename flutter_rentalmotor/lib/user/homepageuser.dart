@@ -7,7 +7,7 @@ import 'package:flutter_rentalmotor/user/datavendor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/services/motor_service.dart';
 import 'package:flutter_rentalmotor/services/vendor_service.dart';
-import 'package:intl/intl.dart'; // Import package intl untuk format angka
+import 'package:intl/intl.dart'; // Untuk format angka
 
 class HomePageUser extends StatefulWidget {
   const HomePageUser({Key? key}) : super(key: key);
@@ -32,6 +32,7 @@ class _HomePageUserState extends State<HomePageUser> {
     _fetchMotors();
   }
 
+  // Memuat data user dari SharedPreferences
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     String? name = prefs.getString('user_name');
@@ -76,14 +77,16 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  void _onItemTapped(int index) {
+  // Navigasi Bottom Navigation Bar
+  void _onItemTapped(int index) async {
     if (index == 1) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => Akun()))
-          .then((_) {
-        setState(() {
-          _selectedIndex = 0;
-        });
+      // Navigasi ke halaman Akun
+      await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => const Akun()));
+      // Setelah kembali, perbarui data user
+      _loadUserData();
+      setState(() {
+        _selectedIndex = 0;
       });
     } else {
       setState(() {
@@ -96,14 +99,22 @@ class _HomePageUserState extends State<HomePageUser> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            _buildVendorSection(),
-            _buildMotorSection(),
-          ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _loadUserData();
+          await _fetchVendors();
+          await _fetchMotors();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              _buildVendorSection(),
+              _buildMotorSection(),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -151,8 +162,8 @@ class _HomePageUserState extends State<HomePageUser> {
                 icon: Image.asset("assets/images/chat.png",
                     width: 24, height: 24),
                 onPressed: () {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => ChatPage()));
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const ChatPage()));
                 },
               ),
             ],
@@ -302,7 +313,6 @@ class _HomePageUserState extends State<HomePageUser> {
       String shopName, String rating, String imageUrl, int vendorId) {
     return GestureDetector(
       onTap: () {
-        // Navigasi ke halaman DataVendor dengan vendorId yang dipilih
         Navigator.push(
             context,
             MaterialPageRoute(

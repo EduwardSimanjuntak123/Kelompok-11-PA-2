@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/signup.dart';
+import 'package:flutter_rentalmotor/user/SignUpCustomer.dart';
 import 'package:flutter_rentalmotor/lupakatasandi.dart';
 import 'package:flutter_rentalmotor/services/api_service.dart';
 
@@ -201,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
             GestureDetector(
               onTap: () {
                 Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => SignUpScreen()));
+                    MaterialPageRoute(builder: (context) => SignUpCustomer()));
               },
               child: Text("Sign up",
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),

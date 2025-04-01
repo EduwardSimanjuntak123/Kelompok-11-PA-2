@@ -208,7 +208,7 @@ func GetVendorProfile(c *gin.Context) {
 	if err := config.DB.
 		Select("id, name, email, role, phone, address, profile_image, ktp_image, status, created_at, updated_at").
 		Preload("Vendor", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, user_id, id_kecamatan, shop_name, shop_address, shop_description, status, created_at, updated_at")
+			return db.Select("id, user_id, id_kecamatan,rating, shop_name, shop_address, shop_description, status, created_at, updated_at")
 		}).
 		Where("id = ? AND name IS NOT NULL AND email IS NOT NULL", userID).
 		First(&user).Error; err != nil {
