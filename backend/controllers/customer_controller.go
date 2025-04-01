@@ -19,57 +19,80 @@ import (
 )
 
 func RegisterCustomer(c *gin.Context) {
-	var input struct {
-		Name     string `json:"name" binding:"required"`
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=6"`
-		Phone    string `json:"phone" binding:"required"`
-		Address  string `json:"address"`
-	}
+    var input struct {
+        Name         string     `form:"name" binding:"required"`
+        Email        string     `form:"email" binding:"required,email"`
+        Password     string     `form:"password" binding:"required,min=6"`
+        Phone        string     `form:"phone" binding:"required"`
+        Address      string     `form:"address"`
+        BirthDate    *time.Time `form:"birth_date" time_format:"2006-01-02"`
+    }
 
-	// Validasi input JSON
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    if err := c.ShouldBind(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	// Cek apakah email sudah digunakan
-	var existingUser models.User
-	if err := config.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Email sudah digunakan"})
-		return
-	}
+    var existingUser models.User
+    if err := config.DB.Where("email = ? OR phone = ?", input.Email, input.Phone).First(&existingUser).Error; err == nil {
+        c.JSON(http.StatusConflict, gin.H{"error": "Email atau nomor telepon sudah digunakan"})
+        return
+    }
 
-	// **Hash password sebelum menyimpan**
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(strings.TrimSpace(input.Password)), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan dalam hashing password"})
-		return
-	}
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(strings.TrimSpace(input.Password)), bcrypt.DefaultCost)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Kesalahan dalam hashing password"})
+        return
+    }
 
-	fmt.Println("✅ Password hash berhasil dibuat:", string(hashedPassword)) // Debugging
+    profileImagePath, _ := saveUserImage(c, "profile_image")
 
-	// Buat user baru
-	user := models.User{
-		Name:     input.Name,
-		Email:    input.Email,
-		Password: string(hashedPassword), // Simpan hash password
-		Role:     "customer",
-		Phone:    input.Phone,
-		Address:  input.Address,
-		Status:   "active",
-	}
+    user := models.User{
+        Name:         input.Name,
+        Email:        input.Email,
+        Password:     string(hashedPassword),
+        Role:         "customer",
+        Phone:        input.Phone,
+        Address:      input.Address,
+        BirthDate:    input.BirthDate,
+        ProfileImage: profileImagePath,
+        Status:       "active",
+    }
 
-	// **Simpan ke database**
-	if err := config.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data pelanggan"})
-		return
-	}
+    if err := config.DB.Create(&user).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data pelanggan"})
+        return
+    }
 
-	fmt.Println("✅ User berhasil terdaftar dengan password hash:", user.Password) // Debugging
-
-	c.JSON(http.StatusOK, gin.H{"message": "Pendaftaran pelanggan berhasil"})
+    c.JSON(http.StatusOK, gin.H{
+        "message":       "Pendaftaran pelanggan berhasil",
+        "user_id":       user.ID,
+        "name":          user.Name,
+        "email":         user.Email,
+        "phone":         user.Phone,
+        "address":       user.Address,
+        "birth_date":    user.BirthDate,
+        "profile_image": user.ProfileImage,
+    })
 }
+
+func saveUserImage(c *gin.Context, field string) (string, error) {
+    file, err := c.FormFile(field)
+    if err != nil {
+        return "", nil 
+    }
+
+    filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+    filePath := filepath.Join("./fileserver/users", filename)
+    os.MkdirAll("./fileserver/users", os.ModePerm)
+
+    if err := c.SaveUploadedFile(file, filePath); err != nil {
+        return "", err
+    }
+
+    return "/fileserver/users/" + filename, nil
+}
+
 
 // Get All Motors
 func GetAllMotors(c *gin.Context) {

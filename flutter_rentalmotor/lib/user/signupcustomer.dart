@@ -3,6 +3,7 @@ import 'package:flutter_rentalmotor/signin.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_rentalmotor/user/welcome_signup_customer.dart';
+import 'package:flutter_rentalmotor/services/auth_service.dart';
 
 class SignUpCustomer extends StatefulWidget {
   const SignUpCustomer({Key? key}) : super(key: key);
@@ -15,8 +16,6 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  TextEditingController _dateOfBirthController = TextEditingController();
-  TextEditingController _joinDateController = TextEditingController();
   bool _isLoading = false;
   bool _isFormValid = false;
 
@@ -24,7 +23,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
   TextEditingController _addressController = TextEditingController();
   TextEditingController _phoneController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
-  TextEditingController _imageController = TextEditingController();
+  TextEditingController _dateOfBirthController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _confirmPasswordController = TextEditingController();
 
@@ -34,7 +33,8 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
     });
   }
 
-  Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+  Future<void> _selectDate(
+      BuildContext context, TextEditingController controller) async {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -66,7 +66,10 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
               padding: EdgeInsets.only(top: 60.0, left: 22),
               child: Text(
                 'Create Your\nAccount',
-                style: TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 30,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold),
               ),
             ),
           ),
@@ -74,13 +77,16 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
             padding: const EdgeInsets.only(top: 200.0),
             child: Container(
               decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(40), topRight: Radius.circular(40)),
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40)),
                 color: Colors.white,
               ),
               height: double.infinity,
               width: double.infinity,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -88,17 +94,23 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                       const SizedBox(height: 20),
                       _buildTextField('Full Name', _fullNameController, false),
                       _buildTextField('Address', _addressController, false),
-                      _buildTextField('Phone Number', _phoneController, false, TextInputType.phone),
-                      _buildTextField('Email', _emailController, false, TextInputType.emailAddress),
-                      _buildDatePickerField('Date of Birth', _dateOfBirthController),
-                      _buildTextField('Image', _imageController, false),
-                      _buildDatePickerField('Join Date', _joinDateController),
-                      _buildPasswordField('Password', _passwordController, _obscurePassword, (value) {
+                      _buildTextField('Phone Number', _phoneController, false,
+                          TextInputType.phone),
+                      _buildTextField('Email', _emailController, false,
+                          TextInputType.emailAddress),
+                      _buildDatePickerField(
+                          'Date of Birth', _dateOfBirthController),
+                      _buildPasswordField(
+                          'Password', _passwordController, _obscurePassword,
+                          () {
                         setState(() {
                           _obscurePassword = !_obscurePassword;
                         });
                       }),
-                      _buildPasswordField('Confirm Password', _confirmPasswordController, _obscureConfirmPassword, (value) {
+                      _buildPasswordField(
+                          'Confirm Password',
+                          _confirmPasswordController,
+                          _obscureConfirmPassword, () {
                         setState(() {
                           _obscureConfirmPassword = !_obscureConfirmPassword;
                         });
@@ -119,21 +131,19 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, bool isPassword, [TextInputType? keyboardType]) {
+  Widget _buildTextField(
+      String label, TextEditingController controller, bool isPassword,
+      [TextInputType? keyboardType]) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
         controller: controller,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
-            color: controller.text.isNotEmpty ? Colors.green : Color(0xFF225378),
-            fontWeight: FontWeight.bold,
-          ),
+          labelStyle:
+              TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold),
           enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: controller.text.isNotEmpty ? Colors.green : Color(0xFF225378),
-            ),
+            borderSide: BorderSide(color: Colors.blueGrey),
           ),
           focusedBorder: const UnderlineInputBorder(
             borderSide: BorderSide(color: Colors.green, width: 2),
@@ -159,23 +169,8 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
         readOnly: true,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
-            color: controller.text.isNotEmpty ? Colors.green : Color(0xFF225378),
-            fontWeight: FontWeight.bold,
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: controller.text.isNotEmpty ? Colors.green : Color(0xFF225378),
-            ),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.green, width: 2),
-          ),
           suffixIcon: IconButton(
-            icon: Icon(
-              Icons.calendar_today,
-              color: controller.text.isNotEmpty ? Colors.green : Color(0xFF225378),
-            ),
+            icon: Icon(Icons.calendar_today, color: Colors.blueGrey),
             onPressed: () => _selectDate(context, controller),
           ),
         ),
@@ -183,7 +178,8 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
     );
   }
 
-  Widget _buildPasswordField(String label, TextEditingController controller, bool obscure, Function onToggle) {
+  Widget _buildPasswordField(String label, TextEditingController controller,
+      bool obscure, Function onToggle) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
@@ -191,23 +187,9 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
         obscureText: obscure,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
-            color: controller.text.isNotEmpty ? Colors.green : Color(0xFF225378),
-            fontWeight: FontWeight.bold,
-          ),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: controller.text.isNotEmpty ? Colors.green : Color(0xFF225378),
-            ),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.green, width: 2),
-          ),
           suffixIcon: IconButton(
-            icon: Icon(
-              obscure ? Icons.visibility_off : Icons.visibility,
-              color: controller.text.isNotEmpty ? Colors.green : Color(0xFF225378),
-            ),
+            icon: Icon(obscure ? Icons.visibility_off : Icons.visibility,
+                color: Colors.blueGrey),
             onPressed: () {
               onToggle();
               setState(() {});
@@ -227,21 +209,39 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
   Widget _buildRegisterButton() {
     return GestureDetector(
       onTap: _isFormValid
-          ? () {
+          ? () async {
               setState(() {
                 _isLoading = true;
               });
-              Future.delayed(const Duration(seconds: 2), () {
-                setState(() {
-                  _isLoading = false;
-                });
+
+              AuthService authService = AuthService();
+              final response = await authService.registerCustomer(
+                name: _fullNameController.text,
+                email: _emailController.text,
+                password: _passwordController.text,
+                phone: _phoneController.text,
+                address: _addressController.text,
+                birthDate: _dateOfBirthController.text,
+              );
+
+              setState(() {
+                _isLoading = false;
+              });
+
+              if (response["success"]) {
                 if (mounted) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const WelcomeSignupCustomerPage()),
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            const WelcomeSignupCustomerPage()),
                   );
                 }
-              });
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(response["message"])),
+                );
+              }
             }
           : null,
       child: Container(
@@ -253,14 +253,12 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
         ),
         child: Center(
           child: _isLoading
-              ? const SpinKitFadingCircle(
-                  color: Colors.white,
-                  size: 50.0,
-                )
-              : const Text(
-                  'SIGN UP',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
-                ),
+              ? const SpinKitFadingCircle(color: Colors.white, size: 50.0)
+              : const Text('SIGN UP',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      color: Colors.white)),
         ),
       ),
     );
@@ -269,12 +267,18 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
   Widget _buildSignInOption(BuildContext context) {
     return Column(
       children: [
-        const Text("Already have an account?", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+        const Text("Already have an account?",
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
         GestureDetector(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => LoginScreen()));
           },
-          child: const Text("Sign in", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17, color: Color(0xFF1B4E75))),
+          child: const Text("Sign in",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  color: Color(0xFF1B4E75))),
         ),
       ],
     );

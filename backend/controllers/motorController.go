@@ -184,7 +184,7 @@ func GetAllMotorByVendorID(c *gin.Context) {
 	// Ambil semua motor berdasarkan VendorID dengan informasi vendor terkait
 	if err := config.DB.
 		Where("vendor_id = ?", vendorID).
-		Select("id, vendor_id, name, brand, model, year, price, color, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand, model, year, rating, price, color, status, image, created_at, updated_at").
 		Find(&motors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
 		return
@@ -210,7 +210,7 @@ func GetAllMotor(c *gin.Context) {
 
 	// Ambil semua data motor dengan vendor terkait
 	if err := config.DB.Preload("Vendor").
-		Select("id, vendor_id, name, brand, model, year, price, color, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand, model, year, rating, price, color, status, image, created_at, updated_at").
 		Find(&motors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
 		return
@@ -262,7 +262,7 @@ func GetAllMotorbyVendor(c *gin.Context) {
 
 	// Ambil motor berdasarkan vendor_id dengan Preload Vendor
 	if err := config.DB.
-		Select("id, vendor_id, name, brand, model, year, price, color, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand, model, year, price, color,rating, status, image, created_at, updated_at").
 		Where("vendor_id = ?", vendor.ID).
 		Find(&motors).Error; err != nil {
 		fmt.Printf("❌ Gagal mengambil data motor: %v\n", err)

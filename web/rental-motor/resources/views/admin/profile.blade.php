@@ -3,20 +3,20 @@
 @section('title', 'Profil Admin')
 
 @section('content')
-<!-- SweetAlert -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<script>
-    @if(session('message'))
-        Swal.fire({
-            icon: '{{ session('type') === 'success' ? 'success' : 'error' }}',
-            title: '{{ session('type') === 'success' ? 'Berhasil!' : 'Oops!' }}',
-            text: '{{ session('message') }}',
-            confirmButtonColor: '{{ session('type') === 'success' ? '#3085d6' : '#d33' }}',
-            confirmButtonText: 'OK'
-        });
-    @endif
-</script>
+    <script>
+        @if (session('message'))
+            Swal.fire({
+                icon: '{{ session('type') === 'success' ? 'success' : 'error' }}',
+                title: '{{ session('type') === 'success' ? 'Berhasil!' : 'Oops!' }}',
+                text: '{{ session('message') }}',
+                confirmButtonColor: '{{ session('type') === 'success' ? '#3085d6' : '#d33' }}',
+                confirmButtonText: 'OK'
+            });
+        @endif
+    </script>
 
 
     <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
@@ -52,7 +52,7 @@
                             alt="Foto Profil" class="w-full h-full object-cover">
                     </div>
                     <button onclick="openPhotoModal('profile')"
-    class="absolute bottom-3 right-3 bg-blue-600 p-2 rounded-full shadow-lg hover:bg-blue-700 transition">
+                        class="absolute bottom-3 right-3 bg-blue-600 p-2 rounded-full shadow-lg hover:bg-blue-700 transition">
 
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -117,62 +117,62 @@
         </div>
     </div>
     <!-- Edit Data Modal -->
-<div id="editModal"
-class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50 p-4">
-<div class="bg-white rounded-xl shadow-2xl w-full max-w-xl">
-    <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-gray-800">Edit Data Profil</h2>
-            <button onclick="closeModal('editModal')" class="text-gray-500 hover:text-gray-700">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+    <div id="editModal"
+        class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Edit Data Profil</h2>
+                    <button onclick="closeModal('editModal')" class="text-gray-500 hover:text-gray-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form action="{{ route('admin.update') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">Nama Lengkap</label>
+                            <input type="text" name="name" value="{{ $adminData['name'] }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">Email</label>
+                            <input type="email" name="email" value="{{ $adminData['email'] }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">Telepon</label>
+                            <input type="text" name="phone" value="{{ $adminData['phone'] }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">Alamat</label>
+                            <input type="text" name="address" value="{{ $adminData['address'] }}"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-6 space-x-3 pt-4 border-t border-gray-200">
+                        <button type="button" onclick="closeModal('editModal')"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-
-        <form action="{{ route('admin.update') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Nama Lengkap</label>
-                    <input type="text" name="name" value="{{ $adminData['name'] }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Email</label>
-                    <input type="email" name="email" value="{{ $adminData['email'] }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Telepon</label>
-                    <input type="text" name="phone" value="{{ $adminData['phone'] }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600">Alamat</label>
-                    <input type="text" name="address" value="{{ $adminData['address'] }}"
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
-                </div>
-            </div>
-
-            <div class="flex justify-end mt-6 space-x-3 pt-4 border-t border-gray-200">
-                <button type="button" onclick="closeModal('editModal')"
-                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                    Batal
-                </button>
-                <button type="submit"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                    Simpan Perubahan
-                </button>
-            </div>
-        </form>
     </div>
-</div>
-</div>
 
 
     <!-- Edit Photo Modal -->
@@ -252,9 +252,6 @@ class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 b
             if (type === 'profile') {
                 title = 'Edit Foto Profil';
                 inputName = 'profile_image';
-            } else if (type === 'ktp') {
-                title = 'Edit Foto KTP';
-                inputName = 'ktp_image';
             }
             document.getElementById('photoModalTitle').innerText = title;
             document.getElementById('photoInput').name = inputName;

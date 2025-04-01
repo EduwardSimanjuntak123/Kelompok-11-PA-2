@@ -46,9 +46,7 @@ class AdminController extends Controller
         if (!$token) {
             return redirect()->route('login')->with('message', 'Anda harus login terlebih dahulu.')->with('type', 'error');
         }
-
         $multipart = [];
-
         // Ambil data input jika tersedia
         if ($name = $request->input('name')) {
             $multipart[] = ['name' => 'name', 'contents' => $name];
@@ -79,16 +77,6 @@ class AdminController extends Controller
                 'name' => 'profile_image',
                 'contents' => fopen($image->getPathname(), 'r'),
                 'filename' => $image->getClientOriginalName()
-            ];
-        }
-
-        // Tangani upload foto KTP
-        if ($request->hasFile('ktp_image')) {
-            $file = $request->file('ktp_image');
-            $multipart[] = [
-                'name' => 'ktp_image',
-                'contents' => fopen($file->getPathname(), 'r'),
-                'filename' => $file->getClientOriginalName()
             ];
         }
 

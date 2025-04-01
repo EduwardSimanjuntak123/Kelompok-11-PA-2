@@ -65,6 +65,7 @@ Route::middleware([CheckAuth::class])->group(function () {
         // Kelola Booking
         Route::get('/bookings/{id}', [KelolaBookingController::class, 'index'])->name('vendor.kelola');
         Route::get('/reviewss/{id}', [ulasanController::class, 'index'])->name('vendor.ulasan');
+        Route::post('/review/{id}/reply', [ulasanController::class, 'submitReply'])->name('reviews.submitReply');
 
         Route::post('/booking/add', [KelolaBookingController::class, 'addManualBooking'])
         ->name('vendor.manual.booking.store');

@@ -28,6 +28,7 @@ class MotorService {
               "year": motor["year"].toString(), // Pastikan String
               "price": motor["price"].toString(), // Pastikan String
               "color": motor["color"],
+              "rating": motor["rating"],
               "status": motor["status"],
               "image": "$baseUrl${motor["image"]}", // Tambahkan URL dasar
               "vendor": {

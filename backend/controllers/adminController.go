@@ -27,7 +27,7 @@ func GetDataAdmin(c *gin.Context) {
 
 	// Ambil data user (admin) dengan semua atribut yang relevan
 	if err := config.DB.
-		Select("id, name, email, phone, address, profile_image, ktp_image, status, role, created_at, updated_at").
+		Select("id, name, email, phone, address, profile_image, status, role, created_at, updated_at").
 		Where("id = ? AND role = ?", userID, "admin").
 		First(&user).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Admin tidak ditemukan"})
@@ -45,13 +45,6 @@ func GetDataAdmin(c *gin.Context) {
 		profileImageURL = "https://via.placeholder.com/150"
 	}
 
-	// Buat URL gambar lengkap untuk ktp_image
-	var ktpImageURL string
-	if user.KtpImage != "" {
-		ktpImageURL = baseURL + user.KtpImage
-	} else {
-		ktpImageURL = "https://via.placeholder.com/150"
-	}
 
 	// Kembalikan respons JSON dengan semua atribut
 	c.JSON(http.StatusOK, gin.H{
@@ -61,7 +54,6 @@ func GetDataAdmin(c *gin.Context) {
 		"phone":         user.Phone,
 		"address":       user.Address,
 		"profile_image": profileImageURL,
-		"ktp_image":     ktpImageURL,
 		"status":        user.Status,
 		"role":          user.Role,
 		"created_at":    user.CreatedAt,
@@ -165,22 +157,6 @@ func EditDataAdmin(c *gin.Context) {
 			return
 		}
 		input["profile_image"] = imagePath
-	}
-
-	// Tangani file ktp_image jika ada
-	if file, err := c.FormFile("ktp_image"); err == nil {
-		if admin.KtpImage != "" {
-			oldPath := "." + admin.KtpImage
-			if err := os.Remove(oldPath); err != nil {
-				log.Printf("Gagal menghapus file ktp_image lama: %v", err)
-			}
-		}
-		ktpPath, err := saveImageKtp(c, file)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan KTP image"})
-			return
-		}
-		input["ktp_image"] = ktpPath
 	}
 
 	// Update waktu perubahan
@@ -302,13 +278,6 @@ func GetAllVendors(c *gin.Context) {
 			profileImage = baseURL + profileImage
 		}
 
-		ktpImage := user.KtpImage
-		if ktpImage == "" {
-			ktpImage = "https://via.placeholder.com/150"
-		} else {
-			ktpImage = baseURL + ktpImage
-		}
-
 		// Gabungkan data yang lengkap ke dalam response
 		result = append(result, gin.H{
 			"id":                user.ID,
@@ -317,7 +286,6 @@ func GetAllVendors(c *gin.Context) {
 			"phone":             user.Phone,
 			"address":           user.Address,
 			"profile_image":     profileImage,
-			"ktp_image":         ktpImage,
 			"role":              user.Role,
 			"status":            user.Status,
 			"created_at":        user.CreatedAt,

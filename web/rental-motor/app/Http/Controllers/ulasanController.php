@@ -40,4 +40,28 @@ class ulasanController extends Controller
 
         return view('vendor.ulasan', compact('Reviews'));
     }
+
+
+    public function submitReply(Request $request, $id)
+{
+    $token = session('token'); // Ambil token dari session
+
+    if (!$token) {
+        return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
+    }
+
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $token
+    ])->post("{$this->apiBaseUrl}/vendor/review/{$id}/reply", [
+        'reply' => $request->input('balasan')
+    ]);
+    
+
+    if ($response->successful()) {
+        return redirect()->back()->with('success', 'Balasan berhasil dikirim.');
+    } else {
+        return redirect()->back()->with('error', 'Gagal mengirim balasan.');
+    }
+}
+
 }

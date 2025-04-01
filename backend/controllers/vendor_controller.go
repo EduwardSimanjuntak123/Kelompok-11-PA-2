@@ -21,7 +21,6 @@ import (
 func GetVendorByID(c *gin.Context) {
 	// Ambil ID vendor dari parameter URL
 	vendorID := c.Param("id")
-
 	// Struct untuk menyimpan data vendor
 	var vendor models.Vendor
 
@@ -293,20 +292,6 @@ func EditProfileVendor(c *gin.Context) {
 		userInput["profile_image"] = imagePath
 	}
 
-	if file, err := c.FormFile("ktp_image"); err == nil {
-		if user.KtpImage != "" {
-			oldPath := "." + user.KtpImage
-			if err := os.Remove(oldPath); err != nil {
-				log.Printf("Gagal menghapus file ktp_image lama: %v", err)
-			}
-		}
-		ktpPath, err := saveImageVendor(c, file)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan KTP image"})
-			return
-		}
-		userInput["ktp_image"] = ktpPath
-	}
 
 	userInput["updated_at"] = time.Now()
 	vendorInput["updated_at"] = time.Now()

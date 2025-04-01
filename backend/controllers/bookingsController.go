@@ -132,34 +132,36 @@ func GetVendorBookings(c *gin.Context) {
 
 	var bookings []models.Booking
 
-	// Query bookings berdasarkan vendor_id dan preload relasi Customer dan Motor
+	// Query bookings berdasarkan vendor_id dan preload relasi Motor
 	query := config.DB.Where("vendor_id = ?", vendor.ID).
-		Preload("Customer", "id IS NOT NULL AND name IS NOT NULL").
-		Preload("Motor", "id IS NOT NULL AND name IS NOT NULL")
+		Preload("Motor")
 
 	if err := query.Find(&bookings).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan booking"})
 		return
 	}
 
-	// Base URL untuk gambar, sesuaikan jika diperlukan
+	// Base URL untuk gambar
 	baseURL := "http://localhost:8080"
 
 	// Format respons
 	var response []map[string]interface{}
 	for _, booking := range bookings {
-		customerName := ""
-		if booking.Customer != nil && booking.Customer.Name != "" {
-			customerName = booking.Customer.Name
-		} else {
-			var customer models.User
-			if err := config.DB.Select("name").Where("id = ?", booking.CustomerID).First(&customer).Error; err == nil {
-				customerName = customer.Name
-			}
+		// Ambil langsung dari kolom customer_name di tabel bookings
+		customerName := booking.CustomerName
+
+		// Data motor
+		motorData := map[string]interface{}{
+			"id":            nil, // Default jika motor tidak ada
+			"name":          "Tidak tersedia",
+			"brand":         "Tidak tersedia",
+			"model":         "Tidak tersedia",
+			"year":          0,
+			"price_per_day": 0,
+			"total_price":   0,
+			"image":         "https://via.placeholder.com/150",
 		}
 
-		// Pastikan data Motor tidak nil
-		motorData := map[string]interface{}{}
 		if booking.Motor != nil {
 			motorData = map[string]interface{}{
 				"id":            booking.Motor.ID,
@@ -169,10 +171,8 @@ func GetVendorBookings(c *gin.Context) {
 				"year":          booking.Motor.Year,
 				"price_per_day": booking.Motor.Price,
 				"total_price":   booking.Motor.Price * float64(booking.GetDurationDays()),
-				// Sertakan URL gambar; jika field image kosong, gunakan placeholder
 				"image": func() string {
 					if booking.Motor.Image != "" {
-						// Jika image sudah berupa URL, atau jika perlu disematkan baseURL
 						if strings.HasPrefix(booking.Motor.Image, "http") {
 							return booking.Motor.Image
 						}
@@ -200,6 +200,7 @@ func GetVendorBookings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
 
 func GetCustomerBookings(c *gin.Context) {
 	// Ambil user_id dari token JWT
