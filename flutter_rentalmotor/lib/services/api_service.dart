@@ -5,8 +5,7 @@ import 'package:flutter_rentalmotor/config/api_config.dart';
 
 Future<Map<String, dynamic>> loginUser(String email, String password) async {
   final String baseUrl = ApiConfig.baseUrl;
-  final url =
-      Uri.parse('$baseUrl/login'); // Pastikan URL benar
+  final url = Uri.parse('$baseUrl/login'); // Pastikan URL benar
 
   try {
     print("Mengirim request login ke: $url");

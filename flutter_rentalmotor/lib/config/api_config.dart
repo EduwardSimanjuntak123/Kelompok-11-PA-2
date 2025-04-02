@@ -2,7 +2,7 @@
 
 class ApiConfig {
   // Base URL API
-  static const String baseUrl = "http://192.168.189.159:8080";
+  static const String baseUrl = "http://192.168.189.159:9090";
 
   // Jika ada endpoint lain, bisa ditambahkan di sini.
   // Contoh:

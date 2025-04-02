@@ -6,7 +6,7 @@ import 'package:flutter_rentalmotor/user/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/akun.dart';
-import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'package:flutter_rentalmotor/services/vendor_service.dart';
 
 class DataVendor extends StatefulWidget {
   final int vendorId;
@@ -22,6 +22,7 @@ class _DataVendorState extends State<DataVendor> {
   List<Map<String, dynamic>> _motorList = [];
   bool _isLoading = true;
   String _errorMessage = '';
+  final VendorService _vendorService = VendorService();
 
   @override
   void initState() {
@@ -30,29 +31,24 @@ class _DataVendorState extends State<DataVendor> {
   }
 
   Future<void> _fetchData() async {
-    await _fetchVendorData();
+    try {
+      final vendors = await _vendorService.fetchVendors();
+      setState(() {
+        _vendorData = vendors.firstWhere(
+          (vendor) => vendor['id'] == widget.vendorId,
+          orElse: () => {},
+        );
+      });
+    } catch (e) {
+      setState(() => _errorMessage = "Error: $e");
+    }
     await _fetchMotorData();
     setState(() => _isLoading = false);
   }
 
-  Future<void> _fetchVendorData() async {
-    final String apiUrl = "${ApiConfig.baseUrl}/vendor/${widget.vendorId}";
-    try {
-      final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        setState(() => _vendorData = jsonResponse['data']);
-      } else {
-        throw Exception("Gagal mengambil data vendor");
-      }
-    } catch (e) {
-      setState(() => _errorMessage = "Error: $e");
-    }
-  }
-
   Future<void> _fetchMotorData() async {
     final String apiUrl =
-        "${ApiConfig.baseUrl}/customer/motors/vendor/${widget.vendorId}";
+        "http://192.168.189.159:8080/customer/motors/vendor/${widget.vendorId}";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
@@ -101,9 +97,8 @@ class _DataVendorState extends State<DataVendor> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Gambar Vendor
-                      _vendorData?["image"] != null
-                          ? Image.network(_vendorData!["image"],
+                      _vendorData?['image'] != null
+                          ? Image.network(_vendorData!['image'],
                               width: double.infinity,
                               height: 200,
                               fit: BoxFit.cover)
@@ -114,20 +109,20 @@ class _DataVendorState extends State<DataVendor> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                                _vendorData?["shop_name"] ??
+                                _vendorData?['shop_name'] ??
                                     "Nama Tidak Diketahui",
                                 style: TextStyle(
                                     fontSize: 24, fontWeight: FontWeight.bold)),
                             SizedBox(height: 5),
                             Text(
-                                _vendorData?["shop_address"] ??
+                                _vendorData?['shop_address'] ??
                                     "Alamat Tidak Diketahui",
                                 style: TextStyle(color: Colors.grey)),
                             SizedBox(height: 5),
                             Row(
                               children: List.generate(5, (index) {
                                 double rating = double.tryParse(
-                                        _vendorData?["rating"]?.toString() ??
+                                        _vendorData?['rating']?.toString() ??
                                             "0") ??
                                     0;
                                 return Icon(
@@ -139,7 +134,7 @@ class _DataVendorState extends State<DataVendor> {
                             ),
                             SizedBox(height: 10),
                             Text(
-                                _vendorData?["shop_description"] ??
+                                _vendorData?['shop_description'] ??
                                     "Deskripsi tidak tersedia",
                                 style: TextStyle(color: Colors.black87)),
                             SizedBox(height: 20),
@@ -154,8 +149,7 @@ class _DataVendorState extends State<DataVendor> {
                                     children: _motorList
                                         .map((motor) =>
                                             _motorListWidget(context, motor))
-                                        .toList(),
-                                  ),
+                                        .toList()),
                           ],
                         ),
                       ),
