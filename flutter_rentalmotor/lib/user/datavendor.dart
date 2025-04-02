@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_rentalmotor/user/detailmotor.dart';
-import 'package:flutter_rentalmotor/user/ulasanpengguna.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
-import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_rentalmotor/user/detailmotor.dart';
+import 'package:flutter_rentalmotor/user/homepageuser.dart';
+import 'package:flutter_rentalmotor/user/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/akun.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class DataVendor extends StatefulWidget {
   final int vendorId;
@@ -22,7 +22,6 @@ class _DataVendorState extends State<DataVendor> {
   List<Map<String, dynamic>> _motorList = [];
   bool _isLoading = true;
   String _errorMessage = '';
-  final String baseUrl = "http://192.168.189.159:8080";
 
   @override
   void initState() {
@@ -33,72 +32,63 @@ class _DataVendorState extends State<DataVendor> {
   Future<void> _fetchData() async {
     await _fetchVendorData();
     await _fetchMotorData();
-    setState(() {
-      _isLoading = false;
-    });
+    setState(() => _isLoading = false);
   }
 
   Future<void> _fetchVendorData() async {
-    final String apiUrl = "$baseUrl/vendor/${widget.vendorId}";
+    final String apiUrl = "${ApiConfig.baseUrl}/vendor/${widget.vendorId}";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
-        setState(() {
-          _vendorData = jsonResponse['data'];
-        });
+        setState(() => _vendorData = jsonResponse['data']);
       } else {
-        throw Exception(
-            "Gagal mengambil data vendor (Status: ${response.statusCode})");
+        throw Exception("Gagal mengambil data vendor");
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = "Error fetching vendor data: $e";
-      });
+      setState(() => _errorMessage = "Error: $e");
     }
   }
 
   Future<void> _fetchMotorData() async {
-    final String apiUrl = "$baseUrl/customer/motors/vendor/1";
+    final String apiUrl =
+        "${ApiConfig.baseUrl}/customer/motors/vendor/${widget.vendorId}";
     try {
       final response = await http.get(Uri.parse(apiUrl));
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
-        setState(() {
-          _motorList = List<Map<String, dynamic>>.from(jsonResponse['data']);
-        });
+        setState(() =>
+            _motorList = List<Map<String, dynamic>>.from(jsonResponse['data']));
       } else {
-        throw Exception(
-            "Gagal mengambil data motor (Status: ${response.statusCode})");
+        throw Exception("Gagal mengambil data motor");
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = "Error fetching motor data: $e";
-      });
+      setState(() => _errorMessage = "Error: $e");
     }
   }
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      Navigator.push(
+      Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => HomePageUser()));
     } else if (index == 1) {
-      Navigator.push(
+      Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => DetailPesanan()));
     } else if (index == 2) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => Akun()));
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => Akun()));
     }
   }
 
   String formatRupiah(int amount) {
-    return NumberFormat.decimalPattern('id').format(amount);
+    return NumberFormat.currency(locale: 'id', symbol: 'Rp ').format(amount);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Data Vendor - ID: ${widget.vendorId}"),
+        title: Text("Vendor"),
         backgroundColor: Color(0xFF2C567E),
       ),
       body: _isLoading
@@ -111,72 +101,61 @@ class _DataVendorState extends State<DataVendor> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Stack(
-                        children: [
-                          Image.asset(
-                            'assets/images/m4.png',
-                            width: double.infinity,
-                            height: 200,
-                            fit: BoxFit.cover,
-                          ),
-                          Positioned(
-                            top: 30,
-                            left: 10,
-                            child: IconButton(
-                              icon: Icon(Icons.arrow_back, color: Colors.white),
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                      // Gambar Vendor
+                      _vendorData?["image"] != null
+                          ? Image.network(_vendorData!["image"],
+                              width: double.infinity,
+                              height: 200,
+                              fit: BoxFit.cover)
+                          : Container(height: 200, color: Colors.grey),
                       Padding(
                         padding: EdgeInsets.all(15),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _vendorData?['shop_name'] ??
-                                  'Nama Tidak Diketahui',
-                              style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold),
-                            ),
+                                _vendorData?["shop_name"] ??
+                                    "Nama Tidak Diketahui",
+                                style: TextStyle(
+                                    fontSize: 24, fontWeight: FontWeight.bold)),
                             SizedBox(height: 5),
                             Text(
-                              _vendorData?['shop_address'] ??
-                                  'Alamat Tidak Diketahui',
-                              style: TextStyle(color: Colors.grey),
+                                _vendorData?["shop_address"] ??
+                                    "Alamat Tidak Diketahui",
+                                style: TextStyle(color: Colors.grey)),
+                            SizedBox(height: 5),
+                            Row(
+                              children: List.generate(5, (index) {
+                                double rating = double.tryParse(
+                                        _vendorData?["rating"]?.toString() ??
+                                            "0") ??
+                                    0;
+                                return Icon(
+                                    index < rating
+                                        ? Icons.star
+                                        : Icons.star_border,
+                                    color: Colors.amber);
+                              }),
                             ),
+                            SizedBox(height: 10),
+                            Text(
+                                _vendorData?["shop_description"] ??
+                                    "Deskripsi tidak tersedia",
+                                style: TextStyle(color: Colors.black87)),
+                            SizedBox(height: 20),
+                            Text("Motor Tersedia",
+                                style: TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
                             SizedBox(height: 10),
                             _motorList.isEmpty
                                 ? Center(
-                                    child: Text("Tidak ada motor tersedia."))
+                                    child: Text("Tidak ada motor tersedia"))
                                 : Column(
                                     children: _motorList
                                         .map((motor) =>
                                             _motorListWidget(context, motor))
                                         .toList(),
                                   ),
-                            SizedBox(height: 15),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
-                                minimumSize: Size(double.infinity, 50),
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            UlasanPenggunaVendorScreen()));
-                              },
-                              child: Text('Ulasan Pengguna',
-                                  style: TextStyle(
-                                      color: Colors.white, fontSize: 16)),
-                            ),
                           ],
                         ),
                       ),
@@ -200,13 +179,18 @@ class _DataVendorState extends State<DataVendor> {
 
   Widget _motorListWidget(BuildContext context, Map<String, dynamic> motor) {
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 5),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        title: Text(motor['name'] ?? 'Nama Tidak Ada',
+        leading: motor["image"] != null
+            ? Image.network(motor["image"],
+                width: 80, height: 80, fit: BoxFit.cover)
+            : Container(width: 80, height: 80, color: Colors.grey),
+        title: Text(motor["name"] ?? "Nama Tidak Ada",
             style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('${formatRupiah(motor['price'])} IDR/hari'),
-        trailing: Text('Rating: ${motor['rating'] ?? '-'}'),
+        subtitle:
+            Text("${formatRupiah(int.parse(motor["price"].toString()))}/hari"),
+        trailing: Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
           Navigator.push(
               context,

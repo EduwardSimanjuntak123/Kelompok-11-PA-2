@@ -26,38 +26,27 @@ class MotorService {
               "name": motor["name"],
               "brand": motor["brand"],
               "model": motor["model"],
-              "year": motor["year"].toString(), // Pastikan String
-              "price": motor["price"].toString(), // Pastikan String
+              "year": motor["year"].toString(),
+              "price": motor["price"].toString(),
               "color": motor["color"],
               "rating": motor["rating"],
               "status": motor["status"],
-              "image": "$baseUrl${motor["image"]}", // Tambahkan URL dasar
-              "vendor": {
-                "id": motor["vendor"]["id"],
-                "shop_name": motor["vendor"]["shop_name"],
-                "shop_address": motor["vendor"]["shop_address"],
-                "rating":
-                    motor["vendor"]["rating"].toString() // Pastikan String
-              }
+              "type": motor["type"], // Tambahkan tipe motor
+              "description": motor["description"], // Tambahkan deskripsi
+              "image": "$baseUrl${motor["image"]}",
             };
           }).toList();
 
           print("✅ Data motor berhasil diambil.");
           return motors;
         } else {
-          print("❌ Format respons API tidak sesuai");
           throw Exception("Format respons API tidak sesuai");
         }
       } else {
-        print("❌ Gagal mengambil data. Kode status: ${response.statusCode}");
         throw Exception("Gagal mengambil data motor");
       }
-    } on TimeoutException {
-      print("⏳ Permintaan API timeout! Periksa koneksi internet.");
-      throw Exception("Timeout: Tidak dapat mengambil data motor");
     } catch (e) {
-      print("⚠️ Error saat mengambil data motor: $e");
-      throw Exception("Terjadi kesalahan saat mengambil data motor");
+      throw Exception("Terjadi kesalahan saat mengambil data motor: $e");
     }
   }
 }

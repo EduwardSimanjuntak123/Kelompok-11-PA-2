@@ -158,15 +158,7 @@ class VendorController extends Controller
             ];
         }
 
-        // Upload file ktp_image
-        if ($request->hasFile('ktp_image')) {
-            $file = $request->file('ktp_image');
-            $multipart[] = [
-                'name' => 'ktp_image',
-                'contents' => fopen($file->getPathname(), 'r'),
-                'filename' => $file->getClientOriginalName()
-            ];
-        }
+        
 
         // Update waktu
         $multipart[] = ['name' => 'updated_at', 'contents' => now()->toDateTimeString()];
@@ -185,7 +177,7 @@ class VendorController extends Controller
                 }
             
                 $hasProfileData = collect($multipart)->filter(function ($item) {
-                    return !in_array($item['name'], ['profile_image', 'ktp_image', 'updated_at']);
+                    return !in_array($item['name'], ['profile_image', 'updated_at']);
                 })->isNotEmpty();
             
                 if ($hasProfileData) {

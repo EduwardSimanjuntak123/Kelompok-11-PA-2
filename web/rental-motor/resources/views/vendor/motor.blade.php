@@ -41,6 +41,7 @@
                     <th class="py-3 px-4 text-left">Aksi</th>
                 </tr>
             </thead>
+            {{-- @dd($motors) --}}
             <tbody>
                 @foreach ($motors as $motor)
                     <tr class="border-b">

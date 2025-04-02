@@ -31,7 +31,6 @@ func saveImage(c *gin.Context, file *multipart.FileHeader) (string, error) {
 	return "/fileserver/motor/" + filename, nil
 }
 
-// Fungsi untuk menambah motor baru
 func CreateMotor(c *gin.Context) {
 	var motor models.Motor
 
@@ -56,13 +55,15 @@ func CreateMotor(c *gin.Context) {
 	motor.Model = c.PostForm("model")
 	motor.Color = c.PostForm("color")
 	motor.Status = c.PostForm("status")
+	motor.Type = c.PostForm("type")             // Tambahan kolom Type
+	motor.Description = c.PostForm("description") // Tambahan kolom Description
 
 	// Konversi nilai numerik
 	year, _ := strconv.Atoi(c.PostForm("year"))
-	price, _ := strconv.Atoi(c.PostForm("price"))
+	price, _ := strconv.ParseFloat(c.PostForm("price"), 64)
 
 	motor.Year = uint(year)
-	motor.Price = float64(price)
+	motor.Price = price
 
 	// Simpan motor terlebih dahulu
 	if err := config.DB.Create(&motor).Error; err != nil {
@@ -70,20 +71,20 @@ func CreateMotor(c *gin.Context) {
 		return
 	}
 
-	// Ambil file gambar jika ada
-	file, err := c.FormFile("image")
-	if err == nil {
-		imagePath, err := saveImage(c, file)
-		if err != nil {
+	// Ambil file gambar jika ada dan simpan
+	if file, err := c.FormFile("image"); err == nil {
+		if imagePath, err := saveImage(c, file); err == nil {
+			motor.Image = imagePath
+			config.DB.Save(&motor)
+		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan gambar"})
 			return
 		}
-		motor.Image = imagePath
-		config.DB.Save(&motor)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil ditambahkan", "data": motor})
 }
+
 
 // Fungsi untuk memperbarui motor
 func UpdateMotor(c *gin.Context) {
@@ -132,6 +133,12 @@ func UpdateMotor(c *gin.Context) {
 	}
 	if status := c.PostForm("status"); status != "" {
 		input["status"] = status
+	}
+	if motorType := c.PostForm("type"); motorType != "" { // Tambahan kolom Type
+		input["type"] = motorType
+	}
+	if description := c.PostForm("description"); description != "" { // Tambahan kolom Description
+		input["description"] = description
 	}
 
 	// Update Year jika valid (jangan set 0)
@@ -184,7 +191,7 @@ func GetAllMotorByVendorID(c *gin.Context) {
 	// Ambil semua motor berdasarkan VendorID dengan informasi vendor terkait
 	if err := config.DB.
 		Where("vendor_id = ?", vendorID).
-		Select("id, vendor_id, name, brand, model, year, rating, price, color, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand, model, year, rating, price, color,description,type, status, image, created_at, updated_at").
 		Find(&motors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
 		return
@@ -210,7 +217,7 @@ func GetAllMotor(c *gin.Context) {
 
 	// Ambil semua data motor dengan vendor terkait
 	if err := config.DB.Preload("Vendor").
-		Select("id, vendor_id, name, brand, model, year, rating, price, color, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand, model, year, rating, price, color,description,type, status, image, created_at, updated_at").
 		Find(&motors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
 		return
@@ -262,7 +269,7 @@ func GetAllMotorbyVendor(c *gin.Context) {
 
 	// Ambil motor berdasarkan vendor_id dengan Preload Vendor
 	if err := config.DB.
-		Select("id, vendor_id, name, brand, model, year, price, color,rating, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand, model, year, price, color,rating,description,type, status, image, created_at, updated_at").
 		Where("vendor_id = ?", vendor.ID).
 		Find(&motors).Error; err != nil {
 		fmt.Printf("❌ Gagal mengambil data motor: %v\n", err)

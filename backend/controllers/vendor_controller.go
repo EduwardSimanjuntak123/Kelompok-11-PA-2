@@ -206,7 +206,7 @@ func GetVendorProfile(c *gin.Context) {
 
 	var user models.User
 	if err := config.DB.
-		Select("id, name, email, role, phone, address, profile_image, ktp_image, status, created_at, updated_at").
+		Select("id, name, email, role, phone, address, profile_image, status, created_at, updated_at").
 		Preload("Vendor", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id, user_id, id_kecamatan,rating, shop_name, shop_address, shop_description, status, created_at, updated_at")
 		}).

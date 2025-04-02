@@ -34,7 +34,8 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
 
   @override
   Widget build(BuildContext context) {
-    String imageUrl = widget.motor["image"] ?? "assets/images/default_motor.png";
+    String imageUrl =
+        widget.motor["image"] ?? "assets/images/default_motor.png";
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -68,8 +69,14 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
                   child: imageUrl.startsWith("http")
-                      ? Image.network(imageUrl, width: double.infinity, height: 200, fit: BoxFit.cover)
-                      : Image.asset(imageUrl, width: double.infinity, height: 200, fit: BoxFit.cover),
+                      ? Image.network(imageUrl,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover)
+                      : Image.asset(imageUrl,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover),
                 ),
               ),
             ),
@@ -81,13 +88,18 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 5),
-            Text(
-              widget.motor["transmission"] ?? "Automatic/Manual",
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            SizedBox(height: 20),
 
-            // Deskripsi
+            // Menampilkan Tipe Motor
+            Text(
+              "Tipe: ${widget.motor["type"] ?? "Tidak Diketahui"}",
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black),
+            ),
+            SizedBox(height: 10),
+
+            // Deskripsi Motor
             Text(
               "Deskripsi",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -116,9 +128,21 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildInfoBox(Icons.star, "${widget.motor["rating"] ?? "0.0"}", "Rating", Colors.yellow),
-                  _buildInfoBox(Icons.attach_money, "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}", "Harga", Colors.green),
-                  _buildInfoBox(Icons.category, "${widget.motor["variant"] ?? "1"} Variant", "Varian", Colors.blue),
+                  _buildInfoBox(
+                      Icons.star,
+                      "${widget.motor["rating"] ?? "0.0"}",
+                      "Rating",
+                      Colors.yellow),
+                  _buildInfoBox(
+                      Icons.attach_money,
+                      "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}",
+                      "Harga",
+                      Colors.green),
+                  _buildInfoBox(
+                      Icons.category,
+                      "${widget.motor["variant"] ?? "1"} Variant",
+                      "Varian",
+                      Colors.blue),
                 ],
               ),
             ),
@@ -130,7 +154,9 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SewaMotorPage(motor: widget.motor)),
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            SewaMotorPage(motor: widget.motor)),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -142,7 +168,10 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                 ),
                 child: Text(
                   "Book Now",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ),
             ),
@@ -158,9 +187,18 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
         showUnselectedLabels: true,
         onTap: _onItemTapped,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: "Beranda"),
-          BottomNavigationBarItem(icon: Icon(Icons.receipt_long_outlined), activeIcon: Icon(Icons.receipt_long), label: "Pesanan"),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: "Akun"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: "Beranda"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: "Pesanan"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: "Akun"),
         ],
       ),
     );
@@ -174,7 +212,8 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
           children: [
             Icon(icon, color: color, size: 20),
             SizedBox(width: 5),
-            Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            Text(value,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           ],
         ),
         SizedBox(height: 5),
