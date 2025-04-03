@@ -1,11 +1,24 @@
 import 'dart:convert';
-import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
-class MotorService {
+class HomePageApi {
   final String baseUrl = ApiConfig.baseUrl;
 
+  // Mengambil daftar vendor dari API
+  Future<List<Map<String, dynamic>>> fetchVendors() async {
+    final response = await http.get(Uri.parse("$baseUrl/vendor"));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(
+          data['data']); // Sesuaikan dengan struktur JSON API
+    } else {
+      throw Exception("Gagal mengambil data vendor");
+    }
+  }
+
+  // Mengambil daftar motor dari API
   Future<List<Map<String, dynamic>>> fetchMotors() async {
     try {
       print("🔄 Memanggil API untuk data motor...");

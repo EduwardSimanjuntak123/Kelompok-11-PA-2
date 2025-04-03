@@ -1,12 +1,11 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:flutter_rentalmotor/user/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/akun.dart';
 import 'package:flutter_rentalmotor/services/vendor_service.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class DataVendor extends StatefulWidget {
   final int vendorId;
@@ -32,12 +31,9 @@ class _DataVendorState extends State<DataVendor> {
 
   Future<void> _fetchData() async {
     try {
-      final vendors = await _vendorService.fetchVendors();
+      final vendor = await _vendorService.fetchVendorById(widget.vendorId);
       setState(() {
-        _vendorData = vendors.firstWhere(
-          (vendor) => vendor['id'] == widget.vendorId,
-          orElse: () => {},
-        );
+        _vendorData = vendor;
       });
     } catch (e) {
       setState(() => _errorMessage = "Error: $e");
@@ -47,17 +43,10 @@ class _DataVendorState extends State<DataVendor> {
   }
 
   Future<void> _fetchMotorData() async {
-    final String apiUrl =
-        "http://192.168.189.159:8080/customer/motors/vendor/${widget.vendorId}";
     try {
-      final response = await http.get(Uri.parse(apiUrl));
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        setState(() =>
-            _motorList = List<Map<String, dynamic>>.from(jsonResponse['data']));
-      } else {
-        throw Exception("Gagal mengambil data motor");
-      }
+      final motorList =
+          await _vendorService.fetchMotorsByVendor(widget.vendorId);
+      setState(() => _motorList = motorList);
     } catch (e) {
       setState(() => _errorMessage = "Error: $e");
     }
@@ -82,6 +71,13 @@ class _DataVendorState extends State<DataVendor> {
 
   @override
   Widget build(BuildContext context) {
+    // Mengambil gambar vendor dan membuat URL lengkap
+    String? vendorImage = _vendorData?['user']?['profile_image'];
+    String fullVendorImageUrl =
+        vendorImage != null && !vendorImage.startsWith("http")
+            ? "${ApiConfig.baseUrl}$vendorImage"
+            : vendorImage ?? "";
+
     return Scaffold(
       appBar: AppBar(
         title: Text("Vendor"),
@@ -97,12 +93,14 @@ class _DataVendorState extends State<DataVendor> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _vendorData?['image'] != null
-                          ? Image.network(_vendorData!['image'],
+                      // Menambahkan pengecekan untuk gambar vendor
+                      fullVendorImageUrl.isNotEmpty
+                          ? Image.network(fullVendorImageUrl,
                               width: double.infinity,
                               height: 200,
                               fit: BoxFit.cover)
                           : Container(height: 200, color: Colors.grey),
+
                       Padding(
                         padding: EdgeInsets.all(15),
                         child: Column(
@@ -172,12 +170,17 @@ class _DataVendorState extends State<DataVendor> {
   }
 
   Widget _motorListWidget(BuildContext context, Map<String, dynamic> motor) {
+    String? imageUrl = motor["image"];
+    String fullImageUrl = imageUrl != null && !imageUrl.startsWith("http")
+        ? "${ApiConfig.baseUrl}$imageUrl" // Gantilah dengan base URL server Anda
+        : imageUrl ?? "";
+
     return Card(
       margin: EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: motor["image"] != null
-            ? Image.network(motor["image"],
+        leading: fullImageUrl.isNotEmpty
+            ? Image.network(fullImageUrl,
                 width: 80, height: 80, fit: BoxFit.cover)
             : Container(width: 80, height: 80, color: Colors.grey),
         title: Text(motor["name"] ?? "Nama Tidak Ada",

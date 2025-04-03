@@ -5,7 +5,7 @@ import 'package:flutter_rentalmotor/user/chat.dart';
 import 'package:flutter_rentalmotor/user/akun.dart';
 import 'package:flutter_rentalmotor/user/datavendor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_rentalmotor/services/motor_service.dart';
+import 'package:flutter_rentalmotor/services/homepage_api.dart';
 import 'package:flutter_rentalmotor/services/vendor_service.dart';
 import 'package:intl/intl.dart'; // Untuk format angka
 
@@ -47,7 +47,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
   Future<void> _fetchMotors() async {
     try {
-      List<Map<String, dynamic>> motors = await MotorService().fetchMotors();
+      List<Map<String, dynamic>> motors = await HomePageApi().fetchMotors();
       if (mounted) {
         setState(() {
           _motorList = motors;
@@ -60,7 +60,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
   Future<void> _fetchVendors() async {
     try {
-      List<Map<String, dynamic>> vendors = await VendorService().fetchVendors();
+      List<Map<String, dynamic>> vendors = await HomePageApi().fetchVendors();
       if (mounted) {
         setState(() {
           _vendorList = vendors;

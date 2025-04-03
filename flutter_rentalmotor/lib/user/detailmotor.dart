@@ -37,6 +37,13 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
     String imageUrl =
         widget.motor["image"] ?? "assets/images/default_motor.png";
 
+    // Cek apakah URL gambar adalah path relatif, tambahkan base URL jika iya
+    if (imageUrl.startsWith("/")) {
+      imageUrl = "http://192.168.189.159:8080$imageUrl"; // Menambahkan base URL
+    }
+
+    print("Gambar motor URL: $imageUrl");
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
