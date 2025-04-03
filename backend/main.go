@@ -33,7 +33,7 @@ func main() {
 	// Tentukan port server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "9090"
+		port = "8080"
 	}
 	// Log informasi server
 	fmt.Println("✅ Server berjalan di port", port)

@@ -13,8 +13,8 @@ type Vendor struct {
     Rating          float32   `gorm:"default:0" json:"rating"`
     CreatedAt       time.Time `gorm:"autoCreateTime" json:"created_at"`
     UpdatedAt       time.Time `gorm:"autoUpdateTime" json:"updated_at"`
-    Motors          []Motor   `gorm:"foreignKey:VendorID" json:"motors"`
-    User            User      `gorm:"foreignKey:UserID" json:"user"`
+    Motors []Motor `gorm:"foreignKey:VendorID" json:"motors" binding:"-"`
+    User   User    `gorm:"foreignKey:UserID" json:"user" binding:"-"`
 }
 
 

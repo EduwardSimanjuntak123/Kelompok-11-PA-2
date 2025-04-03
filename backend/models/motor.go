@@ -6,7 +6,7 @@ import "time"
 type Motor struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	VendorID    uint      `gorm:"not null" json:"vendor_id"`
-	Vendor      Vendor    `gorm:"foreignKey:VendorID" json:"vendor"` // Perbaiki penamaan
+	Vendor 		Vendor 	  `gorm:"foreignKey:VendorID" json:"vendor" binding:"-"`
 	Name        string    `gorm:"size:100;not null" json:"name" form:"name"`
 	Brand       string    `gorm:"size:50;not null" json:"brand" form:"brand"`
 	Model       string    `gorm:"size:50;not null" json:"model" form:"model"`

@@ -18,7 +18,7 @@ type User struct {
     UpdatedAt    time.Time `json:"updated_at"`
     // Relasi ke Vendor jika role adalah 'vendor'
     Vendor   *Vendor    `gorm:"foreignKey:UserID" json:"vendor"`
-    Bookings []Booking `gorm:"foreignKey:CustomerID" json:"bookings"`
+    Bookings []Booking `gorm:"foreignKey:CustomerID" json:"bookings" binding:"-"`
 }
 
 

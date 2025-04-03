@@ -1,305 +1,135 @@
 package controllers
 
 import (
-	"fmt"
-	"log"
-	"mime/multipart"
 	"net/http"
-	"os"
-	"path/filepath"
 	"rental-backend/config"
 	"rental-backend/models"
-	"time"
-
-	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 
-
-
-func saveUserImage(c *gin.Context, field string) (string, error) {
-    file, err := c.FormFile(field)
-    if err != nil {
-        return "", nil 
-    }
-
-    filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
-    filePath := filepath.Join("./fileserver/users", filename)
-    os.MkdirAll("./fileserver/users", os.ModePerm)
-
-    if err := c.SaveUploadedFile(file, filePath); err != nil {
-        return "", err
-    }
-
-    return "/fileserver/users/" + filename, nil
-}
-
 func GetCustomerProfile(c *gin.Context) {
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan, harap login ulang"})
-		return
-	}
+    userID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan, harap login ulang"})
+        return
+    }
 
-	var user models.User
-	if err := config.DB.
-		Select("id, name, email, role,birth_date,password, phone, address, profile_image, status, created_at, updated_at").
-		Where("id = ? AND name IS NOT NULL AND email IS NOT NULL", userID).
-		First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan atau bukan customer"})
-		return
-	}
+    var user models.User
+    if err := config.DB.Select("id, name, email, role, birth_date, phone, address, profile_image, status, created_at, updated_at").
+        Where("id = ? AND role = ?", userID, "customer").
+        First(&user).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Customer tidak ditemukan"})
+        return
+    }
 
-	if user.Role != "customer" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Customer tidak ditemukan"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"user": user})
+    c.JSON(http.StatusOK, gin.H{"user": user})
 }
 
 // Get All Motors
 func GetAllMotors(c *gin.Context) {
-	var motors []models.Motor
-	config.DB.Where("status = ?", "available").Find(&motors)
-	c.JSON(http.StatusOK, motors)
+    var motors []models.Motor
+    if err := config.DB.Where("status = ?", "available").Find(&motors).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
+        return
+    }
+    c.JSON(http.StatusOK, motors)
 }
 // saveBookingImage menyimpan file gambar booking ke folder ./fileserver/booking
-func saveBookingImage(c *gin.Context, file *multipart.FileHeader) (string, error) {
-	timestamp := time.Now().Format("20060102_150405")
-	filename := fmt.Sprintf("%s%s", timestamp, filepath.Ext(file.Filename))
-	filePath := filepath.Join("./fileserver/booking", filename)
-
-	if err := os.MkdirAll("./fileserver/booking", os.ModePerm); err != nil {
-		return "", err
-	}
-	if err := c.SaveUploadedFile(file, filePath); err != nil {
-		return "", err
-	}
-	return "/fileserver/booking/" + filename, nil
-}
 
 
-func CreateBooking(c *gin.Context) {
-	var booking models.Booking
-
-	// Bind request (dikirim sebagai multipart/form-data) ke struct booking
-	if err := c.ShouldBind(&booking); err != nil {
-		log.Printf("Error binding request: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format request tidak valid"})
-		return
-	}
-
-	log.Printf("Debug: Booking data received: %+v", booking)
-
-	// Ambil user_id dari token
-	userID, exists := c.Get("user_id")
-	if !exists {
-		log.Printf("User not authenticated")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-		return
-	}
-
-	// Karena CustomerID bertipe *uint, ambil pointer dari userID
-	id := userID.(uint)
-	booking.CustomerID = &id
-
-	log.Printf("Debug: User ID dari token: %v", id)
-
-	// Mulai transaksi database
-	tx := config.DB.Begin()
-
-	// Ambil data pelanggan (customer) berdasarkan user_id dari token
-	var customer models.User
-	if err := tx.Select("id, name").Where("id = ?", id).First(&customer).Error; err != nil {
-		tx.Rollback()
-		log.Printf("Error fetching customer: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data pelanggan"})
-		return
-	}
-
-	log.Printf("Debug: Customer Data -> ID: %d, Name: %s", customer.ID, customer.Name)
-
-	// Set CustomerName di booking dari nama customer yang diambil
-	booking.CustomerName = customer.Name
-
-	// Validasi MotorID
-	if booking.MotorID == 0 {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "MotorID tidak boleh 0. Pastikan gunakan 'motor_id' dalam request."})
-		return
-	}
-
-	// Cari Motor berdasarkan MotorID
-	var motor models.Motor
-	if err := tx.Select("id, name, brand, model, year, price, vendor_id").Where("id = ?", booking.MotorID).First(&motor).Error; err != nil {
-		tx.Rollback()
-		log.Printf("Error fetching motor: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data motor"})
-		return
-	}
-
-	log.Printf("Debug: Motor Data -> ID: %d, Name: '%s', VendorID: %d", motor.ID, motor.Name, motor.VendorID)
-
-	if motor.VendorID == 0 {
-		tx.Rollback()
-		log.Printf("Motor with ID %d does not have a valid VendorID", booking.MotorID)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Motor does not have a valid VendorID"})
-		return
-	}
-
-	booking.VendorID = motor.VendorID
-
-	// Validasi rentang tanggal
-	if booking.EndDate.Before(booking.StartDate) {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Tanggal booking tidak valid: end_date tidak boleh lebih awal dari start_date"})
-		return
-	}
-
-	// Hitung durasi booking dalam hari
-	duration := int(booking.EndDate.Sub(booking.StartDate).Hours() / 24)
-	if duration <= 0 {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Durasi booking tidak valid"})
-		return
-	}
-	totalPrice := float64(duration) * motor.Price
-
-	// Set status default dan booking date
-	booking.Status = "pending"
-	booking.BookingDate = time.Now()
-
-	// Tangani file gambar untuk PhotoID (jika ada)
-	if file, err := c.FormFile("photo_id"); err == nil {
-		photoPath, err := saveBookingImage(c, file)
-		if err != nil {
-			tx.Rollback()
-			log.Printf("Error saving photo_id: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan foto ID"})
-			return
-		}
-		booking.PhotoID = photoPath
-	}
-
-	// Tangani file gambar untuk KtpID (jika ada)
-	if file, err := c.FormFile("ktp_id"); err == nil {
-		ktpPath, err := saveBookingImage(c, file)
-		if err != nil {
-			tx.Rollback()
-			log.Printf("Error saving ktp_id: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan foto KTP"})
-			return
-		}
-		booking.KtpID = ktpPath
-	}
-
-	// Insert booking ke database
-	if err := tx.Create(&booking).Error; err != nil {
-		tx.Rollback()
-		log.Printf("Error inserting booking: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambahkan booking"})
-		return
-	}
-
-	// Commit transaksi
-	tx.Commit()
-
-	// Siapkan respons
-	response := gin.H{
-		"message":         "Booking berhasil dibuat",
-		"booking_id":      booking.ID,
-		"customer_name":   customer.Name,
-		"booking_date":    booking.BookingDate,
-		"start_date":      booking.StartDate,
-		"end_date":        booking.EndDate,
-		"pickup_location": booking.PickupLocation,
-		"status":          "pending",
-		"motor": gin.H{
-			"id":            motor.ID,
-			"name":          motor.Name,
-			"brand":         motor.Brand,
-			"model":         motor.Model,
-			"year":          motor.Year,
-			"price_per_day": motor.Price,
-			"total_price":   totalPrice,
-		},
-		"photo_id": booking.PhotoID,
-		"ktp_id":   booking.KtpID,
-	}
-
-	log.Printf("Booking successfully created: %+v", response)
-	c.JSON(http.StatusOK, response)
-}
 
 
 // Cancel Booking
 func CancelBooking(c *gin.Context) {
-	id := c.Param("id")
-	var booking models.Booking
+    id := c.Param("id")
+    var booking models.Booking
 
-	// Cari booking berdasarkan ID
-	if err := config.DB.Where("id = ?", id).First(&booking).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
-		return
-	}
+    if err := config.DB.Where("id = ?", id).First(&booking).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
+        return
+    }
 
-	// Pastikan hanya booking dengan status 'pending' yang dapat dibatalkan
-	if booking.Status != "pending" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Hanya booking dengan status 'pending' yang dapat dibatalkan"})
-		return
-	}
+    if booking.Status != "pending" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Hanya booking dengan status 'pending' yang dapat dibatalkan"})
+        return
+    }
 
-	// Update status menjadi 'canceled'
-	if err := config.DB.Model(&models.Booking{}).Where("id = ?", id).Update("status", "canceled").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membatalkan booking"})
-		return
-	}
+    if err := config.DB.Model(&booking).Update("status", "canceled").Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membatalkan booking"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dibatalkan"})
+    c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dibatalkan"})
 }
+
 
 // Get Customer Transactions
 func GetCustomerTransactions(c *gin.Context) {
-	var transactions []models.Transaction
-	config.DB.Where("customer_id = ?", c.MustGet("user_id")).Find(&transactions)
-	c.JSON(http.StatusOK, transactions)
+    var transactions []models.Transaction
+    if err := config.DB.Where("customer_id = ?", c.MustGet("user_id")).Find(&transactions).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil transaksi"})
+        return
+    }
+    c.JSON(http.StatusOK, transactions)
 }
-
 // Update Profile
 func UpdateProfile(c *gin.Context) {
-	var user models.User
-	id := c.MustGet("user_id").(uint)
+    var input models.User
+    id := c.MustGet("user_id").(uint)
 
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	config.DB.Model(&user).Where("id = ?", id).Updates(user)
-	c.JSON(http.StatusOK, gin.H{"message": "Profil berhasil diperbarui"})
+    updates := map[string]interface{}{}
+    if input.Name != "" {
+        updates["name"] = input.Name
+    }
+    if input.Email != "" {
+        updates["email"] = input.Email
+    }
+    if input.Phone != "" {
+        updates["phone"] = input.Phone
+    }
+    if input.Address != "" {
+        updates["address"] = input.Address
+    }
+
+    if len(updates) > 0 {
+        config.DB.Model(&models.User{}).Where("id = ?", id).Updates(updates)
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Profil berhasil diperbarui"})
 }
+
 
 // Change Password
 func ChangePassword(c *gin.Context) {
-	var input struct {
-		OldPassword string `json:"old_password" binding:"required"`
-		NewPassword string `json:"new_password" binding:"required"`
-	}
+    var input struct {
+        OldPassword string `json:"old_password" binding:"required"`
+        NewPassword string `json:"new_password" binding:"required"`
+    }
 
-	id := c.MustGet("user_id").(uint)
-	var user models.User
-	config.DB.First(&user, id)
+    id := c.MustGet("user_id").(uint)
+    var user models.User
+    config.DB.First(&user, id)
 
-	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.OldPassword)) != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Password lama salah"})
-		return
-	}
+    if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.OldPassword)) != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Password lama salah"})
+        return
+    }
 
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
-	config.DB.Model(&user).Update("password", hashedPassword)
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.NewPassword), bcrypt.DefaultCost)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengenkripsi password"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"message": "Password berhasil diubah"})
+    config.DB.Model(&user).Update("password", hashedPassword)
+    c.JSON(http.StatusOK, gin.H{"message": "Password berhasil diubah"})
 }
+

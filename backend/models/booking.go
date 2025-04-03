@@ -7,7 +7,7 @@ import "time"
 type Booking struct {
 	ID             uint      `gorm:"primaryKey" json:"id"`
 	CustomerID     *uint     `json:"customer_id"` // Boleh NULL jika customer tidak memiliki akun
-	CustomerName   string    `gorm:"size:100;not null" json:"customer_name"` // Disimpan di database
+	CustomerName   string    `gorm:"size:100;not null" json:"customer_name"`
 	VendorID       uint      `gorm:"not null" json:"vendor_id"`
 	MotorID        uint      `gorm:"not null" json:"motor_id" form:"motor_id"`
 	BookingDate    time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"booking_date"`
@@ -20,9 +20,10 @@ type Booking struct {
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 
-	Vendor   *Vendor `gorm:"foreignKey:VendorID" json:"vendor"`
-	Customer *User   `gorm:"foreignKey:CustomerID" json:"customer"`
-	Motor    *Motor  `gorm:"foreignKey:MotorID" json:"motor"`
+	// Field relasi; tidak di-bind dari input
+	Vendor   *Vendor `gorm:"foreignKey:VendorID" json:"vendor" binding:"-"`
+	Customer *User   `gorm:"foreignKey:CustomerID" json:"customer" binding:"-"`
+	Motor    *Motor  `gorm:"foreignKey:MotorID" json:"motor" binding:"-"`
 }
 
 

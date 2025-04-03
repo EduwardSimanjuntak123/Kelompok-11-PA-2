@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"rental-backend/config"
 	"rental-backend/models"
 	"strings"
@@ -11,9 +14,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// RegisterCustomer menangani proses registrasi pelanggan.
-// Pada fungsi ini, data pengguna disimpan dengan status "pending" dan OTP dikirim ke email.
-// OTP disimpan di tabel terpisah (OtpRequest).
+func saveUserImage(c *gin.Context, field string) (string, error) {
+    file, err := c.FormFile(field)
+    if err != nil {
+        return "", nil
+    }
+
+    filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+    filePath := filepath.Join("./fileserver/users", filename)
+
+    if err := os.MkdirAll("./fileserver/users", os.ModePerm); err != nil {
+        return "", err
+    }
+
+    if err := c.SaveUploadedFile(file, filePath); err != nil {
+        return "", err
+    }
+
+    return "/fileserver/users/" + filename, nil
+}
 func RegisterCustomer(c *gin.Context) {
 	var input struct {
 		Name     string `form:"name" binding:"required"`
@@ -23,27 +42,34 @@ func RegisterCustomer(c *gin.Context) {
 		Address  string `form:"address"`
 	}
 
+	// Bind input data dari form
 	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Jika diperlukan, Anda dapat memeriksa apakah email sudah terdaftar.
-	// Namun, jika ingin memverifikasi bahwa email benar-benar ada melalui OTP,
-	// Anda bisa menghilangkan pengecekan ini.
+	// Cek apakah email sudah terdaftar
 	var existingUser models.User
 	if err := config.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email sudah digunakan"})
 		return
 	}
 
+	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(strings.TrimSpace(input.Password)), bcrypt.DefaultCost)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Kesalahan dalam hashing password"})
 		return
 	}
 
-	// Generate OTP dan simpan ke tabel otp_requests
+	// Simpan gambar profil jika diunggah
+	profileImage, err := saveUserImage(c, "profile_image")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan gambar profil"})
+		return
+	}
+
+	// Generate OTP
 	otp := generateOTP()
 	otpRequest := models.OtpRequest{
 		Email:     input.Email,
@@ -61,23 +87,25 @@ func RegisterCustomer(c *gin.Context) {
 		return
 	}
 
-	// Simpan data user dengan status "pending" (belum aktif) tanpa field OTP
+	// Simpan data user dengan status "pending"
 	user := models.User{
-		Name:     input.Name,
-		Email:    input.Email,
-		Password: string(hashedPassword),
-		Role:     "customer",
-		Phone:    input.Phone,
-		Address:  input.Address,
-		Status:   "pending",
+		Name:         input.Name,
+		Email:        input.Email,
+		Password:     string(hashedPassword),
+		Role:         "customer",
+		Phone:        input.Phone,
+		Address:      input.Address,
+		ProfileImage: profileImage, // Simpan gambar jika ada
+		Status:       "pending",
 	}
 	if err := config.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data pelanggan"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OTP telah dikirim ke email, harap verifikasi"})
+	c.JSON(http.StatusOK, gin.H{"message": "OTP telah dikirim ke email, harap verifikasi", "profile_image": profileImage})
 }
+
 
 // VerifyOTP menangani verifikasi OTP yang telah dikirim ke email pengguna.
 // Jika OTP valid dan belum kadaluarsa, status pengguna akan diupdate menjadi "active" dan record OTP dihapus.
