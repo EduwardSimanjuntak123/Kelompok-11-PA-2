@@ -6,8 +6,8 @@ import 'package:flutter_rentalmotor/user/akun.dart';
 import 'package:flutter_rentalmotor/user/datavendor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/services/homepage_api.dart';
-import 'package:flutter_rentalmotor/services/vendor_service.dart';
 import 'package:intl/intl.dart'; // Untuk format angka
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class HomePageUser extends StatefulWidget {
   const HomePageUser({Key? key}) : super(key: key);
@@ -21,8 +21,7 @@ class _HomePageUserState extends State<HomePageUser> {
   int _userId = 0;
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _vendorList = [];
-  final String baseUrl =
-      "http://192.168.189.159:8080"; // Sesuaikan dengan API Anda
+  final String baseUrl = ApiConfig.baseUrl; // Sesuaikan dengan API Anda
 
   @override
   void initState() {
