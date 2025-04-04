@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rentalmotor/user/homepageuser.dart';
+import 'package:flutter_rentalmotor/user/homepageuser.dart' as home;
 import 'package:flutter_rentalmotor/user/akun.dart';
-import 'package:flutter_rentalmotor/user/pesanan.dart';
+import 'package:flutter_rentalmotor/user/pesanan.dart' as pesanan;
 
 class DetailPesanan extends StatefulWidget {
   @override
@@ -9,18 +9,18 @@ class DetailPesanan extends StatefulWidget {
 }
 
 class _DetailPesananState extends State<DetailPesanan> {
-  int _selectedIndex = 1; 
+  int _selectedIndex = 1;
 
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomePageUser()),
+        MaterialPageRoute(builder: (context) => home.HomePageUser()),
       );
     } else if (index == 1) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => PesananPage()),
+        MaterialPageRoute(builder: (context) => pesanan.PesananPage()),
       );
     } else if (index == 2) {
       Navigator.pushReplacement(
@@ -38,21 +38,21 @@ class _DetailPesananState extends State<DetailPesanan> {
         title: Text(
           'Pesanan',
           style: TextStyle(
-            color: Colors.white, 
+            color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white), 
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context); 
+            Navigator.pop(context);
           },
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.search, color: Colors.white), 
+            icon: Icon(Icons.search, color: Colors.white),
             onPressed: () {},
           ),
         ],
@@ -83,9 +83,11 @@ class _DetailPesananState extends State<DetailPesanan> {
                   SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.local_gas_station, size: 16, color: Colors.black54),
+                      Icon(Icons.local_gas_station,
+                          size: 16, color: Colors.black54),
                       SizedBox(width: 5),
-                      Text('24% Filled', style: TextStyle(color: Colors.black54)),
+                      Text('24% Filled',
+                          style: TextStyle(color: Colors.black54)),
                       SizedBox(width: 15),
                       Icon(Icons.location_on, size: 16, color: Colors.black54),
                       SizedBox(width: 5),
@@ -96,7 +98,7 @@ class _DetailPesananState extends State<DetailPesanan> {
                   Row(
                     children: [
                       Image.asset(
-                        'assets/images/m2.png', 
+                        'assets/images/m2.png',
                         width: 100,
                       ),
                       SizedBox(width: 15),
@@ -106,12 +108,14 @@ class _DetailPesananState extends State<DetailPesanan> {
                           children: [
                             Text(
                               'GAOL RENTAL',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 5),
                             Text(
                               '75K/ hari',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -126,10 +130,12 @@ class _DetailPesananState extends State<DetailPesanan> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => PesananPage()), 
+                            MaterialPageRoute(
+                                builder: (context) => pesanan.PesananPage()),
                           );
                         },
-                        child: Text('Detail', style: TextStyle(color: Colors.white)),
+                        child: Text('Detail',
+                            style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),

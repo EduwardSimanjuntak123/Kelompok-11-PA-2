@@ -4,13 +4,15 @@ import 'package:flutter_rentalmotor/user/notifikasi.dart';
 import 'package:flutter_rentalmotor/user/chat.dart';
 import 'package:flutter_rentalmotor/user/akun.dart';
 import 'package:flutter_rentalmotor/user/datavendor.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_rentalmotor/services/homepage_api.dart';
-import 'package:intl/intl.dart'; // Untuk format angka
+import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'package:flutter_rentalmotor/services/homepage_api.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class HomePageUser extends StatefulWidget {
   const HomePageUser({Key? key}) : super(key: key);
+
   @override
   _HomePageUserState createState() => _HomePageUserState();
 }
@@ -18,20 +20,31 @@ class HomePageUser extends StatefulWidget {
 class _HomePageUserState extends State<HomePageUser> {
   int _selectedIndex = 0;
   String _userName = "Pengguna";
-  int _userId = 0;
+  int? _userId;
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _vendorList = [];
-  final String baseUrl = ApiConfig.baseUrl; // Sesuaikan dengan API Anda
+  final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
+    final userName = prefs.getString('user_name');
+
+    setState(() {
+      _userId = userId;
+      _userName = userName ?? "Guest";
+    });
+
     _fetchVendors();
     _fetchMotors();
   }
 
-  // Memuat data user dari SharedPreferences
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     String? name = prefs.getString('user_name');
@@ -76,14 +89,25 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  // Navigasi Bottom Navigation Bar
   void _onItemTapped(int index) async {
-    if (index == 1) {
-      // Navigasi ke halaman Akun
+    // Proteksi untuk guest
+    if (_userId == null && (index == 1 || index == 2)) {
+      _showLoginRequiredAlert();
+      return;
+    }
+
+    if (index == 2) {
+      // Akun
       await Navigator.of(context)
           .push(MaterialPageRoute(builder: (context) => const Akun()));
-      // Setelah kembali, perbarui data user
       _loadUserData();
+      setState(() {
+        _selectedIndex = 0;
+      });
+    } else if (index == 1) {
+      // Pesanan (buat halaman sendiri nanti)
+      await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (context) => const PesananPage()));
       setState(() {
         _selectedIndex = 0;
       });
@@ -92,6 +116,32 @@ class _HomePageUserState extends State<HomePageUser> {
         _selectedIndex = index;
       });
     }
+  }
+
+  void _showLoginRequiredAlert() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Login Diperlukan"),
+        content: const Text(
+            "Anda harus login terlebih dahulu untuk mengakses fitur ini."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+            child: const Text("Login"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -123,6 +173,10 @@ class _HomePageUserState extends State<HomePageUser> {
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: "Pesanan"),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
         ],
       ),
@@ -144,7 +198,7 @@ class _HomePageUserState extends State<HomePageUser> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            "Halo, $_userName (ID: $_userId)",
+            "Halo, $_userName (ID: ${_userId ?? '-'})",
             style: const TextStyle(
                 fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
           ),
@@ -189,7 +243,6 @@ class _HomePageUserState extends State<HomePageUser> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: _vendorList.map((vendor) {
-                    // Ambil gambar vendor dari user (profile_image)
                     String path =
                         vendor["user"]["profile_image"]?.toString().trim() ??
                             "";
@@ -200,7 +253,7 @@ class _HomePageUserState extends State<HomePageUser> {
                       vendor["shop_name"] ?? "Vendor Tidak Diketahui",
                       vendor["rating"]?.toString() ?? "0",
                       imageUrl,
-                      vendor["id"], // vendorId
+                      vendor["id"],
                     );
                   }).toList(),
                 ),
@@ -230,7 +283,6 @@ class _HomePageUserState extends State<HomePageUser> {
                     String imageUrl = path.isNotEmpty
                         ? (path.startsWith("http") ? path : "$baseUrl$path")
                         : "assets/images/default_motor.png";
-                    // Format harga menggunakan NumberFormat
                     String formattedPrice;
                     if (motor["price"] != null) {
                       final priceValue =
@@ -250,7 +302,10 @@ class _HomePageUserState extends State<HomePageUser> {
                       motor["rating"]?.toString() ?? "Rating Tidak Diketahui",
                       "Rp $formattedPrice/hari",
                       imageUrl,
-                      DetailMotorPage(motor: motor),
+                      DetailMotorPage(
+                        motor: motor,
+                        isGuest: _userId == null,
+                      ),
                     );
                   }).toList(),
                 ),
@@ -353,6 +408,20 @@ class _HomePageUserState extends State<HomePageUser> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// Placeholder halaman Pesanan
+class PesananPage extends StatelessWidget {
+  const PesananPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Pesanan Anda")),
+      body:
+          const Center(child: Text("Daftar pesanan akan ditampilkan di sini")),
     );
   }
 }

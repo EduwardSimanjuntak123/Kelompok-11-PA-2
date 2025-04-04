@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/editprofiluser.dart';
-import 'package:flutter_rentalmotor/home.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/lupakatasandi.dart';
 import 'package:flutter_rentalmotor/user/detailpesanan.dart';
@@ -271,10 +270,13 @@ class _AkunState extends State<Akun> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear(); // Menghapus semua data tersimpan
+
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                  MaterialPageRoute(builder: (context) => HomePageUser()),
                 );
               },
               child: const Text("Iya", style: TextStyle(color: Colors.white)),
