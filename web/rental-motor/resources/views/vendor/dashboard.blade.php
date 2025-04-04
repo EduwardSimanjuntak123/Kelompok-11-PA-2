@@ -10,7 +10,6 @@
         </h2>
         <p class="text-gray-600">ID Vendor Anda: <span class="font-semibold">{{ $id }}</span></p>
     </div>
-    {{-- @dd($ratingData) --}}
 
     @php
         use Carbon\Carbon;
@@ -30,11 +29,16 @@
             $pendapatanBulanan[$bulan] = 0; // Inisialisasi pendapatan
         }
 
+        // Pastikan transactions memiliki nilai default array kosong
+        $transactions = $transactions ?? [];
+
         // Hitung pendapatan berdasarkan transaksi
-        foreach ($transactions as $transaction) {
-            $bulan = Carbon::parse($transaction['created_at'])->format($bulanFormat);
-            if (isset($pendapatanBulanan[$bulan])) {
-                $pendapatanBulanan[$bulan] += $transaction['total_price'];
+        if (!empty($transactions)) {
+            foreach ($transactions as $transaction) {
+                $bulan = Carbon::parse($transaction['created_at'])->format($bulanFormat);
+                if (isset($pendapatanBulanan[$bulan])) {
+                    $pendapatanBulanan[$bulan] += $transaction['total_price'];
+                }
             }
         }
 
@@ -42,8 +46,11 @@
         $bulanSekarangFormatted = $bulanSekarang->format($bulanFormat);
         $pendapatanBulan = $pendapatanBulanan[$bulanSekarangFormatted] ?? 0;
 
+        // Pastikan bookingData memiliki nilai default array kosong
+        $bookingData = $bookingData ?? [];
+
         // Hitung jumlah pesanan yang berstatus "pending"
-        $pesananPending = collect($bookingData ?? [])
+        $pesananPending = collect($bookingData)
             ->where('status', 'pending')
             ->count();
     @endphp
