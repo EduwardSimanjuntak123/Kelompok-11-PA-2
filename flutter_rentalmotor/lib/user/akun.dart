@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/editprofiluser.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/lupakatasandi.dart';
+import 'package:flutter_rentalmotor/user/lupakatasandi.dart';
 import 'package:flutter_rentalmotor/user/detailpesanan.dart';
 import 'package:flutter_rentalmotor/services/profile_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -97,100 +97,115 @@ class _AkunState extends State<Akun> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Akun'),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      height: 160,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2C567E),
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text(
-                            'My Profile',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      bottom: -50,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(color: Colors.white, width: 4),
-                        ),
-                        child: CircleAvatar(
-                          radius: 40,
-                          backgroundImage: _profileImageUrl.isNotEmpty
-                              ? NetworkImage(_profileImageUrl)
-                              : const AssetImage("assets/default_avatar.png")
-                                  as ImageProvider,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 60),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: _fetchProfile,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
                     children: [
-                      const Text('Information',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      _buildInfoTile(Icons.person, _userName),
-                      _buildInfoTile(Icons.email, _userEmail),
-                      _buildInfoTile(Icons.phone, _userPhone),
-                      _buildInfoTile(Icons.location_on, _userAddress),
-                      const SizedBox(height: 16),
-                      const Text('Setting',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      _buildSettingButton(
-                          Icons.edit, 'Edit Profile', Colors.green, () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const EditProfileuser()));
-                      }),
-                      _buildSettingButton(
-                          Icons.lock, 'Lupa Kata Sandi', Colors.blue, () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => LupaKataSandiScreen()));
-                      }),
-                      _buildSettingButton(Icons.logout, 'Logout', Colors.red,
-                          () {
-                        _showLogoutDialog(context);
-                      }),
+                      Container(
+                        height: 160,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF2C567E),
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Text(
+                              'My Profile',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(height: 20),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -50,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            border: Border.all(color: Colors.white, width: 4),
+                          ),
+                          child: CircleAvatar(
+                            radius: 40,
+                            backgroundImage: _profileImageUrl.isNotEmpty
+                                ? NetworkImage(_profileImageUrl)
+                                : const AssetImage("assets/default_avatar.png")
+                                    as ImageProvider,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 60),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Information',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _buildInfoTile(Icons.person, _userName),
+                        _buildInfoTile(Icons.email, _userEmail),
+                        _buildInfoTile(Icons.phone, _userPhone),
+                        _buildInfoTile(Icons.location_on, _userAddress),
+                        const SizedBox(height: 16),
+                        const Text('Setting',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _buildSettingButton(
+                            Icons.edit, 'Edit Profile', Colors.green, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileuser(
+                                name: _userName,
+                                email: _userEmail,
+                                phone: _userPhone,
+                                address: _userAddress,
+                                profileImage: _profileImageUrl,
+                              ),
+                            ),
+                          );
+                        }),
+                        _buildSettingButton(
+                            Icons.lock, 'Lupa Kata Sandi', Colors.blue, () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => LupaKataSandiScreen(
+                                      email: _userEmail,
+                                    )),
+                          );
+                        }),
+                        _buildSettingButton(Icons.logout, 'Logout', Colors.red,
+                            () {
+                          _showLogoutDialog(context);
+                        }),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 

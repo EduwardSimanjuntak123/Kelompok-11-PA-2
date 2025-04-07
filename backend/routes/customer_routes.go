@@ -28,7 +28,7 @@ func CustomerRoutes(router *gin.Engine) {
 
 			customer.GET("/transactions", controllers.GetCustomerTransactions)
 
-			customer.PUT("/profile", controllers.UpdateProfile)
+			customer.PUT("/profile", controllers.EditProfile)
 			customer.PUT("/change-password", controllers.ChangePassword)
 		}
 	}

@@ -15,6 +15,7 @@ type Vendor struct {
     UpdatedAt       time.Time `gorm:"autoUpdateTime" json:"updated_at"`
     Motors []Motor `gorm:"foreignKey:VendorID" json:"motors" binding:"-"`
     User   User    `gorm:"foreignKey:UserID" json:"user" binding:"-"`
+    Kecamatan Kecamatan `gorm:"foreignKey:IDKecamatan;references:ID" json:"kecamatan"`
 }
 
 

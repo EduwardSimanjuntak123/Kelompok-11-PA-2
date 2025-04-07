@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/SignUpCustomer.dart';
-import 'package:flutter_rentalmotor/lupakatasandi.dart';
 import 'package:flutter_rentalmotor/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {

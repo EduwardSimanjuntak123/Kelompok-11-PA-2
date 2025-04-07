@@ -398,7 +398,7 @@ func GetAllVendor(c *gin.Context) {
 	var vendors []models.Vendor
 
 	// Ambil semua vendor dengan informasi user dan motor terkait
-	if err := config.DB.Preload("User").Preload("Motors").Find(&vendors).Error; err != nil {
+	if err := config.DB.Preload("User").Preload("Motors").Preload("Kecamatan").Find(&vendors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data vendor"})
 		return
 	}

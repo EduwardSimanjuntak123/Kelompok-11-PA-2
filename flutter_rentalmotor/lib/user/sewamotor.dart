@@ -1,30 +1,31 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
+
+import 'package:flutter_rentalmotor/services/create_booking_api.dart';
 
 class SewaMotorPage extends StatefulWidget {
   final Map<String, dynamic> motor;
+  final bool isGuest;
 
-  SewaMotorPage({required this.motor});
+  SewaMotorPage({required this.motor, required this.isGuest});
 
   @override
   _SewaMotorPageState createState() => _SewaMotorPageState();
 }
 
 class _SewaMotorPageState extends State<SewaMotorPage> {
-  // Controller untuk input tanggal dan waktu (dipisah)
   TextEditingController _dateController = TextEditingController();
   TextEditingController _timeController = TextEditingController();
-
-  // Controller untuk input lainnya
   TextEditingController _durationController = TextEditingController();
   TextEditingController _pickupLocationController = TextEditingController();
   TextEditingController _dropoffLocationController = TextEditingController();
 
   File? _photoId;
   File? _ktpId;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -36,8 +37,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     super.dispose();
   }
 
-  // Memilih tanggal
-  Future<void> _selectDate(BuildContext context) async {
+  void _selectDate(BuildContext context) async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -46,6 +46,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
       helpText: 'Pilih Tanggal',
       locale: const Locale('id', 'ID'),
     );
+
     if (pickedDate != null) {
       setState(() {
         _dateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
@@ -53,65 +54,38 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     }
   }
 
-  // Memilih waktu
   Future<void> _selectTime(BuildContext context) async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
       helpText: 'Pilih Jam',
     );
+
     if (pickedTime != null) {
+      String formattedTime =
+          "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
       setState(() {
-        // Format waktu: HH:mm (misalnya 23:00)
-        _timeController.text = pickedTime.format(context);
+        _timeController.text = formattedTime;
       });
     }
   }
 
-  // Menggabungkan tanggal & waktu lalu konversi ke ISO8601 (UTC)
   String _convertToISO8601(String dateStr, String timeStr) {
-    // Misal: dateStr = "15/04/2025", timeStr = "23:00"
     DateTime parsedDate = DateFormat('dd/MM/yyyy').parse(dateStr);
-    // Parsing waktu: ambil jam dan menit. (Jika format waktu lokal, misalnya "11:00 PM", gunakan DateFormat.jm() untuk parsing)
-    // Di sini asumsikan format 24 jam "HH:mm". Jika tidak, Anda bisa menyesuaikan parsing waktu.
     List<String> timeParts = timeStr.split(':');
+
     int hour = int.tryParse(timeParts[0]) ?? 0;
-    int minute = timeParts.length > 1 ? int.tryParse(timeParts[1]) ?? 0 : 0;
-    DateTime combined = DateTime(
+    int minute = int.tryParse(timeParts[1]) ?? 0;
+
+    DateTime combined = DateTime.utc(
       parsedDate.year,
       parsedDate.month,
       parsedDate.day,
       hour,
       minute,
     );
-    return combined.toUtc().toIso8601String();
-  }
 
-  // Tampilan input gambar yang menyerupai field
-  Widget _buildImageInput(
-      {required String label, required File? file, required Function() onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        margin: EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade400),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.image, color: Colors.grey),
-            SizedBox(width: 12),
-            Text(
-              file == null ? "$label *" : "Gambar telah dipilih",
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade700),
-            ),
-          ],
-        ),
-      ),
-    );
+    return combined.toIso8601String();
   }
 
   Future<void> _pickImage(bool isKtp) async {
@@ -129,7 +103,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   }
 
   Future<void> _submitRental() async {
-    // Validasi input wajib
     if (_dateController.text.isEmpty ||
         _timeController.text.isEmpty ||
         _durationController.text.isEmpty ||
@@ -142,45 +115,72 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
       return;
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
+    final startDate =
+        _convertToISO8601(_dateController.text, _timeController.text);
+    final duration = _durationController.text;
+    final pickupLocation = _pickupLocationController.text;
+    final dropoffLocation = _dropoffLocationController.text;
+    final photoId = _photoId!;
+    final ktpId = _ktpId!;
+
     try {
-      var uri = Uri.parse("http://localhost:8080/customer/bookings");
-      var request = http.MultipartRequest("POST", uri);
+      bool success = await BookingService.createBooking(
+        context: context,
+        motorId: widget.motor['id'],
+        startDate: startDate,
+        duration: duration,
+        pickupLocation: pickupLocation,
+        dropoffLocation: dropoffLocation,
+        photoId: photoId,
+        ktpId: ktpId,
+        motorData: widget.motor,
+        isGuest: widget.isGuest,
+      );
 
-      request.fields['motor_id'] = widget.motor['id'].toString();
-      request.fields['start_date'] =
-          _convertToISO8601(_dateController.text, _timeController.text);
-      request.fields['duration'] = _durationController.text;
-      request.fields['pickup_location'] = _pickupLocationController.text;
-      if (_dropoffLocationController.text.isNotEmpty) {
-        request.fields['dropoff_location'] = _dropoffLocationController.text;
-      }
-
-      request.files
-          .add(await http.MultipartFile.fromPath('photo_id', _photoId!.path));
-      request.files
-          .add(await http.MultipartFile.fromPath('ktp_id', _ktpId!.path));
-
-      var response = await request.send();
-
-      if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Pemesanan berhasil!')),
-        );
-        Navigator.pop(context);
+      if (success) {
+        // Sukses ditangani di BookingService
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal melakukan pemesanan')),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Terjadi kesalahan: $e')),
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Sesi Berakhir"),
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: Text("Login Ulang"),
+            ),
+          ],
+        ),
       );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    String imageUrl =
+        widget.motor["image"] ?? "assets/images/default_motor.png";
+    if (imageUrl.startsWith("/")) {
+      final String baseUrl = ApiConfig.baseUrl;
+      imageUrl = "$baseUrl$imageUrl";
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Sewa Motor - ${widget.motor["name"]}'),
@@ -189,84 +189,92 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         child: Column(
           children: [
-            // Input Tanggal
-            TextField(
-              controller: _dateController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: "Tanggal *",
-                hintText: "Pilih tanggal",
-                suffixIcon: Icon(Icons.calendar_today),
-              ),
-              onTap: () => _selectDate(context),
+            // 🔽 Preview Gambar Motor
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: imageUrl.startsWith("http")
+                  ? Image.network(imageUrl, height: 200, fit: BoxFit.cover)
+                  : Image.asset(imageUrl, height: 200, fit: BoxFit.cover),
             ),
             SizedBox(height: 16),
-            // Input Jam
-            TextField(
-              controller: _timeController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: "Jam *",
-                hintText: "Pilih jam",
-                suffixIcon: Icon(Icons.access_time),
-              ),
-              onTap: () => _selectTime(context),
-            ),
-            SizedBox(height: 16),
-            // Input Duration (hari)
-            TextField(
-              controller: _durationController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: "Duration (hari) *",
-                hintText: "Masukkan durasi dalam hari",
-              ),
-            ),
-            SizedBox(height: 16),
-            // Input Pickup Location
-            TextField(
-              controller: _pickupLocationController,
-              decoration: InputDecoration(
-                labelText: "Pickup Location *",
-                hintText: "Masukkan lokasi pengambilan",
-              ),
-            ),
-            SizedBox(height: 16),
-            // Input Dropoff Location (opsional)
-            TextField(
-              controller: _dropoffLocationController,
-              decoration: InputDecoration(
-                labelText: "Dropoff Location",
-                hintText: "Masukkan lokasi pengembalian (opsional)",
-              ),
-            ),
-            SizedBox(height: 16),
-            // Input Gambar: Foto ID
+
+            _buildTextField(_dateController, "Tanggal *", "Pilih tanggal",
+                Icons.calendar_today, () => _selectDate(context)),
+            _buildTextField(_timeController, "Jam *", "Pilih jam",
+                Icons.access_time, () => _selectTime(context)),
+            _buildTextField(_durationController, "Durasi (hari) *",
+                "Masukkan durasi dalam hari", null, null,
+                keyboardType: TextInputType.number),
+            _buildTextField(_pickupLocationController, "Pickup Location *",
+                "Masukkan lokasi pengambilan", null, null),
+            _buildTextField(_dropoffLocationController, "Dropoff Location",
+                "Masukkan lokasi pengembalian (opsional)", null, null),
+
             _buildImageInput(
-              label: "Pilih Foto ID",
-              file: _photoId,
-              onTap: () => _pickImage(false),
-            ),
-            // Input Gambar: KTP
-            _buildImageInput(
-              label: "Pilih KTP",
-              file: _ktpId,
-              onTap: () => _pickImage(true),
-            ),
+                "Pilih Foto ID", _photoId, () => _pickImage(false)),
+            if (_photoId != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Image.file(_photoId!, height: 150),
+              ),
+
+            _buildImageInput("Pilih KTP", _ktpId, () => _pickImage(true)),
+            if (_ktpId != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Image.file(_ktpId!, height: 150),
+              ),
+
             SizedBox(height: 32),
-            // Tombol Submit
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitRental,
-                child: Text('Submit'),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
+            _isLoading
+                ? CircularProgressIndicator()
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _submitRental,
+                      child: Text('Submit'),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      String hint, IconData? icon, Function()? onTap,
+      {TextInputType keyboardType = TextInputType.text}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: controller,
+        readOnly: onTap != null,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          suffixIcon: icon != null ? Icon(icon) : null,
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Widget _buildImageInput(String label, File? file, Function() onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        margin: EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(file == null ? "$label *" : "Gambar telah dipilih"),
       ),
     );
   }

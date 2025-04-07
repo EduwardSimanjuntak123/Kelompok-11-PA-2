@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/user/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/detailpesanan.dart';
@@ -20,13 +21,23 @@ class _DataVendorState extends State<DataVendor> {
   Map<String, dynamic>? _vendorData;
   List<Map<String, dynamic>> _motorList = [];
   bool _isLoading = true;
+  int? _userId; // Menyimpan user ID
   String _errorMessage = '';
   final VendorService _vendorService = VendorService();
 
   @override
   void initState() {
     super.initState();
+    _getUserId(); // Ambil user ID dari penyimpanan
     _fetchData();
+  }
+
+  /// Mengambil user ID dari SharedPreferences
+  Future<void> _getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getInt('user_id'); // Ambil ID pengguna
+    });
   }
 
   Future<void> _fetchData() async {
@@ -71,7 +82,6 @@ class _DataVendorState extends State<DataVendor> {
 
   @override
   Widget build(BuildContext context) {
-    // Mengambil gambar vendor dan membuat URL lengkap
     String? vendorImage = _vendorData?['user']?['profile_image'];
     String fullVendorImageUrl =
         vendorImage != null && !vendorImage.startsWith("http")
@@ -80,43 +90,41 @@ class _DataVendorState extends State<DataVendor> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Vendor"),
-        backgroundColor: Color(0xFF2C567E),
+        title: const Text("Vendor"),
+        backgroundColor: const Color(0xFF2C567E),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
               ? Center(
-                  child:
-                      Text(_errorMessage, style: TextStyle(color: Colors.red)))
+                  child: Text(_errorMessage,
+                      style: const TextStyle(color: Colors.red)))
               : SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Menambahkan pengecekan untuk gambar vendor
                       fullVendorImageUrl.isNotEmpty
                           ? Image.network(fullVendorImageUrl,
                               width: double.infinity,
                               height: 200,
                               fit: BoxFit.cover)
                           : Container(height: 200, color: Colors.grey),
-
                       Padding(
-                        padding: EdgeInsets.all(15),
+                        padding: const EdgeInsets.all(15),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                                 _vendorData?['shop_name'] ??
                                     "Nama Tidak Diketahui",
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 24, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 5),
+                            const SizedBox(height: 5),
                             Text(
                                 _vendorData?['shop_address'] ??
                                     "Alamat Tidak Diketahui",
-                                style: TextStyle(color: Colors.grey)),
-                            SizedBox(height: 5),
+                                style: const TextStyle(color: Colors.grey)),
+                            const SizedBox(height: 5),
                             Row(
                               children: List.generate(5, (index) {
                                 double rating = double.tryParse(
@@ -130,18 +138,18 @@ class _DataVendorState extends State<DataVendor> {
                                     color: Colors.amber);
                               }),
                             ),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             Text(
                                 _vendorData?['shop_description'] ??
                                     "Deskripsi tidak tersedia",
-                                style: TextStyle(color: Colors.black87)),
-                            SizedBox(height: 20),
-                            Text("Motor Tersedia",
+                                style: const TextStyle(color: Colors.black87)),
+                            const SizedBox(height: 20),
+                            const Text("Motor Tersedia",
                                 style: TextStyle(
                                     fontSize: 18, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 10),
+                            const SizedBox(height: 10),
                             _motorList.isEmpty
-                                ? Center(
+                                ? const Center(
                                     child: Text("Tidak ada motor tersedia"))
                                 : Column(
                                     children: _motorList
@@ -156,10 +164,10 @@ class _DataVendorState extends State<DataVendor> {
                 ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: Color(0xFF2C567E),
+        selectedItemColor: const Color(0xFF2C567E),
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
-        items: [
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
           BottomNavigationBarItem(
               icon: Icon(Icons.receipt_long), label: "Pesanan"),
@@ -169,14 +177,15 @@ class _DataVendorState extends State<DataVendor> {
     );
   }
 
+  /// Widget untuk menampilkan daftar motor
   Widget _motorListWidget(BuildContext context, Map<String, dynamic> motor) {
     String? imageUrl = motor["image"];
     String fullImageUrl = imageUrl != null && !imageUrl.startsWith("http")
-        ? "${ApiConfig.baseUrl}$imageUrl" // Gantilah dengan base URL server Anda
+        ? "${ApiConfig.baseUrl}$imageUrl"
         : imageUrl ?? "";
 
     return Card(
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: fullImageUrl.isNotEmpty
@@ -184,15 +193,20 @@ class _DataVendorState extends State<DataVendor> {
                 width: 80, height: 80, fit: BoxFit.cover)
             : Container(width: 80, height: 80, color: Colors.grey),
         title: Text(motor["name"] ?? "Nama Tidak Ada",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle:
             Text("${formatRupiah(int.parse(motor["price"].toString()))}/hari"),
-        trailing: Icon(Icons.arrow_forward_ios, size: 16),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
           Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => DetailMotorPage(motor: motor)));
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailMotorPage(
+                motor: motor,
+                isGuest: _userId == null, // Jika _userId null, berarti guest
+              ),
+            ),
+          );
         },
       ),
     );

@@ -6,12 +6,12 @@ import 'package:flutter_rentalmotor/user/akun.dart';
 
 class DetailMotorPage extends StatefulWidget {
   final Map<String, dynamic> motor;
-  final bool isGuest; // Tambahkan parameter isGuest
+  final bool isGuest;
 
   const DetailMotorPage({
     Key? key,
     required this.motor,
-    this.isGuest = false, // Default ke false jika tidak diberikan
+    this.isGuest = false,
   }) : super(key: key);
 
   @override
@@ -75,14 +75,18 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
                   child: imageUrl.startsWith("http")
-                      ? Image.network(imageUrl,
+                      ? Image.network(
+                          imageUrl,
                           width: double.infinity,
                           height: 200,
-                          fit: BoxFit.cover)
-                      : Image.asset(imageUrl,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          imageUrl,
                           width: double.infinity,
                           height: 200,
-                          fit: BoxFit.cover),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
             ),
@@ -145,15 +149,18 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
               ),
             ),
             Spacer(),
-            if (!widget.isGuest) // ❗ Hanya tampilkan jika bukan guest
+            if (!widget.isGuest)
               Center(
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              SewaMotorPage(motor: widget.motor)),
+                        builder: (context) => SewaMotorPage(
+                          motor: widget.motor,
+                          isGuest: widget.isGuest,
+                        ),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -166,9 +173,10 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                   child: Text(
                     "Book Now",
                     style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               )

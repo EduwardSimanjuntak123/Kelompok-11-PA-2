@@ -30,7 +30,7 @@ func AutoUpdateMotorStatus() {
 
 		// Proses setiap booking
 		for _, booking := range bookings {
-			log.Printf("📅 Memproses Booking ID %d | Motor ID %d", booking.ID, booking.MotorID)
+			// log.Printf("📅 Memproses Booking ID %d | Motor ID %d", booking.ID, booking.MotorID)
 
 			// Ambil motor terkait
 			var motor models.Motor
@@ -40,9 +40,9 @@ func AutoUpdateMotorStatus() {
 			}
 
 			// Konversi waktu booking ke UTC
-			startDateUTC := booking.StartDate.UTC()
+			// startDateUTC := booking.StartDate.UTC()
 			endDateUTC := booking.EndDate.UTC()
-			log.Printf("📌 Start Date (UTC): %v | End Date (UTC): %v", startDateUTC, endDateUTC)
+			// log.Printf("📌 Start Date (UTC): %v | End Date (UTC): %v", startDateUTC, endDateUTC)
 
 			// Jika booking masih aktif, motor harus menjadi "booked"
 			if now.Before(endDateUTC) {
@@ -82,7 +82,7 @@ func AutoUpdateMotorStatus() {
 			}
 		}
 
-		time.Sleep(500 * time.Millisecond) // Beri sedikit delay agar CPU tidak 100%
+		time.Sleep(5 * time.Minute) // Beri sedikit delay agar CPU tidak 100%
 	}
 }
 

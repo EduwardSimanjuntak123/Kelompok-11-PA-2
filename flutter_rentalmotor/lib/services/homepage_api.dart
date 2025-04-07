@@ -62,4 +62,18 @@ class HomePageApi {
       throw Exception("Terjadi kesalahan saat mengambil data motor: $e");
     }
   }
+
+  // Mengambil daftar kecamatan dari API
+  // Mengambil daftar kecamatan dari API
+  Future<List<Map<String, dynamic>>> fetchKecamatan() async {
+    final response = await http.get(Uri.parse("$baseUrl/kecamatan"));
+
+    if (response.statusCode == 200) {
+      // Karena response langsung berupa array
+      final List<dynamic> data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(data);
+    } else {
+      throw Exception("Gagal mengambil data kecamatan");
+    }
+  }
 }

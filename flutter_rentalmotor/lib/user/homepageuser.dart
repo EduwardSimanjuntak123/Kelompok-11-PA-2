@@ -3,6 +3,7 @@ import 'package:flutter_rentalmotor/user/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/notifikasi.dart';
 import 'package:flutter_rentalmotor/user/chat.dart';
 import 'package:flutter_rentalmotor/user/akun.dart';
+import 'package:flutter_rentalmotor/user/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/datavendor.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
@@ -23,12 +24,15 @@ class _HomePageUserState extends State<HomePageUser> {
   int? _userId;
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _vendorList = [];
+  List<Map<String, dynamic>> _kecamatanList = [];
+  String _selectedKecamatan = "Semua"; // Default: tampilkan semua
   final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
+    _fetchKecamatan();
   }
 
   Future<void> _checkLoginStatus() async {
@@ -83,6 +87,20 @@ class _HomePageUserState extends State<HomePageUser> {
     }
   }
 
+  Future<void> _fetchKecamatan() async {
+    try {
+      List<Map<String, dynamic>> kecamatan =
+          await HomePageApi().fetchKecamatan();
+      if (mounted) {
+        setState(() {
+          _kecamatanList = kecamatan;
+        });
+      }
+    } catch (e) {
+      _showErrorMessage("Gagal mengambil data kecamatan!");
+    }
+  }
+
   void _showErrorMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -105,9 +123,9 @@ class _HomePageUserState extends State<HomePageUser> {
         _selectedIndex = 0;
       });
     } else if (index == 1) {
-      // Pesanan (buat halaman sendiri nanti)
+      // Pesanan
       await Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const PesananPage()));
+          .push(MaterialPageRoute(builder: (context) => DetailPesanan()));
       setState(() {
         _selectedIndex = 0;
       });
@@ -144,8 +162,32 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
+  // Helper widget untuk menampilkan satu bintang dan rating (dengan nilai desimal)
+  Widget _buildRatingDisplay(String rating) {
+    return Row(
+      children: [
+        const Icon(Icons.star, size: 14, color: Colors.amber),
+        const SizedBox(width: 3),
+        Text(
+          rating,
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Filter vendor berdasarkan kecamatan yang dipilih.
+    List<Map<String, dynamic>> filteredVendorList = _selectedKecamatan ==
+            "Semua"
+        ? _vendorList
+        : _vendorList.where((vendor) {
+            String vendorKecamatan =
+                vendor["kecamatan"]?["nama_kecamatan"]?.toString().trim() ?? "";
+            return vendorKecamatan == _selectedKecamatan;
+          }).toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: RefreshIndicator(
@@ -153,6 +195,7 @@ class _HomePageUserState extends State<HomePageUser> {
           await _loadUserData();
           await _fetchVendors();
           await _fetchMotors();
+          await _fetchKecamatan();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -160,7 +203,8 @@ class _HomePageUserState extends State<HomePageUser> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              _buildVendorSection(),
+              _buildFilterSection(), // Dropdown filter kecamatan
+              _buildVendorSection(filteredVendorList),
               _buildMotorSection(),
             ],
           ),
@@ -226,7 +270,54 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  Widget _buildVendorSection() {
+  // Widget untuk dropdown filter kecamatan
+  Widget _buildFilterSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        children: [
+          const Text(
+            "Filter Kecamatan:",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: _selectedKecamatan,
+              items: _buildDropdownItems(),
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  setState(() {
+                    _selectedKecamatan = newValue;
+                  });
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Membuat daftar item untuk dropdown filter.
+  List<DropdownMenuItem<String>> _buildDropdownItems() {
+    List<DropdownMenuItem<String>> items = [];
+    items.add(const DropdownMenuItem(
+      value: "Semua",
+      child: Text("Semua"),
+    ));
+    for (var kec in _kecamatanList) {
+      String nama = kec["nama_kecamatan"]?.toString().trim() ?? "";
+      items.add(DropdownMenuItem(
+        value: nama,
+        child: Text(nama),
+      ));
+    }
+    return items;
+  }
+
+  Widget _buildVendorSection(List<Map<String, dynamic>> vendorList) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -236,24 +327,38 @@ class _HomePageUserState extends State<HomePageUser> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(height: 10),
-        _vendorList.isEmpty
-            ? const Center(child: CircularProgressIndicator())
+        vendorList.isEmpty
+            ? Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                alignment: Alignment.center,
+                child: const Text(
+                  "Vendor tidak ada pada kecamatan yang dipilih",
+                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+              )
             : SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
-                  children: _vendorList.map((vendor) {
+                  children: vendorList.map((vendor) {
                     String path =
                         vendor["user"]["profile_image"]?.toString().trim() ??
                             "";
                     String imageUrl = path.isNotEmpty
                         ? (path.startsWith("http") ? path : "$baseUrl$path")
                         : "assets/images/default_vendor.png";
+                    String kecamatan = vendor["kecamatan"]?["nama_kecamatan"]
+                            ?.toString()
+                            .trim() ??
+                        "Tidak Diketahui";
+
                     return _buildVendorCard(
                       vendor["shop_name"] ?? "Vendor Tidak Diketahui",
                       vendor["rating"]?.toString() ?? "0",
                       imageUrl,
                       vendor["id"],
+                      kecamatan,
                     );
                   }).toList(),
                 ),
@@ -299,7 +404,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
                     return _buildMotorCard(
                       motor["name"] ?? "Nama Tidak Diketahui",
-                      motor["rating"]?.toString() ?? "Rating Tidak Diketahui",
+                      motor["rating"]?.toString() ?? "0",
                       "Rp $formattedPrice/hari",
                       imageUrl,
                       DetailMotorPage(
@@ -352,8 +457,8 @@ class _HomePageUserState extends State<HomePageUser> {
             Text(title,
                 style:
                     const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            Text("Rating: $rating",
-                style: const TextStyle(fontSize: 12, color: Colors.black54)),
+            // Menampilkan satu bintang dan rating
+            _buildRatingDisplay(rating),
             Text(price,
                 style:
                     const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
@@ -363,8 +468,8 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  Widget _buildVendorCard(
-      String shopName, String rating, String imageUrl, int vendorId) {
+  Widget _buildVendorCard(String shopName, String rating, String imageUrl,
+      int vendorId, String kecamatan) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -403,25 +508,14 @@ class _HomePageUserState extends State<HomePageUser> {
             Text(shopName,
                 style:
                     const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            Text("Rating: $rating",
-                style: const TextStyle(fontSize: 12, color: Colors.black54)),
+            // Menampilkan satu bintang dan rating
+            _buildRatingDisplay(rating),
+            const SizedBox(height: 3),
+            Text("Kecamatan: $kecamatan",
+                style: const TextStyle(fontSize: 12, color: Colors.black87)),
           ],
         ),
       ),
-    );
-  }
-}
-
-// Placeholder halaman Pesanan
-class PesananPage extends StatelessWidget {
-  const PesananPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Pesanan Anda")),
-      body:
-          const Center(child: Text("Daftar pesanan akan ditampilkan di sini")),
     );
   }
 }

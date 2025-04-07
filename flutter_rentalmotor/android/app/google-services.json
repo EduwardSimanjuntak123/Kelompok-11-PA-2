@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "526741766932",
+    "project_id": "rental-motor-c7f5d",
+    "storage_bucket": "rental-motor-c7f5d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:526741766932:android:c6b98689ed48785a3e3801",
+        "android_client_info": {
+          "package_name": "com.example.flutter_rentalmotor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "526741766932-euvuubt35uev08ckqc14n22r2ev58u54.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_rentalmotor",
+            "certificate_hash": "a33c67ec26191ea60f64a4b93b8d1aae9d33ebe5"
+          }
+        },
+        {
+          "client_id": "526741766932-4h48g5ocnp0vamgtqipnc7bgg00ndckg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCK9q5KZNariRYBvC0SqanXgGgQuVMpiEs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "526741766932-4h48g5ocnp0vamgtqipnc7bgg00ndckg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
