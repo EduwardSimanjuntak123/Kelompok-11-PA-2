@@ -19,6 +19,20 @@ class _DetailPesananState extends State<DetailPesanan> {
   List<dynamic> bookings = [];
   bool isLoading = true;
 
+  List<String> statuses = [
+    'Semua',
+    'pending',
+    'confirmed',
+    'in transit',
+    'in use',
+    'awaiting return',
+    'completed',
+    'canceled',
+    'rejected',
+  ];
+
+  String selectedStatus = 'Semua';
+
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pushReplacement(
@@ -72,6 +86,13 @@ class _DetailPesananState extends State<DetailPesanan> {
     }
   }
 
+  List<dynamic> get filteredBookings {
+    if (selectedStatus == 'Semua') return bookings;
+    return bookings
+        .where((booking) => booking['status'] == selectedStatus)
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,109 +116,178 @@ class _DetailPesananState extends State<DetailPesanan> {
           ? Center(child: CircularProgressIndicator())
           : bookings.isEmpty
               ? Center(child: Text('Belum ada pesanan'))
-              : ListView.builder(
-                  padding: EdgeInsets.all(10),
-                  itemCount: bookings.length,
-                  itemBuilder: (context, index) {
-                    final item = bookings[index];
+              : Column(
+                  children: [
+                    // Filter status horizontal (teks + underline biru)
+                    Container(
+                      height: 45,
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: statuses.length,
+                        itemBuilder: (context, index) {
+                          final status = statuses[index];
+                          final isSelected = selectedStatus == status;
 
-                    // Format tanggal dan hitung durasi
-                    final startDate = DateTime.parse(item['start_date']);
-                    final endDate = DateTime.parse(item['end_date']);
-                    final durationDays = endDate.difference(startDate).inDays;
-
-                    final dateFormat = DateFormat('dd MMM');
-                    final formattedStart = dateFormat.format(startDate);
-                    final formattedEnd = dateFormat.format(endDate);
-
-                    // Perbaiki URL gambar
-                    final String? originalImage = item['motor']['image'];
-                    String imageUrl =
-                        originalImage ?? 'https://via.placeholder.com/100';
-                    if (imageUrl.startsWith('/')) {
-                      imageUrl = "${ApiConfig.baseUrl}$imageUrl";
-                    }
-
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      margin: EdgeInsets.only(bottom: 10),
-                      child: Padding(
-                        padding: EdgeInsets.all(15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['motor']['name'] ?? 'Nama tidak ada',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              'Durasi: $durationDays hari ($formattedStart - $formattedEnd)',
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.black87),
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              item['motor']['model'] ?? '',
-                              style:
-                                  TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                            SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Image.network(
-                                  imageUrl,
-                                  width: 100,
-                                  height: 70,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Icon(Icons.image),
-                                ),
-                                SizedBox(width: 15),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item['pickup_location'] ??
-                                            'Lokasi tidak ada',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(height: 5),
-                                      Text(
-                                        "${item['motor']['price_per_day']} / hari",
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedStatus = status;
+                              });
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              alignment: Alignment.center,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    status[0].toUpperCase() +
+                                        status.substring(1),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isSelected
+                                          ? Color(0xFF2C567E)
+                                          : Colors.black,
+                                      decoration: isSelected
+                                          ? TextDecoration.underline
+                                          : TextDecoration.none,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                    ),
                                   ),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            PesananPage(booking: item),
-                                      ),
-                                    );
-                                  },
-                                  child: Text('Detail'),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+
+                    // Daftar pesanan
+                    Expanded(
+                      child: filteredBookings.isEmpty
+                          ? Center(
+                              child:
+                                  Text('Tidak ada pesanan dengan status ini'))
+                          : ListView.builder(
+                              padding: EdgeInsets.all(10),
+                              itemCount: filteredBookings.length,
+                              itemBuilder: (context, index) {
+                                final item = filteredBookings[index];
+
+                                final startDate =
+                                    DateTime.parse(item['start_date']);
+                                final endDate =
+                                    DateTime.parse(item['end_date']);
+                                final durationDays =
+                                    endDate.difference(startDate).inDays + 1;
+
+                                final dateFormat = DateFormat('dd MMM');
+                                final formattedStart =
+                                    dateFormat.format(startDate);
+                                final formattedEnd = dateFormat.format(endDate);
+
+                                final String? originalImage =
+                                    item['motor']['image'];
+                                String imageUrl = originalImage ??
+                                    'https://via.placeholder.com/100';
+                                if (imageUrl.startsWith('/')) {
+                                  imageUrl = "${ApiConfig.baseUrl}$imageUrl";
+                                }
+
+                                return Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                  margin: EdgeInsets.only(bottom: 10),
+                                  child: Padding(
+                                    padding: EdgeInsets.all(15),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          item['motor']['name'] ??
+                                              'Nama tidak ada',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        SizedBox(height: 5),
+                                        Text(
+                                          'Durasi: $durationDays hari ($formattedStart - $formattedEnd)',
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black87),
+                                        ),
+                                        SizedBox(height: 5),
+                                        Text(
+                                          item['motor']['model'] ?? '',
+                                          style: TextStyle(
+                                              fontSize: 14, color: Colors.grey),
+                                        ),
+                                        SizedBox(height: 10),
+                                        Row(
+                                          children: [
+                                            Image.network(
+                                              imageUrl,
+                                              width: 100,
+                                              height: 70,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error,
+                                                      stackTrace) =>
+                                                  Icon(Icons.image),
+                                            ),
+                                            SizedBox(width: 15),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    item['pickup_location'] ??
+                                                        'Lokasi tidak ada',
+                                                    style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  Text(
+                                                    "${item['motor']['price_per_day']} / hari",
+                                                    style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        PesananPage(
+                                                            booking: item),
+                                                  ),
+                                                );
+                                              },
+                                              child: Text('Detail'),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
                 ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
