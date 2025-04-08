@@ -21,66 +21,152 @@
         });
     </script>
 
-    <!-- Tombol Tambah Motor -->
-    <button id="openAddModalBtn" class="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition mb-4">
-        Tambah Motor
-    </button>
+    <div class="p-6 bg-gray-100 min-h-screen">
+        {{-- Toolbar --}}
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 space-y-4 md:space-y-0">
+            <div>
+                <h1 class="text-2xl font-semibold text-gray-800">Daftar Motor Vendor</h1>
+                <p class="text-sm text-gray-500">Kelola semua motor yang tersedia</p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Cari motor..."
+                    class="w-full sm:w-64 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="openAddModalBtn"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                    Tambah Motor
+                </button>
+            </div>
+        </div>
 
-    <!-- Tabel Motor -->
-    <div class="overflow-x-auto">
-        <table class="w-full border-collapse rounded-lg overflow-hidden shadow-md">
-            <thead>
-                <tr class="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
-                    <th class="py-3 px-4 text-left">Gambar</th>
-                    <th class="py-3 px-4 text-left">Nama</th>
-                    <th class="py-3 px-4 text-left">Brand</th>
-                    <th class="py-3 px-4 text-left">Model</th>
-                    <th class="py-3 px-4 text-left">Tahun</th>
-                    <th class="py-3 px-4 text-left">Warna</th>
-                    <th class="py-3 px-4 text-left">Harga</th>
-                    <th class="py-3 px-4 text-left">Aksi</th>
+        {{-- Tabel --}}
+        <div class="overflow-x-auto w-full">
+            <table
+              id="motorTable"
+              class="w-full table-auto bg-white divide-y divide-gray-200 shadow rounded-lg"
+            >
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Gambar</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Informasi Motor</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
+                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
+                  <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Harga</th>
+                  <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                 </tr>
-            </thead>
-            {{-- @dd($motors) --}}
-            <tbody>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-100">
                 @foreach ($motors as $motor)
-                    <tr class="border-b">
-                        <td class="px-4 py-2">
-                            @if (!empty($motor['image_url']))
-                                <img src="{{ $motor['image_url'] }}" alt="Gambar Motor"
-                                    class="w-24 h-16 object-cover rounded-md">
-                            @else
-                                <span class="text-gray-400 italic">Tidak ada gambar</span>
-                            @endif
-                        </td>
-                        <td class="px-4 py-2">{{ $motor['name'] ?? '-' }}</td>
-                        <td class="px-4 py-2">{{ $motor['brand'] }}</td>
-                        <td class="px-4 py-2">{{ $motor['model'] }}</td>
-                        <td class="px-4 py-2">{{ $motor['year'] ?? '-' }}</td>
-                        <td class="px-4 py-2">{{ $motor['color'] }}</td>
-                        <td class="px-4 py-2 font-bold text-green-600">
-                            Rp {{ number_format($motor['price'], 0, ',', '.') }}
-                        </td>
-                        <td class="px-4 py-2 flex gap-2">
-                            <button onclick="openEditModal({{ json_encode($motor) }})"
-                                class="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition">
-                                Edit
-                            </button>
-                            <button onclick="openDeleteModal({{ json_encode($motor) }})"
-                                class="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition">
-                                Hapus
-                            </button>
-                        </td>
-                    </tr>
+                  <tr class="hover:bg-gray-50">
+                    {{-- Gambar --}}
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      @if (!empty($motor['image_url']))
+                        <img
+                          src="{{ $motor['image_url'] }}"
+                          alt="Motor"
+                          class="h-12 w-16 sm:h-16 sm:w-24 object-cover rounded-md"
+                        >
+                      @else
+                        <span class="text-gray-400 italic">–</span>
+                      @endif
+                    </td>
+          
+                    {{-- Informasi Motor --}}
+                    <td class="px-4 py-2 text-sm text-gray-700">
+                      <div class="flex flex-col space-y-1">
+                        <span><strong>Nama:</strong> {{ $motor['name'] }}</span>
+                        <span><strong>Brand:</strong> {{ $motor['brand'] }}</span>
+                        <span><strong>Model:</strong> {{ $motor['model'] }}</span>
+                        <span><strong>Tahun:</strong> {{ $motor['year'] }}</span>
+                        <span><strong>Warna:</strong> {{ $motor['color'] }}</span>
+                        <span><strong>Deskripsi:</strong> {{ $motor['description'] }}</span>
+                      </div>
+                    </td>
+          
+                    {{-- Tipe --}}
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      <span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                        {{ $motor['type'] }}
+                      </span>
+                    </td>
+          
+                    {{-- Rating --}}
+                    <td class="px-4 py-2 whitespace-nowrap">
+                      <div class="flex items-center space-x-1">
+                        @for ($i = 0; $i < $motor['rating']; $i++)
+                          <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162
+                                 c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
+                                 3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
+                                 0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
+                                 00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
+                                 0 00.95-.69l1.286-3.96z"
+                            />
+                          </svg>
+                        @endfor
+                        @for ($i = $motor['rating']; $i < 5; $i++)
+                          <svg class="h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162
+                                 c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
+                                 3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
+                                 0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
+                                 00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
+                                 0 00.95-.69l1.286-3.96z"
+                            />
+                          </svg>
+                        @endfor
+                      </div>
+                    </td>
+          
+                    {{-- Harga --}}
+                    <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-semibold text-green-600">
+                      Rp {{ number_format($motor['price'], 0, ',', '.') }}
+                    </td>
+          
+                    {{-- Aksi --}}
+                    <td class="px-4 py-2 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                      <button
+                        onclick="openEditModal({{ json_encode($motor) }})"
+                        class="inline-flex items-center px-3 py-2 border border-blue-500 rounded hover:bg-blue-50"
+                      >
+                        <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15.232 5.232l3.536 3.536M9 11l3 3L21 5l-3-3L9 11z"/>
+                        </svg>
+                      </button>
+                      <button
+                        onclick="openDeleteModal({{ json_encode($motor) }})"
+                        class="inline-flex items-center px-3 py-2 border border-red-500 rounded hover:bg-red-50"
+                      >
+                        <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
+                                   01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
+                                   1 0 00-1-1m-4 0h4"/>
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
                 @endforeach
-            </tbody>
-        </table>
-    </div>
+              </tbody>
+            </table>
+          </div>
+          
+
+
 
     <!-- Modal Tambah/Edit/Hapus Motor -->
     @include('layouts.modal_motor_vendor')
 
     <script>
+        function filterTable() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('#motorTable tbody tr').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
         document.getElementById('openAddModalBtn').addEventListener('click', function() {
             document.getElementById('addModal').style.display = 'flex';
         });
@@ -99,6 +185,8 @@
             document.getElementById('editMotorColor').value = motor.color;
             document.getElementById('editMotorPrice').value = motor.price;
             document.getElementById('editMotorStatus').value = motor.status;
+            document.getElementById('editMotorType').value = motor.type;
+            document.getElementById('editMotorDescription').value = motor.description;
             setEditFormAction(motor.id);
         }
 
