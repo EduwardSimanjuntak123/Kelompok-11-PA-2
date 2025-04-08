@@ -120,48 +120,70 @@ class _DetailPesananState extends State<DetailPesanan> {
                   children: [
                     // Filter status horizontal (teks + underline biru)
                     Container(
-                      height: 45,
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: statuses.length,
-                        itemBuilder: (context, index) {
-                          final status = statuses[index];
-                          final isSelected = selectedStatus == status;
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 1,
+                            blurRadius: 4,
+                            offset: Offset(0, 2), // arah shadow ke bawah
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        height: 50,
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: statuses.length,
+                          itemBuilder: (context, index) {
+                            final status = statuses[index];
+                            final isSelected = selectedStatus == status;
 
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedStatus = status;
-                              });
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              alignment: Alignment.center,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    status[0].toUpperCase() +
-                                        status.substring(1),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: isSelected
-                                          ? Color(0xFF2C567E)
-                                          : Colors.black,
-                                      decoration: isSelected
-                                          ? TextDecoration.underline
-                                          : TextDecoration.none,
-                                      fontWeight: isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedStatus = status;
+                                });
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                                alignment: Alignment.center,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      status[0].toUpperCase() +
+                                          status.substring(1),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: isSelected
+                                            ? Color(0xFF2C567E)
+                                            : Colors.black,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(height: 3),
+                                    Container(
+                                      height: 2,
+                                      width: 30,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? Color(0xFF2C567E)
+                                            : Colors.transparent,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    )
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     ),
 

@@ -82,7 +82,7 @@ class AuthController extends Controller
     private function redirectByRole($role)
     {
         return match ($role) {
-            'admin' => 'admin',
+            'admin' => 'admin.dashboard',
             'vendor' => 'vendor.dashboard', // Perbaikan di sini
             default => 'login',
         };

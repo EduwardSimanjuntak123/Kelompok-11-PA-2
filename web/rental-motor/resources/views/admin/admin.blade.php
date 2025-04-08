@@ -16,41 +16,78 @@
         const ctx = document.getElementById('pendaftarChart').getContext('2d');
 
         const pendaftarChart = new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
-                labels: {!! json_encode($labels) !!},
-                datasets: [
-                    {
+                labels: {!! json_encode($labels) !!}, // Misal: ['Februari', 'Maret', 'April', 'Mei', 'Juni']
+                datasets: [{
                         label: 'Vendor',
                         data: {!! json_encode($vendorCounts) !!},
-                        backgroundColor: '#3B82F6',
-                        borderColor: '#2563EB',
-                        borderWidth: 1,
-                        borderRadius: 6
+                        fill: true,
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)', // Biru transparan
+                        borderColor: '#3B82F6',
+                        borderDash: [5, 5], // Garis putus-putus
+                        tension: 0.4, // Melengkung
+                        pointBackgroundColor: '#3B82F6',
+                        pointBorderColor: '#1D4ED8',
+                        pointRadius: 5,
+                        borderWidth: 2
                     },
                     {
                         label: 'Customer',
                         data: {!! json_encode($customerCounts) !!},
-                        backgroundColor: '#10B981',
-                        borderColor: '#059669',
-                        borderWidth: 1,
-                        borderRadius: 6
+                        fill: true,
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)', // Hijau transparan
+                        borderColor: '#10B981',
+                        borderDash: [5, 5],
+                        tension: 0.4,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#047857',
+                        pointRadius: 5,
+                        borderWidth: 2
                     }
                 ]
             },
             options: {
                 responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Jumlah Pendaftar Vendor & Customer per Bulan',
+                        font: {
+                            size: 18
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y + ' orang';
+                            }
+                        }
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         ticks: {
                             stepSize: 1
+                        },
+                        title: {
+                            display: true,
+                            text: 'Jumlah Pendaftar'
                         }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Bulan'
+                        }
                     }
                 }
             }

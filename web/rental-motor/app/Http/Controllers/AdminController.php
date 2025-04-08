@@ -13,55 +13,65 @@ class AdminController extends Controller
     public function dashboard()
     {
         $token = session()->get('token');
+    
         if (!$token) {
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
     
         $response = Http::withToken($token)->get("http://localhost:8080/admin/CustomerandVendor");
+    
         if ($response->failed()) {
             Log::error('Gagal fetch data dari API /admin/CustomerandVendor', [
                 'status' => $response->status(),
                 'body' => $response->body()
             ]);
         }
-        
+    
         $labels = [];
         $vendorCounts = [];
         $customerCounts = [];
     
+        // Inisialisasi 5 bulan: 2 bulan sebelum, bulan sekarang, 2 bulan sesudah
+        $now = \Carbon\Carbon::now();
+        $range = [];
+    
+        for ($i = -2; $i <= 2; $i++) {
+            $month = $now->copy()->addMonths($i)->translatedFormat('F Y'); // Contoh: April 2025
+            $range[$month] = ['vendor' => 0, 'customer' => 0];
+        }
+    
         if ($response->successful()) {
             $users = $response->json();
-            $grouped = [];
     
             foreach ($users as $user) {
                 if (!isset($user['created_at'], $user['role'])) continue;
     
-                $date = \Carbon\Carbon::parse($user['created_at']);
-                $month = $date->translatedFormat('F Y'); // Format Indonesia: Maret 2025
-                $role = $user['role'];
+                $createdMonth = \Carbon\Carbon::parse($user['created_at'])->translatedFormat('F Y');
     
-                if (!isset($grouped[$month])) {
-                    $grouped[$month] = ['vendor' => 0, 'customer' => 0];
-                }
-    
-                if ($role === 'vendor') {
-                    $grouped[$month]['vendor']++;
-                } elseif ($role === 'customer') {
-                    $grouped[$month]['customer']++;
+                // Hanya proses jika bulan ada dalam range
+                if (array_key_exists($createdMonth, $range)) {
+                    $role = $user['role'];
+                    if ($role === 'vendor') {
+                        $range[$createdMonth]['vendor']++;
+                    } elseif ($role === 'customer') {
+                        $range[$createdMonth]['customer']++;
+                    }
                 }
             }
     
-            $labels = array_keys($grouped);
-            $vendorCounts = array_column($grouped, 'vendor');
-            $customerCounts = array_column($grouped, 'customer');
+            // Siapkan data untuk Chart.js
+            $labels = array_keys($range);
+            $vendorCounts = array_column($range, 'vendor');
+            $customerCounts = array_column($range, 'customer');
         }
     
-        return view('admin.dashboard', [
+        return view('admin.admin', [
             'labels' => $labels,
             'vendorCounts' => $vendorCounts,
             'customerCounts' => $customerCounts,
         ]);
     }
+    
     
 
     
