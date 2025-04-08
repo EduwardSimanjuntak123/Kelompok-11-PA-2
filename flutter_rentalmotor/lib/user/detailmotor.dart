@@ -6,8 +6,13 @@ import 'package:flutter_rentalmotor/user/akun.dart';
 
 class DetailMotorPage extends StatefulWidget {
   final Map<String, dynamic> motor;
+  final bool isGuest;
 
-  const DetailMotorPage({Key? key, required this.motor}) : super(key: key);
+  const DetailMotorPage({
+    Key? key,
+    required this.motor,
+    this.isGuest = false,
+  }) : super(key: key);
 
   @override
   _DetailMotorPageState createState() => _DetailMotorPageState();
@@ -37,12 +42,9 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
     String imageUrl =
         widget.motor["image"] ?? "assets/images/default_motor.png";
 
-    // Cek apakah URL gambar adalah path relatif, tambahkan base URL jika iya
     if (imageUrl.startsWith("/")) {
-      imageUrl = "http://192.168.189.159:8080$imageUrl"; // Menambahkan base URL
+      imageUrl = "http://192.168.189.159:8080$imageUrl";
     }
-
-    print("Gambar motor URL: $imageUrl");
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -51,9 +53,7 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           "Detail Motor",
@@ -66,7 +66,6 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gambar Motor
             Center(
               child: Container(
                 decoration: BoxDecoration(
@@ -76,27 +75,27 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
                   child: imageUrl.startsWith("http")
-                      ? Image.network(imageUrl,
+                      ? Image.network(
+                          imageUrl,
                           width: double.infinity,
                           height: 200,
-                          fit: BoxFit.cover)
-                      : Image.asset(imageUrl,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.asset(
+                          imageUrl,
                           width: double.infinity,
                           height: 200,
-                          fit: BoxFit.cover),
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
             ),
             SizedBox(height: 20),
-
-            // Nama Motor
             Text(
               widget.motor["name"] ?? "Nama Tidak Diketahui",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 5),
-
-            // Menampilkan Tipe Motor
             Text(
               "Tipe: ${widget.motor["type"] ?? "Tidak Diketahui"}",
               style: TextStyle(
@@ -105,8 +104,6 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                   color: Colors.black),
             ),
             SizedBox(height: 10),
-
-            // Deskripsi Motor
             Text(
               "Deskripsi",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -117,8 +114,6 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
               style: TextStyle(fontSize: 14, color: Colors.black),
             ),
             SizedBox(height: 15),
-
-            // Informasi Harga dan Rating
             Container(
               padding: EdgeInsets.all(15),
               decoration: BoxDecoration(
@@ -154,34 +149,45 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
               ),
             ),
             Spacer(),
-
-            // Tombol "Book Now"
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            SewaMotorPage(motor: widget.motor)),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF2C567E),
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            if (!widget.isGuest)
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SewaMotorPage(
+                          motor: widget.motor,
+                          isGuest: widget.isGuest,
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF2C567E),
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                ),
-                child: Text(
-                  "Book Now",
-                  style: TextStyle(
+                  child: Text(
+                    "Book Now",
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              )
+            else
+              Center(
+                child: Text(
+                  "Silakan login untuk memesan.",
+                  style:
+                      TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                 ),
               ),
-            ),
             SizedBox(height: 20),
           ],
         ),
@@ -211,7 +217,6 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
     );
   }
 
-  // Widget untuk menampilkan informasi (Rating, Harga, Variant)
   Widget _buildInfoBox(IconData icon, String value, String label, Color color) {
     return Column(
       children: [

@@ -15,7 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 func saveBookingImage(c *gin.Context, file *multipart.FileHeader) (string, error) {
     timestamp := time.Now().Format("20060102_150405")
     filename := fmt.Sprintf("%s%s", timestamp, filepath.Ext(file.Filename))
@@ -29,6 +28,7 @@ func saveBookingImage(c *gin.Context, file *multipart.FileHeader) (string, error
     }
     return "/fileserver/booking/" + filename, nil
 }
+
 func getConfirmedBookings() ([]models.Booking, error) {
     var bookings []models.Booking
 
@@ -47,23 +47,23 @@ func checkBookingConflict(startDate, endDate time.Time) error {
         return fmt.Errorf("gagal mengambil booking yang terkonfirmasi: %v", err)
     }
 
-    // Periksa apakah tanggal booking yang ada tumpang tindih dengan rentang tanggal baru
+    // Periksa apakah rentang waktu booking baru tumpang tindih dengan booking yang sudah ada.
+    // Contoh logika: booking baru harus dimulai setelah 1 hari penuh dari booking yang ada.
     for _, booking := range confirmedBookings {
-        // Pastikan booking baru dimulai setidaknya 1 hari setelah end_date booking yang sudah ada
         if startDate.Before(booking.EndDate.Add(24 * time.Hour)) {
             return fmt.Errorf("motor pada rentang tanggal %s sampai %s telah dibooking, hanya bisa booking setelah %s", 
-                startDate.Format("2006-01-02"), endDate.Format("2006-01-02"), booking.EndDate.Add(24*time.Hour).Format("2006-01-02"))
+                startDate.Format("2006-01-02 15:04"),
+                booking.EndDate.Format("2006-01-02 15:04"),
+                booking.EndDate.Add(24*time.Hour).Format("2006-01-02 15:04"))
         }
     }
 
     return nil
 }
 
-
 func CreateBooking(c *gin.Context) {
     log.Println("[INFO] CreateBooking function called")
 
-    // Gunakan DTO untuk binding data dari form
     var bookingInput dto.BookingInput
     if err := c.ShouldBind(&bookingInput); err != nil {
         log.Printf("[ERROR] Error binding request: %v", err)
@@ -77,8 +77,11 @@ func CreateBooking(c *gin.Context) {
         return
     }
 
-    // Validasi conflict sebelum melanjutkan
-    if err := checkBookingConflict(bookingInput.StartDate, bookingInput.EndDate); err != nil {
+    // **Konversi ke UTC sebelum validasi**
+    startDateUTC := bookingInput.StartDate.UTC()
+    endDateUTC := startDateUTC.Add(time.Duration(bookingInput.Duration*24) * time.Hour)
+
+    if err := checkBookingConflict(startDateUTC, endDateUTC); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
@@ -86,47 +89,43 @@ func CreateBooking(c *gin.Context) {
     tx := config.DB.Begin()
     defer tx.Rollback()
 
-    // Ambil data user berdasarkan userID
     var customer models.User
     if err := tx.Select("id, name").Where("id = ?", userID).First(&customer).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data pelanggan"})
         return
     }
 
-    // Ambil data motor berdasarkan ID
     var motor models.Motor
     if err := tx.Where("id = ?", bookingInput.MotorID).First(&motor).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data motor"})
         return
     }
+    
+    if motor.Status == "unavailable" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Tidak bisa booking, motor sedang perbaikan/rusak"})
+		return
+	}
 
-    // Validasi tanggal
-    if bookingInput.EndDate.Before(bookingInput.StartDate) {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Tanggal booking tidak valid"})
-        return
-    }
-
-    duration := int(bookingInput.EndDate.Sub(bookingInput.StartDate).Hours() / 24)
+    // **Pastikan durasi valid**
+    duration := int(endDateUTC.Sub(startDateUTC).Hours() / 24)
     if duration <= 0 {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Durasi booking tidak valid"})
         return
     }
 
-    // Buat data booking baru
     booking := models.Booking{
         CustomerID:     new(uint),
         CustomerName:   customer.Name,
         VendorID:       motor.VendorID,
         MotorID:        bookingInput.MotorID,
-        BookingDate:    time.Now(),
-        StartDate:      bookingInput.StartDate,
-        EndDate:        bookingInput.EndDate,
+        BookingDate:    time.Now().UTC(), // Simpan booking date dalam UTC
+        StartDate:      startDateUTC,
+        EndDate:        endDateUTC,
         PickupLocation: bookingInput.PickupLocation,
         Status:         "pending",
     }
     *booking.CustomerID = userID.(uint)
 
-    // Proses upload file jika ada
     if file, err := c.FormFile("photo_id"); err == nil {
         if photoPath, err := saveBookingImage(c, file); err == nil {
             booking.PhotoID = photoPath
@@ -151,7 +150,6 @@ func CreateBooking(c *gin.Context) {
         return
     }
 
-    // Simpan booking ke database
     if err := tx.Create(&booking).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data booking"})
         return
@@ -159,4 +157,29 @@ func CreateBooking(c *gin.Context) {
 
     tx.Commit()
     c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dibuat", "booking": booking})
+}
+
+
+
+
+func UpdateBookingStatus() {
+    // Mendapatkan waktu saat ini
+    now := time.Now()
+
+    // Cari booking yang sudah melewati end_date dan statusnya masih "in use"
+    var bookings []models.Booking
+    if err := config.DB.Where("end_date <= ? AND status = ?", now, "in use").Find(&bookings).Error; err != nil {
+        log.Printf("Error saat mengambil booking untuk update status: %v", err)
+        return
+    }
+
+    // Update status setiap booking yang ditemukan
+    for _, booking := range bookings {
+        booking.Status = "awaiting return" // status menunggu pengembalian
+        if err := config.DB.Save(&booking).Error; err != nil {
+            log.Printf("Error saat memperbarui status booking ID %d: %v", booking.ID, err)
+        } else {
+            log.Printf("Booking ID %d status telah diperbarui ke 'awaiting return'", booking.ID)
+        }
+    }
 }

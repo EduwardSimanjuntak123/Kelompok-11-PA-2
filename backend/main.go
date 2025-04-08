@@ -8,6 +8,7 @@ import (
 	"rental-backend/controllers"
 	"rental-backend/middleware"
 	"rental-backend/routes"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,26 +19,50 @@ func main() {
 	// Koneksi ke database
 	config.ConnectDatabase()
 
+	// Inisialisasi router
 	router := gin.Default()
 
+	// Middleware CORS
 	router.Use(middleware.CORSMiddleware())
 
-	// ✅ Route untuk file statis
+	// Route untuk file statis
 	router.Static("/fileserver", "./fileserver")
 
-	// Setup routes
+	// === Test route untuk memastikan server hidup ===
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Rental Motor API is running!",
+		})
+	})
+
+	// Setup route utama aplikasi
 	routes.SetupRoutes(router)
-	// Jalankan auto-update status motor
+
+	// Auto-update status motor
 	go controllers.StartAutoUpdateMotorStatus()
+
+	// Auto-update status booking tiap 1 menit
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				controllers.UpdateBookingStatus()
+			}
+		}
+	}()
 
 	// Tentukan port server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	// Log informasi server
+
+	// Jalankan server
 	fmt.Println("✅ Server berjalan di port", port)
-	if err := router.Run("0.0.0.0:" + port); err != nil { // ✅ Dengarkan di semua IP
+	if err := router.Run("0.0.0.0:" + port); err != nil {
 		log.Fatal("❌ Gagal menjalankan server:", err)
 	}
 }

@@ -220,8 +220,8 @@ func GetCustomerBookings(c *gin.Context) {
 		return
 	}
 
-	// Base URL untuk gambar
-	baseURL := "http://localhost:8080"
+	// // Base URL untuk gambar
+	// baseURL := "http://localhost:8080"
 
 	// Format respons
 	var response []map[string]interface{}
@@ -241,7 +241,7 @@ func GetCustomerBookings(c *gin.Context) {
 						if strings.HasPrefix(booking.Motor.Image, "http") {
 							return booking.Motor.Image
 						}
-						return baseURL + booking.Motor.Image
+						return booking.Motor.Image
 					}
 					return "https://via.placeholder.com/150"
 				}(),
@@ -254,6 +254,7 @@ func GetCustomerBookings(c *gin.Context) {
 			"start_date":      booking.StartDate,
 			"end_date":        booking.EndDate,
 			"status":          booking.Status,
+			"dropoff_location":booking.DropoffLocation,
 			"pickup_location": booking.PickupLocation,
 			"motor":           motorData,
 		}

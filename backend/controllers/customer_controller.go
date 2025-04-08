@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"net/http"
+	"os"
 	"rental-backend/config"
+	"rental-backend/dto"
 	"rental-backend/models"
 
 	"github.com/gin-gonic/gin"
@@ -76,35 +78,68 @@ func GetCustomerTransactions(c *gin.Context) {
     c.JSON(http.StatusOK, transactions)
 }
 // Update Profile
-func UpdateProfile(c *gin.Context) {
-    var input models.User
-    id := c.MustGet("user_id").(uint)
+func EditProfile(c *gin.Context) {
+	userID := c.MustGet("user_id").(uint)
 
-    if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	var input dto.EditProfileRequest
+	if err := c.ShouldBind(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    updates := map[string]interface{}{}
-    if input.Name != "" {
-        updates["name"] = input.Name
-    }
-    if input.Email != "" {
-        updates["email"] = input.Email
-    }
-    if input.Phone != "" {
-        updates["phone"] = input.Phone
-    }
-    if input.Address != "" {
-        updates["address"] = input.Address
-    }
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
 
-    if len(updates) > 0 {
-        config.DB.Model(&models.User{}).Where("id = ?", id).Updates(updates)
-    }
+	updates := map[string]interface{}{}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Profil berhasil diperbarui"})
+	// Upload foto profil menggunakan helper
+	newImagePath, err := saveUserImage(c, "profile_image")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengunggah gambar"})
+		return
+	}
+	if newImagePath != "" {
+		// Hapus gambar lama jika ada
+		if user.ProfileImage != "" {
+			_ = os.Remove("." + user.ProfileImage) // tambahkan "." karena user.ProfileImage = "/fileserver/..."
+		}
+		updates["profile_image"] = newImagePath
+	}
+
+	// Update data profil jika ada perubahan
+	if input.Name != "" {
+		updates["name"] = input.Name
+	}
+	if input.Email != "" {
+		updates["email"] = input.Email
+	}
+	if input.Phone != "" {
+		updates["phone"] = input.Phone
+	}
+	if input.Address != "" {
+		updates["address"] = input.Address
+	}
+
+	if err := config.DB.Model(&user).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui profil"})
+		return
+	}
+
+	response := dto.UserResponse{
+		Name:         user.Name,
+		Email:        user.Email,
+		Phone:        user.Phone,
+		Address:      user.Address,
+		ProfileImage: user.ProfileImage,
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profil berhasil diperbarui", "user": response})
 }
+
+
 
 
 // Change Password
