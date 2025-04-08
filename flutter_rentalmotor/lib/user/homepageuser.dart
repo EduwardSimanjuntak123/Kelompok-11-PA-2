@@ -27,6 +27,12 @@ class _HomePageUserState extends State<HomePageUser> {
   List<Map<String, dynamic>> _kecamatanList = [];
   String _selectedKecamatan = "Semua"; // Default: tampilkan semua
   final String baseUrl = ApiConfig.baseUrl;
+  bool _isLoading = true;
+
+  // Blue theme colors
+  final Color primaryBlue = Color(0xFF2C567E);
+  final Color lightBlue = Color(0xFFE3F2FD);
+  final Color accentBlue = Color(0xFF64B5F6);
 
   @override
   void initState() {
@@ -42,7 +48,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
     setState(() {
       _userId = userId;
-      _userName = userName ?? "Guest";
+      _userName = userName ?? "Pengguna";
     });
 
     _fetchVendors();
@@ -67,10 +73,12 @@ class _HomePageUserState extends State<HomePageUser> {
       if (mounted) {
         setState(() {
           _motorList = motors;
+          _isLoading = false;
         });
       }
     } catch (e) {
       _showErrorMessage("Gagal mengambil data motor!");
+      setState(() => _isLoading = false);
     }
   }
 
@@ -102,8 +110,15 @@ class _HomePageUserState extends State<HomePageUser> {
   }
 
   void _showErrorMessage(String message) {
+    if (!mounted) return;
+    
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 
@@ -140,15 +155,26 @@ class _HomePageUserState extends State<HomePageUser> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Login Diperlukan"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.lock, color: primaryBlue),
+            SizedBox(width: 10),
+            Text("Login Diperlukan"),
+          ],
+        ),
         content: const Text(
             "Anda harus login terlebih dahulu untuk mengakses fitur ini."),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Batal"),
+            child: Text("Batal", style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).pushReplacement(
@@ -162,15 +188,22 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  // Helper widget untuk menampilkan satu bintang dan rating (dengan nilai desimal)
+  // Helper widget untuk menampilkan rating dengan bintang
   Widget _buildRatingDisplay(String rating) {
+    double ratingValue = double.tryParse(rating) ?? 0.0;
     return Row(
       children: [
-        const Icon(Icons.star, size: 14, color: Colors.amber),
-        const SizedBox(width: 3),
+        ...List.generate(5, (index) {
+          return Icon(
+            index < ratingValue ? Icons.star : Icons.star_border,
+            size: 14, 
+            color: Colors.amber,
+          );
+        }),
+        SizedBox(width: 5),
         Text(
           rating,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+          style: TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
     );
@@ -179,8 +212,7 @@ class _HomePageUserState extends State<HomePageUser> {
   @override
   Widget build(BuildContext context) {
     // Filter vendor berdasarkan kecamatan yang dipilih.
-    List<Map<String, dynamic>> filteredVendorList = _selectedKecamatan ==
-            "Semua"
+    List<Map<String, dynamic>> filteredVendorList = _selectedKecamatan == "Semua"
         ? _vendorList
         : _vendorList.where((vendor) {
             String vendorKecamatan =
@@ -189,40 +221,99 @@ class _HomePageUserState extends State<HomePageUser> {
           }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _loadUserData();
-          await _fetchVendors();
-          await _fetchMotors();
-          await _fetchKecamatan();
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              _buildFilterSection(), // Dropdown filter kecamatan
-              _buildVendorSection(filteredVendorList),
-              _buildMotorSection(),
+      backgroundColor: Colors.grey[50],
+      body: _isLoading 
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    "Loading data...",
+                    style: TextStyle(
+                      color: primaryBlue,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : RefreshIndicator(
+              color: primaryBlue,
+              onRefresh: () async {
+                setState(() => _isLoading = true);
+                await _loadUserData();
+                await _fetchVendors();
+                await _fetchMotors();
+                await _fetchKecamatan();
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    _buildSearchBar(),
+                    _buildFilterSection(),
+                    _buildVendorSection(filteredVendorList),
+                    _buildMotorSection(),
+                    // Add padding at the bottom for better scrolling experience
+                    SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: Offset(0, -5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            selectedItemColor: primaryBlue,
+            unselectedItemColor: Colors.grey,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            onTap: _onItemTapped,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
+                label: "Beranda",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.receipt_long_outlined),
+                activeIcon: Icon(Icons.receipt_long),
+                label: "Pesanan",
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline),
+                activeIcon: Icon(Icons.person),
+                label: "Akun",
+              ),
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF2C567E),
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: "Pesanan"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
-        ],
       ),
     );
   }
@@ -230,69 +321,177 @@ class _HomePageUserState extends State<HomePageUser> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF2C567E),
+      padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primaryBlue, Color(0xFF3E8EDE)],
+        ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Halo, $_userName (ID: ${_userId ?? '-'})",
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+        boxShadow: [
+          BoxShadow(
+            color: primaryBlue.withOpacity(0.3),
+            blurRadius: 10,
+            offset: Offset(0, 5),
           ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none, color: Colors.white),
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => NotifikasiPage()));
-                },
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Halo, $_userName",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (_userId != null)
+                    Text(
+                      "ID: $_userId",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                ],
               ),
-              IconButton(
-                icon: Image.asset("assets/images/chat.png",
-                    width: 24, height: 24),
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const ChatPage()));
-                },
+              Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.notifications_none, color: Colors.white),
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => NotifikasiPage()));
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.chat_outlined, color: Colors.white),
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => const ChatPage()));
+                      },
+                    ),
+                  ),
+                ],
               ),
             ],
+          ),
+          SizedBox(height: 20),
+          Text(
+            "Temukan Motor Rental Terbaik",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildSearchBar() {
+    return Container(
+      margin: EdgeInsets.fromLTRB(20, 20, 20, 10),
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Cari motor rental...",
+          hintStyle: TextStyle(color: Colors.grey[400]),
+          prefixIcon: Icon(Icons.search, color: primaryBlue),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 15),
+        ),
+      ),
+    );
+  }
+
   // Widget untuk dropdown filter kecamatan
   Widget _buildFilterSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    return Container(
+      margin: EdgeInsets.fromLTRB(20, 10, 20, 20),
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          const Text(
+          Icon(Icons.location_on, color: primaryBlue, size: 20),
+          SizedBox(width: 10),
+          Text(
             "Filter Kecamatan:",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
-            child: DropdownButton<String>(
-              isExpanded: true,
-              value: _selectedKecamatan,
-              items: _buildDropdownItems(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedKecamatan = newValue;
-                  });
-                }
-              },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: lightBlue.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _selectedKecamatan,
+                  icon: Icon(Icons.keyboard_arrow_down, color: primaryBlue),
+                  items: _buildDropdownItems(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedKecamatan = newValue;
+                      });
+                    }
+                  },
+                ),
+              ),
             ),
           ),
         ],
@@ -309,10 +508,12 @@ class _HomePageUserState extends State<HomePageUser> {
     ));
     for (var kec in _kecamatanList) {
       String nama = kec["nama_kecamatan"]?.toString().trim() ?? "";
-      items.add(DropdownMenuItem(
-        value: nama,
-        child: Text(nama),
-      ));
+      if (nama.isNotEmpty) {
+        items.add(DropdownMenuItem(
+          value: nama,
+          child: Text(nama),
+        ));
+      }
     }
     return items;
   }
@@ -321,27 +522,88 @@ class _HomePageUserState extends State<HomePageUser> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text("Daftar Vendor",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 10, 20, 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: primaryBlue,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    "Daftar Vendor",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  // View all vendors
+                },
+                child: Text(
+                  "Lihat Semua",
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 10),
         vendorList.isEmpty
             ? Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
                 alignment: Alignment.center,
-                child: const Text(
-                  "Vendor tidak ada pada kecamatan yang dipilih",
-                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.store_outlined,
+                      size: 50,
+                      color: Colors.grey[400],
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Vendor tidak ada pada kecamatan yang dipilih",
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               )
-            : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: vendorList.map((vendor) {
+            : SizedBox(
+                height: 200, // Increased height for vendor cards to prevent overflow
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: vendorList.length,
+                  itemBuilder: (context, index) {
+                    final vendor = vendorList[index];
                     String path =
                         vendor["user"]["profile_image"]?.toString().trim() ??
                             "";
@@ -360,7 +622,7 @@ class _HomePageUserState extends State<HomePageUser> {
                       vendor["id"],
                       kecamatan,
                     );
-                  }).toList(),
+                  },
                 ),
               ),
       ],
@@ -371,19 +633,88 @@ class _HomePageUserState extends State<HomePageUser> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text("Rekomendasi Motor",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: primaryBlue,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    "Rekomendasi Motor",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  // View all motors
+                },
+                child: Text(
+                  "Lihat Semua",
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 10),
         _motorList.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: _motorList.map((motor) {
+            ? Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.motorcycle_outlined,
+                      size: 50,
+                      color: Colors.grey[400],
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Tidak ada motor tersedia",
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            : SizedBox(
+                height: 220, // Fixed height for motor cards
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _motorList.length,
+                  itemBuilder: (context, index) {
+                    final motor = _motorList[index];
                     String path = motor["image"]?.toString().trim() ?? "";
                     String imageUrl = path.isNotEmpty
                         ? (path.startsWith("http") ? path : "$baseUrl$path")
@@ -412,7 +743,7 @@ class _HomePageUserState extends State<HomePageUser> {
                         isGuest: _userId == null,
                       ),
                     );
-                  }).toList(),
+                  },
                 ),
               ),
       ],
@@ -427,41 +758,66 @@ class _HomePageUserState extends State<HomePageUser> {
             .push(MaterialPageRoute(builder: (context) => detailPage));
       },
       child: Container(
-        width: 140,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(8),
+        width: 180,
+        margin: const EdgeInsets.only(right: 15),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                blurRadius: 5,
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
                 spreadRadius: 2)
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(
-              imageUrl,
-              height: 80,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Image.asset("assets/images/default_motor.png",
-                    height: 80, width: double.infinity, fit: BoxFit.cover);
-              },
+            ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(15),
+                topRight: Radius.circular(15),
+              ),
+              child: Image.network(
+                imageUrl,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset("assets/images/default_motor.png",
+                      height: 120, width: double.infinity, fit: BoxFit.cover);
+                },
+              ),
             ),
-            const SizedBox(height: 5),
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            // Menampilkan satu bintang dan rating
-            _buildRatingDisplay(rating),
-            Text(price,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 5),
+                  _buildRatingDisplay(rating),
+                  SizedBox(height: 5),
+                  Text(
+                    price,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -478,41 +834,72 @@ class _HomePageUserState extends State<HomePageUser> {
                 builder: (context) => DataVendor(vendorId: vendorId)));
       },
       child: Container(
-        width: 140,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(8),
+        width: 160,
+        margin: const EdgeInsets.only(right: 15),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                blurRadius: 5,
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
                 spreadRadius: 2)
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(
-              imageUrl,
-              height: 80,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Image.asset("assets/images/default_vendor.png",
-                    height: 80, width: double.infinity, fit: BoxFit.cover);
-              },
+            ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(15),
+                topRight: Radius.circular(15),
+              ),
+              child: Image.network(
+                imageUrl,
+                height: 100,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset("assets/images/default_vendor.png",
+                      height: 100, width: double.infinity, fit: BoxFit.cover);
+                },
+              ),
             ),
-            const SizedBox(height: 5),
-            Text(shopName,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            // Menampilkan satu bintang dan rating
-            _buildRatingDisplay(rating),
-            const SizedBox(height: 3),
-            Text("Kecamatan: $kecamatan",
-                style: const TextStyle(fontSize: 12, color: Colors.black87)),
+            Padding(
+              padding: EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shopName,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 5),
+                  _buildRatingDisplay(rating),
+                  SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, size: 12, color: Colors.grey),
+                      SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          kecamatan,
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

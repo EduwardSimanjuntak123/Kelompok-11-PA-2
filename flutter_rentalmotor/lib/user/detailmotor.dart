@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/sewamotor.dart';
 import 'package:flutter_rentalmotor/user/detailpesanan.dart';
@@ -21,111 +20,367 @@ class DetailMotorPage extends StatefulWidget {
 
 class _DetailMotorPageState extends State<DetailMotorPage> {
   int _selectedIndex = 0;
+  final Color primaryBlue = Color(0xFF2C567E);
+  final Color lightBlue = Color(0xFFE3F2FD);
+  final Color accentBlue = Color(0xFF64B5F6);
 
   void _onItemTapped(int index) {
-    final pages = [
-      HomePageUser(),
-      DetailPesanan(),
-      Akun(),
-    ];
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => pages[index]),
-    );
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => HomePageUser()),
+      );
+    } else if (index == 1) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => DetailPesanan()),
+      );
+    } else if (index == 2) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => Akun()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     String imageUrl =
         widget.motor["image"] ?? "assets/images/default_motor.png";
+
     if (imageUrl.startsWith("/")) {
       imageUrl = "http://192.168.189.159:8080$imageUrl";
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: _buildAppBar(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeroImage(imageUrl),
-              SizedBox(height: 20),
-              _buildMotorName(),
-              SizedBox(height: 6),
-              _buildMotorType(),
-              SizedBox(height: 25),
-              _buildSectionTitle("Deskripsi"),
-              SizedBox(height: 8),
-              _buildMotorDescription(),
-              SizedBox(height: 25),
-              _buildSectionTitle("Informasi Motor"),
-              SizedBox(height: 12),
-              _buildInfoRow(),
-              SizedBox(height: 35),
-              _buildActionButton(),
-              SizedBox(height: 20),
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.9),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(Icons.arrow_back, color: primaryBlue, size: 20),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: IconButton(
+              icon: Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(Icons.favorite_border, color: Colors.red, size: 20),
+              ),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Added to favorites"),
+                    behavior: SnackBarBehavior.floating,
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Hero Image
+            Container(
+              height: 300,
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  // Image
+                  Positioned.fill(
+                    child: Hero(
+                      tag: "motor-${widget.motor["id"] ?? "unknown"}",
+                      child: imageUrl.startsWith("http")
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Container(
+                                color: Colors.grey[300],
+                                child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey[600]),
+                              ),
+                            )
+                          : Image.asset(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                            ),
+                    ),
+                  ),
+                  // Gradient Overlay
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Motor Name
+                  Positioned(
+                    bottom: 20,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: primaryBlue,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            widget.motor["type"] ?? "Tidak Diketahui",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          widget.motor["name"] ?? "Nama Tidak Diketahui",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 3,
+                                color: Colors.black.withOpacity(0.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.star, color: Colors.amber, size: 18),
+                            SizedBox(width: 4),
+                            Text(
+                              "${widget.motor["rating"] ?? "0.0"}",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Icon(Icons.monetization_on, color: Colors.green, size: 18),
+                            SizedBox(width: 4),
+                            Text(
+                              "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}/hari",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Content
+            Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle("Deskripsi"),
+                  SizedBox(height: 10),
+                  Text(
+                    widget.motor["description"] ?? "Tidak ada deskripsi.",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                      height: 1.5,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  _buildSectionTitle("Informasi Motor"),
+                  SizedBox(height: 16),
+                  _buildInfoRow(),
+                  SizedBox(height: 30),
+                  _buildBookButton(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: Offset(0, -5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            selectedItemColor: primaryBlue,
+            unselectedItemColor: Colors.grey,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            onTap: _onItemTapped,
+            items: const [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  activeIcon: Icon(Icons.home),
+                  label: "Beranda"),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.receipt_long_outlined),
+                  activeIcon: Icon(Icons.receipt_long),
+                  label: "Pesanan"),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  activeIcon: Icon(Icons.person),
+                  label: "Akun"),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 2,
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Color(0xFF2C567E)),
-        onPressed: () => Navigator.pop(context),
-      ),
-      title: Text(
-        "Detail Motor",
-        style: GoogleFonts.poppins(
-          color: Color(0xFF2C567E),
-          fontWeight: FontWeight.bold,
+  Widget _buildSectionTitle(String title) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: primaryBlue,
+            borderRadius: BorderRadius.circular(2),
+          ),
         ),
-      ),
-      centerTitle: true,
+        SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: primaryBlue,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildHeroImage(String imageUrl) {
-    return Hero(
-      tag: widget.motor["id"].toString(),
-      child: Stack(
+  Widget _buildInfoRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildInfoBox(
+            Icons.star, "${widget.motor["rating"] ?? "0.0"}", "Rating", Colors.amber),
+        _buildInfoBox(
+            Icons.attach_money,
+            "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}",
+            "Harga",
+            Colors.green),
+        _buildInfoBox(
+            Icons.category,
+            "${widget.motor["variant"] ?? "1"} Variant",
+            "Varian",
+            primaryBlue),
+      ],
+    );
+  }
+
+  Widget _buildInfoBox(IconData icon, String value, String label, Color color) {
+    return Container(
+      width: 100,
+      padding: EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
         children: [
           Container(
+            padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 15,
-                  offset: Offset(0, 5),
-                ),
-              ],
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: imageUrl.startsWith("http")
-                  ? Image.network(imageUrl,
-                      width: double.infinity, height: 220, fit: BoxFit.cover)
-                  : Image.asset(imageUrl,
-                      width: double.infinity, height: 220, fit: BoxFit.cover),
-            ),
+            child: Icon(icon, color: color, size: 24),
           ),
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                colors: [Colors.black54, Colors.transparent],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
+          SizedBox(height: 10),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
             ),
           ),
         ],
@@ -133,189 +388,85 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
     );
   }
 
-  Widget _buildMotorName() {
-    return Text(
-      widget.motor["name"] ?? "Nama Tidak Diketahui",
-      style: GoogleFonts.poppins(
-        fontSize: 26,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF2C567E),
-      ),
-    );
-  }
-
-  Widget _buildMotorType() {
-    return Text(
-      "Tipe: ${widget.motor["type"] ?? "Tidak Diketahui"}",
-      style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[700]),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.poppins(
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF2C567E),
-      ),
-    );
-  }
-
-  Widget _buildMotorDescription() {
-    return Text(
-      widget.motor["description"] ?? "Tidak ada deskripsi.",
-      style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
-    );
-  }
-
-  Widget _buildInfoRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildInfoCard(Icons.star, "${widget.motor["rating"] ?? "0.0"}",
-            "Rating", Colors.amber),
-        _buildInfoCard(Icons.monetization_on,
-            "Rp ${widget.motor["price"] ?? "-"}", "Harga", Colors.green),
-        _buildInfoCard(Icons.category,
-            "${widget.motor["variant"] ?? "1"} Varian", "Varian", Colors.blue),
-      ],
-    );
-  }
-
-  Widget _buildInfoCard(
-      IconData icon, String value, String label, Color color) {
-    return Expanded(
-      child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 4),
-        padding: EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: Colors.grey[300]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 5,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withOpacity(0.1),
-              ),
-              padding: EdgeInsets.all(10),
-              child: Icon(icon, color: color, size: 26),
-            ),
-            SizedBox(height: 8),
-            Text(
-              value,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey[700],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton() {
+  Widget _buildBookButton() {
     return Center(
       child: !widget.isGuest
           ? Container(
+              width: double.infinity,
+              height: 55,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
                 gradient: LinearGradient(
-                  colors: [Color(0xFF2C567E), Color(0xFF4682B4)],
+                  colors: [Color(0xFF3E8EDE), primaryBlue],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blueGrey.withOpacity(0.3),
+                    color: primaryBlue.withOpacity(0.3),
                     blurRadius: 8,
                     offset: Offset(0, 4),
-                  )
+                  ),
                 ],
               ),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SewaMotorPage(
-                        motor: widget.motor,
-                        isGuest: widget.isGuest,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SewaMotorPage(
+                          motor: widget.motor,
+                          isGuest: widget.isGuest,
+                        ),
                       ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(15),
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.motorcycle, color: Colors.white, size: 20),
+                        SizedBox(width: 10),
+                        Text(
+                          "Book Now",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  padding: EdgeInsets.symmetric(horizontal: 60, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  "Book Now",
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.1,
                   ),
                 ),
               ),
             )
-          : Text(
-              "Silakan login untuk memesan.",
-              style: GoogleFonts.poppins(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
+          : Container(
+              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.red.withOpacity(0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text(
+                    "Silakan login untuk memesan.",
+                    style: TextStyle(
+                      color: Colors.red, 
+                      fontWeight: FontWeight.bold
+                    ),
+                  ),
+                ],
               ),
             ),
-    );
-  }
-
-  BottomNavigationBar _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _selectedIndex,
-      selectedItemColor: Color(0xFF2C567E),
-      unselectedItemColor: Colors.grey,
-      onTap: _onItemTapped,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: "Beranda",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.receipt_long_outlined),
-          activeIcon: Icon(Icons.receipt_long),
-          label: "Pesanan",
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: "Akun",
-        ),
-      ],
     );
   }
 }
