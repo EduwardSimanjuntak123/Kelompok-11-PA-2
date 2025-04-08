@@ -20,7 +20,12 @@
                         max="{{ date('Y') }}" required>
 
                     <label class="block text-gray-700 mt-2">Tipe</label>
-                    <input name="type" type="text" class="w-full border p-2 rounded" required>
+                    <select id="editMotortype" name="type" class="w-full border p-2 rounded" required>
+                        <option value="matic">Matic</option>
+                        <option value="manual">Manual</option>
+                        <option value="kopling">Kopling</option>
+                        <option value="vespa">Vespa</option>
+                    </select>
                 </div>
 
                 <div>
@@ -77,7 +82,12 @@
                         min="1900" max="{{ date('Y') }}" required>
 
                     <label class="block text-gray-700 mt-2">Tipe</label>
-                    <input id="editMotorType" name="type" type="text" class="w-full border p-2 rounded" required>
+                    <select id="editMotortype" name="type" class="w-full border p-2 rounded" required>
+                        <option value="matic">Matic</option>
+                        <option value="manual">Manual</option>
+                        <option value="kopling">Kopling</option>
+                        <option value="vespa">Vespa</option>
+                    </select>
                 </div>
 
                 <div>
