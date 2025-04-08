@@ -3,20 +3,57 @@
 @section('title', 'Dashboard Admin')
 
 @section('content')
-    <div class="bg-white shadow-lg rounded-lg p-6">
-        <h2 class="text-xl font-bold mb-4">Dashboard Admin</h2>
+    <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Dashboard Admin</h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Menonaktifkan Vendor -->
-            <div class="bg-red-100 p-4 rounded-lg shadow-md transform transition duration-300 hover:scale-102">
-                <h3 class="font-semibold mb-2">Kelola Vendor</h3>
-                <button class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
-                    <a href="{{ route('admin.nonaktif', ['id' => session('user.id')]) }}">
-                        Nonaktifkan Akun Vendor
-                    </a>
-                </button>
-            </div>
-          
+        <div class="mb-8">
+            <canvas id="pendaftarChart" height="120"></canvas>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('pendaftarChart').getContext('2d');
+
+        const pendaftarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode($labels) !!},
+                datasets: [
+                    {
+                        label: 'Vendor',
+                        data: {!! json_encode($vendorCounts) !!},
+                        backgroundColor: '#3B82F6',
+                        borderColor: '#2563EB',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Customer',
+                        data: {!! json_encode($customerCounts) !!},
+                        backgroundColor: '#10B981',
+                        borderColor: '#059669',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                }
+            }
+        });
+    </script>
 @endsection

@@ -38,6 +38,8 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::put('/admin/profile/edit', [AdminController::class, 'updateProfile'])->name('admin.update');
         Route::get('/admin/profile/{id}', [AdminController::class, 'profile'])->name('admin.profile');
         Route::view('/nonaktif', 'nonaktif')->name('nonaktif');
+        Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+
     });
 
     // Route untuk vendor (penjual motor)

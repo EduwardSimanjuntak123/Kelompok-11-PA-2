@@ -10,7 +10,61 @@ use Illuminate\Support\Facades\Log;
 class AdminController extends Controller
 {
     protected $apiBaseUrl = 'http://localhost:8080';
+    public function dashboard()
+    {
+        $token = session()->get('token');
+        if (!$token) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
+        }
+    
+        $response = Http::withToken($token)->get("http://localhost:8080/admin/CustomerandVendor");
+        if ($response->failed()) {
+            Log::error('Gagal fetch data dari API /admin/CustomerandVendor', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+        }
+        
+        $labels = [];
+        $vendorCounts = [];
+        $customerCounts = [];
+    
+        if ($response->successful()) {
+            $users = $response->json();
+            $grouped = [];
+    
+            foreach ($users as $user) {
+                if (!isset($user['created_at'], $user['role'])) continue;
+    
+                $date = \Carbon\Carbon::parse($user['created_at']);
+                $month = $date->translatedFormat('F Y'); // Format Indonesia: Maret 2025
+                $role = $user['role'];
+    
+                if (!isset($grouped[$month])) {
+                    $grouped[$month] = ['vendor' => 0, 'customer' => 0];
+                }
+    
+                if ($role === 'vendor') {
+                    $grouped[$month]['vendor']++;
+                } elseif ($role === 'customer') {
+                    $grouped[$month]['customer']++;
+                }
+            }
+    
+            $labels = array_keys($grouped);
+            $vendorCounts = array_column($grouped, 'vendor');
+            $customerCounts = array_column($grouped, 'customer');
+        }
+    
+        return view('admin.dashboard', [
+            'labels' => $labels,
+            'vendorCounts' => $vendorCounts,
+            'customerCounts' => $customerCounts,
+        ]);
+    }
+    
 
+    
     public function profile()
     {
         // Ambil token autentikasi dari sesi
