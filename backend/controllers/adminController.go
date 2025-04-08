@@ -15,6 +15,44 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GetAllCustomersAndVendors(c *gin.Context) {
+	var users []models.User
+
+	// Ambil user dengan role "customer" atau "vendor"
+	if err := config.DB.Where("role IN ?", []string{"customer", "vendor"}).Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data pengguna"})
+		return
+	}
+
+	// Siapkan base URL untuk gambar
+
+	// Format respons
+	var result []gin.H
+	for _, user := range users {
+		profileImage := user.ProfileImage
+		if profileImage == "" {
+			profileImage = "https://via.placeholder.com/150"
+		} else {
+			profileImage = profileImage
+		}
+
+		result = append(result, gin.H{
+			"id":            user.ID,
+			"name":          user.Name,
+			"email":         user.Email,
+			"phone":         user.Phone,
+			"address":       user.Address,
+			"profile_image": profileImage,
+			"status":        user.Status,
+			"role":          user.Role,
+			"created_at":    user.CreatedAt,
+			"updated_at":    user.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
 func GetDataAdmin(c *gin.Context) {
 	// Ambil user_id dari token JWT
 	userID, exists := c.Get("user_id")
@@ -45,7 +83,6 @@ func GetDataAdmin(c *gin.Context) {
 		profileImageURL = "https://via.placeholder.com/150"
 	}
 
-
 	// Kembalikan respons JSON dengan semua atribut
 	c.JSON(http.StatusOK, gin.H{
 		"id":            user.ID,
@@ -60,7 +97,6 @@ func GetDataAdmin(c *gin.Context) {
 		"updated_at":    user.UpdatedAt,
 	})
 }
-
 
 func saveImageAdmin(c *gin.Context, file *multipart.FileHeader) (string, error) {
 	timestamp := time.Now().Format("20060102_150405")
@@ -299,42 +335,42 @@ func GetAllVendors(c *gin.Context) {
 }
 
 func ActivateVendor(c *gin.Context) {
-    var user models.User
-    id := c.Param("id")
+	var user models.User
+	id := c.Param("id")
 
-    // Validasi apakah ID adalah angka
-    vendorID, err := strconv.Atoi(id)
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "ID tidak valid"})
-        return
-    }
+	// Validasi apakah ID adalah angka
+	vendorID, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID tidak valid"})
+		return
+	}
 
-    // Cari user berdasarkan ID
-    if err := config.DB.Where("id = ?", vendorID).First(&user).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Pengguna (vendor) tidak ditemukan"})
-        return
-    }
+	// Cari user berdasarkan ID
+	if err := config.DB.Where("id = ?", vendorID).First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Pengguna (vendor) tidak ditemukan"})
+		return
+	}
 
-    // Pastikan user adalah vendor
-    if user.Role != "vendor" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Pengguna bukan vendor"})
-        return
-    }
+	// Pastikan user adalah vendor
+	if user.Role != "vendor" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Pengguna bukan vendor"})
+		return
+	}
 
-    // Periksa apakah vendor sudah aktif
-    if user.Status == "active" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Vendor sudah dalam status aktif"})
-        return
-    }
+	// Periksa apakah vendor sudah aktif
+	if user.Status == "active" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Vendor sudah dalam status aktif"})
+		return
+	}
 
-    // Update status menjadi aktif
-    if err := config.DB.Model(&user).Updates(map[string]interface{}{
-        "status":     "active",
-        "updated_at": time.Now(),
-    }).Error; err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengaktifkan vendor"})
-        return
-    }
+	// Update status menjadi aktif
+	if err := config.DB.Model(&user).Updates(map[string]interface{}{
+		"status":     "active",
+		"updated_at": time.Now(),
+	}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengaktifkan vendor"})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Akun vendor berhasil diaktifkan kembali"})
+	c.JSON(http.StatusOK, gin.H{"message": "Akun vendor berhasil diaktifkan kembali"})
 }

@@ -21,6 +21,7 @@ func AdminRoutes(router *gin.Engine) {
 			admin.PUT("/profile/edit", controllers.EditDataAdmin)
 			admin.PUT("/activate-vendor/:id", controllers.ActivateVendor)
 			admin.PUT("/deactivate-vendor/:id", controllers.DeactivateVendor)
+			admin.GET("/CustomerandVendor", controllers.GetAllCustomersAndVendors)
 		}
 	}
 }
