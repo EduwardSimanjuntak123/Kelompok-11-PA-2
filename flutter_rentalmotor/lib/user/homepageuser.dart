@@ -1,3 +1,4 @@
+import 'dart:convert'; // Untuk JSON decoding
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/notifikasi.dart';
@@ -10,6 +11,12 @@ import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/homepage_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:badges/badges.dart' as badges;
+
+const Color primaryBlue = Color(0xFF2196F3);
 
 class HomePageUser extends StatefulWidget {
   const HomePageUser({Key? key}) : super(key: key);
@@ -19,28 +26,74 @@ class HomePageUser extends StatefulWidget {
 }
 
 class _HomePageUserState extends State<HomePageUser> {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   int _selectedIndex = 0;
   String _userName = "Pengguna";
   int? _userId;
+
+  bool _isLoading = true;
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _vendorList = [];
   List<Map<String, dynamic>> _kecamatanList = [];
   String _selectedKecamatan = "Semua"; // Default: tampilkan semua
   final String baseUrl = ApiConfig.baseUrl;
-  bool _isLoading = true;
 
-  // Blue theme colors
-  final Color primaryBlue = Color(0xFF2C567E);
-  final Color lightBlue = Color(0xFFE3F2FD);
-  final Color accentBlue = Color(0xFF64B5F6);
+  WebSocketChannel? _channel;
+  // List untuk menyimpan pesan notifikasi yang diterima
+  // Sekarang menggunakan struktur data Map agar bisa menyimpan status 'read' dan 'timestamp'
+  List<Map<String, dynamic>> _notifications = [];
+  int get _unreadCount {
+    return _notifications.where((notif) => notif['read'] == false).length;
+  }
 
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
     _fetchKecamatan();
+    _initializeLocalNotifications();
   }
 
+  /// Inisialisasi Local Notification
+  void _initializeLocalNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onDidReceiveNotificationResponse: (details) {
+      debugPrint("Notification clicked with payload: ${details.payload}");
+    });
+  }
+
+  /// Tampilkan notifikasi lokal dengan judul dan pesan
+  Future<void> _showLocalNotification(String title, String message) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'channel_id', // ID channel unik
+      'Notifikasi Masuk',
+      channelDescription: 'Channel untuk notifikasi dari vendor',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // ID notifikasi
+      title, // Judul notifikasi
+      message, // Isi pesan
+      platformChannelSpecifics,
+      payload: 'data', // opsional
+    );
+  }
+
+  /// Mengambil data user dari SharedPreferences dan inisialisasi koneksi WebSocket
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
@@ -53,6 +106,58 @@ class _HomePageUserState extends State<HomePageUser> {
 
     _fetchVendors();
     _fetchMotors();
+
+    // Jika user id tersedia, buat koneksi WebSocket
+    if (_userId != null) {
+      _connectWebSocket(_userId!);
+    }
+  }
+
+  /// Membuat koneksi WebSocket dengan parameter user id dan mendengarkan pesan masuk
+  void _connectWebSocket(int userId) {
+    String wsUrl = "ws://192.168.132.159:8080/ws?user_id=$userId";
+    _channel = IOWebSocketChannel.connect(wsUrl);
+    _channel?.stream.listen((data) async {
+      try {
+        final Map<String, dynamic> outer = json.decode(data);
+        final Map<String, dynamic> inner = json.decode(outer['message']);
+        final int bookingId = inner['booking_id'];
+        final String message = inner['message'];
+
+        final newNotification = {
+          'text': "Booking #$bookingId: $message",
+          'read': false,
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+
+        setState(() {
+          _notifications.add(newNotification);
+        });
+        await _saveNotificationToPrefs();
+
+        _showNotificationPopup("Booking #$bookingId: $message");
+        _showLocalNotification("Booking #$bookingId", message);
+      } catch (e) {
+        final fallbackNotification = {
+          'text': data.toString(),
+          'read': false,
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+
+        setState(() {
+          _notifications.add(fallbackNotification);
+        });
+        await _saveNotificationToPrefs();
+        _showNotificationPopup(data.toString());
+      }
+    }, onError: (error) {
+      print("WebSocket error: $error");
+    });
+  }
+
+  Future<void> _saveNotificationToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('notification_list', json.encode(_notifications));
   }
 
   Future<void> _loadUserData() async {
@@ -111,14 +216,30 @@ class _HomePageUserState extends State<HomePageUser> {
 
   void _showErrorMessage(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  /// Menampilkan notifikasi sebagai popup dialog (opsional)
+  void _showNotificationPopup(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Notifikasi Baru"),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Tutup"),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -128,7 +249,6 @@ class _HomePageUserState extends State<HomePageUser> {
       _showLoginRequiredAlert();
       return;
     }
-
     if (index == 2) {
       // Akun
       await Navigator.of(context)
@@ -173,7 +293,8 @@ class _HomePageUserState extends State<HomePageUser> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryBlue,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               Navigator.of(context).pop();
@@ -188,7 +309,7 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  // Helper widget untuk menampilkan rating dengan bintang
+  // Helper widget untuk menampilkan rating
   Widget _buildRatingDisplay(String rating) {
     double ratingValue = double.tryParse(rating) ?? 0.0;
     return Row(
@@ -196,7 +317,7 @@ class _HomePageUserState extends State<HomePageUser> {
         ...List.generate(5, (index) {
           return Icon(
             index < ratingValue ? Icons.star : Icons.star_border,
-            size: 14, 
+            size: 14,
             color: Colors.amber,
           );
         }),
@@ -210,9 +331,16 @@ class _HomePageUserState extends State<HomePageUser> {
   }
 
   @override
+  void dispose() {
+    _channel?.sink.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Filter vendor berdasarkan kecamatan yang dipilih.
-    List<Map<String, dynamic>> filteredVendorList = _selectedKecamatan == "Semua"
+    // Filter vendor berdasarkan kecamatan yang dipilih
+    List<Map<String, dynamic>> filteredVendorList = _selectedKecamatan ==
+            "Semua"
         ? _vendorList
         : _vendorList.where((vendor) {
             String vendorKecamatan =
@@ -221,99 +349,40 @@ class _HomePageUserState extends State<HomePageUser> {
           }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: _isLoading 
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    "Loading data...",
-                    style: TextStyle(
-                      color: primaryBlue,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              color: primaryBlue,
-              onRefresh: () async {
-                setState(() => _isLoading = true);
-                await _loadUserData();
-                await _fetchVendors();
-                await _fetchMotors();
-                await _fetchKecamatan();
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeader(),
-                    _buildSearchBar(),
-                    _buildFilterSection(),
-                    _buildVendorSection(filteredVendorList),
-                    _buildMotorSection(),
-                    // Add padding at the bottom for better scrolling experience
-                    SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: Offset(0, -5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            selectedItemColor: primaryBlue,
-            unselectedItemColor: Colors.grey,
-            backgroundColor: Colors.white,
-            elevation: 0,
-            showSelectedLabels: true,
-            showUnselectedLabels: true,
-            onTap: _onItemTapped,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: "Beranda",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.receipt_long_outlined),
-                activeIcon: Icon(Icons.receipt_long),
-                label: "Pesanan",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
-                label: "Akun",
-              ),
+      backgroundColor: Colors.white,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _loadUserData();
+          await _fetchVendors();
+          await _fetchMotors();
+          await _fetchKecamatan();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              _buildFilterSection(),
+              _buildVendorSection(filteredVendorList),
+              _buildMotorSection(),
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color(0xFF2C567E),
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: "Pesanan"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
+        ],
       ),
     );
   }
@@ -346,57 +415,43 @@ class _HomePageUserState extends State<HomePageUser> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Halo, $_userName",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  if (_userId != null)
-                    Text(
-                      "ID: $_userId",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.8),
+              badges.Badge(
+                showBadge: _unreadCount > 0,
+                badgeContent: Text(
+                  _unreadCount.toString(),
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+                position: badges.BadgePosition.topEnd(top: -5, end: -5),
+                child: IconButton(
+                  icon:
+                      const Icon(Icons.notifications_none, color: Colors.white),
+                  onPressed: () {
+                    // Kirim _notifications (List<Map<String, dynamic>>) ke NotifikasiPage
+                    Navigator.of(context)
+                        .push<List<Map<String, dynamic>>>(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            NotifikasiPage(notifications: _notifications),
                       ),
-                    ),
-                ],
+                    )
+                        .then((updatedNotifications) {
+                      if (updatedNotifications != null) {
+                        setState(() {
+                          _notifications = updatedNotifications;
+                        });
+                      }
+                    });
+                  },
+                ),
               ),
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.notifications_none, color: Colors.white),
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => NotifikasiPage()));
-                      },
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.chat_outlined, color: Colors.white),
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => const ChatPage()));
-                      },
-                    ),
-                  ),
-                ],
+              IconButton(
+                icon: Image.asset("assets/images/chat.png",
+                    width: 24, height: 24),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const ChatPage()),
+                  );
+                },
               ),
             ],
           ),
@@ -414,34 +469,6 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      margin: EdgeInsets.fromLTRB(20, 20, 20, 10),
-      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: "Cari motor rental...",
-          hintStyle: TextStyle(color: Colors.grey[400]),
-          prefixIcon: Icon(Icons.search, color: primaryBlue),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 15),
-        ),
-      ),
-    );
-  }
-
-  // Widget untuk dropdown filter kecamatan
   Widget _buildFilterSection() {
     return Container(
       margin: EdgeInsets.fromLTRB(20, 10, 20, 20),
@@ -474,7 +501,7 @@ class _HomePageUserState extends State<HomePageUser> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: lightBlue.withOpacity(0.3),
+                color: Colors.lightBlue.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: DropdownButtonHideUnderline(
@@ -499,7 +526,6 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  // Membuat daftar item untuk dropdown filter.
   List<DropdownMenuItem<String>> _buildDropdownItems() {
     List<DropdownMenuItem<String>> items = [];
     items.add(const DropdownMenuItem(
@@ -597,7 +623,8 @@ class _HomePageUserState extends State<HomePageUser> {
                 ),
               )
             : SizedBox(
-                height: 200, // Increased height for vendor cards to prevent overflow
+                height:
+                    200, // Increased height for vendor cards to prevent overflow
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -765,58 +792,34 @@ class _HomePageUserState extends State<HomePageUser> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                spreadRadius: 2)
+              color: Colors.grey.withOpacity(0.3),
+              blurRadius: 5,
+              spreadRadius: 2,
+            )
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(15),
-                topRight: Radius.circular(15),
-              ),
-              child: Image.network(
-                imageUrl,
-                height: 120,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Image.asset("assets/images/default_motor.png",
-                      height: 120, width: double.infinity, fit: BoxFit.cover);
-                },
-              ),
+            Image.network(
+              imageUrl,
+              height: 80,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Image.asset("assets/images/default_motor.png",
+                    height: 80, width: double.infinity, fit: BoxFit.cover);
+              },
             ),
-            Padding(
-              padding: EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 5),
-                  _buildRatingDisplay(rating),
-                  SizedBox(height: 5),
-                  Text(
-                    price,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
-                    ),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 5),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            _buildRatingDisplay(rating),
+            Text(
+              price,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -841,64 +844,35 @@ class _HomePageUserState extends State<HomePageUser> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                spreadRadius: 2)
+              color: Colors.grey.withOpacity(0.3),
+              blurRadius: 5,
+              spreadRadius: 2,
+            )
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(15),
-                topRight: Radius.circular(15),
-              ),
-              child: Image.network(
-                imageUrl,
-                height: 100,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Image.asset("assets/images/default_vendor.png",
-                      height: 100, width: double.infinity, fit: BoxFit.cover);
-                },
-              ),
+            Image.network(
+              imageUrl,
+              height: 80,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Image.asset("assets/images/default_vendor.png",
+                    height: 80, width: double.infinity, fit: BoxFit.cover);
+              },
             ),
-            Padding(
-              padding: EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    shopName,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 5),
-                  _buildRatingDisplay(rating),
-                  SizedBox(height: 5),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, size: 12, color: Colors.grey),
-                      SizedBox(width: 3),
-                      Expanded(
-                        child: Text(
-                          kecamatan,
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            const SizedBox(height: 5),
+            Text(
+              shopName,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            _buildRatingDisplay(rating),
+            const SizedBox(height: 3),
+            Text(
+              "Kecamatan: $kecamatan",
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
             ),
           ],
         ),
