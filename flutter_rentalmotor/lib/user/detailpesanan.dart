@@ -19,6 +19,11 @@ class _DetailPesananState extends State<DetailPesanan> {
   List<dynamic> bookings = [];
   bool isLoading = true;
 
+  // Blue theme colors
+  final Color primaryBlue = Color(0xFF2C567E);
+  final Color lightBlue = Color(0xFFE3F2FD);
+  final Color accentBlue = Color(0xFF64B5F6);
+
   List<String> statuses = [
     'Semua',
     'pending',
@@ -93,47 +98,143 @@ class _DetailPesananState extends State<DetailPesanan> {
         .toList();
   }
 
+  Color getStatusColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange;
+      case 'confirmed':
+        return Colors.green;
+      case 'in transit':
+        return Colors.blue;
+      case 'in use':
+        return Colors.purple;
+      case 'awaiting return':
+        return Colors.amber;
+      case 'completed':
+        return Colors.teal;
+      case 'canceled':
+      case 'rejected':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData getStatusIcon(String status) {
+    switch (status) {
+      case 'pending':
+        return Icons.hourglass_empty;
+      case 'confirmed':
+        return Icons.check_circle;
+      case 'in transit':
+        return Icons.local_shipping;
+      case 'in use':
+        return Icons.directions_bike;
+      case 'awaiting return':
+        return Icons.assignment_return;
+      case 'completed':
+        return Icons.task_alt;
+      case 'canceled':
+      case 'rejected':
+        return Icons.cancel;
+      default:
+        return Icons.help_outline;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2C567E),
+        backgroundColor: primaryBlue,
+        elevation: 0,
         title: Text(
           'Pesanan',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(16),
+          ),
         ),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+              ),
+            )
           : bookings.isEmpty
-              ? Center(child: Text('Belum ada pesanan'))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.receipt_long,
+                        size: 60,
+                        color: Colors.grey[400],
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Belum ada pesanan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        'Pesanan Anda akan muncul di sini',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        icon: Icon(Icons.motorcycle, size: 16),
+                        label: Text('Sewa Motor Sekarang', style: TextStyle(fontSize: 14)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryBlue,
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => home.HomePageUser()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                )
               : Column(
                   children: [
-                    // Filter status horizontal (teks + underline biru)
+                    // Filter status horizontal
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.3),
+                            color: Colors.black.withOpacity(0.05),
                             spreadRadius: 1,
                             blurRadius: 4,
-                            offset: Offset(0, 2), // arah shadow ke bawah
+                            offset: Offset(0, 1),
                           ),
                         ],
                       ),
                       child: Container(
-                        height: 50,
-                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        height: 46,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
                           itemCount: statuses.length,
@@ -148,37 +249,24 @@ class _DetailPesananState extends State<DetailPesanan> {
                                 });
                               },
                               child: Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                                margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? primaryBlue : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isSelected ? primaryBlue : Colors.grey[300]!,
+                                    width: 1,
+                                  ),
+                                ),
                                 alignment: Alignment.center,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      status[0].toUpperCase() +
-                                          status.substring(1),
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: isSelected
-                                            ? Color(0xFF2C567E)
-                                            : Colors.black,
-                                        fontWeight: isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                    SizedBox(height: 3),
-                                    Container(
-                                      height: 2,
-                                      width: 30,
-                                      decoration: BoxDecoration(
-                                        color: isSelected
-                                            ? Color(0xFF2C567E)
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    )
-                                  ],
+                                child: Text(
+                                  status[0].toUpperCase() + status.substring(1),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isSelected ? Colors.white : Colors.black87,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  ),
                                 ),
                               ),
                             );
@@ -191,147 +279,280 @@ class _DetailPesananState extends State<DetailPesanan> {
                     Expanded(
                       child: filteredBookings.isEmpty
                           ? Center(
-                              child:
-                                  Text('Tidak ada pesanan dengan status ini'))
-                          : ListView.builder(
-                              padding: EdgeInsets.all(10),
-                              itemCount: filteredBookings.length,
-                              itemBuilder: (context, index) {
-                                final item = filteredBookings[index];
-
-                                final startDate =
-                                    DateTime.parse(item['start_date']);
-                                final endDate =
-                                    DateTime.parse(item['end_date']);
-                                final durationDays =
-                                    endDate.difference(startDate).inDays + 1;
-
-                                final dateFormat = DateFormat('dd MMM');
-                                final formattedStart =
-                                    dateFormat.format(startDate);
-                                final formattedEnd = dateFormat.format(endDate);
-
-                                final String? originalImage =
-                                    item['motor']['image'];
-                                String imageUrl = originalImage ??
-                                    'https://via.placeholder.com/100';
-                                if (imageUrl.startsWith('/')) {
-                                  imageUrl = "${ApiConfig.baseUrl}$imageUrl";
-                                }
-
-                                return Card(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.search_off,
+                                    size: 40,
+                                    color: Colors.grey[400],
                                   ),
-                                  margin: EdgeInsets.only(bottom: 10),
-                                  child: Padding(
-                                    padding: EdgeInsets.all(15),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item['motor']['name'] ??
-                                              'Nama tidak ada',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        SizedBox(height: 5),
-                                        Text(
-                                          'Durasi: $durationDays hari ($formattedStart - $formattedEnd)',
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.black87),
-                                        ),
-                                        SizedBox(height: 5),
-                                        Text(
-                                          item['motor']['model'] ?? '',
-                                          style: TextStyle(
-                                              fontSize: 14, color: Colors.grey),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Row(
-                                          children: [
-                                            Image.network(
-                                              imageUrl,
-                                              width: 100,
-                                              height: 70,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error,
-                                                      stackTrace) =>
-                                                  Icon(Icons.image),
-                                            ),
-                                            SizedBox(width: 15),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    item['pickup_location'] ??
-                                                        'Lokasi tidak ada',
-                                                    style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                  SizedBox(height: 5),
-                                                  Text(
-                                                    "${item['motor']['price_per_day']} / hari",
-                                                    style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight:
-                                                            FontWeight.bold),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            ElevatedButton(
-                                              onPressed: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        PesananPage(
-                                                            booking: item),
-                                                  ),
-                                                );
-                                              },
-                                              child: Text('Detail'),
-                                            ),
-                                          ],
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'Tidak ada pesanan dengan status ini',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: fetchBookings,
+                              color: primaryBlue,
+                              child: ListView.builder(
+                                padding: EdgeInsets.all(12),
+                                itemCount: filteredBookings.length,
+                                itemBuilder: (context, index) {
+                                  final item = filteredBookings[index];
+                                  final status = item['status'] ?? '';
+
+                                  final startDate = DateTime.parse(item['start_date']);
+                                  final endDate = DateTime.parse(item['end_date']);
+                                  final durationDays = endDate.difference(startDate).inDays + 1;
+
+                                  final dateFormat = DateFormat('dd MMM yyyy');
+                                  final formattedStart = dateFormat.format(startDate);
+                                  final formattedEnd = dateFormat.format(endDate);
+
+                                  final String? originalImage = item['motor']['image'];
+                                  String imageUrl = originalImage ?? 'https://via.placeholder.com/100';
+                                  if (imageUrl.startsWith('/')) {
+                                    imageUrl = "${ApiConfig.baseUrl}$imageUrl";
+                                  }
+
+                                  return Container(
+                                    margin: EdgeInsets.only(bottom: 12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 5,
+                                          offset: Offset(0, 1),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                );
-                              },
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Status Banner
+                                        Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: getStatusColor(status).withOpacity(0.1),
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(8),
+                                              topRight: Radius.circular(8),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                getStatusIcon(status),
+                                                color: getStatusColor(status),
+                                                size: 16,
+                                              ),
+                                              SizedBox(width: 6),
+                                              Text(
+                                                status[0].toUpperCase() + status.substring(1),
+                                                style: TextStyle(
+                                                  color: getStatusColor(status),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        
+                                        // Motor Info and Details
+                                        Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              // Motor Image
+                                              ClipRRect(
+                                                borderRadius: BorderRadius.circular(6),
+                                                child: Image.network(
+                                                  imageUrl,
+                                                  width: 80,
+                                                  height: 80,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error, stackTrace) => Container(
+                                                    width: 80,
+                                                    height: 80,
+                                                    color: Colors.grey[300],
+                                                    child: Icon(Icons.image_not_supported, color: Colors.grey[500], size: 20),
+                                                  ),
+                                                ),
+                                              ),
+                                              SizedBox(width: 12),
+                                              
+                                              // Details
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      item['motor']['name'] ?? 'Nama tidak ada',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: primaryBlue,
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 4),
+                                                    Row(
+                                                      children: [
+                                                        Icon(Icons.date_range, size: 14, color: Colors.grey[600]),
+                                                        SizedBox(width: 4),
+                                                        Expanded(
+                                                          child: Text(
+                                                            '$formattedStart - $formattedEnd',
+                                                            style: TextStyle(
+                                                              fontSize: 12,
+                                                              color: Colors.grey[700],
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(height: 4),
+                                                    Row(
+                                                      children: [
+                                                        Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                                                        SizedBox(width: 4),
+                                                        Container(
+                                                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                          decoration: BoxDecoration(
+                                                            color: primaryBlue.withOpacity(0.1),
+                                                            borderRadius: BorderRadius.circular(10),
+                                                          ),
+                                                          child: Text(
+                                                            '$durationDays hari',
+                                                            style: TextStyle(
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.bold,
+                                                              color: primaryBlue,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(height: 4),
+                                                    Row(
+                                                      children: [
+                                                        Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                                                        SizedBox(width: 4),
+                                                        Expanded(
+                                                          child: Text(
+                                                            item['pickup_location'] ?? 'Lokasi tidak ada',
+                                                            style: TextStyle(
+                                                              fontSize: 12,
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(height: 4),
+                                                    Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      children: [
+                                                        Row(
+                                                          children: [
+                                                            Icon(Icons.monetization_on, size: 14, color: Colors.green[700]),
+                                                            SizedBox(width: 4),
+                                                            Text(
+                                                              "${item['motor']['price_per_day']} / hari",
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                fontWeight: FontWeight.bold,
+                                                                color: Colors.green[700],
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        ElevatedButton(
+                                                          onPressed: () {
+                                                            Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                builder: (context) => PesananPage(booking: item),
+                                                              ),
+                                                            );
+                                                          },
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: primaryBlue,
+                                                            foregroundColor: Colors.white,
+                                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius: BorderRadius.circular(6),
+                                                            ),
+                                                            minimumSize: Size(70, 30),
+                                                          ),
+                                                          child: Text('Detail', style: TextStyle(fontSize: 12)),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                     ),
                   ],
                 ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: Color(0xFF2C567E),
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Beranda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: 'Pesanan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Akun',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 5,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          selectedItemColor: primaryBlue,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Beranda',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
+              label: 'Pesanan',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outlined),
+              activeIcon: Icon(Icons.person),
+              label: 'Akun',
+            ),
+          ],
+        ),
       ),
     );
   }

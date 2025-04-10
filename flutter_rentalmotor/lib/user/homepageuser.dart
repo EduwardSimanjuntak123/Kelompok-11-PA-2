@@ -97,7 +97,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
     setState(() {
       _userId = userId;
-      _userName = userName ?? "Guest";
+      _userName = userName ?? "Pengguna";
     });
 
     _fetchVendors();
@@ -174,10 +174,12 @@ class _HomePageUserState extends State<HomePageUser> {
       if (mounted) {
         setState(() {
           _motorList = motors;
+          _isLoading = false;
         });
       }
     } catch (e) {
       _showErrorMessage("Gagal mengambil data motor!");
+      setState(() => _isLoading = false);
     }
   }
 
@@ -209,6 +211,8 @@ class _HomePageUserState extends State<HomePageUser> {
   }
 
   void _showErrorMessage(String message) {
+    if (!mounted) return;
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
@@ -267,15 +271,26 @@ class _HomePageUserState extends State<HomePageUser> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Login Diperlukan"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.lock, color: primaryBlue),
+            SizedBox(width: 10),
+            Text("Login Diperlukan"),
+          ],
+        ),
         content: const Text(
             "Anda harus login terlebih dahulu untuk mengakses fitur ini."),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Batal"),
+            child: Text("Batal", style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).pushReplacement(
@@ -291,13 +306,20 @@ class _HomePageUserState extends State<HomePageUser> {
 
   // Helper widget untuk menampilkan rating
   Widget _buildRatingDisplay(String rating) {
+    double ratingValue = double.tryParse(rating) ?? 0.0;
     return Row(
       children: [
-        const Icon(Icons.star, size: 14, color: Colors.amber),
-        const SizedBox(width: 3),
+        ...List.generate(5, (index) {
+          return Icon(
+            index < ratingValue ? Icons.star : Icons.star_border,
+            size: 14, 
+            color: Colors.amber,
+          );
+        }),
+        SizedBox(width: 5),
         Text(
           rating,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+          style: TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
     );
@@ -363,23 +385,30 @@ class _HomePageUserState extends State<HomePageUser> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF2C567E),
+      padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [primaryBlue, Color(0xFF3E8EDE)],
+        ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Halo, $_userName (ID: ${_userId ?? '-'})",
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+        boxShadow: [
+          BoxShadow(
+            color: primaryBlue.withOpacity(0.3),
+            blurRadius: 10,
+            offset: Offset(0, 5),
           ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               badges.Badge(
                 showBadge: _unreadCount > 0,
@@ -421,33 +450,70 @@ class _HomePageUserState extends State<HomePageUser> {
               ),
             ],
           ),
+          SizedBox(height: 20),
+          Text(
+            "Temukan Motor Rental Terbaik",
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildFilterSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+    return Container(
+      margin: EdgeInsets.fromLTRB(20, 10, 20, 20),
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          const Text(
+          Icon(Icons.location_on, color: primaryBlue, size: 20),
+          SizedBox(width: 10),
+          Text(
             "Filter Kecamatan:",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           Expanded(
-            child: DropdownButton<String>(
-              isExpanded: true,
-              value: _selectedKecamatan,
-              items: _buildDropdownItems(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedKecamatan = newValue;
-                  });
-                }
-              },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                color: lightBlue.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: _selectedKecamatan,
+                  icon: Icon(Icons.keyboard_arrow_down, color: primaryBlue),
+                  items: _buildDropdownItems(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedKecamatan = newValue;
+                      });
+                    }
+                  },
+                ),
+              ),
             ),
           ),
         ],
@@ -463,10 +529,12 @@ class _HomePageUserState extends State<HomePageUser> {
     ));
     for (var kec in _kecamatanList) {
       String nama = kec["nama_kecamatan"]?.toString().trim() ?? "";
-      items.add(DropdownMenuItem(
-        value: nama,
-        child: Text(nama),
-      ));
+      if (nama.isNotEmpty) {
+        items.add(DropdownMenuItem(
+          value: nama,
+          child: Text(nama),
+        ));
+      }
     }
     return items;
   }
@@ -475,27 +543,88 @@ class _HomePageUserState extends State<HomePageUser> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text("Daftar Vendor",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 10, 20, 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: primaryBlue,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    "Daftar Vendor",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  // View all vendors
+                },
+                child: Text(
+                  "Lihat Semua",
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 10),
         vendorList.isEmpty
             ? Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
                 alignment: Alignment.center,
-                child: const Text(
-                  "Vendor tidak ada pada kecamatan yang dipilih",
-                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.store_outlined,
+                      size: 50,
+                      color: Colors.grey[400],
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Vendor tidak ada pada kecamatan yang dipilih",
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               )
-            : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: vendorList.map((vendor) {
+            : SizedBox(
+                height: 200, // Increased height for vendor cards to prevent overflow
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: vendorList.length,
+                  itemBuilder: (context, index) {
+                    final vendor = vendorList[index];
                     String path =
                         vendor["user"]["profile_image"]?.toString().trim() ??
                             "";
@@ -514,7 +643,7 @@ class _HomePageUserState extends State<HomePageUser> {
                       vendor["id"],
                       kecamatan,
                     );
-                  }).toList(),
+                  },
                 ),
               ),
       ],
@@ -525,19 +654,88 @@ class _HomePageUserState extends State<HomePageUser> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text("Rekomendasi Motor",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: primaryBlue,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    "Rekomendasi Motor",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  // View all motors
+                },
+                child: Text(
+                  "Lihat Semua",
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 10),
         _motorList.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: _motorList.map((motor) {
+            ? Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                margin: EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.motorcycle_outlined,
+                      size: 50,
+                      color: Colors.grey[400],
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Tidak ada motor tersedia",
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            : SizedBox(
+                height: 220, // Fixed height for motor cards
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _motorList.length,
+                  itemBuilder: (context, index) {
+                    final motor = _motorList[index];
                     String path = motor["image"]?.toString().trim() ?? "";
                     String imageUrl = path.isNotEmpty
                         ? (path.startsWith("http") ? path : "$baseUrl$path")
@@ -566,7 +764,7 @@ class _HomePageUserState extends State<HomePageUser> {
                         isGuest: _userId == null,
                       ),
                     );
-                  }).toList(),
+                  },
                 ),
               ),
       ],
@@ -581,12 +779,11 @@ class _HomePageUserState extends State<HomePageUser> {
             .push(MaterialPageRoute(builder: (context) => detailPage));
       },
       child: Container(
-        width: 140,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(8),
+        width: 180,
+        margin: const EdgeInsets.only(right: 15),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.3),
@@ -634,12 +831,11 @@ class _HomePageUserState extends State<HomePageUser> {
                 builder: (context) => DataVendor(vendorId: vendorId)));
       },
       child: Container(
-        width: 140,
-        margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.all(8),
+        width: 160,
+        margin: const EdgeInsets.only(right: 15),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.3),
