@@ -23,7 +23,7 @@ class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
 + Booking Manual
 </button>
 </div>
-
+{{-- @dd($bookings) --}}
 @if (empty($bookings) || count($bookings) == 0)
     <p class="text-center text-gray-500">Tidak ada pemesanan untuk ditampilkan.</p>
 @else
@@ -46,11 +46,11 @@ class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
 
                     <!-- Detail Pemesanan -->
                     <td class="py-3 px-4 text-left align-top">
-                        <div><strong>Customer:</strong> {{ $pesanan['customer'] ?? '-' }}</div>
-                        <div><strong>Tanggal Booking:</strong> {{ $pesanan['tanggal_booking'] ?? '-' }}</div>
-                        <div><strong>Tanggal Mulai:</strong> {{ $pesanan['tanggal_mulai'] ?? '-' }}</div>
-                        <div><strong>Tanggal Selesai:</strong> {{ $pesanan['tanggal_selesai'] ?? '-' }}</div>
-                        <div><strong>Lokasi Jemput:</strong> {{ $pesanan['lokasi_jemput'] ?? '-' }}</div>
+                        <div><strong>Customer:</strong> {{ $pesanan['customer_name'] ?? '-' }}</div>
+                        <div><strong>Tanggal Booking:</strong> {{ $pesanan['booking_date'] ?? '-' }}</div>
+                        <div><strong>Tanggal Mulai:</strong> {{ $pesanan['start_date'] ?? '-' }}</div>
+                        <div><strong>Tanggal Selesai:</strong> {{ $pesanan['end_date'] ?? '-' }}</div>
+                        <div><strong>Lokasi Jemput:</strong> {{ $pesanan['pickup_location'] ?? '-' }}</div>
                     </td>
 
                     <!-- Detail Motor -->
@@ -60,8 +60,8 @@ class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
                             <div><strong>Brand:</strong> {{ $pesanan['motor']['brand'] ?? '-' }}</div>
                             <div><strong>Model:</strong> {{ $pesanan['motor']['model'] ?? '-' }}</div>
                             <div><strong>Tahun:</strong> {{ $pesanan['motor']['year'] ?? '-' }}</div>
-                            <div><strong>Warna:</strong> {{ $pesanan['motor']['color'] ?? '-' }}</div>
-                            <div><strong>Deskripsi:</strong> {{ $pesanan['motor']['description'] ?? '-' }}</div>
+                            <div><strong>Warna:</strong> {{ $pesanan['motor']['warna'] ?? '-' }}</div>
+
                         @else
                             <div>Data motor tidak tersedia.</div>
                         @endif
