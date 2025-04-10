@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
+	"rental-backend/websocket"
 	"strconv"
 	"strings"
 	"time"
@@ -16,7 +18,6 @@ import (
 func ConfirmBooking(c *gin.Context) {
 	id := c.Param("id")
 
-	// Ambil user_id dari token JWT yang merupakan ID vendor
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
@@ -24,44 +25,64 @@ func ConfirmBooking(c *gin.Context) {
 	}
 
 	var booking models.Booking
-
-	// Cari booking berdasarkan ID dan pastikan statusnya "pending"
 	if err := config.DB.Where("id = ?", id).First(&booking).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
 		return
 	}
 
-	// Pastikan hanya booking dengan status "pending" yang dapat dikonfirmasi
 	if booking.Status != "pending" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Hanya booking dengan status 'pending' yang dapat dikonfirmasi"})
 		return
 	}
 
-	// Log untuk memastikan ID yang dibandingkan
-	log.Printf("Booking VendorID: %d", booking.VendorID)
-	log.Printf("Authenticated UserID: %d", userID)
-
-	// Cari vendor yang terkait dengan user_id (vendor_id)
 	var vendor models.Vendor
 	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
 		return
 	}
 
-	// Pastikan vendor yang mengonfirmasi adalah pemilik motor yang sesuai
 	if booking.VendorID != vendor.ID {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk mengonfirmasi booking ini"})
 		return
 	}
 
-	// Ubah status booking menjadi "confirmed"
 	if err := config.DB.Model(&models.Booking{}).Where("id = ?", id).Update("status", "confirmed").Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengonfirmasi booking"})
 		return
 	}
 
+	if booking.CustomerID != nil {
+		notification := models.Notification{
+			UserID:    *booking.CustomerID,
+			Message:   "Booking Anda telah dikonfirmasi dan motor sedang disiapkan.",
+			Status:    "unread",
+			BookingID: booking.ID,
+			CreatedAt: time.Now(),
+		}
+	
+		if err := config.DB.Create(&notification).Error; err != nil {
+			log.Println("❗ Gagal menyimpan notifikasi:", err)
+		} else {
+			// Kirim notifikasi real-time ke Flutter via WebSocket
+			notifPayload := map[string]interface{}{
+				"message":    notification.Message,
+				"booking_id": notification.BookingID,
+			}
+			
+	
+			notifJSON, err := json.Marshal(notifPayload)
+			if err != nil {
+				log.Println("❗ Gagal encode notifikasi ke JSON:", err)
+			} else {
+				websocket.SendNotificationToUser(*booking.CustomerID, string(notifJSON))
+			}
+		}
+	}
+	
+
 	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dikonfirmasi"})
 }
+
 
 // Reject Booking
 func RejectBooking(c *gin.Context) {

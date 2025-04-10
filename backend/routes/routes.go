@@ -19,4 +19,7 @@ func SetupRoutes(router *gin.Engine) {
 	MotorRoutes(router)
 	TransactionRoutes(router)
 	ChatRoutes(router)
+
+	// WebSocket route
+	router.GET("/ws", controllers.WebSocketHandler)
 }
