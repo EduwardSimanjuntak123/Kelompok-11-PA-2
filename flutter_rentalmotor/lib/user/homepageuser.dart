@@ -1,3 +1,4 @@
+import 'dart:convert'; // Untuk JSON decoding
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/notifikasi.dart';
@@ -10,6 +11,10 @@ import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/homepage_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:badges/badges.dart' as badges;
 
 class HomePageUser extends StatefulWidget {
   const HomePageUser({Key? key}) : super(key: key);
@@ -19,6 +24,8 @@ class HomePageUser extends StatefulWidget {
 }
 
 class _HomePageUserState extends State<HomePageUser> {
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   int _selectedIndex = 0;
   String _userName = "Pengguna";
   int? _userId;
@@ -28,13 +35,61 @@ class _HomePageUserState extends State<HomePageUser> {
   String _selectedKecamatan = "Semua"; // Default: tampilkan semua
   final String baseUrl = ApiConfig.baseUrl;
 
+  WebSocketChannel? _channel;
+  // List untuk menyimpan pesan notifikasi yang diterima
+  // Sekarang menggunakan struktur data Map agar bisa menyimpan status 'read' dan 'timestamp'
+  List<Map<String, dynamic>> _notifications = [];
+  int get _unreadCount {
+    return _notifications.where((notif) => notif['read'] == false).length;
+  }
+
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
     _fetchKecamatan();
+    _initializeLocalNotifications();
   }
 
+  /// Inisialisasi Local Notification
+  void _initializeLocalNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+        onDidReceiveNotificationResponse: (details) {
+      debugPrint("Notification clicked with payload: ${details.payload}");
+    });
+  }
+
+  /// Tampilkan notifikasi lokal dengan judul dan pesan
+  Future<void> _showLocalNotification(String title, String message) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'channel_id', // ID channel unik
+      'Notifikasi Masuk',
+      channelDescription: 'Channel untuk notifikasi dari vendor',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // ID notifikasi
+      title, // Judul notifikasi
+      message, // Isi pesan
+      platformChannelSpecifics,
+      payload: 'data', // opsional
+    );
+  }
+
+  /// Mengambil data user dari SharedPreferences dan inisialisasi koneksi WebSocket
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
@@ -47,6 +102,58 @@ class _HomePageUserState extends State<HomePageUser> {
 
     _fetchVendors();
     _fetchMotors();
+
+    // Jika user id tersedia, buat koneksi WebSocket
+    if (_userId != null) {
+      _connectWebSocket(_userId!);
+    }
+  }
+
+  /// Membuat koneksi WebSocket dengan parameter user id dan mendengarkan pesan masuk
+  void _connectWebSocket(int userId) {
+    String wsUrl = "ws://192.168.132.159:8080/ws?user_id=$userId";
+    _channel = IOWebSocketChannel.connect(wsUrl);
+    _channel?.stream.listen((data) async {
+      try {
+        final Map<String, dynamic> outer = json.decode(data);
+        final Map<String, dynamic> inner = json.decode(outer['message']);
+        final int bookingId = inner['booking_id'];
+        final String message = inner['message'];
+
+        final newNotification = {
+          'text': "Booking #$bookingId: $message",
+          'read': false,
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+
+        setState(() {
+          _notifications.add(newNotification);
+        });
+        await _saveNotificationToPrefs();
+
+        _showNotificationPopup("Booking #$bookingId: $message");
+        _showLocalNotification("Booking #$bookingId", message);
+      } catch (e) {
+        final fallbackNotification = {
+          'text': data.toString(),
+          'read': false,
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+
+        setState(() {
+          _notifications.add(fallbackNotification);
+        });
+        await _saveNotificationToPrefs();
+        _showNotificationPopup(data.toString());
+      }
+    }, onError: (error) {
+      print("WebSocket error: $error");
+    });
+  }
+
+  Future<void> _saveNotificationToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('notification_list', json.encode(_notifications));
   }
 
   Future<void> _loadUserData() async {
@@ -107,13 +214,33 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
+  /// Menampilkan notifikasi sebagai popup dialog (opsional)
+  void _showNotificationPopup(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Notifikasi Baru"),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text("Tutup"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _onItemTapped(int index) async {
     // Proteksi untuk guest
     if (_userId == null && (index == 1 || index == 2)) {
       _showLoginRequiredAlert();
       return;
     }
-
     if (index == 2) {
       // Akun
       await Navigator.of(context)
@@ -162,7 +289,7 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  // Helper widget untuk menampilkan satu bintang dan rating (dengan nilai desimal)
+  // Helper widget untuk menampilkan rating
   Widget _buildRatingDisplay(String rating) {
     return Row(
       children: [
@@ -177,8 +304,14 @@ class _HomePageUserState extends State<HomePageUser> {
   }
 
   @override
+  void dispose() {
+    _channel?.sink.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Filter vendor berdasarkan kecamatan yang dipilih.
+    // Filter vendor berdasarkan kecamatan yang dipilih
     List<Map<String, dynamic>> filteredVendorList = _selectedKecamatan ==
             "Semua"
         ? _vendorList
@@ -203,7 +336,7 @@ class _HomePageUserState extends State<HomePageUser> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(),
-              _buildFilterSection(), // Dropdown filter kecamatan
+              _buildFilterSection(),
               _buildVendorSection(filteredVendorList),
               _buildMotorSection(),
             ],
@@ -248,19 +381,42 @@ class _HomePageUserState extends State<HomePageUser> {
           ),
           Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_none, color: Colors.white),
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => NotifikasiPage()));
-                },
+              badges.Badge(
+                showBadge: _unreadCount > 0,
+                badgeContent: Text(
+                  _unreadCount.toString(),
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+                position: badges.BadgePosition.topEnd(top: -5, end: -5),
+                child: IconButton(
+                  icon:
+                      const Icon(Icons.notifications_none, color: Colors.white),
+                  onPressed: () {
+                    // Kirim _notifications (List<Map<String, dynamic>>) ke NotifikasiPage
+                    Navigator.of(context)
+                        .push<List<Map<String, dynamic>>>(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            NotifikasiPage(notifications: _notifications),
+                      ),
+                    )
+                        .then((updatedNotifications) {
+                      if (updatedNotifications != null) {
+                        setState(() {
+                          _notifications = updatedNotifications;
+                        });
+                      }
+                    });
+                  },
+                ),
               ),
               IconButton(
                 icon: Image.asset("assets/images/chat.png",
                     width: 24, height: 24),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const ChatPage()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const ChatPage()),
+                  );
                 },
               ),
             ],
@@ -270,7 +426,6 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  // Widget untuk dropdown filter kecamatan
   Widget _buildFilterSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -300,7 +455,6 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  // Membuat daftar item untuk dropdown filter.
   List<DropdownMenuItem<String>> _buildDropdownItems() {
     List<DropdownMenuItem<String>> items = [];
     items.add(const DropdownMenuItem(
@@ -435,9 +589,10 @@ class _HomePageUserState extends State<HomePageUser> {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                blurRadius: 5,
-                spreadRadius: 2)
+              color: Colors.grey.withOpacity(0.3),
+              blurRadius: 5,
+              spreadRadius: 2,
+            )
           ],
         ),
         child: Column(
@@ -454,14 +609,15 @@ class _HomePageUserState extends State<HomePageUser> {
               },
             ),
             const SizedBox(height: 5),
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            // Menampilkan satu bintang dan rating
+            Text(
+              title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
             _buildRatingDisplay(rating),
-            Text(price,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            Text(
+              price,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -486,9 +642,10 @@ class _HomePageUserState extends State<HomePageUser> {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                blurRadius: 5,
-                spreadRadius: 2)
+              color: Colors.grey.withOpacity(0.3),
+              blurRadius: 5,
+              spreadRadius: 2,
+            )
           ],
         ),
         child: Column(
@@ -505,14 +662,16 @@ class _HomePageUserState extends State<HomePageUser> {
               },
             ),
             const SizedBox(height: 5),
-            Text(shopName,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-            // Menampilkan satu bintang dan rating
+            Text(
+              shopName,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
             _buildRatingDisplay(rating),
             const SizedBox(height: 3),
-            Text("Kecamatan: $kecamatan",
-                style: const TextStyle(fontSize: 12, color: Colors.black87)),
+            Text(
+              "Kecamatan: $kecamatan",
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
+            ),
           ],
         ),
       ),

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
-import 'package:flutter_rentalmotor/home.dart';
+import 'package:flutter_rentalmotor/vendor/motor_detail_screen.dart';
 import 'package:flutter_rentalmotor/vendor/lupakatasandiv.dart';
 import 'package:flutter_rentalmotor/vendor/editprofilvendor.dart';
 import 'package:flutter_rentalmotor/vendor/chatvendor.dart';
 import 'package:flutter_rentalmotor/vendor/notifikasivendor.dart';
 import 'package:flutter_rentalmotor/vendor/ulasanvendor.dart';
 import 'package:flutter_rentalmotor/vendor/daftar_pesanan_screen.dart';
+import 'package:flutter_rentalmotor/vendor/CreateMotorScreen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -115,7 +117,7 @@ class _DashboardState extends State<HomepageVendor> {
               onPressed: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => HomeScreen()),
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
                 );
               },
               style:
@@ -240,8 +242,15 @@ class _DashboardState extends State<HomepageVendor> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _buildActionButton(
-                            Icons.motorcycle, "Tambah Motor", () {}),
+                        _buildActionButton(Icons.motorcycle, "Tambah Motor",
+                            () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const CreateMotorScreen()),
+                          );
+                        }),
                         _buildActionButton(Icons.list, "Pesanan", () {
                           Navigator.push(
                             context,
@@ -373,43 +382,62 @@ class _DashboardState extends State<HomepageVendor> {
     );
   }
 
-  Widget _buildMotorCard(dynamic motor) {
-    final String imageUrl = "${ApiConfig.baseUrl}${motor['image']}";
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(color: Colors.grey.withOpacity(0.3), blurRadius: 6)
-        ],
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(imageUrl,
-                width: 80, height: 80, fit: BoxFit.cover),
+  Widget _buildMotorCard(dynamic motorData) {
+    final String imageUrl = "${ApiConfig.baseUrl}${motorData['image']}";
+
+    // Konversi data ke model
+    final motor = MotorModel.fromJson(motorData);
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MotorDetailScreen(motor: motor),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(motor['name'],
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(motor['type'] ?? '',
-                    style: const TextStyle(color: Colors.grey)),
-                Text("${motor['year']}",
-                    style: const TextStyle(color: Colors.grey)),
-                Text("Rp ${motor['price']}/hari",
-                    style: const TextStyle(color: Colors.blue)),
-              ],
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(color: Colors.grey.withOpacity(0.3), blurRadius: 6)
+          ],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.motorcycle),
+              ),
             ),
-          ),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(motor.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(motor.type, style: const TextStyle(color: Colors.grey)),
+                  Text("${motor.year}",
+                      style: const TextStyle(color: Colors.grey)),
+                  Text("Rp ${motor.price}/hari",
+                      style: const TextStyle(color: Colors.blue)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
