@@ -64,17 +64,39 @@
                 <div class="mt-4">
                     <label class="block text-gray-700 font-semibold">Password</label>
                     <div class="flex items-center border rounded-md px-3 py-2 mt-1 bg-gray-100">
-                        <img src="{{ asset('eyeslash.svg') }}" alt="Toggle Password"
+                        <img src="{{ asset('eyeslash.svg') }}" alt="Toggle Password" id="togglePassword"
                             class="w-5 h-5 cursor-pointer mr-2">
-                        <input type="password" name="password" placeholder="Password"
+                        <input type="password" name="password" id="passwordInput" placeholder="Password"
                             class="w-full bg-transparent focus:outline-none" required>
                     </div>
                 </div>
+
+                <script>
+                    const togglePassword = document.getElementById('togglePassword');
+                    const passwordInput = document.getElementById('passwordInput');
+                    let isPasswordVisible = false;
+
+                    togglePassword.addEventListener('click', function () {
+                        isPasswordVisible = !isPasswordVisible;
+                        passwordInput.type = isPasswordVisible ? 'text' : 'password';
+
+                        // Ganti ikon jika perlu
+                        togglePassword.src = isPasswordVisible
+                            ? "{{ asset('eyesolid.svg') }}"
+                            : "{{ asset('eyeslash.svg') }}";
+                    });
+                </script>
+
 
                 <button type="submit"
                     class="w-full mt-6 bg-[#FEA501] hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition">
                     LOGIN
                 </button>
+
+                <a href="{{ url('/') }}" class="block text-center text-blue-700 font-semibold underline text-base mt-4 hover:text-blue-900">
+                    Back
+                </a>
+
             </form>
         </div>
     </div>

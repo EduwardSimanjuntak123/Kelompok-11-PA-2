@@ -41,6 +41,7 @@ flutter:
 
   assets:
     - assets/images/logo1.png
+    - assets/images/logo.png
     - assets/images/chat.png
     - assets/images/m1.png
     - assets/images/m2.png

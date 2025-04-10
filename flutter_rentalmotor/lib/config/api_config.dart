@@ -2,6 +2,5 @@
 
 class ApiConfig {
   // Base URL API
-
   static const String baseUrl = "http://172.27.67.64:8080";
 }
