@@ -11,6 +11,7 @@ import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/homepage_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -52,6 +53,7 @@ class _HomePageUserState extends State<HomePageUser> {
     super.initState();
     _checkLoginStatus();
     _fetchKecamatan();
+    _requestNotificationPermission();
     _initializeLocalNotifications();
   }
 
@@ -115,7 +117,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
   /// Membuat koneksi WebSocket dengan parameter user id dan mendengarkan pesan masuk
   void _connectWebSocket(int userId) {
-    String wsUrl = "ws://192.168.132.159:8080/ws?user_id=$userId";
+    String wsUrl = "ws://172.27.67.64:8080/ws?user_id=$userId";
     _channel = IOWebSocketChannel.connect(wsUrl);
     _channel?.stream.listen((data) async {
       try {
@@ -241,6 +243,12 @@ class _HomePageUserState extends State<HomePageUser> {
         );
       },
     );
+  }
+
+  void _requestNotificationPermission() async {
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
   }
 
   void _onItemTapped(int index) async {
