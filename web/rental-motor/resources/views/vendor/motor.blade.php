@@ -185,7 +185,7 @@
             document.getElementById('editMotorColor').value = motor.color;
             document.getElementById('editMotorPrice').value = motor.price;
             document.getElementById('editMotorStatus').value = motor.status;
-            document.getElementById('editMotorType').value = motor.type;
+            document.getElementById('editMotortype').value = motor.type;
             document.getElementById('editMotorDescription').value = motor.description;
             setEditFormAction(motor.id);
         }

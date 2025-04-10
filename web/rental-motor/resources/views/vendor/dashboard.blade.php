@@ -50,9 +50,7 @@
         $bookingData = $bookingData ?? [];
 
         // Hitung jumlah pesanan yang berstatus "pending"
-        $pesananPending = collect($bookingData)
-            ->where('status', 'pending')
-            ->count();
+        $pesananPending = collect($bookingData)->where('status', 'pending')->count();
     @endphp
 
     <!-- Summary Cards -->
@@ -100,6 +98,23 @@
             const pendapatanLabels = @json($rentangBulan);
             const pendapatanData = @json(array_values($pendapatanBulanan));
 
+            // Dapatkan bulan saat ini (0 = Jan, 11 = Des)
+            const currentMonth = new Date().getMonth();
+
+            // Cari index bulan saat ini di array $rentangBulan
+            const indexBulanIni = pendapatanLabels.findIndex(label => {
+                const date = new Date(`${label} 1, ${new Date().getFullYear()}`);
+                return date.getMonth() === currentMonth;
+            });
+
+            // Atur warna titik
+            const defaultColor = 'blue';
+            const highlightColor = 'red';
+
+            const pointColors = pendapatanLabels.map((_, i) =>
+                i === indexBulanIni ? highlightColor : defaultColor
+            );
+
             const ctxPendapatan = document.getElementById('pendapatanChart').getContext('2d');
             new Chart(ctxPendapatan, {
                 type: 'line',
@@ -108,9 +123,10 @@
                     datasets: [{
                         label: 'Pendapatan (Rp)',
                         data: pendapatanData,
-                        borderColor: 'blue',
+                        borderColor: defaultColor,
                         borderWidth: 2,
-                        pointBackgroundColor: 'blue',
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: pointColors,
                         pointRadius: 6,
                         fill: false,
                         tension: 0.3,

@@ -4,6 +4,7 @@
     <!-- Izin untuk membaca penyimpanan dan menggunakan kamera -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
     <application
         android:label="flutter_rentalmotor"

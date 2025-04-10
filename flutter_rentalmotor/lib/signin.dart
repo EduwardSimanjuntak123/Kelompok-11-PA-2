@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/SignUpCustomer.dart';
 import 'package:flutter_rentalmotor/services/api_service.dart';
+import 'package:flutter_rentalmotor/vendor/homepagevendor.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -57,17 +58,22 @@ class _LoginScreenState extends State<LoginScreen> {
       final role = user["role"];
       final token = response["token"];
 
-      if (role == "customer") {
-        // Simpan token, nama, dan id ke SharedPreferences
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', token);
-        await prefs.setString('user_name', user["name"]);
-        await prefs.setInt('user_id', user["id"]);
+      // Simpan data login ke SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      await prefs.setString('user_name', user["name"]);
+      await prefs.setInt('user_id', user["id"]);
 
+      if (role == "customer") {
         _showSuccessDialog();
+      } else if (role == "vendor") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomepageVendor()),
+        );
       } else {
         setState(() {
-          _errorMessage = "Akses ditolak! Hanya customer yang dapat login.";
+          _errorMessage = "Akses ditolak! Role tidak dikenali.";
           _isLoading = false;
         });
       }
