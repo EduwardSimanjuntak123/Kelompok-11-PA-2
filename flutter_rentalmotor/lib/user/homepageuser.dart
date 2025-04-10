@@ -16,6 +16,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:badges/badges.dart' as badges;
 
+const Color primaryBlue = Color(0xFF2196F3);
+
 class HomePageUser extends StatefulWidget {
   const HomePageUser({Key? key}) : super(key: key);
 
@@ -29,6 +31,8 @@ class _HomePageUserState extends State<HomePageUser> {
   int _selectedIndex = 0;
   String _userName = "Pengguna";
   int? _userId;
+
+  bool _isLoading = true;
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _vendorList = [];
   List<Map<String, dynamic>> _kecamatanList = [];
@@ -212,7 +216,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
   void _showErrorMessage(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
@@ -289,7 +293,8 @@ class _HomePageUserState extends State<HomePageUser> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryBlue,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
               Navigator.of(context).pop();
@@ -312,7 +317,7 @@ class _HomePageUserState extends State<HomePageUser> {
         ...List.generate(5, (index) {
           return Icon(
             index < ratingValue ? Icons.star : Icons.star_border,
-            size: 14, 
+            size: 14,
             color: Colors.amber,
           );
         }),
@@ -496,7 +501,7 @@ class _HomePageUserState extends State<HomePageUser> {
             child: Container(
               padding: EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: lightBlue.withOpacity(0.3),
+                color: Colors.lightBlue.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: DropdownButtonHideUnderline(
@@ -618,7 +623,8 @@ class _HomePageUserState extends State<HomePageUser> {
                 ),
               )
             : SizedBox(
-                height: 200, // Increased height for vendor cards to prevent overflow
+                height:
+                    200, // Increased height for vendor cards to prevent overflow
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
