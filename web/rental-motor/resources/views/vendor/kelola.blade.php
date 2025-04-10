@@ -17,67 +17,95 @@
                 <option value="completed">Completed</option>
                 <option value="rejected">Rejected</option>
             </select>
-            <!-- Button to open manual booking modal -->
-            <button onclick="openModal('addTransactionModal')"
-                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                + Booking Manual
-            </button>
-        </div>
+           <!-- Button untuk booking manual -->
+<button onclick="openModal('addTransactionModal')"
+class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
++ Booking Manual
+</button>
+</div>
 
-        @if (empty($bookings) || count($bookings) == 0)
-            <p class="text-center text-gray-500">Tidak ada pemesanan untuk ditampilkan.</p>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full bg-white shadow-md rounded-lg">
-                    <thead>
-                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                            <th class="py-3 px-6 text-center">Nomor</th>
-                            <th class="py-3 px-6 text-center">Detail Pemesanan</th>
-                            <th class="py-3 px-6 text-center">Status</th>
-                            <th class="py-3 px-6 text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-gray-600 text-sm font-light">
-                        @foreach ($bookings as $pesanan)
-                            <tr class="border-b border-gray-200 hover:bg-gray-100" data-status="{{ $pesanan['status'] }}">
+@if (empty($bookings) || count($bookings) == 0)
+    <p class="text-center text-gray-500">Tidak ada pemesanan untuk ditampilkan.</p>
+@else
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow-md rounded-lg table-fixed">
+            <thead>
+                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                    <th class="py-3 px-4 text-center w-[5%]">No</th>
+                    <th class="py-3 px-4 text-left align-top w-[28%]">Detail Pemesanan</th>
+                    <th class="py-3 px-4 text-left align-top w-[20%]">Detail Motor</th>
+                    <th class="py-3 px-4 text-center w-[17%]">Gambar</th>
+                    <th class="py-3 px-4 text-center w-[10%]">Status</th>
+                    <th class="py-3 px-4 text-center w-[15%]">Aksi</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-600 text-sm font-light">
+                @foreach ($bookings as $pesanan)
+                <tr class="border-b border-gray-200 hover:bg-gray-100" data-status="{{ $pesanan['status'] }}">
+                    <td class="py-3 px-4 text-center align-top">{{ $loop->iteration }}</td>
 
-                                <td class="py-3 px-6 text-center">{{ $loop->iteration }}</td>
+                    <!-- Detail Pemesanan -->
+                    <td class="py-3 px-4 text-left align-top">
+                        <div><strong>Customer:</strong> {{ $pesanan['customer'] ?? '-' }}</div>
+                        <div><strong>Tanggal Booking:</strong> {{ $pesanan['tanggal_booking'] ?? '-' }}</div>
+                        <div><strong>Tanggal Mulai:</strong> {{ $pesanan['tanggal_mulai'] ?? '-' }}</div>
+                        <div><strong>Tanggal Selesai:</strong> {{ $pesanan['tanggal_selesai'] ?? '-' }}</div>
+                        <div><strong>Lokasi Jemput:</strong> {{ $pesanan['lokasi_jemput'] ?? '-' }}</div>
+                    </td>
 
+                    <!-- Detail Motor -->
+                    <td class="py-3 px-4 text-left align-top">
+                        @if(isset($pesanan['motor']))
+                            <div><strong>Nama:</strong> {{ $pesanan['motor']['name'] ?? '-' }}</div>
+                            <div><strong>Brand:</strong> {{ $pesanan['motor']['brand'] ?? '-' }}</div>
+                            <div><strong>Model:</strong> {{ $pesanan['motor']['model'] ?? '-' }}</div>
+                            <div><strong>Tahun:</strong> {{ $pesanan['motor']['year'] ?? '-' }}</div>
+                            <div><strong>Warna:</strong> {{ $pesanan['motor']['color'] ?? '-' }}</div>
+                            <div><strong>Deskripsi:</strong> {{ $pesanan['motor']['description'] ?? '-' }}</div>
+                        @else
+                            <div>Data motor tidak tersedia.</div>
+                        @endif
+                    </td>
 
-                                    <td class="py-3 px-6 text-center">
-                                        <button onclick='showFullDetails(@json($pesanan))'
-                                        class="mx-auto flex items-center justify-center bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-full transition duration-200 shadow-md">
+                    <!-- Gambar Motor -->
+                    <td class="py-3 px-4 text-center align-top">
+                        @if(isset($pesanan['motor']['image']))
+                            <img src="{{ $pesanan['motor']['image'] }}" alt="Motor"
+                                class="w-30 h-30 object-cover rounded mx-auto">
+                        @else
+                            <span class="text-gray-400">-</span>
+                        @endif
+                    </td>
 
-                                            <span>Detail</span>
-                                        </button>
-                                    </td>
+                    <!-- Status -->
+                    <td class="py-3 px-4 text-center align-top">
+                        <strong
+                            class="{{ $pesanan['status'] == 'pending' ? 'text-yellow-600' : ($pesanan['status'] == 'rejected' ? 'text-red-600' : 'text-green-600') }}">
+                            {{ ucfirst($pesanan['status']) }}
+                        </strong>
+                    </td>
 
+                    <!-- Aksi -->
+                    <td class="py-3 px-4 text-center align-top">
+                        @if ($pesanan['status'] == 'pending')
+                            <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'confirm')"
+                                class="bg-green-600 text-white px-3 py-1 rounded-lg">Setujui</button>
+                            <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'reject')"
+                                class="bg-red-600 text-white px-3 py-1 rounded-lg">Tolak</button>
+                        @elseif ($pesanan['status'] == 'confirmed')
+                            <button onclick="handleCompleteBooking({{ $pesanan['id'] }})"
+                                class="bg-blue-600 text-white px-3 py-1 rounded-lg">Selesaikan</button>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
 
-                                </td>
-                                <td class="py-3 px-6 text-center">
-                                    <strong
-                                        class="{{ $pesanan['status'] == 'pending' ? 'text-yellow-600' : ($pesanan['status'] == 'rejected' ? 'text-red-600' : 'text-green-600') }}">
-                                        {{ ucfirst($pesanan['status']) }}
-                                    </strong>
-                                </td>
-                                <td class="py-3 px-6 text-center">
-                                    @if ($pesanan['status'] == 'pending')
-                                        <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'confirm')"
-                                            class="bg-green-600 text-white px-3 py-1 rounded-lg">Setujui</button>
-                                        <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'reject')"
-                                            class="bg-red-600 text-white px-3 py-1 rounded-lg">Tolak</button>
-                                    @elseif ($pesanan['status'] == 'confirmed')
-                                        <button onclick="handleCompleteBooking({{ $pesanan['id'] }})"
-                                            class="bg-blue-600 text-white px-3 py-1 rounded-lg">Selesaikan</button>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
     </div>
+@endif
+
+
 
     <!-- Modal for Manual Booking -->
     <div id="addTransactionModal"
@@ -159,56 +187,6 @@
             </form>
         </div>
     </div>
-
-
-    <!-- Modal Booking & Motor Detail -->
-<div id="bookingDetailModal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-50">
-    <div class="bg-white w-full max-w-5xl p-6 rounded-lg shadow-xl relative overflow-y-auto max-h-[90vh]">
-        <!-- Tombol close -->
-        <button onclick="closeBookingModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl">
-            &times;
-        </button>
-
-        <!-- Header -->
-        <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">📋 Detail Pemesanan & Motor</h2>
-
-        <!-- Grid dua kolom -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Card: Detail Pemesanan -->
-            <div class="bg-gray-50 border border-gray-200 p-5 rounded-lg shadow-md">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                    📄 <span>Detail Pemesanan</span>
-                </h3>
-                <ul class="space-y-2 text-gray-600 text-sm">
-                    <li><strong>Customer:</strong> <span id="detailCustomer">-</span></li>
-                    <li><strong>Tanggal Booking:</strong> <span id="detailBookingDate">-</span></li>
-                    <li><strong>Tanggal Mulai:</strong> <span id="detailStart">-</span></li>
-                    <li><strong>Tanggal Selesai:</strong> <span id="detailEnd">-</span></li>
-                    <li><strong>Lokasi Jemput:</strong> <span id="detailPickupLocation">-</span></li>
-                </ul>
-            </div>
-
-            <!-- Card: Detail Motor -->
-            <div class="bg-gray-50 border border-gray-200 p-5 rounded-lg shadow-md">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                    🛵 <span>Detail Motor</span>
-                </h3>
-                <ul class="space-y-2 text-gray-600 text-sm mb-4">
-                    <li><strong>Nama:</strong> <span id="detailMotor">-</span></li>
-                    <li><strong>Brand:</strong> <span id="detailBrand">-</span></li>
-                    <li><strong>Model:</strong> <span id="detailModel">-</span></li>
-                    <li><strong>Tahun:</strong> <span id="detailYear">-</span></li>
-                    <li><strong>Harga per Hari:</strong> Rp <span id="detailPricePerDay">0</span></li>
-                </ul>
-                <img id="detailMotorImage"
-     src="https://via.placeholder.com/150"
-     class="w-35 h-25 object-contain rounded border mx-auto"
-     alt="Gambar Motor">
-
-            </div>
-        </div>
-    </div>
-</div>
 
 
 
