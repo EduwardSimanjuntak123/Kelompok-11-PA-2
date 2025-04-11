@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-co-op/gocron"
 )
 
 // Fungsi untuk mengonfirmasi booking oleh vendor
@@ -82,6 +83,216 @@ func ConfirmBooking(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dikonfirmasi"})
 }
+
+// SetBookingToTransit mengubah status booking menjadi "in transit"
+func SetBookingToTransit(c *gin.Context) {
+	id := c.Param("id")
+
+	// Ambil user_id dari token JWT
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+		return
+	}
+
+	var booking models.Booking
+
+	// Cari booking berdasarkan ID
+	if err := config.DB.Where("id = ?", id).First(&booking).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
+		return
+	}
+
+	// Hanya booking dengan status "confirmed" yang dapat diubah menjadi "in transit"
+	if booking.Status != "confirmed" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status booking harus 'confirmed' untuk mengubah ke 'in transit'"})
+		return
+	}
+
+	// Pastikan vendor yang mengakses adalah pemilik booking
+	var vendor models.Vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	if booking.VendorID != vendor.ID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk mengubah status booking ini"})
+		return
+	}
+
+	// Ubah status menjadi "in transit"
+	if err := config.DB.Model(&models.Booking{}).Where("id = ?", id).Update("status", "in transit").Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengubah status booking"})
+		return
+	}
+
+	// Kirim notifikasi ke customer jika ada
+	if booking.CustomerID != nil {
+		notification := models.Notification{
+			UserID:    *booking.CustomerID,
+			Message:   "Motor Anda sedang dalam perjalanan ke lokasi penjemputan.",
+			Status:    "unread",
+			BookingID: booking.ID,
+			CreatedAt: time.Now(),
+		}
+
+		if err := config.DB.Create(&notification).Error; err != nil {
+			log.Println("❗ Gagal menyimpan notifikasi:", err)
+		} else {
+			notifPayload := map[string]interface{}{
+				"message":    notification.Message,
+				"booking_id": notification.BookingID,
+			}
+
+			notifJSON, err := json.Marshal(notifPayload)
+			if err != nil {
+				log.Println("❗ Gagal encode notifikasi ke JSON:", err)
+			} else {
+				websocket.SendNotificationToUser(*booking.CustomerID, string(notifJSON))
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Status booking berhasil diubah ke 'in transit'"})
+}
+// SetBookingToInUse mengubah status booking menjadi "in use"
+func SetBookingToInUse(c *gin.Context) {
+	id := c.Param("id")
+
+	// Ambil user_id dari token JWT
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+		return
+	}
+
+	var booking models.Booking
+
+	// Cari booking berdasarkan ID
+	if err := config.DB.Where("id = ?", id).First(&booking).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
+		return
+	}
+
+	// Hanya booking dengan status "in transit" yang bisa diubah ke "in use"
+	if booking.Status != "in transit" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Status booking harus 'in transit' untuk mengubah ke 'in use'"})
+		return
+	}
+
+	// Pastikan vendor yang mengakses adalah pemilik booking
+	var vendor models.Vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	if booking.VendorID != vendor.ID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk mengubah status booking ini"})
+		return
+	}
+
+	// Update status menjadi "in use"
+	if err := config.DB.Model(&models.Booking{}).Where("id = ?", id).Update("status", "in use").Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengubah status booking"})
+		return
+	}
+
+	// Kirim notifikasi ke customer
+	if booking.CustomerID != nil {
+		notification := models.Notification{
+			UserID:    *booking.CustomerID,
+			Message:   "Motor Anda telah tiba dan siap digunakan. Selamat berkendara!",
+			Status:    "unread",
+			BookingID: booking.ID,
+			CreatedAt: time.Now(),
+		}
+
+		if err := config.DB.Create(&notification).Error; err != nil {
+			log.Println("❗ Gagal menyimpan notifikasi:", err)
+		} else {
+			notifPayload := map[string]interface{}{
+				"message":    notification.Message,
+				"booking_id": notification.BookingID,
+			}
+
+			notifJSON, err := json.Marshal(notifPayload)
+			if err != nil {
+				log.Println("❗ Gagal encode notifikasi ke JSON:", err)
+			} else {
+				websocket.SendNotificationToUser(*booking.CustomerID, string(notifJSON))
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Status booking berhasil diubah ke 'in use'"})
+}
+func StartAutoAwaitingReturnScheduler() {
+	log.Println("📆 Memulai scheduler untuk pengecekan pengembalian booking...")
+	s := gocron.NewScheduler(time.Local)
+
+	s.Every(1).Second().Do(AutoSetAwaitingReturn)
+
+	s.StartAsync()
+}
+
+// AutoSetAwaitingReturn memproses semua booking yang seharusnya masuk status "awaiting return"
+func AutoSetAwaitingReturn() {
+
+	var bookings []models.Booking
+
+	// Ambil semua booking yang masih "in use"
+	if err := config.DB.Where("status = ?", "in use").Find(&bookings).Error; err != nil {
+		log.Println("❗ Gagal mengambil booking:", err)
+		return
+	}
+
+
+	now := time.Now()
+
+	for _, booking := range bookings {
+		log.Printf("⏰ Booking ID %d - EndDate: %v | Now: %v\n", booking.ID, booking.EndDate, now)
+
+		if now.After(booking.EndDate) {
+			// Ubah status menjadi "awaiting return"
+			if err := config.DB.Model(&models.Booking{}).Where("id = ?", booking.ID).Update("status", "awaiting return").Error; err != nil {
+				log.Printf("❗ Gagal update status booking ID %d: %v\n", booking.ID, err)
+				continue
+			}
+
+			// Kirim notifikasi ke customer
+			if booking.CustomerID != nil {
+				notification := models.Notification{
+					UserID:    *booking.CustomerID,
+					Message:   "Waktu peminjaman Anda telah berakhir. Mohon segera kembalikan motor.",
+					Status:    "unread",
+					BookingID: booking.ID,
+					CreatedAt: time.Now(),
+				}
+
+				if err := config.DB.Create(&notification).Error; err != nil {
+					log.Println("❗ Gagal menyimpan notifikasi:", err)
+				} else {
+					notifPayload := map[string]interface{}{
+						"message":    notification.Message,
+						"booking_id": notification.BookingID,
+					}
+
+					notifJSON, err := json.Marshal(notifPayload)
+					if err != nil {
+						log.Println("❗ Gagal encode notifikasi ke JSON:", err)
+					} else {
+						websocket.SendNotificationToUser(*booking.CustomerID, string(notifJSON))
+					}
+				}
+			}
+
+			log.Printf("✅ Booking ID %d status diubah ke 'awaiting return'\n", booking.ID)
+		}
+	}
+}
+
 
 
 // Reject Booking
@@ -231,6 +442,7 @@ func GetVendorBookings(c *gin.Context) {
 		bookingData := map[string]interface{}{
 			"id":              booking.ID,
 			"customer_name":   customerName,
+			"customer_id": booking.CustomerID,
 			"booking_date":    booking.BookingDate,
 			"start_date":      booking.StartDate,
 			"end_date":        booking.EndDate,
@@ -310,39 +522,45 @@ func GetCustomerBookings(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-
 func CreateManualBooking(c *gin.Context) {
 	// Ambil data teks dari form-data
 	motorIDStr := c.PostForm("motor_id")
 	customerName := c.PostForm("customer_name")
 	startDateStr := c.PostForm("start_date")
-	endDateStr := c.PostForm("end_date")
+	durationStr := c.PostForm("duration")
 	pickupLocation := c.PostForm("pickup_location")
+	dropoffLocation := c.PostForm("dropoff_location")
 
-	// Konversi motor_id dari string ke uint64
+	// Konversi motor_id ke uint64
 	motorID, err := strconv.ParseUint(motorIDStr, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "motor_id tidak valid"})
 		return
 	}
 
-	// Parse waktu start_date dan end_date
+	// Parse durasi
+	duration, err := strconv.Atoi(durationStr)
+	if err != nil || duration <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Durasi tidak valid"})
+		return
+	}
+
+	// Parse waktu start_date
 	layout := "2006-01-02T15:04:05Z07:00"
 	startDate, err := time.Parse(layout, startDateStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "start_date tidak valid"})
 		return
 	}
-	endDate, err := time.Parse(layout, endDateStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "end_date tidak valid"})
-		return
-	}
 
-	log.Printf("Debug: Manual Booking Data => motor_id: %d, customer_name: %s, start_date: %v, end_date: %v, pickup_location: %s",
-		motorID, customerName, startDate, endDate, pickupLocation)
+	// Hitung endDate
+	endDate := startDate.Add(time.Hour * 24 * time.Duration(duration))
 
-	// Ambil user_id dari token (ID vendor)
+	// Debug log
+	log.Printf("Debug: Manual Booking => motor_id: %d, customer_name: %s, start_date: %v, duration: %d, end_date: %v, pickup_location: %s",
+		motorID, customerName, startDate, duration, endDate, pickupLocation)
+
+	// Ambil user_id dari token (vendor)
 	userID, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
@@ -350,18 +568,14 @@ func CreateManualBooking(c *gin.Context) {
 	}
 	vendorUserID := userID.(uint)
 
-	// Pastikan user role = vendor
+	// Validasi user
 	var user models.User
-	if err := config.DB.First(&user, vendorUserID).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan"})
-		return
-	}
-	if user.Role != "vendor" {
+	if err := config.DB.First(&user, vendorUserID).Error; err != nil || user.Role != "vendor" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Hanya vendor yang dapat membuat booking manual"})
 		return
 	}
 
-	// Ambil data vendor berdasarkan user_id
+	// Ambil data vendor
 	var vendor models.Vendor
 	if err := config.DB.Where("user_id = ?", vendorUserID).First(&vendor).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Data vendor tidak ditemukan"})
@@ -370,7 +584,7 @@ func CreateManualBooking(c *gin.Context) {
 
 	tx := config.DB.Begin()
 
-	// Validasi customer_name
+	// Validasi nama customer
 	finalCustomerName := strings.TrimSpace(customerName)
 	if finalCustomerName == "" {
 		tx.Rollback()
@@ -386,77 +600,63 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 
-	// Pastikan motor milik vendor yang sedang login
+	// Pastikan motor milik vendor ini
 	if motor.VendorID != vendor.ID {
 		tx.Rollback()
-		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk menyewakan motor ini"})
+		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin menyewakan motor ini"})
 		return
 	}
 
-	// Validasi tanggal
-	if endDate.Before(startDate) {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Tanggal booking tidak valid: end_date harus setelah start_date"})
-		return
-	}
-
-	duration := int(endDate.Sub(startDate).Hours() / 24)
-	if duration <= 0 {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Durasi booking tidak valid"})
-		return
-	}
-	totalPrice := float64(duration) * motor.Price
-
-	// ✅ Gunakan checkBookingConflict
+	// Cek konflik booking
 	if err := checkBookingConflict(startDate, endDate, uint(motorID)); err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Hitung total harga
+	totalPrice := float64(duration) * motor.Price
+
 	// Buat booking
 	booking := models.Booking{
-		CustomerID:     nil,
-		CustomerName:   finalCustomerName,
-		VendorID:       vendor.ID,
-		MotorID:        uint(motorID),
-		BookingDate:    time.Now(),
-		StartDate:      startDate,
-		EndDate:        endDate,
-		PickupLocation: pickupLocation,
-		Status:         "confirmed",
+		CustomerID:      nil,
+		CustomerName:    finalCustomerName,
+		VendorID:        vendor.ID,
+		MotorID:         uint(motorID),
+		BookingDate:     time.Now(),
+		StartDate:       startDate,
+		EndDate:         endDate,
+		PickupLocation:  pickupLocation,
+		DropoffLocation: dropoffLocation,
+		Status:          "confirmed",
 	}
 
-	// Upload photo_id (opsional)
+	// Upload photo_id
 	if file, err := c.FormFile("photo_id"); err == nil {
 		if path, err := saveBookingImage(c, file); err == nil {
 			booking.PhotoID = path
 		} else {
 			tx.Rollback()
-			log.Printf("Error saving photo_id: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan foto ID"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan photo ID"})
 			return
 		}
 	}
 
-	// Upload ktp_id (opsional)
+	// Upload ktp_id
 	if file, err := c.FormFile("ktp_id"); err == nil {
 		if path, err := saveBookingImage(c, file); err == nil {
 			booking.KtpID = path
 		} else {
 			tx.Rollback()
-			log.Printf("Error saving ktp_id: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan foto KTP"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan KTP"})
 			return
 		}
 	}
 
-	// Simpan ke database
+	// Simpan booking
 	if err := tx.Create(&booking).Error; err != nil {
 		tx.Rollback()
-		log.Printf("Error inserting manual booking: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menambahkan booking manual"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan booking"})
 		return
 	}
 	tx.Commit()
@@ -470,6 +670,7 @@ func CreateManualBooking(c *gin.Context) {
 		"start_date":      booking.StartDate,
 		"end_date":        booking.EndDate,
 		"pickup_location": booking.PickupLocation,
+		"dropoff_location": booking.DropoffLocation,
 		"status":          booking.Status,
 		"motor": gin.H{
 			"id":            motor.ID,
@@ -484,4 +685,5 @@ func CreateManualBooking(c *gin.Context) {
 		"ktp_id":   booking.KtpID,
 	})
 }
+
 

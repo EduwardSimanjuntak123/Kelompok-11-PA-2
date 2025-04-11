@@ -2,6 +2,7 @@ package routes
 
 import (
 	"rental-backend/controllers"
+	"rental-backend/websocketupdatemotor"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,11 @@ func SetupRoutes(router *gin.Engine) {
 	TransactionRoutes(router)
 	ChatRoutes(router)
 
+
 	// WebSocket route
-	router.GET("/ws", controllers.WebSocketHandler)
+	router.GET("/ws/notifikasi", controllers.WebSocketNotifikasiHandler)
+	router.GET("/ws/motor", func(c *gin.Context) {
+		websocketupdatemotor.HandleMotorWebSocket(c.Writer, c.Request)
+	})
+
 }
