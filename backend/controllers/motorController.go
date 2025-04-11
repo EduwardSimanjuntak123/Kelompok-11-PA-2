@@ -216,12 +216,14 @@ func GetAllMotor(c *gin.Context) {
 	var motors []models.Motor
 
 	// Ambil semua data motor dengan vendor terkait
-	if err := config.DB.Preload("Vendor").
-		Select("id, vendor_id, name, brand, model, year, rating, price, color,description,type, status, image, created_at, updated_at").
-		Find(&motors).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
-		return
-	}
+	if err := config.DB.
+	Preload("Vendor").
+	Preload("Vendor.Kecamatan").
+	Preload("Vendor.User").
+	Find(&motors).Error; err != nil {
+	c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
+	return
+}
 
 	// Periksa apakah data motor ditemukan
 	if len(motors) == 0 {

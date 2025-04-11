@@ -16,6 +16,7 @@ import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:badges/badges.dart' as badges;
+import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
 
 const Color primaryBlue = Color(0xFF2196F3);
 
@@ -32,8 +33,8 @@ class _HomePageUserState extends State<HomePageUser> {
   int _selectedIndex = 0;
   String _userName = "Pengguna";
   int? _userId;
-
   bool _isLoading = true;
+
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _vendorList = [];
   List<Map<String, dynamic>> _kecamatanList = [];
@@ -41,8 +42,7 @@ class _HomePageUserState extends State<HomePageUser> {
   final String baseUrl = ApiConfig.baseUrl;
 
   WebSocketChannel? _channel;
-  // List untuk menyimpan pesan notifikasi yang diterima
-  // Sekarang menggunakan struktur data Map agar bisa menyimpan status 'read' dan 'timestamp'
+  // List notifikasi
   List<Map<String, dynamic>> _notifications = [];
   int get _unreadCount {
     return _notifications.where((notif) => notif['read'] == false).length;
@@ -71,7 +71,7 @@ class _HomePageUserState extends State<HomePageUser> {
     });
   }
 
-  /// Tampilkan notifikasi lokal dengan judul dan pesan
+  /// Tampilkan notifikasi lokal
   Future<void> _showLocalNotification(String title, String message) async {
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
@@ -87,15 +87,15 @@ class _HomePageUserState extends State<HomePageUser> {
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.show(
-      0, // ID notifikasi
-      title, // Judul notifikasi
-      message, // Isi pesan
+      0,
+      title,
+      message,
       platformChannelSpecifics,
-      payload: 'data', // opsional
+      payload: 'data',
     );
   }
 
-  /// Mengambil data user dari SharedPreferences dan inisialisasi koneksi WebSocket
+  /// Cek status login dan ambil user_name dari SharedPreferences
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
@@ -109,15 +109,15 @@ class _HomePageUserState extends State<HomePageUser> {
     _fetchVendors();
     _fetchMotors();
 
-    // Jika user id tersedia, buat koneksi WebSocket
+    // Kalau user_id tersedia, buat koneksi WebSocket
     if (_userId != null) {
       _connectWebSocket(_userId!);
     }
   }
 
-  /// Membuat koneksi WebSocket dengan parameter user id dan mendengarkan pesan masuk
+  /// Membuat koneksi WebSocket
   void _connectWebSocket(int userId) {
-    String wsUrl = "ws://172.27.67.64:8080/ws?user_id=$userId";
+    String wsUrl = "ws://192.168.132.159:8080/ws?user_id=$userId";
     _channel = IOWebSocketChannel.connect(wsUrl);
     _channel?.stream.listen((data) async {
       try {
@@ -180,6 +180,7 @@ class _HomePageUserState extends State<HomePageUser> {
       if (mounted) {
         setState(() {
           _motorList = motors;
+
           _isLoading = false;
         });
       }
@@ -218,30 +219,24 @@ class _HomePageUserState extends State<HomePageUser> {
 
   void _showErrorMessage(String message) {
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
-  /// Menampilkan notifikasi sebagai popup dialog (opsional)
   void _showNotificationPopup(String message) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Notifikasi Baru"),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text("Tutup"),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AlertDialog(
+        title: const Text("Notifikasi Baru"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Tutup"),
+          ),
+        ],
+      ),
     );
   }
 
@@ -251,23 +246,16 @@ class _HomePageUserState extends State<HomePageUser> {
     }
   }
 
-  void _onItemTapped(int index) async {
-    // Proteksi untuk guest
-    if (_userId == null && (index == 1 || index == 2)) {
-      _showLoginRequiredAlert();
-      return;
-    }
+  void _onItemTapped(int index) {
     if (index == 2) {
-      // Akun
-      await Navigator.of(context)
+      Navigator.of(context)
           .push(MaterialPageRoute(builder: (context) => const Akun()));
       _loadUserData();
       setState(() {
         _selectedIndex = 0;
       });
     } else if (index == 1) {
-      // Pesanan
-      await Navigator.of(context)
+      Navigator.of(context)
           .push(MaterialPageRoute(builder: (context) => DetailPesanan()));
       setState(() {
         _selectedIndex = 0;
@@ -277,44 +265,6 @@ class _HomePageUserState extends State<HomePageUser> {
         _selectedIndex = index;
       });
     }
-  }
-
-  void _showLoginRequiredAlert() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.lock, color: primaryBlue),
-            SizedBox(width: 10),
-            Text("Login Diperlukan"),
-          ],
-        ),
-        content: const Text(
-            "Anda harus login terlebih dahulu untuk mengakses fitur ini."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text("Batal", style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryBlue,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-              );
-            },
-            child: const Text("Login"),
-          ),
-        ],
-      ),
-    );
   }
 
   // Helper widget untuk menampilkan rating
@@ -329,10 +279,10 @@ class _HomePageUserState extends State<HomePageUser> {
             color: Colors.amber,
           );
         }),
-        SizedBox(width: 5),
+        const SizedBox(width: 5),
         Text(
           rating,
-          style: TextStyle(fontSize: 12, color: Colors.black54),
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
     );
@@ -344,57 +294,6 @@ class _HomePageUserState extends State<HomePageUser> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // Filter vendor berdasarkan kecamatan yang dipilih
-    List<Map<String, dynamic>> filteredVendorList = _selectedKecamatan ==
-            "Semua"
-        ? _vendorList
-        : _vendorList.where((vendor) {
-            String vendorKecamatan =
-                vendor["kecamatan"]?["nama_kecamatan"]?.toString().trim() ?? "";
-            return vendorKecamatan == _selectedKecamatan;
-          }).toList();
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await _loadUserData();
-          await _fetchVendors();
-          await _fetchMotors();
-          await _fetchKecamatan();
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              _buildFilterSection(),
-              _buildVendorSection(filteredVendorList),
-              _buildMotorSection(),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF2C567E),
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: "Pesanan"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
@@ -403,9 +302,9 @@ class _HomePageUserState extends State<HomePageUser> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [primaryBlue, Color(0xFF3E8EDE)],
+          colors: [primaryBlue, const Color(0xFF3E8EDE)],
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
@@ -413,58 +312,86 @@ class _HomePageUserState extends State<HomePageUser> {
           BoxShadow(
             color: primaryBlue.withOpacity(0.3),
             blurRadius: 10,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Baris pertama: jika guest tampilkan tombol login, jika tidak tampilkan notifikasi dan chat
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              badges.Badge(
-                showBadge: _unreadCount > 0,
-                badgeContent: Text(
-                  _unreadCount.toString(),
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                ),
-                position: badges.BadgePosition.topEnd(top: -5, end: -5),
-                child: IconButton(
-                  icon:
-                      const Icon(Icons.notifications_none, color: Colors.white),
+              if (_userId == null)
+                ElevatedButton.icon(
                   onPressed: () {
-                    // Kirim _notifications (List<Map<String, dynamic>>) ke NotifikasiPage
-                    Navigator.of(context)
-                        .push<List<Map<String, dynamic>>>(
-                      MaterialPageRoute(
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: primaryBlue,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  icon: const Icon(Icons.login, size: 20),
+                  label: const Text("Login"),
+                )
+              else ...[
+                badges.Badge(
+                  showBadge: _unreadCount > 0,
+                  badgeContent: Text(
+                    _unreadCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
+                  ),
+                  position: badges.BadgePosition.topEnd(top: -5, end: -5),
+                  child: IconButton(
+                    icon: const Icon(Icons.notifications_none,
+                        color: Colors.white),
+                    onPressed: () {
+                      Navigator.of(context)
+                          .push<List<Map<String, dynamic>>>(MaterialPageRoute(
                         builder: (context) =>
                             NotifikasiPage(notifications: _notifications),
-                      ),
-                    )
-                        .then((updatedNotifications) {
-                      if (updatedNotifications != null) {
-                        setState(() {
-                          _notifications = updatedNotifications;
-                        });
-                      }
-                    });
+                      ))
+                          .then((updatedNotifications) {
+                        if (updatedNotifications != null) {
+                          setState(() {
+                            _notifications = updatedNotifications;
+                          });
+                        }
+                      });
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: Image.asset("assets/images/chat.png",
+                      width: 24, height: 24),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ChatPage()),
+                    );
                   },
                 ),
-              ),
-              IconButton(
-                icon: Image.asset("assets/images/chat.png",
-                    width: 24, height: 24),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const ChatPage()),
-                  );
-                },
-              ),
+              ],
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
+          // Greeting username (tetap tampil meskipun guest, dengan default "Pengguna")
           Text(
+            "Halo, $_userName!",
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text(
             "Temukan Motor Rental Terbaik",
             style: TextStyle(
               fontSize: 16,
@@ -479,8 +406,8 @@ class _HomePageUserState extends State<HomePageUser> {
 
   Widget _buildFilterSection() {
     return Container(
-      margin: EdgeInsets.fromLTRB(20, 10, 20, 20),
-      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -488,26 +415,25 @@ class _HomePageUserState extends State<HomePageUser> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Row(
         children: [
           Icon(Icons.location_on, color: primaryBlue, size: 20),
-          SizedBox(width: 10),
-          Text(
+          const SizedBox(width: 10),
+          const Text(
             "Filter Kecamatan:",
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87),
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                 color: Colors.lightBlue.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(10),
@@ -557,7 +483,7 @@ class _HomePageUserState extends State<HomePageUser> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(20, 10, 20, 15),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -571,27 +497,24 @@ class _HomePageUserState extends State<HomePageUser> {
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  SizedBox(width: 8),
-                  Text(
+                  const SizedBox(width: 8),
+                  const Text(
                     "Daftar Vendor",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87),
                   ),
                 ],
               ),
               TextButton(
                 onPressed: () {
-                  // View all vendors
+                  // Aksi untuk lihat semua vendor
                 },
                 child: Text(
                   "Lihat Semua",
                   style: TextStyle(
-                    color: primaryBlue,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      color: primaryBlue, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -601,7 +524,7 @@ class _HomePageUserState extends State<HomePageUser> {
             ? Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-                margin: EdgeInsets.symmetric(horizontal: 20),
+                margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15),
@@ -609,20 +532,17 @@ class _HomePageUserState extends State<HomePageUser> {
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
                       blurRadius: 10,
-                      offset: Offset(0, 5),
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 alignment: Alignment.center,
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.store_outlined,
-                      size: 50,
-                      color: Colors.grey[400],
-                    ),
-                    SizedBox(height: 10),
-                    Text(
+                    Icon(Icons.store_outlined,
+                        size: 50, color: Colors.grey[400]),
+                    const SizedBox(height: 10),
+                    const Text(
                       "Vendor tidak ada pada kecamatan yang dipilih",
                       style: TextStyle(fontSize: 16, color: Colors.black87),
                       textAlign: TextAlign.center,
@@ -631,8 +551,7 @@ class _HomePageUserState extends State<HomePageUser> {
                 ),
               )
             : SizedBox(
-                height:
-                    200, // Increased height for vendor cards to prevent overflow
+                height: 200,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -669,7 +588,7 @@ class _HomePageUserState extends State<HomePageUser> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, 15),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 15),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -683,27 +602,24 @@ class _HomePageUserState extends State<HomePageUser> {
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  SizedBox(width: 8),
-                  Text(
+                  const SizedBox(width: 8),
+                  const Text(
                     "Rekomendasi Motor",
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87),
                   ),
                 ],
               ),
               TextButton(
                 onPressed: () {
-                  // View all motors
+                  // Aksi untuk lihat semua motor
                 },
                 child: Text(
                   "Lihat Semua",
                   style: TextStyle(
-                    color: primaryBlue,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      color: primaryBlue, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -713,7 +629,7 @@ class _HomePageUserState extends State<HomePageUser> {
             ? Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
-                margin: EdgeInsets.symmetric(horizontal: 20),
+                margin: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15),
@@ -721,20 +637,17 @@ class _HomePageUserState extends State<HomePageUser> {
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
                       blurRadius: 10,
-                      offset: Offset(0, 5),
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
                 alignment: Alignment.center,
                 child: Column(
                   children: [
-                    Icon(
-                      Icons.motorcycle_outlined,
-                      size: 50,
-                      color: Colors.grey[400],
-                    ),
-                    SizedBox(height: 10),
-                    Text(
+                    Icon(Icons.motorcycle_outlined,
+                        size: 50, color: Colors.grey[400]),
+                    const SizedBox(height: 10),
+                    const Text(
                       "Tidak ada motor tersedia",
                       style: TextStyle(fontSize: 16, color: Colors.black87),
                       textAlign: TextAlign.center,
@@ -743,13 +656,15 @@ class _HomePageUserState extends State<HomePageUser> {
                 ),
               )
             : SizedBox(
-                height: 220, // Fixed height for motor cards
+                height: 280,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: _motorList.length,
                   itemBuilder: (context, index) {
                     final motor = _motorList[index];
+                    print(
+                        "Kecamatan: ${motor["vendor"]?["kecamatan"]?["nama_kecamatan"]}");
                     String path = motor["image"]?.toString().trim() ?? "";
                     String imageUrl = path.isNotEmpty
                         ? (path.startsWith("http") ? path : "$baseUrl$path")
@@ -767,17 +682,25 @@ class _HomePageUserState extends State<HomePageUser> {
                     } else {
                       formattedPrice = "Harga Tidak Diketahui";
                     }
-
                     return _buildMotorCard(
-                      motor["name"] ?? "Nama Tidak Diketahui",
-                      motor["rating"]?.toString() ?? "0",
-                      "Rp $formattedPrice/hari",
-                      imageUrl,
-                      DetailMotorPage(
-                        motor: motor,
-                        isGuest: _userId == null,
-                      ),
-                    );
+                        motor["name"] ?? "Nama Tidak Diketahui",
+                        motor["rating"]?.toString() ?? "0",
+                        "Rp $formattedPrice/hari",
+                        imageUrl,
+                        DetailMotorPage(
+                          motor: motor,
+                          isGuest: _userId == null,
+                        ),
+                        motor["status"] ?? "unknown",
+                        motor["type"] ?? "unknown",
+                        (motor["vendor"]?["kecamatan"]?["nama_kecamatan"]
+                                ?.toString()
+                                .replaceAll('\r', '')
+                                .replaceAll('\n', '')
+                                .trim()) ??
+                            "Tidak Diketahui"
+// mengirim nama kecamatan
+                        );
                   },
                 ),
               ),
@@ -785,8 +708,33 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  Widget _buildMotorCard(String title, String rating, String price,
-      String imageUrl, Widget detailPage) {
+  Widget _buildMotorCard(
+    String title,
+    String rating,
+    String price,
+    String imageUrl,
+    Widget detailPage,
+    String status,
+    String type,
+    String kecamatan,
+  ) {
+    // Konversi status motor dan warna
+    String statusText;
+    Color statusColor;
+    if (status == "booked") {
+      statusText = "in use";
+      statusColor = Colors.red;
+    } else if (status == "available") {
+      statusText = "available";
+      statusColor = Colors.green;
+    } else if (status == "unavailable") {
+      statusText = "unavailable";
+      statusColor = Colors.grey;
+    } else {
+      statusText = status;
+      statusColor = Colors.black;
+    }
+
     return GestureDetector(
       onTap: () {
         Navigator.of(context)
@@ -800,34 +748,70 @@ class _HomePageUserState extends State<HomePageUser> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              blurRadius: 5,
-              spreadRadius: 2,
-            )
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(
-              imageUrl,
-              height: 80,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Image.asset("assets/images/default_motor.png",
-                    height: 80, width: double.infinity, fit: BoxFit.cover);
-              },
+            // Gambar motor
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(15)),
+              child: Image.network(
+                imageUrl,
+                height: 110,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    "assets/images/default_motor.png",
+                    height: 110,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  );
+                },
+              ),
             ),
-            const SizedBox(height: 5),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            _buildRatingDisplay(rating),
-            Text(
-              price,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            // Konten teks
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text("Type: $type",
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black87)),
+                  Text("Kecamatan: $kecamatan",
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.black54)),
+                  const SizedBox(height: 4),
+                  _buildRatingDisplay(rating),
+                  const SizedBox(height: 4),
+                  Text(price,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(
+                    statusText,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: statusColor,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -884,6 +868,47 @@ class _HomePageUserState extends State<HomePageUser> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _loadUserData();
+          await _fetchVendors();
+          await _fetchMotors();
+          await _fetchKecamatan();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              _buildFilterSection(),
+              _buildVendorSection(_selectedKecamatan == "Semua"
+                  ? _vendorList
+                  : _vendorList.where((vendor) {
+                      String vendorKecamatan = vendor["kecamatan"]
+                                  ?["nama_kecamatan"]
+                              ?.toString()
+                              .trim() ??
+                          "";
+                      return vendorKecamatan == _selectedKecamatan;
+                    }).toList()),
+              _buildMotorSection(),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        isGuest: _userId == null,
       ),
     );
   }

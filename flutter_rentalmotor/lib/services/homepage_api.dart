@@ -33,22 +33,8 @@ class HomePageApi {
           List<dynamic> data = jsonResponse["data"];
 
           // Konversi dan pemetaan data motor
-          List<Map<String, dynamic>> motors = data.map((motor) {
-            return {
-              "id": motor["id"],
-              "name": motor["name"],
-              "brand": motor["brand"],
-              "model": motor["model"],
-              "year": motor["year"].toString(),
-              "price": motor["price"].toString(),
-              "color": motor["color"],
-              "rating": motor["rating"],
-              "status": motor["status"],
-              "type": motor["type"], // Tambahkan tipe motor
-              "description": motor["description"], // Tambahkan deskripsi
-              "image": "$baseUrl${motor["image"]}",
-            };
-          }).toList();
+          List<Map<String, dynamic>> motors =
+              data.map((motor) => motor as Map<String, dynamic>).toList();
 
           print("✅ Data motor berhasil diambil.");
           return motors;

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"mime/multipart"
@@ -10,6 +11,7 @@ import (
 	"rental-backend/config"
 	"rental-backend/dto"
 	"rental-backend/models"
+	"rental-backend/websocket"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,32 +31,31 @@ func saveBookingImage(c *gin.Context, file *multipart.FileHeader) (string, error
     return "/fileserver/booking/" + filename, nil
 }
 
-func getConfirmedBookings() ([]models.Booking, error) {
+func getConfirmedBookings(motorID uint) ([]models.Booking, error) {
     var bookings []models.Booking
 
-    // Menggunakan GORM untuk mengambil data booking dengan status "confirmed"
-    if err := config.DB.Where("status = ?", "confirmed").Find(&bookings).Error; err != nil {
+    // Ambil hanya booking dengan status "confirmed" dan motor_id sesuai
+    if err := config.DB.Where("status = ? AND motor_id = ?", "confirmed", motorID).Find(&bookings).Error; err != nil {
         return nil, fmt.Errorf("error querying confirmed bookings: %v", err)
     }
 
     return bookings, nil
 }
 
-func checkBookingConflict(startDate, endDate time.Time) error {
-    // Ambil daftar booking yang statusnya "confirmed"
-    confirmedBookings, err := getConfirmedBookings()
+func checkBookingConflict(startDate, endDate time.Time, motorID uint) error {
+    confirmedBookings, err := getConfirmedBookings(motorID)
     if err != nil {
         return fmt.Errorf("gagal mengambil booking yang terkonfirmasi: %v", err)
     }
 
-    // Periksa apakah rentang waktu booking baru tumpang tindih dengan booking yang sudah ada.
-    // Contoh logika: booking baru harus dimulai setelah 1 hari penuh dari booking yang ada.
     for _, booking := range confirmedBookings {
         if startDate.Before(booking.EndDate.Add(24 * time.Hour)) {
-            return fmt.Errorf("motor pada rentang tanggal %s sampai %s telah dibooking, hanya bisa booking setelah %s", 
-                startDate.Format("2006-01-02 15:04"),
+            return fmt.Errorf(
+                "motor telah dibooking pada rentang tanggal %s hingga %s, hanya bisa booking setelah %s",
+                booking.StartDate.Format("2006-01-02 15:04"),
                 booking.EndDate.Format("2006-01-02 15:04"),
-                booking.EndDate.Add(24*time.Hour).Format("2006-01-02 15:04"))
+                booking.EndDate.Add(24*time.Hour).Format("2006-01-02 15:04"),
+            )
         }
     }
 
@@ -81,7 +82,8 @@ func CreateBooking(c *gin.Context) {
     startDateUTC := bookingInput.StartDate.UTC()
     endDateUTC := startDateUTC.Add(time.Duration(bookingInput.Duration*24) * time.Hour)
 
-    if err := checkBookingConflict(startDateUTC, endDateUTC); err != nil {
+    if err := checkBookingConflict(startDateUTC, endDateUTC, bookingInput.MotorID); err != nil {
+
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
@@ -122,6 +124,7 @@ func CreateBooking(c *gin.Context) {
         StartDate:      startDateUTC,
         EndDate:        endDateUTC,
         PickupLocation: bookingInput.PickupLocation,
+        DropoffLocation: bookingInput.DropoffLocation,
         Status:         "pending",
     }
     *booking.CustomerID = userID.(uint)
@@ -163,7 +166,6 @@ func CreateBooking(c *gin.Context) {
 
 
 func UpdateBookingStatus() {
-    // Mendapatkan waktu saat ini
     now := time.Now()
 
     // Cari booking yang sudah melewati end_date dan statusnya masih "in use"
@@ -173,13 +175,40 @@ func UpdateBookingStatus() {
         return
     }
 
-    // Update status setiap booking yang ditemukan
     for _, booking := range bookings {
         booking.Status = "awaiting return" // status menunggu pengembalian
+
         if err := config.DB.Save(&booking).Error; err != nil {
             log.Printf("Error saat memperbarui status booking ID %d: %v", booking.ID, err)
         } else {
             log.Printf("Booking ID %d status telah diperbarui ke 'awaiting return'", booking.ID)
+
+            // Kirim notifikasi jika CustomerID tersedia
+            if booking.CustomerID != nil {
+                notification := models.Notification{
+                    UserID:    *booking.CustomerID,
+                    Message:   "Waktu sewa Anda telah selesai. Mohon kembalikan motor ke vendor.",
+                    Status:    "unread",
+                    BookingID: booking.ID,
+                    CreatedAt: time.Now(),
+                }
+
+                if err := config.DB.Create(&notification).Error; err != nil {
+                    log.Println("❗ Gagal menyimpan notifikasi:", err)
+                } else {
+                    notifPayload := map[string]interface{}{
+                        "message":    notification.Message,
+                        "booking_id": notification.BookingID,
+                    }
+
+                    notifJSON, err := json.Marshal(notifPayload)
+                    if err != nil {
+                        log.Println("❗ Gagal encode notifikasi ke JSON:", err)
+                    } else {
+                        websocket.SendNotificationToUser(*booking.CustomerID, string(notifJSON))
+                    }
+                }
+            }
         }
     }
 }

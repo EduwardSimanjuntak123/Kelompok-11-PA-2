@@ -1,18 +1,19 @@
 package controllers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+	"rental-backend/config"
+	"rental-backend/models"
+	"rental-backend/websocket"
 	"strconv"
 	"strings"
 	"time"
-
-	"rental-backend/config"
-	"rental-backend/models"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -45,53 +46,74 @@ func GetVendorByID(c *gin.Context) {
 // RegisterVendor mendaftarkan vendor baru
 func RegisterVendor(c *gin.Context) {
 	var input struct {
-		Name            string `json:"name" binding:"required"`
-		Email           string `json:"email" binding:"required,email"`
-		Password        string `json:"password" binding:"required,min=6"`
-		Phone           string `json:"phone" binding:"required"`
-		ShopName        string `json:"shop_name" binding:"required"`
-		ShopAddress     string `json:"shop_address" binding:"required"`
-		ShopDescription string `json:"shop_description"`
-		IDKecamatan     *uint  `json:"id_kecamatan"`
+		Name            string `form:"name" binding:"required"`
+		Email           string `form:"email" binding:"required,email"`
+		Password        string `form:"password" binding:"required,min=6"`
+		Phone           string `form:"phone" binding:"required"`
+		ShopName        string `form:"shop_name" binding:"required"`
+		ShopAddress     string `form:"shop_address" binding:"required"`
+		ShopDescription string `form:"shop_description"`
+		IDKecamatan     *uint  `form:"id_kecamatan"`
 	}
 
-	if err := c.ShouldBindJSON(&input); err != nil {
+	// Ambil form-data (bukan JSON)
+	if err := c.ShouldBind(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Cek apakah email sudah terdaftar
 	var existingUser models.User
 	if err := config.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
-		if existingUser.Role == "vendor" {
-			c.JSON(http.StatusConflict, gin.H{"error": "Email sudah digunakan oleh vendor"})
-			return
-		}
-		if existingUser.Role == "customer" {
-			c.JSON(http.StatusConflict, gin.H{"error": "Email sudah digunakan oleh pelanggan"})
-			return
-		}
-	}
-
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(strings.TrimSpace(input.Password)), bcrypt.DefaultCost)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Terjadi kesalahan dalam hashing password"})
+		c.JSON(http.StatusConflict, gin.H{"error": "Email sudah digunakan"})
 		return
 	}
 
-	fmt.Println("✅ Password hash berhasil dibuat:", string(hashedPassword))
-
-	user := models.User{
-		Name:     input.Name,
-		Email:    input.Email,
-		Password: string(hashedPassword),
-		Role:     "vendor",
-		Phone:    input.Phone,
-		Address:  input.ShopAddress,
-		Status:   "active",
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(strings.TrimSpace(input.Password)), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Kesalahan dalam hashing password"})
+		return
 	}
 
+	// Simpan gambar profil vendor (opsional)
+	profileImage, err := saveUserImage(c, "profile_image") // gunakan input name="profile_image"
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan gambar profil"})
+		return
+	}
+
+	// Generate OTP dan simpan
+	otp := generateOTP()
+	otpRequest := models.OtpRequest{
+		Email:     input.Email,
+		OTP:       otp,
+		ExpiresAt: time.Now().Add(10 * time.Minute),
+	}
+	if err := config.DB.Create(&otpRequest).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data OTP"})
+		return
+	}
+
+	// Kirim OTP ke email
+	if err := SendOTPEmail(input.Email, otp); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengirim OTP ke email"})
+		return
+	}
+
+	// Simpan data user dan vendor dengan status "pending"
+	user := models.User{
+		Name:         input.Name,
+		Email:        input.Email,
+		Password:     string(hashedPassword),
+		Role:         "vendor",
+		Phone:        input.Phone,
+		Address:      input.ShopAddress,
+		Status:       "inactive",
+		ProfileImage: profileImage,
+	}
 	if err := config.DB.Create(&user).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data vendor"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data user"})
 		return
 	}
 
@@ -100,18 +122,20 @@ func RegisterVendor(c *gin.Context) {
 		ShopName:        input.ShopName,
 		ShopAddress:     input.ShopAddress,
 		ShopDescription: input.ShopDescription,
-		Status:          "active",
 		IDKecamatan:     input.IDKecamatan,
+		Status:          "active",
 	}
-
 	if err := config.DB.Create(&vendor).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data vendor"})
 		return
 	}
 
-	fmt.Println("✅ Vendor berhasil terdaftar dengan user ID:", user.ID)
-	c.JSON(http.StatusOK, gin.H{"message": "Pendaftaran vendor berhasil"})
+	c.JSON(http.StatusOK, gin.H{
+		"message":       "OTP telah dikirim ke email, harap verifikasi",
+		"profile_image": profileImage,
+	})
 }
+
 
 // CompleteBooking menyelesaikan booking dan membuat transaksi otomatis
 func CompleteBooking(c *gin.Context) {
@@ -146,6 +170,33 @@ func CompleteBooking(c *gin.Context) {
 	if err := CreateTransaction(booking); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat transaksi otomatis", "details": err.Error()})
 		return
+	}
+
+	// Kirim notifikasi ke customer jika ada
+	if booking.CustomerID != nil {
+		notification := models.Notification{
+			UserID:    *booking.CustomerID,
+			Message:   "Booking Anda telah selesai. Terima kasih telah menggunakan layanan kami!",
+			Status:    "unread",
+			BookingID: booking.ID,
+			CreatedAt: time.Now(),
+		}
+
+		if err := config.DB.Create(&notification).Error; err != nil {
+			log.Println("❗ Gagal menyimpan notifikasi:", err)
+		} else {
+			notifPayload := map[string]interface{}{
+				"message":    notification.Message,
+				"booking_id": notification.BookingID,
+			}
+
+			notifJSON, err := json.Marshal(notifPayload)
+			if err != nil {
+				log.Println("❗ Gagal encode notifikasi ke JSON:", err)
+			} else {
+				websocket.SendNotificationToUser(*booking.CustomerID, string(notifJSON))
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Booking selesai, transaksi dibuat otomatis"})

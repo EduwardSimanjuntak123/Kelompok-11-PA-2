@@ -7,16 +7,24 @@ import 'package:flutter_rentalmotor/user/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/akun.dart';
 import 'package:flutter_rentalmotor/services/vendor_service.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
 
 class DataVendor extends StatefulWidget {
   final int vendorId;
-  const DataVendor({Key? key, required this.vendorId}) : super(key: key);
+  final bool isGuest; // Tambahkan ini
+
+  const DataVendor({
+    Key? key,
+    required this.vendorId,
+    this.isGuest = false, // Default false
+  }) : super(key: key);
 
   @override
   _DataVendorState createState() => _DataVendorState();
 }
 
-class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateMixin {
+class _DataVendorState extends State<DataVendor>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   Map<String, dynamic>? _vendorData;
   List<Map<String, dynamic>> _motorList = [];
@@ -143,7 +151,8 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                           color: Colors.red.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.error_outline, size: 60, color: Colors.red),
+                        child: Icon(Icons.error_outline,
+                            size: 60, color: Colors.red),
                       ),
                       SizedBox(height: 20),
                       Text(
@@ -188,7 +197,8 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.refresh, color: Colors.white, size: 18),
+                                  Icon(Icons.refresh,
+                                      color: Colors.white, size: 18),
                                   SizedBox(width: 8),
                                   Text(
                                     "Try Again",
@@ -221,7 +231,9 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                                 ? Image.network(
                                     fullVendorImageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Container(
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            Container(
                                       color: Colors.grey[300],
                                       child: Icon(
                                         Icons.store,
@@ -263,7 +275,8 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: primaryBlue,
                                     borderRadius: BorderRadius.circular(20),
@@ -279,7 +292,8 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  _vendorData?['shop_name'] ?? "Nama Tidak Diketahui",
+                                  _vendorData?['shop_name'] ??
+                                      "Nama Tidak Diketahui",
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -296,11 +310,13 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                                 SizedBox(height: 8),
                                 Row(
                                   children: [
-                                    Icon(Icons.location_on, color: Colors.white, size: 16),
+                                    Icon(Icons.location_on,
+                                        color: Colors.white, size: 16),
                                     SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        _vendorData?['shop_address'] ?? "Alamat Tidak Diketahui",
+                                        _vendorData?['shop_address'] ??
+                                            "Alamat Tidak Diketahui",
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 14,
@@ -316,10 +332,14 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                                   children: [
                                     ...List.generate(5, (index) {
                                       double rating = double.tryParse(
-                                              _vendorData?['rating']?.toString() ?? "0") ??
+                                              _vendorData?['rating']
+                                                      ?.toString() ??
+                                                  "0") ??
                                           0;
                                       return Icon(
-                                        index < rating ? Icons.star : Icons.star_border,
+                                        index < rating
+                                            ? Icons.star
+                                            : Icons.star_border,
                                         color: Colors.amber,
                                         size: 18,
                                       );
@@ -341,7 +361,7 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                         ],
                       ),
                     ),
-                    
+
                     // Tab Bar
                     Container(
                       decoration: BoxDecoration(
@@ -365,7 +385,7 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                         ],
                       ),
                     ),
-                    
+
                     // Tab Content
                     Expanded(
                       child: TabBarView(
@@ -380,7 +400,8 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                                 _buildSectionTitle("Tentang Vendor"),
                                 SizedBox(height: 16),
                                 Text(
-                                  _vendorData?['shop_description'] ?? "Deskripsi tidak tersedia",
+                                  _vendorData?['shop_description'] ??
+                                      "Deskripsi tidak tersedia",
                                   style: TextStyle(
                                     fontSize: 14,
                                     height: 1.6,
@@ -390,24 +411,27 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                                 SizedBox(height: 24),
                                 _buildSectionTitle("Informasi Kontak"),
                                 SizedBox(height: 16),
-                                _buildContactItem(Icons.phone, "Phone", _vendorData?['phone'] ?? "Tidak tersedia"),
-                                _buildContactItem(Icons.email, "Email", _vendorData?['email'] ?? "Tidak tersedia"),
-                                _buildContactItem(Icons.access_time, "Jam Operasional", "08:00 - 20:00"),
+                                _buildContactItem(Icons.phone, "Phone",
+                                    _vendorData?['phone'] ?? "Tidak tersedia"),
+                                _buildContactItem(Icons.email, "Email",
+                                    _vendorData?['email'] ?? "Tidak tersedia"),
+                                _buildContactItem(Icons.access_time,
+                                    "Jam Operasional", "08:00 - 20:00"),
                                 SizedBox(height: 24),
                                 _buildSectionTitle("Lokasi"),
                                 SizedBox(height: 16),
                                 // Changed location display to match contact information style
                                 _buildContactItem(
-                                  Icons.location_on, 
-                                  "Alamat", 
-                                  _vendorData?['shop_address'] ?? "Alamat tidak tersedia"
-                                ),
+                                    Icons.location_on,
+                                    "Alamat",
+                                    _vendorData?['shop_address'] ??
+                                        "Alamat tidak tersedia"),
                                 SizedBox(height: 20),
                                 _buildContactButton(),
                               ],
                             ),
                           ),
-                          
+
                           // Motors Tab
                           _motorList.isEmpty
                               ? Center(
@@ -458,54 +482,10 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                     ),
                   ],
                 ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: Offset(0, -5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            selectedItemColor: primaryBlue,
-            unselectedItemColor: Colors.grey,
-            backgroundColor: Colors.white,
-            elevation: 0,
-            showSelectedLabels: true,
-            showUnselectedLabels: true,
-            onTap: _onItemTapped,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: "Beranda",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.receipt_long_outlined),
-                activeIcon: Icon(Icons.receipt_long),
-                label: "Pesanan",
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outlined),
-                activeIcon: Icon(Icons.person),
-                label: "Akun",
-              ),
-            ],
-          ),
-        ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        isGuest: widget.isGuest,
       ),
     );
   }
@@ -700,7 +680,7 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                       ),
                     ),
             ),
-            
+
             // Motor Info
             Expanded(
               child: Padding(
@@ -719,7 +699,8 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                     SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.monetization_on, size: 16, color: Colors.green[700]),
+                        Icon(Icons.monetization_on,
+                            size: 16, color: Colors.green[700]),
                         SizedBox(width: 6),
                         Text(
                           "${formatRupiah(int.parse(motor["price"].toString()))}/hari",
@@ -747,7 +728,8 @@ class _DataVendorState extends State<DataVendor> with SingleTickerProviderStateM
                     ),
                     SizedBox(height: 12),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [Color(0xFF3E8EDE), primaryBlue],

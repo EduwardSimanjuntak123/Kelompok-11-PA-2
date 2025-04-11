@@ -96,7 +96,7 @@ func RegisterCustomer(c *gin.Context) {
 		Phone:        input.Phone,
 		Address:      input.Address,
 		ProfileImage: profileImage, // Simpan gambar jika ada
-		Status:       "pending",
+		Status:       "inactive",
 	}
 	if err := config.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data pelanggan"})

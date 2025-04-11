@@ -103,33 +103,57 @@ func RejectBooking(c *gin.Context) {
 		return
 	}
 
-	// Pastikan hanya booking dengan status "pending" yang dapat dikonfirmasi
+	// Pastikan hanya booking dengan status "pending" yang dapat ditolak
 	if booking.Status != "pending" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Hanya booking dengan status 'pending' yang dapat ditolak"})
 		return
 	}
 
-	// Log untuk memastikan ID yang dibandingkan
-	log.Printf("Booking VendorID: %d", booking.VendorID)
-	log.Printf("Authenticated UserID: %d", userID)
-
-	// Cari vendor yang terkait dengan user_id (vendor_id)
+	// Cari vendor yang terkait dengan user_id
 	var vendor models.Vendor
 	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
 		return
 	}
 
-	// Pastikan vendor yang mengonfirmasi adalah pemilik motor yang sesuai
+	// Pastikan vendor yang menolak adalah pemilik booking
 	if booking.VendorID != vendor.ID {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk menolak booking ini"})
 		return
 	}
 
-	// Ubah status booking menjadi "confirmed"
+	// Ubah status booking menjadi "rejected"
 	if err := config.DB.Model(&models.Booking{}).Where("id = ?", id).Update("status", "rejected").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mmenolak booking"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menolak booking"})
 		return
+	}
+
+	// Kirim notifikasi jika customer ID tersedia
+	if booking.CustomerID != nil {
+		notification := models.Notification{
+			UserID:    *booking.CustomerID,
+			Message:   "Maaf, booking Anda ditolak oleh vendor.",
+			Status:    "unread",
+			BookingID: booking.ID,
+			CreatedAt: time.Now(),
+		}
+
+		if err := config.DB.Create(&notification).Error; err != nil {
+			log.Println("❗ Gagal menyimpan notifikasi:", err)
+		} else {
+			// Kirim notifikasi real-time ke Flutter via WebSocket
+			notifPayload := map[string]interface{}{
+				"message":    notification.Message,
+				"booking_id": notification.BookingID,
+			}
+
+			notifJSON, err := json.Marshal(notifPayload)
+			if err != nil {
+				log.Println("❗ Gagal encode notifikasi ke JSON:", err)
+			} else {
+				websocket.SendNotificationToUser(*booking.CustomerID, string(notifJSON))
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil ditolak"})
@@ -302,8 +326,7 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 
-	// Parse waktu start_date dan end_date dengan format ISO8601
-	// Expected format from the form: "2025-04-01T00:00:00Z" (adjust layout if needed)
+	// Parse waktu start_date dan end_date
 	layout := "2006-01-02T15:04:05Z07:00"
 	startDate, err := time.Parse(layout, startDateStr)
 	if err != nil {
@@ -345,10 +368,9 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 
-	// Mulai transaksi
 	tx := config.DB.Begin()
 
-	// Validasi customer_name untuk booking manual tanpa akun
+	// Validasi customer_name
 	finalCustomerName := strings.TrimSpace(customerName)
 	if finalCustomerName == "" {
 		tx.Rollback()
@@ -364,19 +386,20 @@ func CreateManualBooking(c *gin.Context) {
 		return
 	}
 
-	// Pastikan motor dimiliki oleh vendor yang sedang login
+	// Pastikan motor milik vendor yang sedang login
 	if motor.VendorID != vendor.ID {
 		tx.Rollback()
 		c.JSON(http.StatusForbidden, gin.H{"error": "Anda tidak memiliki izin untuk menyewakan motor ini"})
 		return
 	}
 
-	// Validasi rentang tanggal
+	// Validasi tanggal
 	if endDate.Before(startDate) {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Tanggal booking tidak valid: end_date harus setelah start_date"})
 		return
 	}
+
 	duration := int(endDate.Sub(startDate).Hours() / 24)
 	if duration <= 0 {
 		tx.Rollback()
@@ -385,26 +408,16 @@ func CreateManualBooking(c *gin.Context) {
 	}
 	totalPrice := float64(duration) * motor.Price
 
-	// Validasi overlap: cek apakah motor sudah dibooking (status "confirmed") pada periode ini
-	var overlappingCount int64
-	if err := tx.Model(&models.Booking{}).
-		Where("motor_id = ? AND status = 'confirmed'", motor.ID).
-		Where("(start_date <= ? AND end_date >= ?)", endDate, startDate).
-		Count(&overlappingCount).Error; err != nil {
+	// ✅ Gunakan checkBookingConflict
+	if err := checkBookingConflict(startDate, endDate, uint(motorID)); err != nil {
 		tx.Rollback()
-		log.Printf("Error checking motor availability: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memeriksa ketersediaan motor"})
-		return
-	}
-	if overlappingCount > 0 {
-		tx.Rollback()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Motor sudah dibooking pada rentang tanggal tersebut"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Buat objek booking dengan status otomatis "confirmed"
+	// Buat booking
 	booking := models.Booking{
-		CustomerID:     nil, // Booking manual tanpa akun customer
+		CustomerID:     nil,
 		CustomerName:   finalCustomerName,
 		VendorID:       vendor.ID,
 		MotorID:        uint(motorID),
@@ -415,31 +428,31 @@ func CreateManualBooking(c *gin.Context) {
 		Status:         "confirmed",
 	}
 
-	// Tangani file gambar untuk PhotoID (jika ada)
+	// Upload photo_id (opsional)
 	if file, err := c.FormFile("photo_id"); err == nil {
-		photoPath, err := saveBookingImage(c, file)
-		if err != nil {
+		if path, err := saveBookingImage(c, file); err == nil {
+			booking.PhotoID = path
+		} else {
 			tx.Rollback()
 			log.Printf("Error saving photo_id: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan foto ID"})
 			return
 		}
-		booking.PhotoID = photoPath
 	}
 
-	// Tangani file gambar untuk KtpID (jika ada)
+	// Upload ktp_id (opsional)
 	if file, err := c.FormFile("ktp_id"); err == nil {
-		ktpPath, err := saveBookingImage(c, file)
-		if err != nil {
+		if path, err := saveBookingImage(c, file); err == nil {
+			booking.KtpID = path
+		} else {
 			tx.Rollback()
 			log.Printf("Error saving ktp_id: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan foto KTP"})
 			return
 		}
-		booking.KtpID = ktpPath
 	}
 
-	// Simpan booking ke database
+	// Simpan ke database
 	if err := tx.Create(&booking).Error; err != nil {
 		tx.Rollback()
 		log.Printf("Error inserting manual booking: %v", err)
@@ -448,8 +461,8 @@ func CreateManualBooking(c *gin.Context) {
 	}
 	tx.Commit()
 
-	// Siapkan respons
-	response := gin.H{
+	// Response
+	c.JSON(http.StatusOK, gin.H{
 		"message":         "Booking manual berhasil dibuat",
 		"booking_id":      booking.ID,
 		"customer_name":   booking.CustomerName,
@@ -469,8 +482,6 @@ func CreateManualBooking(c *gin.Context) {
 		},
 		"photo_id": booking.PhotoID,
 		"ktp_id":   booking.KtpID,
-	}
-
-	log.Printf("Manual booking successfully created: %+v", response)
-	c.JSON(http.StatusOK, response)
+	})
 }
+
