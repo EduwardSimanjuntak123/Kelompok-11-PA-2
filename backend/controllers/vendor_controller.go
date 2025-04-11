@@ -149,8 +149,8 @@ func CompleteBooking(c *gin.Context) {
 	}
 
 	// Pastikan status booking adalah "confirmed"
-	if booking.Status != "confirmed" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking hanya dapat diselesaikan jika statusnya 'confirmed'"})
+	if booking.Status != "awaiting return" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Booking hanya dapat diselesaikan jika statusnya 'awaiting return'"})
 		return
 	}
 
