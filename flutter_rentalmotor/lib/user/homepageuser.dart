@@ -1,11 +1,11 @@
 import 'dart:convert'; // Untuk JSON decoding
 import 'package:flutter/material.dart';
-import 'package:flutter_rentalmotor/user/detailmotor.dart';
-import 'package:flutter_rentalmotor/user/notifikasi.dart';
-import 'package:flutter_rentalmotor/user/chat.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
-import 'package:flutter_rentalmotor/user/datavendor.dart';
+import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
+import 'package:flutter_rentalmotor/user/notifikasi/notifikasi.dart';
+import 'package:flutter_rentalmotor/user/chat/chat.dart';
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/homepage_api.dart';

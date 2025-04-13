@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_rentalmotor/user/detailmotor.dart';
+import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import 'package:flutter_rentalmotor/user/chat/chat_page.dart';
 import 'package:flutter_rentalmotor/services/vendor_service.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
+import 'package:flutter_rentalmotor/services/chat_services.dart';
 
 class DataVendor extends StatefulWidget {
   final int vendorId;
@@ -419,6 +421,7 @@ class _DataVendorState extends State<DataVendor>
                                     "Jam Operasional", "08:00 - 20:00"),
                                 SizedBox(height: 24),
                                 _buildSectionTitle("Lokasi"),
+
                                 SizedBox(height: 16),
                                 // Changed location display to match contact information style
                                 _buildContactItem(
@@ -428,6 +431,14 @@ class _DataVendorState extends State<DataVendor>
                                         "Alamat tidak tersedia"),
                                 SizedBox(height: 20),
                                 _buildContactButton(),
+                                SizedBox(height: 20),
+                                ChatVendorButton(
+                                  vendorId: _vendorData?['user_id'] ??
+                                      _vendorData?['id'] ??
+                                      0,
+                                  vendorData:
+                                      _vendorData, // Kirim vendorData ke ChatVendorButton
+                                ),
                               ],
                             ),
                           ),
@@ -759,6 +770,107 @@ class _DataVendorState extends State<DataVendor>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class ChatVendorButton extends StatelessWidget {
+  final int vendorId; // This should be passed from the parent widget
+  final Map<String, dynamic>? vendorData; // Tambahkan parameter ini
+
+  const ChatVendorButton({
+    Key? key,
+    required this.vendorId, // Make it required
+    required this.vendorData, // Tambahkan ini
+  }) : super(key: key);
+
+  Future<void> _startChat(BuildContext context) async {
+    try {
+      final chatRoom = await ChatService.getOrCreateChatRoom(
+        vendorId: vendorId, // Use the vendorId passed to the widget
+      );
+
+      if (chatRoom != null) {
+        final prefs = await SharedPreferences.getInstance();
+        final customerId = prefs.getInt('user_id');
+
+        if (customerId != null) {
+          // Ambil receiverId dari vendorData
+          final receiverId = vendorData?['user_id'] ?? vendorData?['id'] ?? 0;
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatPage(
+                chatRoomId: chatRoom['id'],
+                senderId: customerId,
+                receiverId: receiverId, // Kirim receiverId yang benar
+                receiverName: vendorData?['shop_name'] ?? 'Nama Penerima',
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Silakan login untuk mulai chat')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memulai chat')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 55,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF3E8EDE), Color(0xFF2C567E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0xFF2C567E).withOpacity(0.3),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _startChat(context),
+          borderRadius: BorderRadius.circular(15),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.chat, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Text(
+                  "Chat Vendor",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
