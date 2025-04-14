@@ -43,15 +43,6 @@
                     <input name="price" type="number" class="w-full border p-2 rounded" min="1000">
                     <small class="text-red-500 text-sm error-message" data-field="price"></small>
 
-                    <label class="block text-gray-700 mt-2">Status</label>
-                    <select name="status" class="w-full border p-2 rounded">
-                        <option value="">-- Pilih Status --</option>
-                        <option value="available">Tersedia</option>
-                        <option value="booked">Dibooking</option>
-                        <option value="unavailable">Bermasalah</option>
-                    </select>
-                    <small class="text-red-500 text-sm error-message" data-field="status"></small>
-
                     <label class="block text-gray-700 mt-2">Deskripsi</label>
                     <textarea name="description" rows="3" class="w-full border p-2 rounded"></textarea>
                     <small class="text-red-500 text-sm error-message" data-field="description"></small>

@@ -1,4 +1,5 @@
-package controllers
+package websocketupdatemotor
+
 
 import (
 	"net/http"

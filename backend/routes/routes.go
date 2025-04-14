@@ -19,13 +19,25 @@ func SetupRoutes(router *gin.Engine) {
 	AdminRoutes(router)
 	MotorRoutes(router)
 	TransactionRoutes(router)
-	ChatRoutes(router)
 
 
 	// WebSocket route
-	router.GET("/ws/notifikasi", controllers.WebSocketNotifikasiHandler)
+	router.GET("/ws/notifikasi", websocketupdatemotor.WebSocketNotifikasiHandler)
 	router.GET("/ws/motor", func(c *gin.Context) {
 		websocketupdatemotor.HandleMotorWebSocket(c.Writer, c.Request)
 	})
+	// Route untuk WebSocket chat
+	router.GET("/ws/chat", controllers.ChatWebSocket)
+
+	// Route untuk kirim pesan (hanya customer dan vendor yang bisa kirim)
+	router.POST("/chat/message",  controllers.SendMessage)
+
+	// Route untuk ambil pesan berdasarkan chat_room_id (harus login)
+	router.GET("/chat/messages",  controllers.GetChatMessages)
+
+	// Route untuk dapat/buat ChatRoom (harus login)
+	router.POST("/chat/room",  controllers.GetOrCreateChatRoom)
+
+	router.GET("/chat/rooms", controllers.GetUserChatRooms)
 
 }

@@ -8,9 +8,12 @@ class HomePageApi {
   // Mengambil daftar vendor dari API
   Future<List<Map<String, dynamic>>> fetchVendors() async {
     final response = await http.get(Uri.parse("$baseUrl/vendor"));
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+      print(
+          "Decoded data: ${jsonEncode(data)}"); // Menampilkan data JSON yang didekode
       return List<Map<String, dynamic>>.from(
           data['data']); // Sesuaikan dengan struktur JSON API
     } else {

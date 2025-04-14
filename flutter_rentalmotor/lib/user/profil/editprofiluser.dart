@@ -7,9 +7,9 @@ import 'package:path/path.dart' as p; // Aliasing import
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 
 class EditProfileuser extends StatefulWidget {
   final String name;

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
-import 'package:flutter_rentalmotor/user/sewamotor.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
+import 'package:flutter_rentalmotor/user/booking_motor/sewamotor.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
 const String baseUrl = ApiConfig.baseUrl;

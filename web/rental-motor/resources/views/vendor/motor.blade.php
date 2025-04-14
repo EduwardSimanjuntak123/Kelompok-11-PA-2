@@ -244,7 +244,6 @@
           const type = form.type.value;
           const color = form.color.value.trim();
           const price = parseFloat(form.price.value);
-          const status = form.status.value;
           const description = form.description.value.trim();
           const image = form.image.files[0];
   
@@ -262,7 +261,6 @@
           if (!['matic', 'manual', 'kopling', 'vespa'].includes(type)) setError('type', 'Tipe harus dipilih.');
           if (!color) setError('color', 'Warna harus diisi.');
           if (isNaN(price)) setError('price', 'Harga harus diisi.');
-          if (!['available', 'booked', 'unavailable'].includes(status)) setError('status', 'Status harus dipilih.');
           if (!description) setError('description', 'Deskripsi tidak boleh kosong.');
   
           if (image) {

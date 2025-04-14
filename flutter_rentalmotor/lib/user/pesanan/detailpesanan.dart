@@ -5,8 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart' as home;
-import 'package:flutter_rentalmotor/user/akun.dart';
-import 'package:flutter_rentalmotor/user/pesanan.dart';
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import 'package:flutter_rentalmotor/user/pesanan/pesanan.dart';
 
 class DetailPesanan extends StatefulWidget {
   @override

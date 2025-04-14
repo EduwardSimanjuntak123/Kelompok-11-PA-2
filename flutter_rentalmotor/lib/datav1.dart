@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/detailm.dart';
 import 'package:flutter_rentalmotor/home.dart';
-import 'package:flutter_rentalmotor/user/ulasanpengguna.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/ulasan/ulasanpengguna.dart';
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 
 class DataV1 extends StatefulWidget {
