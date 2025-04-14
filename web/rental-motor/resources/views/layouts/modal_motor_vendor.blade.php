@@ -1,4 +1,4 @@
-<!-- Modal Tambah Motor (rating dihapus) -->
+<!-- Modal Tambah Motor -->
 <div id="addModal" class="hidden fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
     <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
         <h2 class="text-2xl font-bold text-gray-800 mb-4">Tambah Motor</h2>
@@ -7,46 +7,58 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-gray-700">Nama</label>
-                    <input name="name" type="text" class="w-full border p-2 rounded" required autofocus>
+                    <input name="name" type="text" class="w-full border p-2 rounded">
+                    <small class="text-red-500 text-sm error-message" data-field="name"></small>
 
                     <label class="block text-gray-700 mt-2">Brand</label>
-                    <input name="brand" type="text" class="w-full border p-2 rounded" required>
+                    <input name="brand" type="text" class="w-full border p-2 rounded">
+                    <small class="text-red-500 text-sm error-message" data-field="brand"></small>
 
                     <label class="block text-gray-700 mt-2">Model</label>
-                    <input name="model" type="text" class="w-full border p-2 rounded" required>
+                    <input name="model" type="text" class="w-full border p-2 rounded">
+                    <small class="text-red-500 text-sm error-message" data-field="model"></small>
 
                     <label class="block text-gray-700 mt-2">Tahun</label>
                     <input name="year" type="number" class="w-full border p-2 rounded" min="1900"
-                        max="{{ date('Y') }}" required>
+                        max="{{ date('Y') }}">
+                    <small class="text-red-500 text-sm error-message" data-field="year"></small>
 
                     <label class="block text-gray-700 mt-2">Tipe</label>
-                    <select id="editMotortype" name="type" class="w-full border p-2 rounded" required>
+                    <select name="type" class="w-full border p-2 rounded">
+                        <option value="">-- Pilih Tipe --</option>
                         <option value="matic">Matic</option>
                         <option value="manual">Manual</option>
                         <option value="kopling">Kopling</option>
                         <option value="vespa">Vespa</option>
                     </select>
+                    <small class="text-red-500 text-sm error-message" data-field="type"></small>
                 </div>
 
                 <div>
                     <label class="block text-gray-700">Warna</label>
-                    <input name="color" type="text" class="w-full border p-2 rounded" required>
+                    <input name="color" type="text" class="w-full border p-2 rounded">
+                    <small class="text-red-500 text-sm error-message" data-field="color"></small>
 
                     <label class="block text-gray-700 mt-2">Harga</label>
-                    <input name="price" type="number" class="w-full border p-2 rounded" min="1000" required>
+                    <input name="price" type="number" class="w-full border p-2 rounded" min="1000">
+                    <small class="text-red-500 text-sm error-message" data-field="price"></small>
 
                     <label class="block text-gray-700 mt-2">Status</label>
-                    <select name="status" class="w-full border p-2 rounded" required>
+                    <select name="status" class="w-full border p-2 rounded">
+                        <option value="">-- Pilih Status --</option>
                         <option value="available">Tersedia</option>
                         <option value="booked">Dibooking</option>
                         <option value="unavailable">Bermasalah</option>
                     </select>
+                    <small class="text-red-500 text-sm error-message" data-field="status"></small>
 
                     <label class="block text-gray-700 mt-2">Deskripsi</label>
-                    <textarea name="description" rows="3" class="w-full border p-2 rounded" required></textarea>
+                    <textarea name="description" rows="3" class="w-full border p-2 rounded"></textarea>
+                    <small class="text-red-500 text-sm error-message" data-field="description"></small>
 
                     <label class="block text-gray-700 mt-2">Gambar Motor</label>
                     <input name="image" type="file" class="w-full border p-2 rounded">
+                    <small class="text-red-500 text-sm error-message" data-field="image"></small>
                 </div>
             </div>
 
@@ -59,6 +71,8 @@
     </div>
 </div>
 
+
+
 <!-- Modal Edit Motor (rating dihapus) -->
 <div id="editModal" class="hidden fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
     <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
@@ -69,20 +83,20 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-gray-700">Nama</label>
-                    <input id="editMotorName" name="name" type="text" class="w-full border p-2 rounded" required>
+                    <input id="editMotorName" name="name" type="text" class="w-full border p-2 rounded">
 
                     <label class="block text-gray-700 mt-2">Brand</label>
-                    <input id="editMotorBrand" name="brand" type="text" class="w-full border p-2 rounded" required>
+                    <input id="editMotorBrand" name="brand" type="text" class="w-full border p-2 rounded">
 
                     <label class="block text-gray-700 mt-2">Model</label>
-                    <input id="editMotorModel" name="model" type="text" class="w-full border p-2 rounded" required>
+                    <input id="editMotorModel" name="model" type="text" class="w-full border p-2 rounded">
 
                     <label class="block text-gray-700 mt-2">Tahun</label>
                     <input id="editMotorYear" name="year" type="number" class="w-full border p-2 rounded"
-                        min="1900" max="{{ date('Y') }}" required>
+                        min="1900" max="{{ date('Y') }}">
 
                     <label class="block text-gray-700 mt-2">Tipe</label>
-                    <select id="editMotortype" name="type" class="w-full border p-2 rounded" required>
+                    <select id="editMotortype" name="type" class="w-full border p-2 rounded">
                         <option value="matic">Matic</option>
                         <option value="manual">Manual</option>
                         <option value="kopling">Kopling</option>
@@ -92,22 +106,21 @@
 
                 <div>
                     <label class="block text-gray-700">Warna</label>
-                    <input id="editMotorColor" name="color" type="text" class="w-full border p-2 rounded"
-                        required>
+                    <input id="editMotorColor" name="color" type="text" class="w-full border p-2 rounded">
 
                     <label class="block text-gray-700 mt-2">Harga</label>
                     <input id="editMotorPrice" name="price" type="number" class="w-full border p-2 rounded"
-                        min="1000" required>
+                        min="1000">
 
                     <label class="block text-gray-700 mt-2">Status</label>
-                    <select id="editMotorStatus" name="status" class="w-full border p-2 rounded" required>
+                    <select id="editMotorStatus" name="status" class="w-full border p-2 rounded">
                         <option value="available">Tersedia</option>
                         <option value="booked">Dibooking</option>
                         <option value="unavailable">Bermasalah</option>
                     </select>
 
                     <label class="block text-gray-700 mt-2">Deskripsi</label>
-                    <textarea id="editMotorDescription" name="description" rows="3" class="w-full border p-2 rounded" required></textarea>
+                    <textarea id="editMotorDescription" name="description" rows="3" class="w-full border p-2 rounded"></textarea>
 
                     <label class="block text-gray-700 mt-2">Gambar Motor</label>
                     <input id="editMotorImage" name="image" type="file" class="w-full border p-2 rounded">
@@ -138,3 +151,5 @@
         </form>
     </div>
 </div>
+
+
