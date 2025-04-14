@@ -11,43 +11,37 @@
 
 
     <div class="container mx-auto p-8">
-        <h2 class="text-4xl font-extrabold mb-6 text-center text-gray-800">📋 Kelola Pemesanan</h2>
+        <h2 class="text-4xl font-extrabold mb-6 text-center text-gray-800">Kelola Pemesanan</h2>
 
-        <!-- Nav Filter Menggunakan Bootstrap Nav-Pills -->
-        <ul class="nav nav-pills justify-content-center mb-4" id="statusTabs">
-            <li class="nav-item">
-                <a class="nav-link active" data-filter="all" href="#">Semua</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-filter="pending" href="#">Menunggu Konfirmasi</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-filter="confirmed" href="#">Dikonfirmasi</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-filter="in transit" href="#">Motor Sedang Diantar</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-filter="in use" href="#">Sedang Digunakan</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-filter="awaiting return" href="#">Menunggu Pengembalian</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-filter="completed" href="#">Pesanan Selesai</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" data-filter="rejected" href="#">Booking Ditolak</a>
-            </li>
-        </ul>
+        <!-- Filter dan Booking Manual dalam satu baris -->
+        <div class="mb-6 flex items-center justify-between">
+            <div class="relative w-60">
+                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 019 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+                </svg>
+                <select id="statusFilter"
+                    class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    <option value="all">Semua Status</option>
+                    <option value="pending">Menunggu Konfirmasi</option>
+                    <option value="confirmed">Dikonfirmasi</option>
+                    <option value="in transit">Motor Sedang Diantar</option>
+                    <option value="in use">Sedang Digunakan</option>
+                    <option value="awaiting return">Menunggu Pengembalian</option>
+                    <option value="completed">Pesanan Selesai</option>
+                    <option value="rejected">Booking Ditolak</option>
+                </select>
+            </div>
 
-        <!-- Button untuk Booking Manual -->
-        <div class="mb-6 flex justify-end">
+
+            <!-- Tombol Booking Manual -->
             <button onclick="openModal('addBookingModal')"
                 class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
                 + Booking Manual
             </button>
         </div>
+
 
         @if (empty($bookings) || count($bookings) == 0)
             <p class="text-center text-gray-500">Tidak ada pemesanan untuk ditampilkan.</p>
@@ -71,25 +65,36 @@
 
                                 <!-- Detail Pemesanan -->
                                 <td class="py-3 px-4 text-left align-top">
-                                    <div><strong>Customer:</strong> {{ $pesanan['customer_name'] ?? '-' }}</div>
-                                    <div><strong>Tanggal Booking:</strong> {{ $pesanan['booking_date'] ?? '-' }}</div>
-                                    <div><strong>Tanggal Mulai:</strong> {{ $pesanan['start_date'] ?? '-' }}</div>
-                                    <div><strong>Tanggal Selesai:</strong> {{ $pesanan['end_date'] ?? '-' }}</div>
-                                    <div><strong>Lokasi Jemput:</strong> {{ $pesanan['pickup_location'] ?? '-' }}</div>
+                                    <div><strong class="font-bold">Customer:</strong> {{ $pesanan['customer_name'] ?? '-' }}
+                                    </div>
+                                    <div><strong class="font-bold">Tanggal Booking:</strong>
+                                        {{ $pesanan['booking_date'] ?? '-' }}</div>
+                                    <div><strong class="font-bold">Tanggal Mulai:</strong>
+                                        {{ $pesanan['start_date'] ?? '-' }}</div>
+                                    <div><strong class="font-bold">Tanggal Selesai:</strong>
+                                        {{ $pesanan['end_date'] ?? '-' }}</div>
+                                    <div><strong class="font-bold">Lokasi Jemput:</strong>
+                                        {{ $pesanan['pickup_location'] ?? '-' }}</div>
                                 </td>
 
                                 <!-- Detail Motor -->
                                 <td class="py-3 px-4 text-left align-top">
                                     @if (isset($pesanan['motor']))
-                                        <div><strong>Nama:</strong> {{ $pesanan['motor']['name'] ?? '-' }}</div>
-                                        <div><strong>Brand:</strong> {{ $pesanan['motor']['brand'] ?? '-' }}</div>
-                                        <div><strong>Model:</strong> {{ $pesanan['motor']['model'] ?? '-' }}</div>
-                                        <div><strong>Tahun:</strong> {{ $pesanan['motor']['year'] ?? '-' }}</div>
-                                        <div><strong>Warna:</strong> {{ $pesanan['motor']['warna'] ?? '-' }}</div>
+                                        <div><strong class="font-bold">Nama:</strong> {{ $pesanan['motor']['name'] ?? '-' }}
+                                        </div>
+                                        <div><strong class="font-bold">Brand:</strong>
+                                            {{ $pesanan['motor']['brand'] ?? '-' }}</div>
+                                        <div><strong class="font-bold">Model:</strong>
+                                            {{ $pesanan['motor']['model'] ?? '-' }}</div>
+                                        <div><strong class="font-bold">Tahun:</strong>
+                                            {{ $pesanan['motor']['year'] ?? '-' }}</div>
+                                        <div><strong class="font-bold">Warna:</strong>
+                                            {{ $pesanan['motor']['warna'] ?? '-' }}</div>
                                     @else
                                         <div>Data motor tidak tersedia.</div>
                                     @endif
                                 </td>
+
 
                                 <!-- Gambar Motor -->
                                 <td class="py-3 px-4 text-center align-top">
@@ -366,6 +371,20 @@
                     confirmButtonColor: '#d33'
                 });
             }
+
+            document.getElementById('statusFilter').addEventListener('change', function() {
+                const selected = this.value;
+                const rows = document.querySelectorAll('tbody tr');
+
+                rows.forEach(row => {
+                    const status = row.getAttribute('data-status');
+                    if (selected === 'all' || status === selected) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
 
             // Update Status Booking
             function handleUpdateBooking(bookingId, action) {
