@@ -40,229 +40,220 @@
 
         {{-- Tabel --}}
         <div class="overflow-x-auto w-full">
-            <table
-              id="motorTable"
-              class="w-full table-auto bg-white divide-y divide-gray-200 shadow rounded-lg"
-            >
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Gambar</th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Informasi Motor</th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
-                  <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                  <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Harga</th>
-                  <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-100">
-                @foreach ($motors as $motor)
-                  <tr class="hover:bg-gray-50">
-                    {{-- Gambar --}}
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      @if (!empty($motor['image_url']))
-                        <img
-                          src="{{ $motor['image_url'] }}"
-                          alt="Motor"
-                          class="h-12 w-16 sm:h-16 sm:w-24 object-cover rounded-md"
-                        >
-                      @else
-                        <span class="text-gray-400 italic">–</span>
-                      @endif
-                    </td>
-          
-                    {{-- Informasi Motor --}}
-                    <td class="px-4 py-2 text-sm text-gray-700">
-                      <div class="flex flex-col space-y-1">
-                        <span><strong>Nama:</strong> {{ $motor['name'] }}</span>
-                        <span><strong>Brand:</strong> {{ $motor['brand'] }}</span>
-                        <span><strong>Model:</strong> {{ $motor['model'] }}</span>
-                        <span><strong>Tahun:</strong> {{ $motor['year'] }}</span>
-                        <span><strong>Warna:</strong> {{ $motor['color'] }}</span>
-                        <span><strong>Deskripsi:</strong> {{ $motor['description'] }}</span>
-                      </div>
-                    </td>
-          
-                    {{-- Tipe --}}
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      <span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
-                        {{ $motor['type'] }}
-                      </span>
-                    </td>
-          
-                    {{-- Rating --}}
-                    <td class="px-4 py-2 whitespace-nowrap">
-                      <div class="flex items-center space-x-1">
-                        @for ($i = 0; $i < $motor['rating']; $i++)
-                          <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162
-                                 c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
-                                 3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
-                                 0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
-                                 00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
-                                 0 00.95-.69l1.286-3.96z"
-                            />
-                          </svg>
-                        @endfor
-                        @for ($i = $motor['rating']; $i < 5; $i++)
-                          <svg class="h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162
-                                 c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
-                                 3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
-                                 0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
-                                 00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
-                                 0 00.95-.69l1.286-3.96z"
-                            />
-                          </svg>
-                        @endfor
-                      </div>
-                    </td>
-          
-                    {{-- Harga --}}
-                    <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-semibold text-green-600">
-                      Rp {{ number_format($motor['price'], 0, ',', '.') }}
-                    </td>
-          
-                    {{-- Aksi --}}
-                    <td class="px-4 py-2 whitespace-nowrap text-center text-sm font-medium space-x-2">
-                      <button
-                        onclick="openEditModal({{ json_encode($motor) }})"
-                        class="inline-flex items-center px-3 py-2 border border-blue-500 rounded hover:bg-blue-50"
-                      >
-                        <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15.232 5.232l3.536 3.536M9 11l3 3L21 5l-3-3L9 11z"/>
-                        </svg>
-                      </button>
-                      <button
-                        onclick="openDeleteModal({{ json_encode($motor) }})"
-                        class="inline-flex items-center px-3 py-2 border border-red-500 rounded hover:bg-red-50"
-                      >
-                        <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
-                                   01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
-                                   1 0 00-1-1m-4 0h4"/>
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                @endforeach
-              </tbody>
+            <table id="motorTable" class="w-full table-auto bg-white divide-y divide-gray-200 shadow rounded-lg">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Gambar</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Informasi Motor</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tipe</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
+                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Harga</th>
+                        <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                    @foreach ($motors as $motor)
+                        <tr class="hover:bg-gray-50">
+                            {{-- Gambar --}}
+                            <td class="px-4 py-2 whitespace-nowrap">
+                                @if (!empty($motor['image_url']))
+                                    <img src="{{ $motor['image_url'] }}" alt="Motor"
+                                        class="h-12 w-16 sm:h-16 sm:w-24 object-cover rounded-md">
+                                @else
+                                    <span class="text-gray-400 italic">–</span>
+                                @endif
+                            </td>
+
+                            {{-- Informasi Motor --}}
+                            <td class="px-4 py-2 text-sm text-gray-700">
+                                <div class="flex flex-col space-y-1">
+                                    <span><strong>Nama:</strong> {{ $motor['name'] }}</span>
+                                    <span><strong>Brand:</strong> {{ $motor['brand'] }}</span>
+                                    <span><strong>Model:</strong> {{ $motor['model'] }}</span>
+                                    <span><strong>Tahun:</strong> {{ $motor['year'] }}</span>
+                                    <span><strong>Warna:</strong> {{ $motor['color'] }}</span>
+                                    <span><strong>Deskripsi:</strong> {{ $motor['description'] }}</span>
+                                </div>
+                            </td>
+
+                            {{-- Tipe --}}
+                            <td class="px-4 py-2 whitespace-nowrap">
+                                <span
+                                    class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
+                                    {{ $motor['type'] }}
+                                </span>
+                            </td>
+
+                            {{-- Rating --}}
+                            <td class="px-4 py-2 whitespace-nowrap">
+                                <div class="flex items-center space-x-1">
+                                    @for ($i = 0; $i < $motor['rating']; $i++)
+                                        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162
+                                         c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
+                                         3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
+                                         0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
+                                         00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
+                                         0 00.95-.69l1.286-3.96z" />
+                                        </svg>
+                                    @endfor
+                                    @for ($i = $motor['rating']; $i < 5; $i++)
+                                        <svg class="h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162
+                                         c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
+                                         3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
+                                         0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
+                                         00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
+                                         0 00.95-.69l1.286-3.96z" />
+                                        </svg>
+                                    @endfor
+                                </div>
+                            </td>
+
+                            {{-- Harga --}}
+                            <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-semibold text-green-600">
+                                Rp {{ number_format($motor['price'], 0, ',', '.') }}
+                            </td>
+
+                            {{-- Aksi --}}
+                            <td class="px-4 py-2 whitespace-nowrap text-center text-sm font-medium space-x-2">
+                                <button onclick="openEditModal({{ json_encode($motor) }})"
+                                    class="inline-flex items-center px-3 py-2 border border-blue-500 rounded hover:bg-blue-50">
+                                    <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15.232 5.232l3.536 3.536M9 11l3 3L21 5l-3-3L9 11z" />
+                                    </svg>
+                                </button>
+                                <button onclick="openDeleteModal({{ json_encode($motor) }})"
+                                    class="inline-flex items-center px-3 py-2 border border-red-500 rounded hover:bg-red-50">
+                                    <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
+                                           01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
+                                           1 0 00-1-1m-4 0h4" />
+                                    </svg>
+                                </button>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
             </table>
-          </div>
-          
+        </div>
 
 
 
-    <!-- Modal Tambah/Edit/Hapus Motor -->
-    @include('layouts.modal_motor_vendor')
 
-    <script>
-        function filterTable() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('#motorTable tbody tr').forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+
+
+
+        <!-- Modal Tambah/Edit/Hapus Motor -->
+        @include('layouts.modal_motor_vendor')
+
+        <script>
+            function filterTable() {
+                const q = document.getElementById('searchInput').value.toLowerCase();
+                document.querySelectorAll('#motorTable tbody tr').forEach(row => {
+                    row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+                });
+            }
+
+            document.getElementById('openAddModalBtn').addEventListener('click', function() {
+                document.getElementById('addModal').style.display = 'flex';
             });
-        }
 
-        document.getElementById('openAddModalBtn').addEventListener('click', function() {
-            document.getElementById('addModal').style.display = 'flex';
-        });
+            function closeAddModal() {
+                document.getElementById('addModal').style.display = 'none';
+            }
 
-        function closeAddModal() {
-            document.getElementById('addModal').style.display = 'none';
-        }
+            // Modal Edit Motor
+            function openEditModal(motor) {
+                document.getElementById('editModal').style.display = 'flex';
+                document.getElementById('editMotorName').value = motor.name;
+                document.getElementById('editMotorBrand').value = motor.brand;
+                document.getElementById('editMotorModel').value = motor.model;
+                document.getElementById('editMotorYear').value = motor.year;
+                document.getElementById('editMotorColor').value = motor.color;
+                document.getElementById('editMotorPrice').value = motor.price;
+                document.getElementById('editMotorStatus').value = motor.status;
+                document.getElementById('editMotortype').value = motor.type;
+                document.getElementById('editMotorDescription').value = motor.description;
+                setEditFormAction(motor.id);
+            }
 
-        // Modal Edit Motor
-        function openEditModal(motor) {
-            document.getElementById('editModal').style.display = 'flex';
-            document.getElementById('editMotorName').value = motor.name;
-            document.getElementById('editMotorBrand').value = motor.brand;
-            document.getElementById('editMotorModel').value = motor.model;
-            document.getElementById('editMotorYear').value = motor.year;
-            document.getElementById('editMotorColor').value = motor.color;
-            document.getElementById('editMotorPrice').value = motor.price;
-            document.getElementById('editMotorStatus').value = motor.status;
-            document.getElementById('editMotortype').value = motor.type;
-            document.getElementById('editMotorDescription').value = motor.description;
-            setEditFormAction(motor.id);
-        }
+            function closeEditModal() {
+                document.getElementById('editModal').style.display = 'none';
+            }
 
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        // Modal Hapus Motor
-        function openDeleteModal(motor) {
-            Swal.fire({
-                title: 'Hapus Motor',
-                text: 'Apakah Anda yakin ingin menghapus motor ini?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Ya, hapus!',
-                cancelButtonText: 'Batal',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    setDeleteFormAction(motor.id);
-                    document.getElementById('deleteMotorForm').submit();
-                }
-            });
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
-
-        // Set action URL untuk form edit dan delete
-        function setEditFormAction(id) {
-            document.getElementById('editMotorForm').action = `/vendor/motor/${id}`;
-        }
-
-        function setDeleteFormAction(id) {
-            document.getElementById('deleteMotorForm').action = `/vendor/motor/${id}`;
-        }
-
-        // Event listener untuk form submit pada modal tambah
-        if (document.getElementById('addMotorForm')) {
-            document.getElementById('addMotorForm').addEventListener('submit', function(e) {
-                e.preventDefault();
+            // Modal Hapus Motor
+            function openDeleteModal(motor) {
                 Swal.fire({
-                    title: 'Tambah Motor',
-                    text: 'Apakah Anda yakin ingin menyimpan motor baru ini?',
-                    icon: 'question',
+                    title: 'Hapus Motor',
+                    text: 'Apakah Anda yakin ingin menghapus motor ini?',
+                    icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonText: 'Ya, simpan!',
+                    confirmButtonText: 'Ya, hapus!',
                     cancelButtonText: 'Batal',
                     reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        this.submit();
+                        setDeleteFormAction(motor.id);
+                        document.getElementById('deleteMotorForm').submit();
                     }
                 });
-            });
-        }
+            }
 
-        // Event listener untuk form submit pada modal edit
-        if (document.getElementById('editMotorForm')) {
-            document.getElementById('editMotorForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                Swal.fire({
-                    title: 'Edit Motor',
-                    text: 'Apakah Anda yakin ingin menyimpan perubahan pada motor ini?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Ya, simpan!',
-                    cancelButtonText: 'Batal',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        this.submit();
-                    }
+            function closeDeleteModal() {
+                document.getElementById('deleteModal').style.display = 'none';
+            }
+
+            // Set action URL untuk form edit dan delete
+            function setEditFormAction(id) {
+                document.getElementById('editMotorForm').action = `/vendor/motor/${id}`;
+            }
+
+            function setDeleteFormAction(id) {
+                document.getElementById('deleteMotorForm').action = `/vendor/motor/${id}`;
+            }
+
+            // Event listener untuk form submit pada modal tambah
+            if (document.getElementById('addMotorForm')) {
+                document.getElementById('addMotorForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Tambah Motor',
+                        text: 'Apakah Anda yakin ingin menyimpan motor baru ini?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, simpan!',
+                        cancelButtonText: 'Batal',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.submit();
+                        }
+                    });
                 });
-            });
-        }
-    </script>
-@endsection
+            }
+
+            // Event listener untuk form submit pada modal edit
+            if (document.getElementById('editMotorForm')) {
+                document.getElementById('editMotorForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Edit Motor',
+                        text: 'Apakah Anda yakin ingin menyimpan perubahan pada motor ini?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, simpan!',
+                        cancelButtonText: 'Batal',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.submit();
+                        }
+                    });
+                });
+            }
+        </script>
+    @endsection

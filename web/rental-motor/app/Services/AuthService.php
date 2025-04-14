@@ -51,6 +51,7 @@ class AuthService
                 Log::error("Login gagal, respons dari Golang tidak sesuai:", ['status' => $statusCode, 'response' => $data]);
                 return ['error' => 'Login gagal. Backend tidak mengembalikan token yang valid.', 'server_response' => $data];
             }
+
         } catch (\Exception $e) {
             Log::error("Kesalahan saat menghubungi backend Golang", [
                 'message' => $e->getMessage(),
