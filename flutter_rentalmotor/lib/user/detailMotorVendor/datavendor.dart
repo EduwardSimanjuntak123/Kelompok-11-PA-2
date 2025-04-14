@@ -805,7 +805,7 @@ class ChatVendorButton extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => ChatPage(
                 chatRoomId: chatRoom['id'],
-                senderId: customerId,
+                // senderId: customerId,
                 receiverId: receiverId, // Kirim receiverId yang benar
                 receiverName: vendorData?['shop_name'] ?? 'Nama Penerima',
               ),

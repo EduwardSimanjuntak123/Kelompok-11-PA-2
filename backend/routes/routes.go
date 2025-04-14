@@ -39,5 +39,6 @@ func SetupRoutes(router *gin.Engine) {
 	router.POST("/chat/room",  controllers.GetOrCreateChatRoom)
 
 	router.GET("/chat/rooms", controllers.GetUserChatRooms)
+	router.PUT("/messages/:id/read", controllers.MarkMessageAsRead)
 
 }

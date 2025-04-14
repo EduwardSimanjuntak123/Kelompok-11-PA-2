@@ -11,6 +11,7 @@ class ChatService {
     final customerId = prefs.getInt('user_id');
 
     if (customerId == null) {
+      print("User belum login");
       return null; // Belum login
     }
 

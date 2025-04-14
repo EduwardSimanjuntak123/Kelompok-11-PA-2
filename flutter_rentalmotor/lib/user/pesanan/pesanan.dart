@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
-import 'package:flutter_rentalmotor/user/chat/chat.dart';
+import 'package:flutter_rentalmotor/user/chat/chat_page.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/cancelBooking_api.dart';
 
@@ -101,7 +101,8 @@ class _PesananPageState extends State<PesananPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text("Ya, Batalkan", style: TextStyle(color: Colors.white)),
+            child: const Text("Ya, Batalkan",
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -216,7 +217,8 @@ class _PesananPageState extends State<PesananPage> {
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: Colors.grey[300],
-                      child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey[600]),
+                      child: Icon(Icons.image_not_supported,
+                          size: 40, color: Colors.grey[600]),
                     ),
                   ),
                 ),
@@ -278,7 +280,7 @@ class _PesananPageState extends State<PesananPage> {
                 ),
               ],
             ),
-            
+
             // Status Banner
             Container(
               width: double.infinity,
@@ -340,7 +342,7 @@ class _PesananPageState extends State<PesananPage> {
                 ],
               ),
             ),
-            
+
             // Booking Details Card
             Container(
               margin: EdgeInsets.all(16),
@@ -387,9 +389,9 @@ class _PesananPageState extends State<PesananPage> {
                       ],
                     ),
                   ),
-                  
+
                   Divider(height: 1, thickness: 1, color: Colors.grey[200]),
-                  
+
                   // Booking Details
                   Padding(
                     padding: EdgeInsets.all(16),
@@ -410,7 +412,9 @@ class _PesananPageState extends State<PesananPage> {
                         _buildDetailItem(
                           Icons.calendar_today,
                           "Tanggal Mulai",
-                          (booking['start_date'] ?? '').toString().split('T')[0],
+                          (booking['start_date'] ?? '')
+                              .toString()
+                              .split('T')[0],
                         ),
                         _buildDetailItem(
                           Icons.event_available,
@@ -423,7 +427,7 @@ class _PesananPageState extends State<PesananPage> {
                 ],
               ),
             ),
-            
+
             // Action Buttons
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -446,7 +450,18 @@ class _PesananPageState extends State<PesananPage> {
                     primaryBlue,
                     Colors.white,
                     () => Navigator.push(
-                        context, MaterialPageRoute(builder: (context) => ChatPage())),
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatPage(
+                          chatRoomId: widget.booking[
+                              'chat_room_id'], // pastikan field ini tersedia// biasanya user yang sedang login
+                          receiverId:
+                              widget.booking['vendor_id'], // dari data booking
+                          receiverName:
+                              widget.booking['vendor_name'] ?? 'Vendor',
+                        ),
+                      ),
+                    ),
                     Icons.chat,
                   ),
                 ],
@@ -570,16 +585,16 @@ class _PesananPageState extends State<PesananPage> {
     );
   }
 
-  Widget buildButton(
-      String text, Color bgColor, Color textColor, VoidCallback? onPressed, IconData icon) {
+  Widget buildButton(String text, Color bgColor, Color textColor,
+      VoidCallback? onPressed, IconData icon) {
     return Container(
       width: double.infinity,
       height: 50,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: onPressed == null 
-              ? [Colors.grey, Colors.grey] 
-              : (bgColor == Colors.red 
+          colors: onPressed == null
+              ? [Colors.grey, Colors.grey]
+              : (bgColor == Colors.red
                   ? [Colors.redAccent, Colors.red.shade700]
                   : [Color(0xFF3E8EDE), primaryBlue]),
           begin: Alignment.topLeft,

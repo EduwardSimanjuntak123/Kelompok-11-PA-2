@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"rental-backend/config"
+	"rental-backend/models"
 	"strconv"
 	"sync"
 	"time"
 
-	"rental-backend/config"
-	"rental-backend/models"
+	"gorm.io/gorm"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -181,6 +182,7 @@ func SendMessage(c *gin.Context) {
 
 // GetChatMessages mengambil pesan berdasarkan chat_room_id
 func GetChatMessages(c *gin.Context) {
+	// Ambil chat_room_id dari query parameter
 	chatRoomIDStr := c.Query("chat_room_id")
 	chatRoomID, err := strconv.Atoi(chatRoomIDStr)
 	if err != nil {
@@ -188,15 +190,68 @@ func GetChatMessages(c *gin.Context) {
 		return
 	}
 
+	// Ambil user_id dari query parameter
+	userIDStr := c.Query("user_id")
+	if userIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id tidak ditemukan"})
+		return
+	}
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id tidak valid"})
+		return
+	}
+
+	// Validasi bahwa user_id adalah bagian dari chat room (bisa sebagai customer atau vendor)
+	var chatRoom models.ChatRoom
+	if err := config.DB.First(&chatRoom, chatRoomID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Chat room tidak ditemukan"})
+		return
+	}
+	if chatRoom.CustomerID != uint(userID) && chatRoom.VendorID != uint(userID) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Anda bukan bagian dari chat room ini"})
+		return
+	}
+
+	// Ambil pesan-pesan berdasarkan chat_room_id
 	var messages []models.Message
-	if err := config.DB.Preload("Sender").Where("chat_room_id = ?", chatRoomID).Order("sent_at ASC").Find(&messages).Error; err != nil {
+	if err := config.DB.Preload("Sender").
+		Where("chat_room_id = ?", chatRoomID).
+		Order("sent_at ASC").
+		Find(&messages).Error; err != nil {
+		log.Println("Error fetching messages:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil pesan"})
 		return
+	}
+
+	// Tandai pesan yang belum dibaca dan bukan dikirim oleh user tersebut sebagai sudah dibaca
+	if err := config.DB.Model(&models.Message{}).
+		Where("chat_room_id = ? AND is_read = false AND sender_id != ?", chatRoomID, userID).
+		Update("is_read", true).Error; err != nil {
+		log.Println("Error updating messages:", err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"messages": messages,
 	})
+}
+
+
+func MarkMessageAsRead(c *gin.Context) {
+	messageID := c.Param("id")
+	var msg models.Message
+	if err := config.DB.First(&msg, messageID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Pesan tidak ditemukan"})
+		return
+	}
+
+	msg.IsRead = true
+	if err := config.DB.Save(&msg).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui pesan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Pesan ditandai sebagai dibaca"})
 }
 
 // GetOrCreateChatRoom membuat atau ambil chat room
@@ -205,11 +260,6 @@ type ChatRoomRequest struct {
 	VendorID   uint `json:"vendor_id,omitempty"`
 }
 func GetOrCreateChatRoom(c *gin.Context) {
-	type ChatRoomRequest struct {
-		CustomerID uint `json:"customer_id,omitempty"`
-		VendorID   uint `json:"vendor_id,omitempty"`
-	}
-
 	var req ChatRoomRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -249,38 +299,38 @@ func GetOrCreateChatRoom(c *gin.Context) {
 }
 
 
-func GetUserChatRooms(c *gin.Context) {
-	userID := c.MustGet("user_id").(uint)
 
-	var chatRooms []models.ChatRoom
-	if err := config.DB.Preload("Customer").Preload("Vendor").
-		Where("customer_id = ? OR vendor_id = ?", userID, userID).
-		Find(&chatRooms).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil chat rooms"})
+func GetUserChatRooms(c *gin.Context) {
+	// Ambil user_id dari query parameter
+	userIDStr := c.Query("user_id")
+	userIDInt, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id tidak valid"})
 		return
 	}
+	userID := uint(userIDInt)
 
-	// Jika belum ada chat room, buatkan chat room baru
-	for _, chatRoom := range chatRooms {
-		if chatRoom.CustomerID != 0 && chatRoom.VendorID != 0 {
-			continue
-		}
-
-		// Jika chat room tidak ada, buatkan baru
-		newRoom := models.ChatRoom{
-			CustomerID: userID,
-			VendorID:   userID, // Ganti dengan vendor_id yang sesuai jika perlu
-		}
-		if err := config.DB.Create(&newRoom).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat chat room"})
-			return
-		}
-
-		chatRooms = append(chatRooms, newRoom)
-	}
-
-	c.JSON(http.StatusOK, chatRooms)
+	var chatRooms []models.ChatRoom
+	if err := config.DB.
+	Preload("Customer").
+	Preload("Vendor").
+	Preload("Messages", func(db *gorm.DB) *gorm.DB {
+		return db.Order("sent_at desc").Limit(1)
+	}).
+	Preload("Messages.Sender"). // ⬅️ preload data Sender
+	Preload("Messages.ChatRoom"). // ⬅️ preload data ChatRoom
+	Where("customer_id = ? OR vendor_id = ?", userID, userID).
+	Find(&chatRooms).Error; err != nil {
+	c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil chat rooms"})
+	return
 }
+
+	c.JSON(http.StatusOK, gin.H{
+		"user_id":    userID,
+		"chat_rooms": chatRooms,
+	})
+}
+
 
 
 
