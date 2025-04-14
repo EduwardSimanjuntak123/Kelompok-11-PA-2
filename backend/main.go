@@ -8,7 +8,6 @@ import (
 	"rental-backend/controllers"
 	"rental-backend/middleware"
 	"rental-backend/routes"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,19 +39,7 @@ func main() {
 
 	// Auto-update status motor
 	go controllers.StartAutoUpdateMotorStatus()
-
-	// Auto-update status booking tiap 1 menit
-	go func() {
-		ticker := time.NewTicker(1 * time.Minute)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ticker.C:
-				controllers.UpdateBookingStatus()
-			}
-		}
-	}()
+	go controllers.StartAutoAwaitingReturnScheduler()
 
 	// Tentukan port server
 	port := os.Getenv("PORT")

@@ -144,6 +144,7 @@
 
 
 
+<<<<<<< HEAD
 
 
 
@@ -257,3 +258,155 @@
             }
         </script>
     @endsection
+=======
+    <script>
+      // ========== FILTER TABLE ==========
+      function filterTable() {
+          const q = document.getElementById('searchInput').value.toLowerCase();
+          document.querySelectorAll('#motorTable tbody tr').forEach(row => {
+              row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+          });
+      }
+  
+      // ========== MODAL: ADD ==========
+      document.getElementById('openAddModalBtn').addEventListener('click', function () {
+          const form = document.getElementById('addMotorForm');
+  
+          // Reset form input
+          form.reset();
+  
+          // Hapus semua pesan error
+          form.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+  
+          // Tampilkan modal
+          document.getElementById('addModal').style.display = 'flex';
+      });
+  
+      function closeAddModal() {
+          document.getElementById('addModal').style.display = 'none';
+      }
+  
+      // ========== MODAL: EDIT ==========
+      function openEditModal(motor) {
+          document.getElementById('editModal').style.display = 'flex';
+          document.getElementById('editMotorName').value = motor.name;
+          document.getElementById('editMotorBrand').value = motor.brand;
+          document.getElementById('editMotorModel').value = motor.model;
+          document.getElementById('editMotorYear').value = motor.year;
+          document.getElementById('editMotorColor').value = motor.color;
+          document.getElementById('editMotorPrice').value = motor.price;
+          document.getElementById('editMotorStatus').value = motor.status;
+          document.getElementById('editMotortype').value = motor.type;
+          document.getElementById('editMotorDescription').value = motor.description;
+          setEditFormAction(motor.id);
+      }
+  
+      function closeEditModal() {
+          document.getElementById('editModal').style.display = 'none';
+      }
+  
+      function setEditFormAction(id) {
+          document.getElementById('editMotorForm').action = `/vendor/motor/${id}`;
+      }
+  
+      // ========== MODAL: DELETE ==========
+      function openDeleteModal(motor) {
+          Swal.fire({
+              title: 'Hapus Motor',
+              text: 'Apakah Anda yakin ingin menghapus motor ini?',
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonText: 'Ya, hapus!',
+              cancelButtonText: 'Batal',
+              reverseButtons: true
+          }).then((result) => {
+              if (result.isConfirmed) {
+                  setDeleteFormAction(motor.id);
+                  document.getElementById('deleteMotorForm').submit();
+              }
+          });
+      }
+  
+      function setDeleteFormAction(id) {
+          document.getElementById('deleteMotorForm').action = `/vendor/motor/${id}`;
+      }
+  
+      // ========== VALIDASI & SUBMIT: ADD MOTOR ==========
+      document.getElementById('addMotorForm')?.addEventListener('submit', function (event) {
+          const form = event.target;
+          const errorMessages = form.querySelectorAll('.error-message');
+          errorMessages.forEach(el => el.textContent = '');
+  
+          const name = form.name.value.trim();
+          const brand = form.brand.value.trim();
+          const model = form.model.value.trim();
+          const year = parseInt(form.year.value);
+          const type = form.type.value;
+          const color = form.color.value.trim();
+          const price = parseFloat(form.price.value);
+          const description = form.description.value.trim();
+          const image = form.image.files[0];
+  
+          let hasError = false;
+          function setError(field, message) {
+              const el = form.querySelector(`.error-message[data-field="${field}"]`);
+              if (el) el.textContent = message;
+              hasError = true;
+          }
+  
+          if (!name) setError('name', 'Nama harus diisi.');
+          if (!brand) setError('brand', 'Brand harus diisi.');
+          if (!model) setError('model', 'Model harus diisi.');
+          if (!year || year < 1900 || year > new Date().getFullYear()) setError('year', 'Tahun tidak valid.');
+          if (!['matic', 'manual', 'kopling', 'vespa'].includes(type)) setError('type', 'Tipe harus dipilih.');
+          if (!color) setError('color', 'Warna harus diisi.');
+          if (isNaN(price)) setError('price', 'Harga harus diisi.');
+          if (!description) setError('description', 'Deskripsi tidak boleh kosong.');
+  
+          if (image) {
+              const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+              if (!allowedTypes.includes(image.type)) setError('image', 'File harus JPG/PNG.');
+              if (image.size > 2 * 1024 * 1024) setError('image', 'Ukuran maksimal 2MB.');
+          }
+  
+          if (hasError) {
+              event.preventDefault();
+              return;
+          }
+  
+          event.preventDefault(); // mencegah submit default
+          Swal.fire({
+              title: 'Tambah Motor',
+              text: 'Apakah Anda yakin ingin menyimpan motor baru ini?',
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonText: 'Ya, simpan!',
+              cancelButtonText: 'Batal',
+              reverseButtons: true
+          }).then((result) => {
+              if (result.isConfirmed) {
+                  form.submit();
+              }
+          });
+      });
+  
+      // ========== VALIDASI & SUBMIT: EDIT MOTOR ==========
+      document.getElementById('editMotorForm')?.addEventListener('submit', function (e) {
+          e.preventDefault();
+          Swal.fire({
+              title: 'Edit Motor',
+              text: 'Apakah Anda yakin ingin menyimpan perubahan pada motor ini?',
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonText: 'Ya, simpan!',
+              cancelButtonText: 'Batal',
+              reverseButtons: true
+          }).then((result) => {
+              if (result.isConfirmed) {
+                  this.submit();
+              }
+          });
+      });
+  </script>    
+@endsection
+>>>>>>> cb695ba2aa85ade673ecf70bf89b66b1c8d03ee6

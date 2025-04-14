@@ -1,4 +1,5 @@
-package controllers
+package websocketupdatemotor
+
 
 import (
 	"net/http"
@@ -9,16 +10,16 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Konfigurasi upgrader
-var upgrader = websocket.Upgrader{
+// Upgrader khusus notifikasi
+var upgraderNotif = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		// Izinkan semua origin (bisa dibatasi kalau perlu)
 		return true
 	},
 }
 
-// WebSocket handler
-func WebSocketHandler(c *gin.Context) {
+// WebSocket handler untuk notifikasi
+func WebSocketNotifikasiHandler(c *gin.Context) {
 	userIDStr := c.Query("user_id")
 	userID, err := strconv.Atoi(userIDStr)
 	if err != nil || userID == 0 {
@@ -26,15 +27,15 @@ func WebSocketHandler(c *gin.Context) {
 		return
 	}
 
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := upgraderNotif.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return
 	}
 
-	// Register client
+	// Registrasi client ke peta notifikasi
 	ws.RegisterClient(uint(userID), conn)
 
-	// Handle komunikasi selama koneksi aktif
+	// Dengarkan pesan sampai koneksi ditutup
 	for {
 		_, _, err := conn.ReadMessage()
 		if err != nil {

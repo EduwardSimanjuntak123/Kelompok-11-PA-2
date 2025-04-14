@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../verifikasi_kode_screen.dart';
+import '../../verifikasi_kode_screen.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
 
 class LupaKataSandiScreen extends StatefulWidget {
   final String email;

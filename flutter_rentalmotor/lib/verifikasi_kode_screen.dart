@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_rentalmotor/kata_sandi_baru_screen.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
 
 class VerifikasiKodeScreen extends StatefulWidget {
   final String email;

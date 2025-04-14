@@ -8,6 +8,7 @@ type Message struct {
 	SenderID   uint      `gorm:"not null"`            // ForeignKey ke User
 	Message    string    `gorm:"not null"`
 	SentAt     time.Time `json:"sent_at"`
-	ChatRoom   ChatRoom  `gorm:"foreignKey:ChatRoomID"` // Relasi ke ChatRoom
-	Sender     User      `gorm:"foreignKey:SenderID"`   // Relasi ke User
+	IsRead     bool      `gorm:"default:false" json:"is_read"` 
+	ChatRoom   ChatRoom  `gorm:"foreignKey:ChatRoomID"`
+	Sender     User      `gorm:"foreignKey:SenderID"`
 }

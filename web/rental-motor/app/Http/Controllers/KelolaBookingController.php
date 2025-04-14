@@ -153,68 +153,49 @@ class KelolaBookingController extends Controller
     public function addManualBooking(Request $request)
 {
     try {
-        // Ambil token dari session
         $token = session()->get('token');
         if (!$token) {
             return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
         }
 
-        // Validasi input form-data dengan format tanggal tanpa detik
+        // Validasi input (tanpa end_date, pakai duration)
         $validated = $request->validate([
-            'motor_id'        => 'required|integer',
-            'customer_name'   => 'required|string',
-            'start_date'      => 'required|date_format:Y-m-d\TH:i',  // Contoh: "2025-04-01T00:00"
-            'end_date'        => 'required|date_format:Y-m-d\TH:i',  // Contoh: "2025-04-05T00:00"
-            'pickup_location' => 'required|string',
-            'photo_id'        => 'nullable|file|mimes:jpg,jpeg,png',
-            'ktp_id'          => 'nullable|file|mimes:jpg,jpeg,png',
+            'motor_id'           => 'required|integer',
+            'customer_name'      => 'required|string',
+            'start_date_date'    => 'required|date_format:Y-m-d',
+            'start_date_time'    => 'required|date_format:H:i',
+            'duration'           => 'required|integer|min:1',
+            'pickup_location'    => 'required|string',
+            'photo_id'           => 'nullable|file|mimes:jpg,jpeg,png',
+            'ktp_id'             => 'nullable|file|mimes:jpg,jpeg,png',
         ]);
 
-        // Karena input tidak mengandung detik, kita tambahkan ":00" untuk parsing.
-        $startDateInput = $validated['start_date'] . ':00';
-        $endDateInput   = $validated['end_date'] . ':00';
+        // Gabungkan input tanggal dan waktu; tambahkan ":00" untuk detik
+        $startDateInput = $validated['start_date_date'] . 'T' . $validated['start_date_time'] . ':00';
 
-        // Konversi start_date dan end_date ke format ISO8601 dengan timezone Asia/Jakarta
-        $startDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $startDateInput, 'Asia/Jakarta')
-            ->format('Y-m-d\TH:i:sP'); // Hasil misal: "2025-04-01T00:00:00+07:00"
-        $endDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $endDateInput, 'Asia/Jakarta')
-            ->format('Y-m-d\TH:i:sP');
+        // Buat objek Carbon dari input
+        $carbonStartDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $startDateInput, 'Asia/Jakarta');
 
-        // Persiapkan data multipart
-        $multipart = [];
-        // Tambahkan field teks (dengan override tanggal menggunakan nilai yang telah dikonversi)
-        $multipart[] = [
-            'name'     => 'motor_id',
-            'contents' => $validated['motor_id']
-        ];
-        $multipart[] = [
-            'name'     => 'customer_name',
-            'contents' => trim($validated['customer_name'])
-        ];
-        $multipart[] = [
-            'name'     => 'start_date',
-            'contents' => $startDate
-        ];
-        $multipart[] = [
-            'name'     => 'end_date',
-            'contents' => $endDate
-        ];
-        $multipart[] = [
-            'name'     => 'pickup_location',
-            'contents' => $validated['pickup_location']
+        // Cek apakah tanggal mulai yang dimasukkan sudah lewat waktu saat ini
+        if ($carbonStartDate->lt(\Carbon\Carbon::now('Asia/Jakarta'))) {
+            return redirect()->back()->with('error', 'Tanggal dan jam mulai tidak boleh kurang dari waktu saat ini.');
+        }
+
+        // Setelah validasi, format objek Carbon menjadi string ISO8601
+        $startDate = $carbonStartDate->format('Y-m-d\TH:i:sP');
+
+        // Bangun data multipart untuk dikirim ke API backend
+        $multipart = [
+            ['name' => 'motor_id',        'contents' => $validated['motor_id']],
+            ['name' => 'customer_name',   'contents' => trim($validated['customer_name'])],
+            ['name' => 'start_date',      'contents' => $startDate],
+            ['name' => 'duration',        'contents' => $validated['duration']],
+            ['name' => 'pickup_location', 'contents' => $validated['pickup_location']],
+            ['name' => 'type',            'contents' => 'manual'],
+            ['name' => 'status',          'contents' => 'confirmed'],
         ];
 
-        // Set type dan status secara manual (untuk booking manual)
-        $multipart[] = [
-            'name'     => 'type',
-            'contents' => 'manual'
-        ];
-        $multipart[] = [
-            'name'     => 'status',
-            'contents' => 'confirmed'
-        ];
-
-        // Tangani file upload jika ada (optional)
+        // Optional file upload (foto ID dan KTP)
         if ($request->hasFile('photo_id')) {
             $photo = $request->file('photo_id');
             $multipart[] = [
@@ -232,31 +213,31 @@ class KelolaBookingController extends Controller
             ];
         }
 
-        // Log data untuk debugging
-        Log::info("Request Data (manual booking): " . json_encode($validated));
-        Log::info("Converted start_date: " . $startDate . " | end_date: " . $endDate);
-
-        // Kirim POST request ke backend Go untuk booking manual
-        $url = $this->apiBaseUrl . '/vendor/manual/bookings';
-        Log::info("Mengirim request ke: " . $url);
+        Log::info("Manual Booking (pakai duration):", [
+            'start_date' => $startDate,
+            'duration'   => $validated['duration'],
+            'validated'  => $validated
+        ]);
 
         $response = Http::withToken($token)
             ->asMultipart()
-            ->post($url, $multipart);
-
-        Log::info("Response dari addManualBooking: " . $response->body());
+            ->post($this->apiBaseUrl . '/vendor/manual/bookings', $multipart);
 
         if ($response->successful()) {
-            return redirect()->route('vendor.kelola')
+            return redirect()->back()
                 ->with('message', 'Booking manual berhasil dibuat');
         } else {
-            return redirect()->back()->with('error', 'Gagal menambahkan booking manual: ' . $response->body());
+            return redirect()->back()
+                ->with('error', 'Gagal menambahkan booking manual: ' . $response->body());
         }
+
     } catch (\Exception $e) {
-    Log::error("Terjadi kesalahan saat menambahkan booking manual: " . $e->getMessage());
+        Log::error("Error saat booking manual (duration): " . $e->getMessage());
         return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
 }
+
+    
 
     
     

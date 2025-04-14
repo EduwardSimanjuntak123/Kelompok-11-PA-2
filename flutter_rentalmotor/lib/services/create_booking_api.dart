@@ -6,7 +6,7 @@ import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/signin.dart';
-import 'package:flutter_rentalmotor/user/detailmotor.dart';
+import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
 
 class BookingService {
   static Future<bool> createBooking({

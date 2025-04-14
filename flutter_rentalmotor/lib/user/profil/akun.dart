@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rentalmotor/user/editprofiluser.dart';
+import 'package:flutter_rentalmotor/user/profil/editprofiluser.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/user/lupakatasandi.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/profil/lupakatasandi.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
 import 'package:flutter_rentalmotor/services/profile_api.dart';
 import 'package:flutter_rentalmotor/signin.dart';

@@ -357,13 +357,7 @@ func ActivateVendor(c *gin.Context) {
 		return
 	}
 
-	// Periksa apakah vendor sudah aktif
-	if user.Status == "active" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Vendor sudah dalam status aktif"})
-		return
-	}
-
-	// Update status menjadi aktif
+	// Update status menjadi aktif kembali
 	if err := config.DB.Model(&user).Updates(map[string]interface{}{
 		"status":     "active",
 		"updated_at": time.Now(),
@@ -372,5 +366,6 @@ func ActivateVendor(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Akun vendor berhasil diaktifkan kembali"})
+	c.JSON(http.StatusOK, gin.H{"message": "Akun vendor berhasil diaktifkan"})
 }
+

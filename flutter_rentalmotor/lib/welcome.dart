@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:lottie/lottie.dart';
 import 'package:flutter_rentalmotor/vendor/signupvendor.dart';
-import 'package:flutter_rentalmotor/user/signupcustomer.dart';
+import 'package:flutter_rentalmotor/user/registrasi/signupcustomer.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});

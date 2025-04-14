@@ -1,11 +1,12 @@
 import 'dart:convert'; // Untuk JSON decoding
 import 'package:flutter/material.dart';
-import 'package:flutter_rentalmotor/user/detailmotor.dart';
-import 'package:flutter_rentalmotor/user/notifikasi.dart';
-import 'package:flutter_rentalmotor/user/chat.dart';
-import 'package:flutter_rentalmotor/user/akun.dart';
-import 'package:flutter_rentalmotor/user/detailpesanan.dart';
-import 'package:flutter_rentalmotor/user/datavendor.dart';
+import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
+import 'package:flutter_rentalmotor/user/notifikasi/notifikasi.dart';
+import 'package:flutter_rentalmotor/user/chat_room_list_page.dart';
+
+import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
+import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/homepage_api.dart';
@@ -117,7 +118,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
   /// Membuat koneksi WebSocket
   void _connectWebSocket(int userId) {
-    String wsUrl = "ws://192.168.132.159:8080/ws?user_id=$userId";
+    String wsUrl = "ws://192.168.205.235:8080/ws?user_id=$userId";
     _channel = IOWebSocketChannel.connect(wsUrl);
     _channel?.stream.listen((data) async {
       try {
@@ -373,7 +374,8 @@ class _HomePageUserState extends State<HomePageUser> {
                       width: 24, height: 24),
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const ChatPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const ChatRoomListPage()),
                     );
                   },
                 ),
