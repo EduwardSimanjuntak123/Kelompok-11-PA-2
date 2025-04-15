@@ -20,7 +20,9 @@ func SetupRoutes(router *gin.Engine) {
 	MotorRoutes(router)
 	TransactionRoutes(router)
 
-
+// Review routes
+router.GET("/reviews/motor/:id", controllers.GetReviewsByMotorID)
+router.GET("/reviews/vendor/:id", controllers.GetReviewsByVendorID)
 	// WebSocket route
 	router.GET("/ws/notifikasi", websocketupdatemotor.WebSocketNotifikasiHandler)
 	router.GET("/ws/motor", func(c *gin.Context) {

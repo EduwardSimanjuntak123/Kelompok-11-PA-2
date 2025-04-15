@@ -128,3 +128,53 @@ func GetVendorReviews(c *gin.Context) {
 }
 
 
+// Ambil ulasan berdasarkan motor_id
+func GetReviewsByMotorID(c *gin.Context) {
+	motorIDStr := c.Param("id")
+	motorID, err := strconv.Atoi(motorIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "motor_id tidak valid"})
+		return
+	}
+
+	var reviews []models.Review
+	err = config.DB.
+		Preload("Customer").
+		Preload("Motor").
+		Where("motor_id = ?", motorID).
+		Find(&reviews).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data ulasan", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, reviews)
+}
+
+// Ambil ulasan berdasarkan vendor_id
+func GetReviewsByVendorID(c *gin.Context) {
+	vendorIDStr := c.Param("id")
+	vendorID, err := strconv.Atoi(vendorIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "vendor_id tidak valid"})
+		return
+	}
+
+	var reviews []models.Review
+	err = config.DB.
+		Preload("Customer").
+		Preload("Motor").
+		Where("vendor_id = ?", vendorID).
+		Find(&reviews).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data ulasan", "details": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, reviews)
+}
+
+
+

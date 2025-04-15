@@ -30,6 +30,7 @@ class _DataVendorState extends State<DataVendor>
   int _selectedIndex = 0;
   Map<String, dynamic>? _vendorData;
   List<Map<String, dynamic>> _motorList = [];
+  List<Map<String, dynamic>> _reviewList = [];
   bool _isLoading = true;
   int? _userId; // Menyimpan user ID
   String _errorMessage = '';
@@ -54,6 +55,24 @@ class _DataVendorState extends State<DataVendor>
     _tabController.dispose();
     super.dispose();
   }
+    Future<List<Map<String, dynamic>>> fetchReviewsByMotor(int vendorId) async {
+    final response = await http
+        .get(Uri.parse('http://localhost:8080/reviews/motor/$vendorId'));
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(json.decode(response.body));
+    } else {
+      throw Exception('Failed to load reviews');
+    }
+  }
+
+  Future<void> _fetchReviewData() async {
+    try {
+      final reviews = await _vendorService.fetchReviewsByMotor(widget.vendorId);
+      setState(() => _reviewList = reviews);
+    } catch (e) {
+      setState(() => _errorMessage = "Error: $e");
+    }
+  }
 
   /// Mengambil user ID dari SharedPreferences
   Future<void> _getUserId() async {
@@ -62,6 +81,8 @@ class _DataVendorState extends State<DataVendor>
       _userId = prefs.getInt('user_id'); // Ambil ID pengguna
     });
   }
+
+
 
   Future<void> _fetchData() async {
     try {
@@ -73,6 +94,8 @@ class _DataVendorState extends State<DataVendor>
       setState(() => _errorMessage = "Error: $e");
     }
     await _fetchMotorData();
+    await _fetchReviewData();
+
     setState(() => _isLoading = false);
   }
 
@@ -384,6 +407,7 @@ class _DataVendorState extends State<DataVendor>
                         tabs: [
                           Tab(text: "About"),
                           Tab(text: "Motors"),
+                          Tab(text: "Ulasan"),
                         ],
                       ),
                     ),
@@ -488,6 +512,17 @@ class _DataVendorState extends State<DataVendor>
                                     return _buildMotorCard(_motorList[index]);
                                   },
                                 ),
+                          _reviewList.isEmpty
+                              ? Center(
+                                  child: Text("Tidak ada ulasan tersedia"),
+                                )
+                              : ListView.builder(
+                                  padding: EdgeInsets.all(16),
+                                  itemCount: _reviewList.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildReviewCard(_reviewList[index]);
+                                  },
+                                ),
                         ],
                       ),
                     ),
@@ -563,6 +598,31 @@ class _DataVendorState extends State<DataVendor>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReviewCard(Map<String, dynamic> review) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              review['customer']['name'] ?? "Nama Tidak Diketahui",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text("Rating: ${review['rating']}"),
+            SizedBox(height: 8),
+            Text(review['review'] ?? "Tidak ada ulasan"),
+            SizedBox(height: 8),
+            Text(
+                "Dibalas oleh vendor: ${review['vendor_reply'] ?? "Tidak ada balasan"}"),
+          ],
+        ),
       ),
     );
   }
