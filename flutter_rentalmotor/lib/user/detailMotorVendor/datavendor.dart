@@ -10,15 +10,17 @@ import 'package:flutter_rentalmotor/services/vendor_service.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
 import 'package:flutter_rentalmotor/services/chat_services.dart';
+import 'package:http/http.dart' as http; // Pastikan untuk mengimpor http
+import 'dart:convert'; // Pastikan untuk mengimpor json
 
 class DataVendor extends StatefulWidget {
   final int vendorId;
-  final bool isGuest; // Tambahkan ini
+  final bool isGuest;
 
   const DataVendor({
     Key? key,
     required this.vendorId,
-    this.isGuest = false, // Default false
+    this.isGuest = false,
   }) : super(key: key);
 
   @override
@@ -32,21 +34,20 @@ class _DataVendorState extends State<DataVendor>
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _reviewList = [];
   bool _isLoading = true;
-  int? _userId; // Menyimpan user ID
+  int? _userId;
   String _errorMessage = '';
   final VendorService _vendorService = VendorService();
   late TabController _tabController;
 
-  // Blue theme colors
   final Color primaryBlue = Color(0xFF2C567E);
   final Color lightBlue = Color(0xFFE3F2FD);
-  final Color accentBlue = Color(0xFF64B5F6);
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _getUserId(); // Ambil user ID dari penyimpanan
+    _tabController =
+        TabController(length: 3, vsync: this); // Ubah panjang tab menjadi 3
+    _getUserId();
     _fetchData();
   }
 
@@ -55,9 +56,20 @@ class _DataVendorState extends State<DataVendor>
     _tabController.dispose();
     super.dispose();
   }
-    Future<List<Map<String, dynamic>>> fetchReviewsByMotor(int vendorId) async {
-    final response = await http
-        .get(Uri.parse('http://localhost:8080/reviews/motor/$vendorId'));
+
+  Future<void> _fetchReviewData() async {
+    try {
+      final reviews = await fetchReviewsByMotorVendor(widget.vendorId);
+      setState(() => _reviewList = reviews);
+    } catch (e) {
+      setState(() => _errorMessage = "Error: $e");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchReviewsByMotorVendor(
+      int vendorId) async {
+    final response = await http.get(Uri.parse(
+        'http://192.168.95.159:8080/reviews/vendor/$vendorId')); // Ganti localhost dengan IP lokal Anda
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
     } else {
@@ -65,24 +77,12 @@ class _DataVendorState extends State<DataVendor>
     }
   }
 
-  Future<void> _fetchReviewData() async {
-    try {
-      final reviews = await _vendorService.fetchReviewsByMotor(widget.vendorId);
-      setState(() => _reviewList = reviews);
-    } catch (e) {
-      setState(() => _errorMessage = "Error: $e");
-    }
-  }
-
-  /// Mengambil user ID dari SharedPreferences
   Future<void> _getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userId = prefs.getInt('user_id'); // Ambil ID pengguna
+      _userId = prefs.getInt('user_id');
     });
   }
-
-
 
   Future<void> _fetchData() async {
     try {
@@ -95,7 +95,6 @@ class _DataVendorState extends State<DataVendor>
     }
     await _fetchMotorData();
     await _fetchReviewData();
-
     setState(() => _isLoading = false);
   }
 
@@ -183,10 +182,9 @@ class _DataVendorState extends State<DataVendor>
                       Text(
                         "Oops! Something went wrong",
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87),
                       ),
                       SizedBox(height: 10),
                       Text(
@@ -226,12 +224,11 @@ class _DataVendorState extends State<DataVendor>
                                       color: Colors.white, size: 18),
                                   SizedBox(width: 8),
                                   Text(
-                                    "Try Again",
+                                    "Coba Lagi",
                                     style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
@@ -244,13 +241,11 @@ class _DataVendorState extends State<DataVendor>
                 )
               : Column(
                   children: [
-                    // Vendor Header with Image
                     Container(
                       height: 300,
                       width: double.infinity,
                       child: Stack(
                         children: [
-                          // Vendor Image
                           Positioned.fill(
                             child: fullVendorImageUrl.isNotEmpty
                                 ? Image.network(
@@ -260,23 +255,16 @@ class _DataVendorState extends State<DataVendor>
                                         (context, error, stackTrace) =>
                                             Container(
                                       color: Colors.grey[300],
-                                      child: Icon(
-                                        Icons.store,
-                                        size: 60,
-                                        color: Colors.grey[500],
-                                      ),
+                                      child: Icon(Icons.store,
+                                          size: 60, color: Colors.grey[500]),
                                     ),
                                   )
                                 : Container(
                                     color: Colors.grey[300],
-                                    child: Icon(
-                                      Icons.store,
-                                      size: 60,
-                                      color: Colors.grey[500],
-                                    ),
+                                    child: Icon(Icons.store,
+                                        size: 60, color: Colors.grey[500]),
                                   ),
                           ),
-                          // Gradient Overlay
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
@@ -285,13 +273,12 @@ class _DataVendorState extends State<DataVendor>
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     Colors.transparent,
-                                    Colors.black.withOpacity(0.7),
+                                    Colors.black.withOpacity(0.7)
                                   ],
                                 ),
                               ),
                             ),
                           ),
-                          // Vendor Info
                           Positioned(
                             bottom: 20,
                             left: 20,
@@ -309,10 +296,9 @@ class _DataVendorState extends State<DataVendor>
                                   child: Text(
                                     "Vendor",
                                     style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12),
                                   ),
                                 ),
                                 SizedBox(height: 8),
@@ -320,17 +306,9 @@ class _DataVendorState extends State<DataVendor>
                                   _vendorData?['shop_name'] ??
                                       "Nama Tidak Diketahui",
                                   style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                    shadows: [
-                                      Shadow(
-                                        offset: Offset(0, 1),
-                                        blurRadius: 3,
-                                        color: Colors.black.withOpacity(0.5),
-                                      ),
-                                    ],
-                                  ),
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white),
                                 ),
                                 SizedBox(height: 8),
                                 Row(
@@ -343,9 +321,7 @@ class _DataVendorState extends State<DataVendor>
                                         _vendorData?['shop_address'] ??
                                             "Alamat Tidak Diketahui",
                                         style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                        ),
+                                            color: Colors.white, fontSize: 14),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -373,10 +349,9 @@ class _DataVendorState extends State<DataVendor>
                                     Text(
                                       "${_vendorData?['rating'] ?? '0.0'}",
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14),
                                     ),
                                   ],
                                 ),
@@ -393,10 +368,9 @@ class _DataVendorState extends State<DataVendor>
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 5,
-                            offset: Offset(0, 2),
-                          ),
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 5,
+                              offset: Offset(0, 2)),
                         ],
                       ),
                       child: TabBar(
@@ -429,15 +403,14 @@ class _DataVendorState extends State<DataVendor>
                                   _vendorData?['shop_description'] ??
                                       "Deskripsi tidak tersedia",
                                   style: TextStyle(
-                                    fontSize: 14,
-                                    height: 1.6,
-                                    color: Colors.black87,
-                                  ),
+                                      fontSize: 14,
+                                      height: 1.6,
+                                      color: Colors.black87),
                                 ),
                                 SizedBox(height: 24),
                                 _buildSectionTitle("Informasi Kontak"),
                                 SizedBox(height: 16),
-                                _buildContactItem(Icons.phone, "Phone",
+                                _buildContactItem(Icons.phone, "Telepon",
                                     _vendorData?['phone'] ?? "Tidak tersedia"),
                                 _buildContactItem(Icons.email, "Email",
                                     _vendorData?['email'] ?? "Tidak tersedia"),
@@ -445,9 +418,7 @@ class _DataVendorState extends State<DataVendor>
                                     "Jam Operasional", "08:00 - 20:00"),
                                 SizedBox(height: 24),
                                 _buildSectionTitle("Lokasi"),
-
                                 SizedBox(height: 16),
-                                // Changed location display to match contact information style
                                 _buildContactItem(
                                     Icons.location_on,
                                     "Alamat",
@@ -460,8 +431,7 @@ class _DataVendorState extends State<DataVendor>
                                   vendorId: _vendorData?['user_id'] ??
                                       _vendorData?['id'] ??
                                       0,
-                                  vendorData:
-                                      _vendorData, // Kirim vendorData ke ChatVendorButton
+                                  vendorData: _vendorData,
                                 ),
                               ],
                             ),
@@ -476,32 +446,23 @@ class _DataVendorState extends State<DataVendor>
                                       Container(
                                         padding: EdgeInsets.all(20),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey.withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          Icons.motorcycle_outlined,
-                                          size: 60,
-                                          color: Colors.grey[400],
-                                        ),
+                                            color: Colors.grey.withOpacity(0.1),
+                                            shape: BoxShape.circle),
+                                        child: Icon(Icons.motorcycle_outlined,
+                                            size: 60, color: Colors.grey[400]),
                                       ),
                                       SizedBox(height: 20),
-                                      Text(
-                                        "Tidak ada motor tersedia",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
+                                      Text("Tidak ada motor tersedia",
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey[600])),
                                       SizedBox(height: 8),
                                       Text(
-                                        "Vendor ini belum menambahkan motor",
-                                        style: TextStyle(
-                                          color: Colors.grey[500],
-                                          fontSize: 14,
-                                        ),
-                                      ),
+                                          " Vendor ini belum menambahkan motor",
+                                          style: TextStyle(
+                                              color: Colors.grey[500],
+                                              fontSize: 14)),
                                     ],
                                   ),
                                 )
@@ -512,10 +473,10 @@ class _DataVendorState extends State<DataVendor>
                                     return _buildMotorCard(_motorList[index]);
                                   },
                                 ),
+
+                          // Ulasan Tab
                           _reviewList.isEmpty
-                              ? Center(
-                                  child: Text("Tidak ada ulasan tersedia"),
-                                )
+                              ? Center(child: Text("Tidak ada ulasan tersedia"))
                               : ListView.builder(
                                   padding: EdgeInsets.all(16),
                                   itemCount: _reviewList.length,
@@ -543,19 +504,12 @@ class _DataVendorState extends State<DataVendor>
           width: 4,
           height: 20,
           decoration: BoxDecoration(
-            color: primaryBlue,
-            borderRadius: BorderRadius.circular(2),
-          ),
+              color: primaryBlue, borderRadius: BorderRadius.circular(2)),
         ),
         SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: primaryBlue,
-          ),
-        ),
+        Text(title,
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: primaryBlue)),
       ],
     );
   }
@@ -569,9 +523,7 @@ class _DataVendorState extends State<DataVendor>
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: lightBlue,
-              borderRadius: BorderRadius.circular(12),
-            ),
+                color: lightBlue, borderRadius: BorderRadius.circular(12)),
             child: Icon(icon, color: primaryBlue, size: 20),
           ),
           SizedBox(width: 16),
@@ -579,21 +531,12 @@ class _DataVendorState extends State<DataVendor>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
+                Text(label,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600])),
                 SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Text(value,
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -602,30 +545,93 @@ class _DataVendorState extends State<DataVendor>
     );
   }
 
-  Widget _buildReviewCard(Map<String, dynamic> review) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              review['customer']['name'] ?? "Nama Tidak Diketahui",
-              style: TextStyle(fontWeight: FontWeight.bold),
+Widget _buildReviewCard(Map<String, dynamic> review) {
+  return Card(
+    margin: EdgeInsets.only(bottom: 16),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12), // Rounded corners
+    ),
+    elevation: 5, // Add elevation for shadow effect
+    child: Padding(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Customer Name and Rating
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundImage: review['customer']['profile_image'] != null
+                    ? NetworkImage('${ApiConfig.baseUrl}${review['customer']['profile_image']}')
+                    : null,
+                child: review['customer']['profile_image'] == null
+                    ? Icon(Icons.person, size: 24, color: Colors.white)
+                    : null,
+                radius: 20,
+              ),
+              SizedBox(width: 12),
+              Text(
+                review['customer']['name'] ?? "Nama Tidak Diketahui",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          
+          // Rating Stars (above the review text)
+          Row(
+            children: [
+              ...List.generate(5, (index) {
+                return Icon(
+                  index < review['rating']
+                      ? Icons.star
+                      : Icons.star_border,
+                  color: Colors.amber,
+                  size: 18,
+                );
+              }),
+            ],
+          ),
+          SizedBox(height: 10),
+          
+          // Review Content with Quotation Marks
+          Text(
+            '"${review['review'] ?? "Tidak ada ulasan"}"',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontStyle: FontStyle.italic, // Italicized for a quotation effect
             ),
-            SizedBox(height: 8),
-            Text("Rating: ${review['rating']}"),
-            SizedBox(height: 8),
-            Text(review['review'] ?? "Tidak ada ulasan"),
-            SizedBox(height: 8),
-            Text(
-                "Dibalas oleh vendor: ${review['vendor_reply'] ?? "Tidak ada balasan"}"),
-          ],
-        ),
+            textAlign: TextAlign.justify, // Ensure the text is justified
+          ),
+          SizedBox(height: 8),
+          
+          // Vendor's Reply (if available)
+          if (review['vendor_reply'] != null)
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                "Balasan Vendor: ${review['vendor_reply']}",
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue[800],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildContactButton() {
     return Container(
@@ -633,17 +639,15 @@ class _DataVendorState extends State<DataVendor>
       height: 55,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF3E8EDE), primaryBlue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+            colors: [Color(0xFF3E8EDE), primaryBlue],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: primaryBlue.withOpacity(0.3),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
+              color: primaryBlue.withOpacity(0.3),
+              blurRadius: 8,
+              offset: Offset(0, 4)),
         ],
       ),
       child: Material(
@@ -652,10 +656,9 @@ class _DataVendorState extends State<DataVendor>
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("Contacting vendor..."),
-                behavior: SnackBarBehavior.floating,
-                backgroundColor: primaryBlue,
-              ),
+                  content: Text("Menghubungi vendor..."),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: primaryBlue),
             );
           },
           borderRadius: BorderRadius.circular(15),
@@ -665,15 +668,12 @@ class _DataVendorState extends State<DataVendor>
               children: [
                 Icon(Icons.chat, color: Colors.white, size: 20),
                 SizedBox(width: 10),
-                Text(
-                  "Contact Vendor",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
+                Text("Hubungi Vendor",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1)),
               ],
             ),
           ),
@@ -709,7 +709,7 @@ class _DataVendorState extends State<DataVendor>
             MaterialPageRoute(
               builder: (context) => DetailMotorPage(
                 motor: motor,
-                isGuest: _userId == null, // Jika _userId null, berarti guest
+                isGuest: _userId == null,
               ),
             ),
           );
@@ -717,7 +717,6 @@ class _DataVendorState extends State<DataVendor>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Motor Image
             ClipRRect(
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(15),
@@ -751,8 +750,6 @@ class _DataVendorState extends State<DataVendor>
                       ),
                     ),
             ),
-
-            // Motor Info
             Expanded(
               child: Padding(
                 padding: EdgeInsets.all(16),
@@ -817,7 +814,7 @@ class _DataVendorState extends State<DataVendor>
                         ],
                       ),
                       child: Text(
-                        "View Details",
+                        "Lihat Detail",
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -837,27 +834,25 @@ class _DataVendorState extends State<DataVendor>
 }
 
 class ChatVendorButton extends StatelessWidget {
-  final int vendorId; // This should be passed from the parent widget
-  final Map<String, dynamic>? vendorData; // Tambahkan parameter ini
+  final int vendorId;
+  final Map<String, dynamic>? vendorData;
 
   const ChatVendorButton({
     Key? key,
-    required this.vendorId, // Make it required
-    required this.vendorData, // Tambahkan ini
+    required this.vendorId,
+    required this.vendorData,
   }) : super(key: key);
 
   Future<void> _startChat(BuildContext context) async {
     try {
-      final chatRoom = await ChatService.getOrCreateChatRoom(
-        vendorId: vendorId, // Use the vendorId passed to the widget
-      );
+      final chatRoom =
+          await ChatService.getOrCreateChatRoom(vendorId: vendorId);
 
       if (chatRoom != null) {
         final prefs = await SharedPreferences.getInstance();
         final customerId = prefs.getInt('user_id');
 
         if (customerId != null) {
-          // Ambil receiverId dari vendorData
           final receiverId = vendorData?['user_id'] ?? vendorData?['id'] ?? 0;
 
           Navigator.push(
@@ -865,8 +860,7 @@ class ChatVendorButton extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => ChatPage(
                 chatRoomId: chatRoom['id'],
-                // senderId: customerId,
-                receiverId: receiverId, // Kirim receiverId yang benar
+                receiverId: receiverId,
                 receiverName: vendorData?['shop_name'] ?? 'Nama Penerima',
               ),
             ),

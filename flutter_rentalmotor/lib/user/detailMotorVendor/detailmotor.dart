@@ -6,6 +6,8 @@ import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 const String baseUrl = ApiConfig.baseUrl;
 
@@ -23,6 +25,19 @@ class DetailMotorPage extends StatefulWidget {
   _DetailMotorPageState createState() => _DetailMotorPageState();
 }
 
+Future<List<Map<String, dynamic>>> fetchReviewsForMotor(int motorId) async {
+  final response =
+      await http.get(Uri.parse('http://192.168.95.159:8080/reviews/motor/$motorId'));
+
+  if (response.statusCode == 200) {
+    // Successfully fetched the reviews
+    return List<Map<String, dynamic>>.from(json.decode(response.body));
+  } else {
+    // Handle error response
+    throw Exception('Failed to load reviews');
+  }
+}
+
 class _DetailMotorPageState extends State<DetailMotorPage>
     with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
@@ -34,10 +49,13 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  List<Map<String, dynamic>> _reviewList = [];
+  bool _isLoadingReviews = true;
 
   @override
   void initState() {
     super.initState();
+    fetchMotorReviews();
     print("🔍 MOTOR DATA: ${widget.motor}");
 
     // Initialize animation controller
@@ -61,6 +79,21 @@ class _DetailMotorPageState extends State<DetailMotorPage>
 
     // Start animation
     _animationController.forward();
+  }
+
+  Future<void> fetchMotorReviews() async {
+    try {
+      final reviews = await fetchReviewsForMotor(widget.motor["id"]);
+      setState(() {
+        _reviewList = reviews;
+        _isLoadingReviews = false; // Set loading state to false
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingReviews = false; // Set loading state to false on error
+      });
+      print("Error fetching reviews: $e");
+    }
   }
 
   @override
@@ -352,6 +385,19 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                       _buildVendorInfo(),
                       SizedBox(height: 30),
                       _buildBookButton(),
+
+                      // Ulasan Motor
+                      _buildSectionTitle("Ulasan"),
+                      SizedBox(height: 16),
+                      _isLoadingReviews
+                          ? Center(child: CircularProgressIndicator())
+                          : _reviewList.isEmpty
+                              ? Center(child: Text("No reviews available"))
+                              : Column(
+                                  children: _reviewList.map((review) {
+                                    return _buildReviewCard(review);
+                                  }).toList(),
+                                ),
                     ],
                   ),
                 ),
@@ -394,6 +440,93 @@ class _DetailMotorPageState extends State<DetailMotorPage>
     } else {
       return status;
     }
+  }
+
+  Widget _buildReviewCard(Map<String, dynamic> review) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 5,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Nama dan Rating Pengguna
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: review['customer']['profile_image'] != null
+                      ? NetworkImage(
+                          '${ApiConfig.baseUrl}${review['customer']['profile_image']}')
+                      : null,
+                  child: review['customer']['profile_image'] == null
+                      ? Icon(Icons.person, size: 24, color: Colors.white)
+                      : null,
+                  radius: 20,
+                ),
+                SizedBox(width: 12),
+                Text(
+                  review['customer']['name'] ?? "Nama Tidak Diketahui",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+
+            // Bintang Rating
+            Row(
+              children: [
+                ...List.generate(5, (index) {
+                  return Icon(
+                    index < review['rating'] ? Icons.star : Icons.star_border,
+                    color: Colors.amber,
+                    size: 18,
+                  );
+                }),
+              ],
+            ),
+            SizedBox(height: 10),
+
+            // Isi Ulasan dengan Kutipan
+            Text(
+              '"${review['review'] ?? "Tidak ada ulasan"}"',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.justify,
+            ),
+            SizedBox(height: 8),
+
+            // Balasan Vendor (jika ada)
+            if (review['vendor_reply'] != null)
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "Balasan Vendor: ${review['vendor_reply']}",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue[800],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildSectionTitle(String title) {
