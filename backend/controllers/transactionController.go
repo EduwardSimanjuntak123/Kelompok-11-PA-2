@@ -144,7 +144,6 @@ func GetVendorTransactions(c *gin.Context) {
 				"id":            motor.ID,
 				"name":          motor.Name,
 				"brand":         motor.Brand,
-				"model":         motor.Model,
 				"year":          motor.Year,
 				"price_per_day": motor.Price,
 			},
