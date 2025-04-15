@@ -52,7 +52,6 @@ class MotorController extends Controller
                 'type'        => 'required|in:matic,manual,kopling,vespa',
                 'description' => 'required|string',
                 'price'       => 'required|numeric|min:1000',
-                'status'      => 'required|in:available,booked,unavailable',
                 'image'       => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             ]);
 
@@ -79,12 +78,12 @@ class MotorController extends Controller
             session()->flash('message', $response->successful() ? 'Motor berhasil ditambahkan!' : 'Gagal menambahkan motor.');
             session()->flash('type', $response->successful() ? 'success' : 'error');
 
-            return redirect()->back();
+            return redirect()->route('vendor.motor');
         } catch (\Exception $e) {
             Log::error('Gagal menyimpan motor: ' . $e->getMessage());
             session()->flash('message', 'Terjadi kesalahan server.');
             session()->flash('type', 'error');
-            return redirect()->back();
+            return redirect()->route('vendor.motor');
         }
     }
 

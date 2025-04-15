@@ -30,7 +30,7 @@
             color: #FEA501;
         }
 
-        .error-message {
+         .error-message {
             color: #dc2626; /* Tailwind's red-600 */
             font-size: 0.875rem; /* text-sm */
             margin-top: 0.5rem; /* mt-2 */
