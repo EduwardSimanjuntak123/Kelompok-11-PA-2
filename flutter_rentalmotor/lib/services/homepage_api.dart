@@ -8,12 +8,10 @@ class HomePageApi {
   // Mengambil daftar vendor dari API
   Future<List<Map<String, dynamic>>> fetchVendors() async {
     final response = await http.get(Uri.parse("$baseUrl/vendor"));
-    print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      print(
-          "Decoded data: ${jsonEncode(data)}"); // Menampilkan data JSON yang didekode
+      // Menampilkan data JSON yang didekode
       return List<Map<String, dynamic>>.from(
           data['data']); // Sesuaikan dengan struktur JSON API
     } else {
@@ -24,11 +22,9 @@ class HomePageApi {
   // Mengambil daftar motor dari API
   Future<List<Map<String, dynamic>>> fetchMotors() async {
     try {
-      print("🔄 Memanggil API untuk data motor...");
       final response = await http
           .get(Uri.parse('$baseUrl/motor/'))
           .timeout(Duration(seconds: 5));
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
 
@@ -39,7 +35,6 @@ class HomePageApi {
           List<Map<String, dynamic>> motors =
               data.map((motor) => motor as Map<String, dynamic>).toList();
 
-          print("✅ Data motor berhasil diambil.");
           return motors;
         } else {
           throw Exception("Format respons API tidak sesuai");

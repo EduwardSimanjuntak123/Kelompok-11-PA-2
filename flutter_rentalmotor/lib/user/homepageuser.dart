@@ -5,6 +5,9 @@ import 'package:flutter_rentalmotor/user/notifikasi/notifikasi.dart';
 import 'package:flutter_rentalmotor/user/chat_room_list_page.dart';
 
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import 'package:flutter_rentalmotor/user/MotorListPage.dart';
+import 'package:flutter_rentalmotor/user/VendorListPage.dart';
+
 import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:flutter_rentalmotor/signin.dart';
@@ -118,9 +121,19 @@ class _HomePageUserState extends State<HomePageUser> {
 
   /// Membuat koneksi WebSocket
   void _connectWebSocket(int userId) {
-    String wsUrl = "ws://192.168.205.235:8080/ws?user_id=$userId";
+    print({
+      {userId}
+    });
+    String wsUrl = "ws://192.168.205.159:8080/ws/notifikasi?user_id=$userId";
     _channel = IOWebSocketChannel.connect(wsUrl);
+
+    // Log untuk memverifikasi jika WebSocket terhubung
     _channel?.stream.listen((data) async {
+      debugPrint(
+          "WebSocket connected: $wsUrl"); // Log untuk memastikan WebSocket berhasil terhubung
+      debugPrint(
+          "Received data: $data"); // Log untuk melihat data yang diterima
+
       try {
         final Map<String, dynamic> outer = json.decode(data);
         final Map<String, dynamic> inner = json.decode(outer['message']);
@@ -154,7 +167,8 @@ class _HomePageUserState extends State<HomePageUser> {
         _showNotificationPopup(data.toString());
       }
     }, onError: (error) {
-      print("WebSocket error: $error");
+      debugPrint(
+          "WebSocket error: $error"); // Log untuk menampilkan error jika ada masalah dengan WebSocket
     });
   }
 
@@ -343,13 +357,16 @@ class _HomePageUserState extends State<HomePageUser> {
                   label: const Text("Login"),
                 )
               else ...[
+                // Notifikasi dengan badge yang menampilkan jumlah pesan belum dibaca
                 badges.Badge(
-                  showBadge: _unreadCount > 0,
+                  showBadge: _unreadCount >
+                      0, // Tampilkan badge jika ada pesan yang belum dibaca
                   badgeContent: Text(
                     _unreadCount.toString(),
                     style: const TextStyle(color: Colors.white, fontSize: 10),
                   ),
-                  position: badges.BadgePosition.topEnd(top: -5, end: -5),
+                  position: badges.BadgePosition.topEnd(
+                      top: -5, end: -5), // Badge di pojok kanan atas
                   child: IconButton(
                     icon: const Icon(Icons.notifications_none,
                         color: Colors.white),
@@ -369,6 +386,7 @@ class _HomePageUserState extends State<HomePageUser> {
                     },
                   ),
                 ),
+                // Icon chat yang juga memiliki badge jika ada pesan yang belum dibaca
                 IconButton(
                   icon: Image.asset("assets/images/chat.png",
                       width: 24, height: 24),
@@ -511,7 +529,14 @@ class _HomePageUserState extends State<HomePageUser> {
               ),
               TextButton(
                 onPressed: () {
-                  // Aksi untuk lihat semua vendor
+                  // Navigasi ke halaman Daftar Vendor
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VendorListPage(
+                          isGuest: _userId == null), // Pass isGuest value
+                    ),
+                  ); // Halaman Daftar Vendor
                 },
                 child: Text(
                   "Lihat Semua",
@@ -616,7 +641,13 @@ class _HomePageUserState extends State<HomePageUser> {
               ),
               TextButton(
                 onPressed: () {
-                  // Aksi untuk lihat semua motor
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MotorListPage(
+                          isGuest: _userId == null), // Pass isGuest value
+                    ),
+                  );
                 },
                 child: Text(
                   "Lihat Semua",
@@ -665,12 +696,12 @@ class _HomePageUserState extends State<HomePageUser> {
                   itemCount: _motorList.length,
                   itemBuilder: (context, index) {
                     final motor = _motorList[index];
-                    print(
-                        "Kecamatan: ${motor["vendor"]?["kecamatan"]?["nama_kecamatan"]}");
+
                     String path = motor["image"]?.toString().trim() ?? "";
                     String imageUrl = path.isNotEmpty
                         ? (path.startsWith("http") ? path : "$baseUrl$path")
                         : "assets/images/default_motor.png";
+
                     String formattedPrice;
                     if (motor["price"] != null) {
                       final priceValue =

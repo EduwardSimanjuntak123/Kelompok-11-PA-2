@@ -14,6 +14,7 @@ class ChatRoomListPage extends StatefulWidget {
 class _ChatRoomListPageState extends State<ChatRoomListPage> {
   List<dynamic> chatRooms = [];
   int? userId;
+  
 
   @override
   void initState() {
@@ -36,7 +37,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
 
   Future<void> _fetchChatRooms(int userId) async {
     final url =
-        Uri.parse("http://192.168.205.159:8080/chat/rooms?user_id=$userId");
+        Uri.parse("http://192.168.168.159:8080/chat/rooms?user_id=$userId");
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -110,7 +111,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundImage: NetworkImage(
-                              'http://192.168.205.159:8080${otherUser['profile_image']}'),
+                              'http://192.168.168.159:8080${otherUser['profile_image']}'),
                         ),
                         title:
                             Text(otherUser['shop_name'] ?? otherUser['name']),

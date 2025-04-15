@@ -7,23 +7,29 @@ import 'package:intl/intl.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart' as home;
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/user/pesanan/pesanan.dart';
+import 'package:shimmer/shimmer.dart';
 
 class DetailPesanan extends StatefulWidget {
   @override
   _DetailPesananState createState() => _DetailPesananState();
 }
 
-class _DetailPesananState extends State<DetailPesanan> {
+class _DetailPesananState extends State<DetailPesanan>
+    with SingleTickerProviderStateMixin {
   final storage = FlutterSecureStorage();
   int _selectedIndex = 1;
   List<dynamic> bookings = [];
   bool isLoading = true;
 
   // Blue theme colors
-  final Color primaryBlue = Color(0xFF2C567E);
+  final Color primaryBlue = Color(0xFF1565C0);
   final Color lightBlue = Color(0xFFE3F2FD);
   final Color accentBlue = Color(0xFF64B5F6);
 
+  // Animation controller for staggered animations
+  late AnimationController _animationController;
+
+  // Status filter
   List<String> statuses = [
     'Semua',
     'pending',
@@ -60,7 +66,23 @@ class _DetailPesananState extends State<DetailPesanan> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
     fetchBookings();
+
+    // Start animation
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> fetchBookings() async {
@@ -78,6 +100,48 @@ class _DetailPesananState extends State<DetailPesanan> {
       if (response.statusCode == 200) {
         setState(() {
           bookings = json.decode(response.body);
+          // Sort bookings to show newest first (assuming there's a created_at field)
+          bookings.sort((a, b) {
+            // First sort by status priority (pending first)
+            int statusPriority(String status) {
+              switch (status) {
+                case 'pending':
+                  return 0;
+                case 'confirmed':
+                  return 1;
+                case 'in transit':
+                  return 2;
+                case 'in use':
+                  return 3;
+                case 'awaiting return':
+                  return 4;
+                case 'completed':
+                  return 5;
+                case 'canceled':
+                  return 6;
+                case 'rejected':
+                  return 7;
+                default:
+                  return 8;
+              }
+            }
+
+            int priorityA = statusPriority(a['status'] ?? '');
+            int priorityB = statusPriority(b['status'] ?? '');
+
+            // If status priority is the same, sort by date (newest first)
+            if (priorityA == priorityB) {
+              DateTime dateA = a['created_at'] != null
+                  ? DateTime.parse(a['created_at'])
+                  : DateTime.now();
+              DateTime dateB = b['created_at'] != null
+                  ? DateTime.parse(b['created_at'])
+                  : DateTime.now();
+              return dateB.compareTo(dateA); // Newest first
+            }
+
+            return priorityA.compareTo(priorityB); // Sort by priority
+          });
           isLoading = false;
         });
       } else {
@@ -165,11 +229,7 @@ class _DetailPesananState extends State<DetailPesanan> {
         ),
       ),
       body: isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
-              ),
-            )
+          ? _buildLoadingSkeleton()
           : bookings.isEmpty
               ? Center(
                   child: Column(
@@ -200,10 +260,12 @@ class _DetailPesananState extends State<DetailPesanan> {
                       SizedBox(height: 16),
                       ElevatedButton.icon(
                         icon: Icon(Icons.motorcycle, size: 16),
-                        label: Text('Sewa Motor Sekarang', style: TextStyle(fontSize: 14)),
+                        label: Text('Sewa Motor Sekarang',
+                            style: TextStyle(fontSize: 14)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryBlue,
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -211,7 +273,8 @@ class _DetailPesananState extends State<DetailPesanan> {
                         onPressed: () {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => home.HomePageUser()),
+                            MaterialPageRoute(
+                                builder: (context) => home.HomePageUser()),
                           );
                         },
                       ),
@@ -220,8 +283,9 @@ class _DetailPesananState extends State<DetailPesanan> {
                 )
               : Column(
                   children: [
-                    // Filter status horizontal
+                    // Improved status filter - now as a grid instead of horizontal scroll
                     Container(
+                      padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         boxShadow: [
@@ -233,47 +297,163 @@ class _DetailPesananState extends State<DetailPesanan> {
                           ),
                         ],
                       ),
-                      child: Container(
-                        height: 46,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: statuses.length,
-                          itemBuilder: (context, index) {
-                            final status = statuses[index];
-                            final isSelected = selectedStatus == status;
-
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  selectedStatus = status;
-                                });
-                              },
-                              child: Container(
-                                margin: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? primaryBlue : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: isSelected ? primaryBlue : Colors.grey[300]!,
-                                    width: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.filter_list,
+                                    size: 18,
+                                    color: primaryBlue,
                                   ),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  status[0].toUpperCase() + status.substring(1),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isSelected ? Colors.white : Colors.black87,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Filter Status',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryBlue,
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
+                              if (selectedStatus != 'Semua')
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      selectedStatus = 'Semua';
+                                    });
+                                  },
+                                  child: Text(
+                                    'Reset',
+                                    style: TextStyle(
+                                      color: primaryBlue,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    minimumSize: Size(0, 0),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          SizedBox(height: 12),
+
+                          // Grid of status filters instead of horizontal scroll
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              childAspectRatio: 2.5,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                            ),
+                            itemCount: statuses.length,
+                            itemBuilder: (context, index) {
+                              final status = statuses[index];
+                              final isSelected = selectedStatus == status;
+
+                          
+                              // Get status color for the chip
+                              Color statusColor = status == 'Semua'
+                                  ? primaryBlue
+                                  : getStatusColor(status);
+
+                              return InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    selectedStatus = status;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? statusColor
+                                        : statusColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: statusColor,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (status != 'Semua')
+                                        Icon(
+                                          getStatusIcon(status),
+                                          size: 14,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : statusColor,
+                                        ),
+                                      if (status != 'Semua') SizedBox(width: 4),
+                                      Text(
+                                        status[0].toUpperCase() +
+                                            status.substring(1),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isSelected
+                                              ? Colors.white
+                                              : statusColor,
+                                          fontWeight: isSelected
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
+
+                    // Active filter display
+                    if (selectedStatus != 'Semua')
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        color: getStatusColor(selectedStatus).withOpacity(0.05),
+                        child: Row(
+                          children: [
+                            Icon(
+                              getStatusIcon(selectedStatus),
+                              size: 16,
+                              color: getStatusColor(selectedStatus),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Menampilkan pesanan dengan status: ',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            Text(
+                              selectedStatus[0].toUpperCase() +
+                                  selectedStatus.substring(1),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: getStatusColor(selectedStatus),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
 
                     // Daftar pesanan
                     Expanded(
@@ -308,206 +488,387 @@ class _DetailPesananState extends State<DetailPesanan> {
                                   final item = filteredBookings[index];
                                   final status = item['status'] ?? '';
 
-                                  final startDate = DateTime.parse(item['start_date']);
-                                  final endDate = DateTime.parse(item['end_date']);
-                                  final durationDays = endDate.difference(startDate).inDays + 1;
+                                  // Create staggered animation for each item
+                                  final itemAnimation =
+                                      Tween<double>(begin: 0.0, end: 1.0)
+                                          .animate(
+                                    CurvedAnimation(
+                                      parent: _animationController,
+                                      curve: Interval(
+                                        (index / filteredBookings.length) * 0.5,
+                                        ((index + 1) /
+                                                    filteredBookings.length) *
+                                                0.5 +
+                                            0.5,
+                                        curve: Curves.easeOut,
+                                      ),
+                                    ),
+                                  );
+
+                                  final startDate =
+                                      DateTime.parse(item['start_date']);
+                                  final endDate =
+                                      DateTime.parse(item['end_date']);
+                                  final durationDays =
+                                      endDate.difference(startDate).inDays + 1;
 
                                   final dateFormat = DateFormat('dd MMM yyyy');
-                                  final formattedStart = dateFormat.format(startDate);
-                                  final formattedEnd = dateFormat.format(endDate);
+                                  final formattedStart =
+                                      dateFormat.format(startDate);
+                                  final formattedEnd =
+                                      dateFormat.format(endDate);
 
-                                  final String? originalImage = item['motor']['image'];
-                                  String imageUrl = originalImage ?? 'https://via.placeholder.com/100';
+                                  final String? originalImage =
+                                      item['motor']['image'];
+                                  String imageUrl = originalImage ??
+                                      'https://via.placeholder.com/100';
                                   if (imageUrl.startsWith('/')) {
                                     imageUrl = "${ApiConfig.baseUrl}$imageUrl";
                                   }
 
-                                  return Container(
-                                    margin: EdgeInsets.only(bottom: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.05),
-                                          blurRadius: 5,
-                                          offset: Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Status Banner
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                          decoration: BoxDecoration(
-                                            color: getStatusColor(status).withOpacity(0.1),
-                                            borderRadius: BorderRadius.only(
-                                              topLeft: Radius.circular(8),
-                                              topRight: Radius.circular(8),
+                                  // Check if this is a new booking (pending status)
+                                  bool isNewBooking = status == 'pending';
+
+                                  return FadeTransition(
+                                    opacity: itemAnimation,
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: Offset(0, 0.2),
+                                        end: Offset.zero,
+                                      ).animate(itemAnimation),
+                                      child: Container(
+                                        margin: EdgeInsets.only(bottom: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black
+                                                  .withOpacity(0.05),
+                                              blurRadius: 5,
+                                              offset: Offset(0, 1),
                                             ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                getStatusIcon(status),
-                                                color: getStatusColor(status),
-                                                size: 16,
-                                              ),
-                                              SizedBox(width: 6),
-                                              Text(
-                                                status[0].toUpperCase() + status.substring(1),
-                                                style: TextStyle(
-                                                  color: getStatusColor(status),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                          ],
+                                          border: isNewBooking
+                                              ? Border.all(
+                                                  color: Colors.orange,
+                                                  width: 1.5,
+                                                )
+                                              : null,
                                         ),
-                                        
-                                        // Motor Info and Details
-                                        Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Row(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              // Motor Image
-                                              ClipRRect(
-                                                borderRadius: BorderRadius.circular(6),
-                                                child: Image.network(
-                                                  imageUrl,
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (context, error, stackTrace) => Container(
-                                                    width: 80,
-                                                    height: 80,
-                                                    color: Colors.grey[300],
-                                                    child: Icon(Icons.image_not_supported, color: Colors.grey[500], size: 20),
-                                                  ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+// Status Banner
+                                            Container(
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 8,
+                                                  horizontal:
+                                                      12), // Adjusted padding
+                                              decoration: BoxDecoration(
+                                                color: getStatusColor(status)
+                                                    .withOpacity(
+                                                        0.1), // Background color
+                                                borderRadius: BorderRadius.only(
+                                                  topLeft: Radius.circular(12),
+                                                  topRight: Radius.circular(12),
                                                 ),
                                               ),
-                                              SizedBox(width: 12),
-                                              
-                                              // Details
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      item['motor']['name'] ?? 'Nama tidak ada',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: primaryBlue,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment
+                                                        .start, // Align items to the start
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Icon(
+                                                        getStatusIcon(status),
+                                                        color: getStatusColor(
+                                                            status),
+                                                        size: 16,
+                                                      ),
+                                                      SizedBox(width: 6),
+                                                      Text(
+                                                        status[0]
+                                                                .toUpperCase() +
+                                                            status.substring(1),
+                                                        style: TextStyle(
+                                                          color: getStatusColor(
+                                                              status),
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  // Badge "New" for pending orders
+                                                  if (isNewBooking)
+                                                    Container(
+                                                      margin: EdgeInsets.only(
+                                                          top:
+                                                              4), // Margin for spacing
+                                                      padding:
+                                                          EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.orange,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10),
+                                                      ),
+                                                      child: Text(
+                                                        'Baru',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 10,
+                                                        ),
                                                       ),
                                                     ),
-                                                    SizedBox(height: 4),
-                                                    Row(
+                                                ],
+                                              ),
+                                            ),
+
+                                            // Motor Info and Details
+                                            Padding(
+                                              padding: EdgeInsets.all(12),
+                                              child: Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  // Motor Image
+                                                  ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    child: Image.network(
+                                                      imageUrl,
+                                                      width: 80,
+                                                      height: 80,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder: (context,
+                                                              error,
+                                                              stackTrace) =>
+                                                          Container(
+                                                        width: 80,
+                                                        height: 80,
+                                                        color: Colors.grey[300],
+                                                        child: Icon(
+                                                            Icons
+                                                                .image_not_supported,
+                                                            color: Colors
+                                                                .grey[500],
+                                                            size: 20),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 12),
+
+                                                  // Details
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
                                                       children: [
-                                                        Icon(Icons.date_range, size: 14, color: Colors.grey[600]),
-                                                        SizedBox(width: 4),
-                                                        Expanded(
-                                                          child: Text(
-                                                            '$formattedStart - $formattedEnd',
-                                                            style: TextStyle(
-                                                              fontSize: 12,
-                                                              color: Colors.grey[700],
-                                                            ),
-                                                            overflow: TextOverflow.ellipsis,
+                                                        Text(
+                                                          item['motor']
+                                                                  ['name'] ??
+                                                              'Nama tidak ada',
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: primaryBlue,
                                                           ),
                                                         ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(height: 4),
-                                                    Row(
-                                                      children: [
-                                                        Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
-                                                        SizedBox(width: 4),
-                                                        Container(
-                                                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                          decoration: BoxDecoration(
-                                                            color: primaryBlue.withOpacity(0.1),
-                                                            borderRadius: BorderRadius.circular(10),
-                                                          ),
-                                                          child: Text(
-                                                            '$durationDays hari',
-                                                            style: TextStyle(
-                                                              fontSize: 10,
-                                                              fontWeight: FontWeight.bold,
-                                                              color: primaryBlue,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(height: 4),
-                                                    Row(
-                                                      children: [
-                                                        Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
-                                                        SizedBox(width: 4),
-                                                        Expanded(
-                                                          child: Text(
-                                                            item['pickup_location'] ?? 'Lokasi tidak ada',
-                                                            style: TextStyle(
-                                                              fontSize: 12,
-                                                            ),
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(height: 4),
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                      children: [
+                                                        SizedBox(height: 4),
                                                         Row(
                                                           children: [
-                                                            Icon(Icons.monetization_on, size: 14, color: Colors.green[700]),
+                                                            Icon(
+                                                                Icons
+                                                                    .date_range,
+                                                                size: 14,
+                                                                color: Colors
+                                                                    .grey[600]),
                                                             SizedBox(width: 4),
-                                                            Text(
-                                                              "${item['motor']['price_per_day']} / hari",
-                                                              style: TextStyle(
-                                                                fontSize: 12,
-                                                                fontWeight: FontWeight.bold,
-                                                                color: Colors.green[700],
+                                                            Expanded(
+                                                              child: Text(
+                                                                '$formattedStart - $formattedEnd',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 12,
+                                                                  color: Colors
+                                                                          .grey[
+                                                                      700],
+                                                                ),
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
                                                               ),
                                                             ),
                                                           ],
                                                         ),
-                                                        ElevatedButton(
-                                                          onPressed: () {
-                                                            Navigator.push(
-                                                              context,
-                                                              MaterialPageRoute(
-                                                                builder: (context) => PesananPage(booking: item),
+                                                        SizedBox(height: 4),
+                                                        Row(
+                                                          children: [
+                                                            Icon(
+                                                                Icons
+                                                                    .access_time,
+                                                                size: 14,
+                                                                color: Colors
+                                                                    .grey[600]),
+                                                            SizedBox(width: 4),
+                                                            Container(
+                                                              padding: EdgeInsets
+                                                                  .symmetric(
+                                                                      horizontal:
+                                                                          6,
+                                                                      vertical:
+                                                                          2),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: primaryBlue
+                                                                    .withOpacity(
+                                                                        0.1),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            10),
                                                               ),
-                                                            );
-                                                          },
-                                                          style: ElevatedButton.styleFrom(
-                                                            backgroundColor: primaryBlue,
-                                                            foregroundColor: Colors.white,
-                                                            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius: BorderRadius.circular(6),
+                                                              child: Text(
+                                                                '$durationDays hari',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  color:
+                                                                      primaryBlue,
+                                                                ),
+                                                              ),
                                                             ),
-                                                            minimumSize: Size(70, 30),
-                                                          ),
-                                                          child: Text('Detail', style: TextStyle(fontSize: 12)),
+                                                          ],
+                                                        ),
+                                                        SizedBox(height: 4),
+                                                        Row(
+                                                          children: [
+                                                            Icon(
+                                                                Icons
+                                                                    .location_on,
+                                                                size: 14,
+                                                                color: Colors
+                                                                    .grey[600]),
+                                                            SizedBox(width: 4),
+                                                            Expanded(
+                                                              child: Text(
+                                                                item['pickup_location'] ??
+                                                                    'Lokasi tidak ada',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 12,
+                                                                ),
+                                                                maxLines: 1,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        SizedBox(height: 4),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Row(
+                                                              children: [
+                                                                Icon(
+                                                                    Icons
+                                                                        .monetization_on,
+                                                                    size: 14,
+                                                                    color: Colors
+                                                                            .green[
+                                                                        700]),
+                                                                SizedBox(
+                                                                    width: 4),
+                                                                Text(
+                                                                  "${item['motor']['price_per_day']} / hari",
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: Colors
+                                                                            .green[
+                                                                        700],
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            ElevatedButton(
+                                                              onPressed: () {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder: (context) =>
+                                                                        PesananPage(
+                                                                            booking:
+                                                                                item),
+                                                                  ),
+                                                                );
+                                                              },
+                                                              style:
+                                                                  ElevatedButton
+                                                                      .styleFrom(
+                                                                backgroundColor:
+                                                                    primaryBlue,
+                                                                foregroundColor:
+                                                                    Colors
+                                                                        .white,
+                                                                padding: EdgeInsets
+                                                                    .symmetric(
+                                                                        horizontal:
+                                                                            12,
+                                                                        vertical:
+                                                                            6),
+                                                                shape:
+                                                                    RoundedRectangleBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              6),
+                                                                ),
+                                                                minimumSize:
+                                                                    Size(
+                                                                        70, 30),
+                                                              ),
+                                                              child: Text(
+                                                                  'Detail',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          12)),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ],
                                                     ),
-                                                  ],
-                                                ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
+                                      ),
                                     ),
                                   );
                                 },
@@ -554,6 +915,74 @@ class _DetailPesananState extends State<DetailPesanan> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLoadingSkeleton() {
+    return Column(
+      children: [
+        // Filter skeleton
+        Container(
+          padding: EdgeInsets.all(16),
+          color: Colors.white,
+          child: Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 120,
+                  height: 20,
+                  color: Colors.white,
+                ),
+                SizedBox(height: 16),
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2.5,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: 6,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // List skeleton
+        Expanded(
+          child: ListView.builder(
+            padding: EdgeInsets.all(12),
+            itemCount: 5,
+            itemBuilder: (context, index) {
+              return Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Container(
+                  margin: EdgeInsets.only(bottom: 12),
+                  height: 150,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

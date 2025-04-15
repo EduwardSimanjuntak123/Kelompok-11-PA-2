@@ -4,6 +4,7 @@ import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/user/chat/chat_page.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/cancelBooking_api.dart';
+import 'package:flutter_rentalmotor/user/reviewpage.dart'; // Import ReviewPage
 
 class PesananPage extends StatefulWidget {
   final Map<String, dynamic> booking;
@@ -17,11 +18,10 @@ class PesananPage extends StatefulWidget {
 class _PesananPageState extends State<PesananPage> {
   int _selectedIndex = 1;
   bool _isCancelling = false;
+  bool _hasReviewed = false;
 
   // Blue theme colors
   final Color primaryBlue = Color(0xFF2C567E);
-  final Color lightBlue = Color(0xFFE3F2FD);
-  final Color accentBlue = Color(0xFF64B5F6);
 
   void _onItemTapped(int index) {
     if (index == 0) {
@@ -433,15 +433,22 @@ class _PesananPageState extends State<PesananPage> {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 children: [
-                  if (status == 'pending') ...[
+                  if (status == 'completed' && !_hasReviewed) ...[
                     buildButton(
-                      _isCancelling ? "Membatalkan..." : "Batalkan Pesanan",
-                      Colors.red,
+                      "Berikan Ulasan",
+                      Colors.blue,
                       Colors.white,
-                      _isCancelling
-                          ? null
-                          : () => showCancelConfirmation(booking['id']),
-                      Icons.cancel,
+                      () {
+                        // Show review dialog and post review
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ReviewPage(bookingId: booking['id']),
+                          ),
+                        );
+                      },
+                      Icons.star,
                     ),
                     SizedBox(height: 12),
                   ],
@@ -552,7 +559,6 @@ class _PesananPageState extends State<PesananPage> {
           Container(
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: lightBlue,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: primaryBlue, size: 18),

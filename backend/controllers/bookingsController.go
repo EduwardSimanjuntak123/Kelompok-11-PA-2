@@ -252,7 +252,7 @@ func AutoSetAwaitingReturn() {
 	now := time.Now()
 
 	for _, booking := range bookings {
-		log.Printf("⏰ Booking ID %d - EndDate: %v | Now: %v\n", booking.ID, booking.EndDate, now)
+		// log.Printf("⏰ Booking ID %d - EndDate: %v | Now: %v\n", booking.ID, booking.EndDate, now)
 
 		if now.After(booking.EndDate) {
 			// Ubah status menjadi "awaiting return"

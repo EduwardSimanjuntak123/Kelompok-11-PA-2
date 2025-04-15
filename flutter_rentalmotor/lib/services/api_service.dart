@@ -8,11 +8,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Inisialisasi penyimpanan
 final FlutterSecureStorage storage = FlutterSecureStorage();
 
+// Fungsi untuk menyimpan token
 Future<void> saveToken(String token) async {
   await storage.write(key: "auth_token", value: token);
   print("✅ Token berhasil disimpan!");
 }
 
+// Fungsi untuk menyimpan data vendor atau customer
 Future<void> saveVendorData(Map<String, dynamic> user) async {
   final prefs = await SharedPreferences.getInstance();
 
@@ -23,8 +25,8 @@ Future<void> saveVendorData(Map<String, dynamic> user) async {
     final vendor = user['vendor'];
     if (vendor != null) {
       await prefs.setInt('vendorId', vendor['id']);
-      await prefs.setString('businessName', vendor['shop_name']);
-      await prefs.setString('vendorAddress', vendor['shop_address']);
+      await prefs.setString('businessName', vendor['business_name']);
+      await prefs.setString('vendorAddress', vendor['address']);
       print("✅ Data vendor berhasil disimpan!");
     } else {
       print("⚠️ Data vendor kosong meskipun role vendor.");
@@ -37,6 +39,7 @@ Future<void> saveVendorData(Map<String, dynamic> user) async {
   }
 }
 
+// Fungsi untuk melakukan login
 Future<Map<String, dynamic>> loginUser(String email, String password) async {
   final String baseUrl = ApiConfig.baseUrl;
   final url = Uri.parse('$baseUrl/login');

@@ -5,6 +5,7 @@ import 'package:flutter_rentalmotor/user/booking_motor/sewamotor.dart';
 import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 
 const String baseUrl = ApiConfig.baseUrl;
 
@@ -22,12 +23,50 @@ class DetailMotorPage extends StatefulWidget {
   _DetailMotorPageState createState() => _DetailMotorPageState();
 }
 
-class _DetailMotorPageState extends State<DetailMotorPage> {
+class _DetailMotorPageState extends State<DetailMotorPage>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   final Color primaryBlue = Color(0xFF2C567E);
+  final Color accentColor = Color(0xFFFF9800);
+  bool _isFavorite = false;
+
+  // Animation controller
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
   void initState() {
     super.initState();
     print("🔍 MOTOR DATA: ${widget.motor}");
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 800),
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    // Start animation
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   void _onItemTapped(int index) {
@@ -44,6 +83,26 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
         MaterialPageRoute(builder: (context) => Akun()),
       );
     }
+  }
+
+  void _toggleFavorite() {
+    setState(() {
+      _isFavorite = !_isFavorite;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:
+            Text(_isFavorite ? "Added to favorites" : "Removed from favorites"),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: _isFavorite ? Colors.green : Colors.grey[700],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: EdgeInsets.all(10),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   @override
@@ -100,167 +159,205 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
                     ),
                   ],
                 ),
-                child: Icon(Icons.favorite_border, color: Colors.red, size: 20),
+                child: Icon(
+                    _isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: Colors.red,
+                    size: 20),
               ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Added to favorites"),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
+              onPressed: _toggleFavorite,
             ),
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Gambar motor
-            Container(
-              height: 300,
-              width: double.infinity,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Hero(
-                      tag: "motor-${widget.motor["id"] ?? "unknown"}",
-                      child: imageUrl.startsWith("http")
-                          ? Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                color: Colors.grey[300],
-                                child: Icon(Icons.image_not_supported,
-                                    size: 50, color: Colors.grey[600]),
-                              ),
-                            )
-                          : Image.asset(
-                              imageUrl,
-                              fit: BoxFit.cover,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Gambar motor
+                Container(
+                  height: 350, // Increased from 300 to 350
+                  width: double.infinity,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Hero(
+                          tag: "motor-${widget.motor["id"] ?? "unknown"}",
+                          child: imageUrl.startsWith("http")
+                              ? Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                    color: Colors.grey[300],
+                                    child: Icon(Icons.image_not_supported,
+                                        size: 50, color: Colors.grey[600]),
+                                  ),
+                                )
+                              : Image.asset(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                              stops: [0.6, 1.0],
                             ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: primaryBlue,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    widget.motor["type"] ?? "Tidak Diketahui",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: _getStatusColor(
+                                        widget.motor["status"] ?? "unknown"),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    _getStatusText(
+                                        widget.motor["status"] ?? "unknown"),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              widget.motor["name"] ?? "Nama Tidak Diketahui",
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    offset: Offset(0, 1),
+                                    blurRadius: 3,
+                                    color: Colors.black.withOpacity(0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.star, color: Colors.amber, size: 18),
+                                SizedBox(width: 4),
+                                Text(
+                                  "${widget.motor["rating"] ?? "0.0"}",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(width: 16),
+                                Icon(Icons.monetization_on,
+                                    color: Colors.green, size: 18),
+                                SizedBox(width: 4),
+                                Text(
+                                  "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}/hari",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  Positioned(
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: primaryBlue,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            widget.motor["type"] ?? "Tidak Diketahui",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          widget.motor["name"] ?? "Nama Tidak Diketahui",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                offset: Offset(0, 1),
-                                blurRadius: 3,
-                                color: Colors.black.withOpacity(0.5),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(Icons.star, color: Colors.amber, size: 18),
-                            SizedBox(width: 4),
-                            Text(
-                              "${widget.motor["rating"] ?? "0.0"}",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(width: 16),
-                            Icon(Icons.monetization_on,
-                                color: Colors.green, size: 18),
-                            SizedBox(width: 4),
-                            Text(
-                              "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}/hari",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
 
-            // Konten
-            Padding(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSectionTitle("Deskripsi"),
-                  SizedBox(height: 10),
-                  Text(
-                    (widget.motor["description"]
-                                ?.toString()
-                                .trim()
-                                .isNotEmpty ??
-                            false)
-                        ? widget.motor["description"]
-                        : "Tidak ada deskripsi.",
+                // Konten
+                Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("Deskripsi"),
+                      SizedBox(height: 10),
+                      Container(
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Text(
+                          (widget.motor["description"]
+                                      ?.toString()
+                                      .trim()
+                                      .isNotEmpty ??
+                                  false)
+                              ? widget.motor["description"]
+                              : "Tidak ada deskripsi.",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[800],
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      _buildSectionTitle("Informasi Motor"),
+                      SizedBox(height: 16),
+                      _buildInfoRow(),
+                      SizedBox(height: 20),
+                      _buildSectionTitle("Informasi Vendor"),
+                      SizedBox(height: 16),
+                      _buildVendorInfo(),
+                      SizedBox(height: 30),
+                      _buildBookButton(),
+                    ],
                   ),
-                  SizedBox(height: 20),
-                  _buildSectionTitle("Informasi Motor"),
-                  SizedBox(height: 16),
-                  _buildInfoRow(),
-                  SizedBox(height: 20),
-                  _buildSectionTitle("Informasi Vendor"),
-                  SizedBox(height: 16),
-                  _buildVendorInfo(),
-                  SizedBox(height: 30),
-                  _buildBookButton(),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
       bottomNavigationBar: CustomBottomNavBar(
@@ -269,6 +366,34 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
         isGuest: widget.isGuest,
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    String statusLower = status.toLowerCase();
+    if (statusLower == "booked") {
+      return Colors.red;
+    } else if (statusLower == "available" || statusLower == "tersedia") {
+      return Colors.green;
+    } else if (statusLower == "unavailable" ||
+        statusLower == "tidak tersedia") {
+      return Colors.grey;
+    } else {
+      return Colors.black;
+    }
+  }
+
+  String _getStatusText(String status) {
+    String statusLower = status.toLowerCase();
+    if (statusLower == "booked") {
+      return "Booked";
+    } else if (statusLower == "available" || statusLower == "tersedia") {
+      return "Available";
+    } else if (statusLower == "unavailable" ||
+        statusLower == "tidak tersedia") {
+      return "Unavailable";
+    } else {
+      return status;
+    }
   }
 
   Widget _buildSectionTitle(String title) {
@@ -391,63 +516,106 @@ class _DetailMotorPageState extends State<DetailMotorPage> {
             .replaceAll('\n', '')
             .trim() ??
         "Tidak Diketahui";
-    return Container(
-      padding: EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 5),
+
+    return GestureDetector(
+      onTap: () {
+        // Redirect to vendor page when clicked
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DataVendor(vendorId: vendor["id"]),
           ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Circle Avatar untuk gambar vendor
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.grey[200],
-            backgroundImage: (vendor["user"]?["profile_image"] != null &&
-                    vendor["user"]["profile_image"].toString().isNotEmpty)
-                ? NetworkImage("$baseUrl${vendor["user"]["profile_image"]}")
-                : AssetImage("assets/images/default_profile.png")
-                    as ImageProvider,
-          ),
-          SizedBox(width: 12),
-          // Info Vendor
-          Expanded(
-            child: Column(
+        );
+      },
+      child: Container(
+        padding: EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: Offset(0, 5),
+            ),
+          ],
+          border: Border.all(color: primaryBlue.withOpacity(0.1)),
+        ),
+        child: Column(
+          children: [
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  vendor["shop_name"] ?? "Nama Toko Tidak Diketahui",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: primaryBlue,
+                // Circle Avatar untuk gambar vendor
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: (vendor["user"]?["profile_image"] != null &&
+                          vendor["user"]["profile_image"].toString().isNotEmpty)
+                      ? NetworkImage(
+                          "$baseUrl${vendor["user"]["profile_image"]}")
+                      : AssetImage("assets/images/default_profile.png")
+                          as ImageProvider,
+                ),
+                SizedBox(width: 12),
+                // Info Vendor
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        vendor["shop_name"] ?? "Nama Toko Tidak Diketahui",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: primaryBlue,
+                        ),
+                      ),
+                      SizedBox(height: 6),
+                      Text("Alamat: ${vendor["shop_address"] ?? "-"}",
+                          style: TextStyle(fontSize: 14)),
+                      Text("Kecamatan: $namaKecamatan",
+                          style: TextStyle(fontSize: 14)),
+                      Row(
+                        children: [
+                          Icon(Icons.star, size: 16, color: Colors.amber),
+                          SizedBox(width: 4),
+                          Text("${vendor["rating"] ?? "0"} / 5",
+                              style: TextStyle(fontSize: 14)),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 6),
-                Text("Alamat: ${vendor["shop_address"] ?? "-"}",
-                    style: TextStyle(fontSize: 14)),
-                Text("Kecamatan: $namaKecamatan",
-                    style: TextStyle(fontSize: 14)),
-                Row(
-                  children: [
-                    Icon(Icons.star, size: 16, color: Colors.amber),
-                    SizedBox(width: 4),
-                    Text("${vendor["rating"] ?? "0"} / 5",
-                        style: TextStyle(fontSize: 14)),
-                  ],
+                // Arrow indicator for clickable
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: primaryBlue,
+                  size: 16,
                 ),
               ],
             ),
-          ),
-        ],
+            SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: primaryBlue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(
+                  "Tap untuk melihat detail vendor",
+                  style: TextStyle(
+                    color: primaryBlue,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
