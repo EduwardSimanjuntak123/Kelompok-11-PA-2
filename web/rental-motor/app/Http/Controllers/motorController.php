@@ -46,7 +46,6 @@ class MotorController extends Controller
             $validated = $request->validate([
                 'name'        => 'required|string|max:255',
                 'brand'       => 'required|string|max:255',
-                'model'       => 'required|string|max:255',
                 'year'        => 'required|integer|min:1900|max:' . date('Y'),
                 'color'       => 'required|string|max:255',
                 'type'        => 'required|in:matic,manual,kopling,vespa',
@@ -96,7 +95,6 @@ class MotorController extends Controller
             $validated = $request->validate([
                 'name'        => 'required|string|max:255',
                 'brand'       => 'required|string|max:255',
-                'model'       => 'required|string|max:255',
                 'year'        => 'required|integer|min:1900|max:' . date('Y'),
                 'color'       => 'required|string|max:255',
                 'type'        => 'required|in:matic,manual,kopling,vespa',

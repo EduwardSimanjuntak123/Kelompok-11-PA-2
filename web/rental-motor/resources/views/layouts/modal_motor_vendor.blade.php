@@ -10,13 +10,9 @@
                     <input name="name" type="text" class="w-full border p-2 rounded">
                     <small class="text-red-500 text-sm error-message" data-field="name"></small>
 
-                    <label class="block text-gray-700 mt-2">Brand</label>
+                    <label class="block text-gray-700 mt-2">Merek</label>
                     <input name="brand" type="text" class="w-full border p-2 rounded">
                     <small class="text-red-500 text-sm error-message" data-field="brand"></small>
-
-                    <label class="block text-gray-700 mt-2">Model</label>
-                    <input name="model" type="text" class="w-full border p-2 rounded">
-                    <small class="text-red-500 text-sm error-message" data-field="model"></small>
 
                     <label class="block text-gray-700 mt-2">Tahun</label>
                     <input name="year" type="number" class="w-full border p-2 rounded" min="1900"
@@ -76,11 +72,10 @@
                     <label class="block text-gray-700">Nama</label>
                     <input id="editMotorName" name="name" type="text" class="w-full border p-2 rounded">
 
-                    <label class="block text-gray-700 mt-2">Brand</label>
+                    <label class="block text-gray-700 mt-2">Merek</label>
                     <input id="editMotorBrand" name="brand" type="text" class="w-full border p-2 rounded">
 
-                    <label class="block text-gray-700 mt-2">Model</label>
-                    <input id="editMotorModel" name="model" type="text" class="w-full border p-2 rounded">
+
 
                     <label class="block text-gray-700 mt-2">Tahun</label>
                     <input id="editMotorYear" name="year" type="number" class="w-full border p-2 rounded"
@@ -142,5 +137,3 @@
         </form>
     </div>
 </div>
-
-
