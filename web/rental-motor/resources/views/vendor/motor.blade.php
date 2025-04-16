@@ -67,8 +67,8 @@
                             {{-- Informasi Motor --}}
                             <td class="px-4 py-2 text-sm text-gray-700">
                                 <div class="flex flex-col space-y-1">
-                                    <span><strong>Nama:</strong> {{ $motor['name'] }}</span>
-                                    <span><strong>Merek:</strong> {{ $motor['brand'] }}</span>
+                                    <span><strong>Nama Motor:</strong> {{ $motor['name'] }}</span>
+                                    <span><strong>Merek Motor:</strong> {{ $motor['brand'] }}</span>
                                     <span><strong>Tahun:</strong> {{ $motor['year'] }}</span>
                                     <span><strong>Warna:</strong> {{ $motor['color'] }}</span>
                                     <span><strong>Deskripsi:</strong> {{ $motor['description'] }}</span>

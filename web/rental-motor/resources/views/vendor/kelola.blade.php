@@ -12,7 +12,6 @@
 
     <div class="container mx-auto p-8">
         <h2 class="text-4xl font-extrabold mb-6 text-center text-gray-800">Kelola Pemesanan</h2>
-
         <!-- Filter dan Booking Manual dalam satu baris -->
         <div class="mb-6 flex items-center justify-between">
             <div class="relative w-60">
@@ -42,7 +41,7 @@
             </button>
         </div>
 
-    
+
 
         @if (empty($bookings) || count($bookings) == 0)
             <p class="text-center text-gray-500">Tidak ada pemesanan untuk ditampilkan.</p>
@@ -64,39 +63,44 @@
                             <tr class="border-b border-gray-200 hover:bg-gray-100" data-status="{{ $pesanan['status'] }}">
                                 <td class="py-3 px-4 text-center align-top">{{ $loop->iteration }}</td>
 
-                                <!-- Detail Pemesanan -->
                                 <td class="py-3 px-4 text-left align-top">
                                     <div><strong class="font-bold">Customer:</strong> {{ $pesanan['customer_name'] ?? '-' }}
                                     </div>
+
                                     <div><strong class="font-bold">Tanggal Booking:</strong>
-                                        {{ $pesanan['booking_date'] ?? '-' }}</div>
+                                        <span class="format-datetime">{{ $pesanan['booking_date'] ?? '-' }}</span>
+                                    </div>
+
                                     <div><strong class="font-bold">Tanggal Mulai:</strong>
-                                        {{ $pesanan['start_date'] ?? '-' }}</div>
+                                        <span class="format-datetime">{{ $pesanan['start_date'] ?? '-' }}</span>
+                                    </div>
+
                                     <div><strong class="font-bold">Tanggal Selesai:</strong>
-                                        {{ $pesanan['end_date'] ?? '-' }}</div>
+                                        <span class="format-datetime">{{ $pesanan['end_date'] ?? '-' }}</span>
+                                    </div>
+
                                     <div><strong class="font-bold">Lokasi Jemput:</strong>
-                                        {{ $pesanan['pickup_location'] ?? '-' }}</div>
+                                        {{ $pesanan['pickup_location'] ?? '-' }}
+                                    </div>
                                 </td>
+
 
                                 <!-- Detail Motor -->
                                 <td class="py-3 px-4 text-left align-top">
                                     @if (isset($pesanan['motor']))
-                                        <div><strong class="font-bold">Nama:</strong> {{ $pesanan['motor']['name'] ?? '-' }}
+                                        <div><strong class="font-bold">Nama Motor:</strong> {{ $pesanan['motor']['name'] ?? '-' }}
                                         </div>
-                                        <div><strong class="font-bold">Brand:</strong>
+                                        <div><strong class="font-bold">Merek Motor:</strong>
                                             {{ $pesanan['motor']['brand'] ?? '-' }}</div>
-                                        <div><strong class="font-bold">Model:</strong>
-                                            {{ $pesanan['motor']['model'] ?? '-' }}</div>
                                         <div><strong class="font-bold">Tahun:</strong>
                                             {{ $pesanan['motor']['year'] ?? '-' }}</div>
                                         <div><strong class="font-bold">Warna:</strong>
-                                            {{ $pesanan['motor']['warna'] ?? '-' }}</div>
+                                            {{ $pesanan['motor']['color'] ?? '-' }}</div>
                                     @else
                                         <div>Data motor tidak tersedia.</div>
                                     @endif
                                 </td>
-
-
+                            
                                 <!-- Gambar Motor -->
                                 <td class="py-3 px-4 text-center align-top">
                                     @if (isset($pesanan['motor']['image']))
@@ -323,7 +327,21 @@
                 });
             @endif
 
-            // Waktu minimal jika tanggal hari ini dipilih
+
+            document.addEventListener("DOMContentLoaded", function() {
+                const dateInput = document.getElementById("start_date_date");
+                const today = new Date();
+                const todayString = today.toISOString().split('T')[0];
+                dateInput.setAttribute("min", todayString);
+
+
+                document.querySelectorAll('.format-datetime').forEach(el => {
+                    const originalText = el.textContent.trim();
+                    el.textContent = formatDateTime(originalText);
+                });
+            });
+
+
             document.getElementById("start_date_date").addEventListener("change", function() {
                 const dateInput = this.value;
                 const today = new Date();
@@ -372,6 +390,41 @@
                     confirmButtonColor: '#d33'
                 });
             }
+
+            function formatDateTime(dateTimeString) {
+                if (!dateTimeString || dateTimeString === "-") return "-";
+
+                const date = new Date(dateTimeString);
+                if (isNaN(date.getTime())) return dateTimeString;
+
+                const formattedDate = date.toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                const formattedTime = date.toLocaleTimeString('id-ID', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+
+                return `${formattedDate} / ${formattedTime}`;
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('.format-datetime').forEach(el => {
+                    const originalText = el.textContent.trim();
+                    el.textContent = formatDateTime(originalText);
+                });
+            });
+
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('.format-datetime').forEach(el => {
+                    const originalText = el.textContent.trim();
+                    el.textContent = formatDateTime(originalText);
+                });
+            });
 
             document.getElementById('statusFilter').addEventListener('change', function() {
                 const selected = this.value;
@@ -456,24 +509,21 @@
                 const modal = document.getElementById(modalId);
                 modal.classList.add("hidden");
                 document.body.style.overflow = "auto";
+
+                const form = modal.querySelector("form");
+                if (form) {
+                    form.reset(); 
+                }
+
+                const errorMessages = modal.querySelectorAll(".error-message");
+                errorMessages.forEach(el => el.textContent = '');
+
+                const timeInput = modal.querySelector("#start_date_time");
+                if (timeInput) {
+                    timeInput.removeAttribute("min");
+                }
             }
 
-            // Filter Booking Status (Tab nav)
-            const statusTabs = document.querySelectorAll("#statusTabs a");
-            statusTabs.forEach(tab => {
-                tab.addEventListener("click", function(e) {
-                    e.preventDefault();
-
-                    statusTabs.forEach(t => t.classList.remove("active"));
-                    this.classList.add("active");
-
-                    const filter = this.getAttribute("data-filter");
-                    document.querySelectorAll("tbody tr").forEach(row => {
-                        row.style.display = (filter === "all" || row.getAttribute("data-status") ===
-                            filter) ? "" : "none";
-                    });
-                });
-            });
 
             // ========== VALIDASI & SUBMIT: MANUAL BOOKING ===========
             document.getElementById('manualBookingForm')?.addEventListener('submit', function(event) {

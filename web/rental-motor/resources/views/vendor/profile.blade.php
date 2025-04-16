@@ -6,29 +6,29 @@
     @php
         $vendor = $user['vendor'] ?? [];
     @endphp
-   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-   <script>
-       @if (session('message_profile'))
-           Swal.fire({
-               icon: '{{ session('type_profile') ?? 'success' }}',
-               title: 'Berhasil!',
-               text: '{{ session('message_profile') }}',
-               confirmButtonColor: '#3085d6',
-           });
-       @endif
-   
-       @if (session('message_photo'))
-           Swal.fire({
-               icon: '{{ session('type_photo') ?? 'success' }}',
-               title: 'Foto Diperbarui!',
-               text: '{{ session('message_photo') }}',
-               confirmButtonColor: '#3085d6',
-           });
-       @endif
-   </script>
-   
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        @if (session('message_profile'))
+            Swal.fire({
+                icon: '{{ session('type_profile') ?? 'success' }}',
+                title: 'Berhasil!',
+                text: '{{ session('message_profile') }}',
+                confirmButtonColor: '#3085d6',
+            });
+        @endif
 
-    
+        @if (session('message_photo'))
+            Swal.fire({
+                icon: '{{ session('type_photo') ?? 'success' }}',
+                title: 'Foto Diperbarui!',
+                text: '{{ session('message_photo') }}',
+                confirmButtonColor: '#3085d6',
+            });
+        @endif
+    </script>
+
+
+
 
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Header Section -->
@@ -76,12 +76,12 @@
 
                     <!-- Status Badge -->
                     <div
-    class="mt-4 px-4 py-2 rounded-full 
+                        class="mt-4 px-4 py-2 rounded-full 
     @if ($user['status'] === 'active') bg-green-100 text-green-800
     @elseif($user['status'] === 'pending') bg-yellow-100 text-yellow-800
     @else bg-red-100 text-red-800 @endif">
-    {{ ucfirst($user['status']) }}
-</div>
+                        {{ ucfirst($user['status']) }}
+                    </div>
 
                 </div>
 
@@ -100,22 +100,22 @@
                             Informasi Pribadi
                         </h3>
                         <!-- Informasi Pribadi -->
-<div class="bg-gray-50 p-4 rounded-lg">
-    <p class="text-sm font-medium text-gray-500">Nama Lengkap</p>
-    <p class="text-gray-800 font-semibold">{{ $user['name'] ?? '-' }}</p>
-</div>
-<div class="bg-gray-50 p-4 rounded-lg">
-    <p class="text-sm font-medium text-gray-500">Email</p>
-    <p class="text-gray-800 font-semibold">{{ $user['email'] ?? '-' }}</p>
-</div>
-<div class="bg-gray-50 p-4 rounded-lg">
-    <p class="text-sm font-medium text-gray-500">Telepon</p>
-    <p class="text-gray-800 font-semibold">{{ $user['phone'] ?? '-' }}</p>
-</div>
-<div class="bg-gray-50 p-4 rounded-lg">
-    <p class="text-sm font-medium text-gray-500">Alamat</p>
-    <p class="text-gray-800 font-semibold">{{ $user['address'] ?? '-' }}</p>
-</div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Nama Lengkap</p>
+                            <p class="text-gray-800 font-semibold">{{ $user['name'] ?? '-' }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Email</p>
+                            <p class="text-gray-800 font-semibold">{{ $user['email'] ?? '-' }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Telepon</p>
+                            <p class="text-gray-800 font-semibold">{{ $user['phone'] ?? '-' }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Alamat</p>
+                            <p class="text-gray-800 font-semibold">{{ $user['address'] ?? '-' }}</p>
+                        </div>
 
                     </div>
 
@@ -130,22 +130,22 @@
                             Informasi Toko
                         </h3>
                         <!-- Informasi Toko -->
-<div class="bg-gray-50 p-4 rounded-lg">
-    <p class="text-sm font-medium text-gray-500">Nama Toko</p>
-    <p class="text-gray-800 font-semibold">{{ $vendor['shop_name'] ?? '-' }}</p>
-</div>
-<div class="bg-gray-50 p-4 rounded-lg">
-    <p class="text-sm font-medium text-gray-500">ID Kecamatan</p>
-    <p class="text-gray-800 font-semibold">{{ $vendor['id_kecamatan'] ?? '-' }}</p>
-</div>
-<div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
-    <p class="text-sm font-medium text-gray-500">Alamat Toko</p>
-    <p class="text-gray-800 font-semibold">{{ $vendor['shop_address'] ?? '-' }}</p>
-</div>
-<div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
-    <p class="text-sm font-medium text-gray-500">Deskripsi Toko</p>
-    <p class="text-gray-800">{{ $vendor['shop_description'] ?? '-' }}</p>
-</div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Nama Toko</p>
+                            <p class="text-gray-800 font-semibold">{{ $vendor['shop_name'] ?? '-' }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">ID Kecamatan</p>
+                            <p class="text-gray-800 font-semibold">{{ $vendor['id_kecamatan'] ?? '-' }}</p>
+                        </div>
+                        <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Alamat Toko</p>
+                            <p class="text-gray-800 font-semibold">{{ $vendor['shop_address'] ?? '-' }}</p>
+                        </div>
+                        <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
+                            <p class="text-sm font-medium text-gray-500">Deskripsi Toko</p>
+                            <p class="text-gray-800">{{ $vendor['shop_description'] ?? '-' }}</p>
+                        </div>
 
                     </div>
 
@@ -207,29 +207,31 @@
                             </div>
 
                             <!-- Shop Information -->
-<div class="space-y-4">
-    <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Informasi Toko</h3>
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Toko</label>
-        <input type="text" name="shop_name" value="{{ $vendor['shop_name'] ?? '' }}"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-    </div>
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Toko</label>
-        <input type="text" name="shop_address" value="{{ $vendor['shop_address'] ?? '' }}"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-    </div>
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ID Kecamatan</label>
-        <input type="text" name="id_kecamatan" value="{{ $vendor['id_kecamatan'] ?? '' }}"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-    </div>
-    <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Toko</label>
-        <textarea name="shop_description" rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ $vendor['shop_description'] ?? '' }}</textarea>
-    </div>
-</div>
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Informasi Toko</h3>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Toko</label>
+                                    <input type="text" name="shop_name" value="{{ $vendor['shop_name'] ?? '' }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Alamat Toko</label>
+                                    <input type="text" name="shop_address"
+                                        value="{{ $vendor['shop_address'] ?? '' }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Kecamatan</label>
+                                    <input type="text" name="id_kecamatan"
+                                        value="{{ $vendor['id_kecamatan'] ?? '' }}"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Toko</label>
+                                    <textarea name="shop_description" rows="3"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ $vendor['shop_description'] ?? '' }}</textarea>
+                                </div>
+                            </div>
 
                         </div>
 

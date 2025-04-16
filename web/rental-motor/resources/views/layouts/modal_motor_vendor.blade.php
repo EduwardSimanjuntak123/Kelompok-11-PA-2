@@ -6,11 +6,11 @@
             @csrf
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-gray-700">Nama</label>
+                    <label class="block text-gray-700">Nama Motor</label>
                     <input name="name" type="text" class="w-full border p-2 rounded">
                     <small class="text-red-500 text-sm error-message" data-field="name"></small>
 
-                    <label class="block text-gray-700 mt-2">Merek</label>
+                    <label class="block text-gray-700 mt-2">Merek Motor</label>
                     <input name="brand" type="text" class="w-full border p-2 rounded">
                     <small class="text-red-500 text-sm error-message" data-field="brand"></small>
 
@@ -69,13 +69,11 @@
             @method('PUT')
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-gray-700">Nama</label>
+                    <label class="block text-gray-700">Nama Motor</label>
                     <input id="editMotorName" name="name" type="text" class="w-full border p-2 rounded">
 
-                    <label class="block text-gray-700 mt-2">Merek</label>
+                    <label class="block text-gray-700 mt-2">Merek Motor</label>
                     <input id="editMotorBrand" name="brand" type="text" class="w-full border p-2 rounded">
-
-
 
                     <label class="block text-gray-700 mt-2">Tahun</label>
                     <input id="editMotorYear" name="year" type="number" class="w-full border p-2 rounded"
