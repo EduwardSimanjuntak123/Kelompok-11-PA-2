@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class MotorDetailScreen extends StatelessWidget {
   final MotorModel motor;
@@ -7,9 +8,9 @@ class MotorDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = motor.image != null
-        ? 'http://192.168.132.159:8080${motor.image}'
-        : null;
+    final String baseUrl = ApiConfig.baseUrl;
+
+    final imageUrl = motor.image != null ? '$baseUrl:8080${motor.image}' : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -49,7 +50,7 @@ class MotorDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${motor.brand} ${motor.model} (${motor.year})',
+                    '${motor.brand} ${motor.year}',
                     style: const TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 8),
@@ -100,7 +101,6 @@ class MotorModel {
   final int id;
   final String name;
   final String brand;
-  final String model;
   final int year;
   final double price;
   final String color;
@@ -114,7 +114,6 @@ class MotorModel {
     required this.id,
     required this.name,
     required this.brand,
-    required this.model,
     required this.year,
     required this.price,
     required this.color,
@@ -130,7 +129,6 @@ class MotorModel {
       id: json['id'],
       name: json['name'],
       brand: json['brand'],
-      model: json['model'],
       year: json['year'],
       price: (json['price'] as num).toDouble(),
       color: json['color'],

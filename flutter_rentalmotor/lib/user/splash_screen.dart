@@ -33,6 +33,7 @@ class _SplashScreenState extends State<SplashScreen> {
     // Ambil token dan role dari secure storage
     String? token = await storage.read(key: "auth_token");
     String? role = await storage.read(key: "role");
+    print("Token: $token, Role: $role");
 
     if (token != null && role != null) {
       if (role == "vendor") {

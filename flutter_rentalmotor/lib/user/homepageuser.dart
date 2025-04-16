@@ -124,7 +124,7 @@ class _HomePageUserState extends State<HomePageUser> {
     print({
       {userId}
     });
-    String wsUrl = "ws://192.168.205.159:8080/ws/notifikasi?user_id=$userId";
+    String wsUrl = "ws://192.168.95.159:8080/ws/notifikasi?user_id=$userId";
     _channel = IOWebSocketChannel.connect(wsUrl);
 
     // Log untuk memverifikasi jika WebSocket terhubung

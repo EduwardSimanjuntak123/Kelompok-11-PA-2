@@ -15,7 +15,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
   final picker = ImagePicker();
 
   // Form fields
-  String? _name, _brand, _model, _color, _description;
+  String? _name, _brand, _color, _description;
   int? _year;
   double? _price;
   String _status = 'available';
@@ -35,7 +35,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
       _formKey.currentState!.save();
       // Kirim ke backend atau lakukan POST
       print("🚀 Kirim Data Motor:");
-      print("Name: $_name, Brand: $_brand, Model: $_model, Year: $_year");
+      print("Name: $_name, Brand: $_brand,  Year: $_year");
       print("Price: $_price, Color: $_color, Type: $_type, Status: $_status");
       print("Image: ${_imageFile?.path}");
     }
@@ -79,10 +79,6 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Brand'),
                 onSaved: (val) => _brand = val,
-              ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Model'),
-                onSaved: (val) => _model = val,
               ),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Tahun'),

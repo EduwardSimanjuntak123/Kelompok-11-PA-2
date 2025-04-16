@@ -422,6 +422,7 @@ func GetVendorBookings(c *gin.Context) {
 				"id":            booking.Motor.ID,
 				"name":          booking.Motor.Name,
 				"brand":         booking.Motor.Brand,
+				"color":         booking.Motor.Color,
 				"year":          booking.Motor.Year,
 				"price_per_day": booking.Motor.Price,
 				"total_price":   booking.Motor.Price * float64(booking.GetDurationDays()),
@@ -675,6 +676,7 @@ func CreateManualBooking(c *gin.Context) {
 			"brand":         motor.Brand,
 			"year":          motor.Year,
 			"price_per_day": motor.Price,
+			
 			"total_price":   totalPrice,
 		},
 		"photo_id": booking.PhotoID,
