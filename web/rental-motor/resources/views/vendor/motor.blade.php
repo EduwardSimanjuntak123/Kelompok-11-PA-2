@@ -68,8 +68,7 @@
                             <td class="px-4 py-2 text-sm text-gray-700">
                                 <div class="flex flex-col space-y-1">
                                     <span><strong>Nama:</strong> {{ $motor['name'] }}</span>
-                                    <span><strong>Brand:</strong> {{ $motor['brand'] }}</span>
-                                    <span><strong>Model:</strong> {{ $motor['model'] }}</span>
+                                    <span><strong>Merek:</strong> {{ $motor['brand'] }}</span>
                                     <span><strong>Tahun:</strong> {{ $motor['year'] }}</span>
                                     <span><strong>Warna:</strong> {{ $motor['color'] }}</span>
                                     <span><strong>Deskripsi:</strong> {{ $motor['description'] }}</span>
@@ -177,7 +176,6 @@
                 document.getElementById('editModal').style.display = 'flex';
                 document.getElementById('editMotorName').value = motor.name;
                 document.getElementById('editMotorBrand').value = motor.brand;
-                document.getElementById('editMotorModel').value = motor.model;
                 document.getElementById('editMotorYear').value = motor.year;
                 document.getElementById('editMotorColor').value = motor.color;
                 document.getElementById('editMotorPrice').value = motor.price;
@@ -225,7 +223,6 @@
 
                 const name = form.name.value.trim();
                 const brand = form.brand.value.trim();
-                const model = form.model.value.trim();
                 const year = parseInt(form.year.value);
                 const type = form.type.value;
                 const color = form.color.value.trim();
@@ -242,8 +239,7 @@
                 }
 
                 if (!name) setError('name', 'Nama harus diisi.');
-                if (!brand) setError('brand', 'Brand harus diisi.');
-                if (!model) setError('model', 'Model harus diisi.');
+                if (!brand) setError('brand', 'Merek harus diisi.');
                 if (!year || year < 1900 || year > new Date().getFullYear()) setError('year', 'Tahun tidak valid.');
                 if (!['matic', 'manual', 'kopling', 'vespa'].includes(type)) setError('type', 'Tipe harus dipilih.');
                 if (!color) setError('color', 'Warna harus diisi.');
