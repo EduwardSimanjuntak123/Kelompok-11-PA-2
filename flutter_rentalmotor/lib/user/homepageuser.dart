@@ -1,11 +1,13 @@
-import 'dart:convert';
+import 'dart:convert'; // Untuk JSON decoding
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/notifikasi/notifikasi.dart';
 import 'package:flutter_rentalmotor/user/chat/chat_room_list_page.dart';
+
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/MotorListPage.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/VendorListPage.dart';
+
 import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:flutter_rentalmotor/signin.dart';
@@ -19,25 +21,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
-// Define app theme colors
-class AppColors {
-  static const Color primary = Color(0xFF2563EB);
-  static const Color primaryDark = Color(0xFF1E40AF);
-  static const Color secondary = Color(0xFFEFF6FF);
-  static const Color accent = Color(0xFFFF9500);
-  static const Color success = Color(0xFF22C55E);
-  static const Color error = Color(0xFFEF4444);
-  static const Color textDark = Color(0xFF1F2937);
-  static const Color textMedium = Color(0xFF6B7280);
-  static const Color textLight = Color(0xFF9CA3AF);
-  static const Color background = Color(0xFFF9FAFB);
-  static const Color cardBackground = Colors.white;
-  static const Color divider = Color(0xFFE5E7EB);
-}
+const Color primaryBlue = Color(0xFF2196F3);
 
 class HomePageUser extends StatefulWidget {
   const HomePageUser({Key? key}) : super(key: key);
@@ -46,16 +31,13 @@ class HomePageUser extends StatefulWidget {
   _HomePageUserState createState() => _HomePageUserState();
 }
 
-class _HomePageUserState extends State<HomePageUser>
-    with SingleTickerProviderStateMixin {
+class _HomePageUserState extends State<HomePageUser> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
   int _selectedIndex = 0;
   String _userName = "Pengguna";
   int? _userId;
   bool _isLoading = true;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
 
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _vendorList = [];
@@ -73,18 +55,6 @@ class _HomePageUserState extends State<HomePageUser>
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
-    _animationController.forward();
-
     _checkLoginStatus();
     _fetchKecamatan();
     _requestNotificationPermission();
@@ -115,7 +85,6 @@ class _HomePageUserState extends State<HomePageUser>
       importance: Importance.max,
       priority: Priority.high,
       ticker: 'ticker',
-      color: AppColors.primary,
     );
 
     const NotificationDetails platformChannelSpecifics =
@@ -226,6 +195,7 @@ class _HomePageUserState extends State<HomePageUser>
       if (mounted) {
         setState(() {
           _motorList = motors;
+
           _isLoading = false;
         });
       }
@@ -265,16 +235,7 @@ class _HomePageUserState extends State<HomePageUser>
   void _showErrorMessage(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
-        ),
-        backgroundColor: AppColors.error,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.all(10),
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
@@ -282,40 +243,12 @@ class _HomePageUserState extends State<HomePageUser>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.notifications_active, color: AppColors.primary),
-            SizedBox(width: 10),
-            Text(
-              "Notifikasi Baru",
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          message,
-          style: GoogleFonts.poppins(
-            color: AppColors.textMedium,
-            fontSize: 14,
-          ),
-        ),
+        title: const Text("Notifikasi Baru"),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              "Tutup",
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
+            child: const Text("Tutup"),
           ),
         ],
       ),
@@ -358,17 +291,13 @@ class _HomePageUserState extends State<HomePageUser>
           return Icon(
             index < ratingValue ? Icons.star : Icons.star_border,
             size: 14,
-            color: AppColors.accent,
+            color: Colors.amber,
           );
         }),
         const SizedBox(width: 5),
         Text(
           rating,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: AppColors.textMedium,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
         ),
       ],
     );
@@ -377,19 +306,18 @@ class _HomePageUserState extends State<HomePageUser>
   @override
   void dispose() {
     _channel?.sink.close();
-    _animationController.dispose();
     super.dispose();
   }
 
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 60, 20, 25),
+      padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primaryDark],
+          colors: [primaryBlue, const Color(0xFF1976D2)],
           stops: [0.3, 1.0],
         ),
         borderRadius: const BorderRadius.only(
@@ -398,10 +326,9 @@ class _HomePageUserState extends State<HomePageUser>
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-            spreadRadius: 2,
+            color: primaryBlue.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -422,22 +349,17 @@ class _HomePageUserState extends State<HomePageUser>
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primary,
+                    foregroundColor: primaryBlue,
                     elevation: 3,
                     shadowColor: Colors.black26,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
                   icon: const Icon(Icons.login, size: 20),
-                  label: Text(
-                    "Login",
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
+                  label: const Text("Login",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 )
               else ...[
                 // Notifikasi dengan badge yang menampilkan jumlah pesan belum dibaca
@@ -445,27 +367,18 @@ class _HomePageUserState extends State<HomePageUser>
                   showBadge: _unreadCount > 0,
                   badgeContent: Text(
                     _unreadCount.toString(),
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
                   ),
                   badgeStyle: badges.BadgeStyle(
-                    badgeColor: AppColors.error,
+                    badgeColor: Colors.red,
                     elevation: 2,
-                    padding: EdgeInsets.all(5),
                   ),
                   position: badges.BadgePosition.topEnd(top: -5, end: -5),
                   child: Container(
-                    padding: EdgeInsets.all(10),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.3),
-                        width: 1,
-                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
                       icon: const Icon(Icons.notifications_none,
@@ -489,25 +402,16 @@ class _HomePageUserState extends State<HomePageUser>
                     ),
                   ),
                 ),
-                SizedBox(width: 12),
                 // Icon chat yang juga memiliki badge jika ada pesan yang belum dibaca
                 Container(
-                  padding: EdgeInsets.all(10),
+                  padding: EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
-                      width: 1,
-                    ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: IconButton(
-                    icon: Image.asset(
-                      "assets/images/chat.png",
-                      width: 24,
-                      height: 24,
-                      color: Colors.white,
-                    ),
+                    icon: Image.asset("assets/images/chat.png",
+                        width: 24, height: 24),
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(),
                     onPressed: () {
@@ -523,99 +427,41 @@ class _HomePageUserState extends State<HomePageUser>
           ),
           const SizedBox(height: 30),
           // Greeting username with improved styling
-          FadeTransition(
-            opacity: _fadeAnimation,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.3),
-                  width: 1,
+          Container(
+            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Halo, $_userName!",
+                  style: const TextStyle(
+                    fontSize: 22,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 20,
-                        ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.motorcycle,
+                        color: Colors.white.withOpacity(0.9), size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      "Temukan Motor Rental Terbaik",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w500,
                       ),
-                      SizedBox(width: 12),
-                      Text(
-                        "Halo, $_userName!",
-                        style: GoogleFonts.poppins(
-                          fontSize: 22,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(Icons.motorcycle,
-                          color: Colors.white.withOpacity(0.9), size: 16),
-                      SizedBox(width: 8),
-                      Text(
-                        "Temukan Motor Rental Terbaik",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          color: Colors.white.withOpacity(0.9),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.local_offer,
-                          color: Colors.white,
-                          size: 14,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          "Promo Spesial Hari Ini!",
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -625,20 +471,19 @@ class _HomePageUserState extends State<HomePageUser>
 
   Widget _buildFilterSection() {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      margin: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 15,
+            blurRadius: 10,
             offset: const Offset(0, 5),
-            spreadRadius: 1,
           ),
         ],
-        border: Border.all(color: AppColors.divider, width: 1),
+        border: Border.all(color: Colors.blue.shade100, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -646,39 +491,36 @@ class _HomePageUserState extends State<HomePageUser>
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(10),
+                padding: EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child:
-                    Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                child: Icon(Icons.location_on, color: primaryBlue, size: 20),
               ),
-              const SizedBox(width: 12),
-              Text(
+              const SizedBox(width: 10),
+              const Text(
                 "Filter Kecamatan",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
               ),
             ],
           ),
-          SizedBox(height: 15),
+          SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 15),
             decoration: BoxDecoration(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3), width: 1),
+              color: Colors.blue.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.shade200, width: 1),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: _selectedKecamatan,
-                icon: Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+                icon: Icon(Icons.keyboard_arrow_down, color: primaryBlue),
                 items: _buildDropdownItems(),
                 onChanged: (String? newValue) {
                   if (newValue != null) {
@@ -687,14 +529,11 @@ class _HomePageUserState extends State<HomePageUser>
                     });
                   }
                 },
-                style: GoogleFonts.poppins(
-                  color: AppColors.primary,
+                style: TextStyle(
+                  color: primaryBlue,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
-                dropdownColor: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                elevation: 3,
               ),
             ),
           ),
@@ -705,22 +544,16 @@ class _HomePageUserState extends State<HomePageUser>
 
   List<DropdownMenuItem<String>> _buildDropdownItems() {
     List<DropdownMenuItem<String>> items = [];
-    items.add(DropdownMenuItem(
+    items.add(const DropdownMenuItem(
       value: "Semua",
-      child: Text(
-        "Semua",
-        style: GoogleFonts.poppins(),
-      ),
+      child: Text("Semua"),
     ));
     for (var kec in _kecamatanList) {
       String nama = kec["nama_kecamatan"]?.toString().trim() ?? "";
       if (nama.isNotEmpty) {
         items.add(DropdownMenuItem(
           value: nama,
-          child: Text(
-            nama,
-            style: GoogleFonts.poppins(),
-          ),
+          child: Text(nama),
         ));
       }
     }
@@ -742,21 +575,21 @@ class _HomePageUserState extends State<HomePageUser>
                     width: 4,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: primaryBlue,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Row(
                     children: [
-                      Icon(Icons.store, color: AppColors.primary, size: 20),
+                      Icon(Icons.store, color: primaryBlue, size: 20),
                       SizedBox(width: 8),
                       Text(
                         "Daftar Vendor",
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
+                          color: Colors.black87,
                         ),
                       ),
                     ],
@@ -764,9 +597,9 @@ class _HomePageUserState extends State<HomePageUser>
                 ],
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: primaryBlue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: TextButton.icon(
@@ -779,12 +612,11 @@ class _HomePageUserState extends State<HomePageUser>
                       ),
                     );
                   },
-                  icon: Icon(Icons.arrow_forward,
-                      size: 16, color: AppColors.primary),
+                  icon: Icon(Icons.arrow_forward, size: 16, color: primaryBlue),
                   label: Text(
                     "Lihat Semua",
-                    style: GoogleFonts.poppins(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: primaryBlue,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -799,224 +631,149 @@ class _HomePageUserState extends State<HomePageUser>
             ],
           ),
         ),
-        _isLoading
-            ? _buildVendorShimmer()
-            : vendorList.isEmpty
-                ? _buildEmptyVendorState()
-                : _buildVendorList(vendorList),
-      ],
-    );
-  }
+        vendorList.isEmpty
+            ? Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(Icons.store_outlined,
+                        size: 50, color: Colors.grey[400]),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Vendor tidak ada pada kecamatan yang dipilih",
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            : SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: vendorList.length,
+                  itemBuilder: (context, index) {
+                    final vendor = vendorList[index];
+                    String path =
+                        vendor["user"]["profile_image"]?.toString().trim() ??
+                            "";
+                    String imageUrl = path.isNotEmpty
+                        ? (path.startsWith("http") ? path : "$baseUrl$path")
+                        : "assets/images/default_vendor.png";
+                    String kecamatan = vendor["kecamatan"]?["nama_kecamatan"]
+                            ?.toString()
+                            .trim() ??
+                        "Tidak Diketahui";
 
-  Widget _buildVendorShimmer() {
-    return SizedBox(
-      height: 200,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          return Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
-            child: Container(
-              width: 160,
-              margin: const EdgeInsets.only(right: 15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEmptyVendorState() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          Icon(Icons.store_outlined, size: 50, color: Colors.grey[400]),
-          const SizedBox(height: 10),
-          Text(
-            "Vendor tidak ada pada kecamatan yang dipilih",
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: AppColors.textMedium,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVendorList(List<Map<String, dynamic>> vendorList) {
-    return SizedBox(
-      height: 220,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: vendorList.length,
-        itemBuilder: (context, index) {
-          final vendor = vendorList[index];
-          String path =
-              vendor["user"]["profile_image"]?.toString().trim() ?? "";
-          String imageUrl = path.isNotEmpty
-              ? (path.startsWith("http") ? path : "$baseUrl$path")
-              : "assets/images/default_vendor.png";
-          String kecamatan =
-              vendor["kecamatan"]?["nama_kecamatan"]?.toString().trim() ??
-                  "Tidak Diketahui";
-
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          DataVendor(vendorId: vendor["id"])));
-            },
-            child: Container(
-              width: 180,
-              margin: const EdgeInsets.only(right: 15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.15),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                    offset: Offset(0, 4),
-                  )
-                ],
-                border: Border.all(color: AppColors.divider),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(18),
-                          topRight: Radius.circular(18),
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    DataVendor(vendorId: vendor["id"])));
+                      },
+                      child: Container(
+                        width: 160,
+                        margin: const EdgeInsets.only(right: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.2),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                              offset: Offset(0, 3),
+                            )
+                          ],
+                          border: Border.all(color: Colors.blue.shade50),
                         ),
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          height: 120,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Shimmer.fromColors(
-                            baseColor: Colors.grey[300]!,
-                            highlightColor: Colors.grey[100]!,
-                            child: Container(
-                              height: 120,
-                              color: Colors.white,
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Image.asset(
-                            "assets/images/default_vendor.png",
-                            height: 120,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.verified,
-                                  size: 12, color: Colors.white),
-                              SizedBox(width: 4),
-                              Text(
-                                "Verified",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          vendor["shop_name"] ?? "Vendor Tidak Diketahui",
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 6),
-                        _buildRatingDisplay(
-                            vendor["rating"]?.toString() ?? "0"),
-                        SizedBox(height: 6),
-                        Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.location_on,
-                                size: 12, color: AppColors.textMedium),
-                            SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                kecamatan,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: AppColors.textMedium,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            ClipRRect(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(15),
+                                topRight: Radius.circular(15),
+                              ),
+                              child: Image.network(
+                                imageUrl,
+                                height: 100,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                      "assets/images/default_vendor.png",
+                                      height: 100,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover);
+                                },
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    vendor["shop_name"] ??
+                                        "Vendor Tidak Diketahui",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryBlue,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(height: 5),
+                                  _buildRatingDisplay(
+                                      vendor["rating"]?.toString() ?? "0"),
+                                  SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.location_on,
+                                          size: 12, color: Colors.grey[600]),
+                                      SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          kecamatan,
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[700]),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          );
-        },
-      ),
+      ],
     );
   }
 
@@ -1035,22 +792,21 @@ class _HomePageUserState extends State<HomePageUser>
                     width: 4,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: primaryBlue,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Row(
                     children: [
-                      Icon(Icons.motorcycle,
-                          color: AppColors.primary, size: 20),
+                      Icon(Icons.motorcycle, color: primaryBlue, size: 20),
                       SizedBox(width: 8),
                       Text(
                         "Rekomendasi Motor",
-                        style: GoogleFonts.poppins(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
+                          color: Colors.black87,
                         ),
                       ),
                     ],
@@ -1058,9 +814,9 @@ class _HomePageUserState extends State<HomePageUser>
                 ],
               ),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: primaryBlue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: TextButton.icon(
@@ -1073,12 +829,11 @@ class _HomePageUserState extends State<HomePageUser>
                       ),
                     );
                   },
-                  icon: Icon(Icons.arrow_forward,
-                      size: 16, color: AppColors.primary),
+                  icon: Icon(Icons.arrow_forward, size: 16, color: primaryBlue),
                   label: Text(
                     "Lihat Semua",
-                    style: GoogleFonts.poppins(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: primaryBlue,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
                     ),
@@ -1093,314 +848,242 @@ class _HomePageUserState extends State<HomePageUser>
             ],
           ),
         ),
-        _isLoading
-            ? _buildMotorShimmer()
-            : _motorList.isEmpty
-                ? _buildEmptyMotorState()
-                : _buildMotorList(),
-      ],
-    );
-  }
-
-  Widget _buildMotorShimmer() {
-    return SizedBox(
-      height: 280,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          return Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
-            child: Container(
-              width: 180,
-              margin: const EdgeInsets.only(right: 15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEmptyMotorState() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          Icon(Icons.motorcycle_outlined, size: 50, color: Colors.grey[400]),
-          const SizedBox(height: 10),
-          Text(
-            "Tidak ada motor tersedia",
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: AppColors.textMedium,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMotorList() {
-    return SizedBox(
-      height: 300,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: _motorList.length,
-        itemBuilder: (context, index) {
-          final motor = _motorList[index];
-
-          String path = motor["image"]?.toString().trim() ?? "";
-          String imageUrl = path.isNotEmpty
-              ? (path.startsWith("http") ? path : "$baseUrl$path")
-              : "assets/images/default_motor.png";
-
-          String formattedPrice;
-          if (motor["price"] != null) {
-            final priceValue = num.tryParse(motor["price"].toString());
-            if (priceValue != null) {
-              formattedPrice =
-                  NumberFormat.decimalPattern('id').format(priceValue);
-            } else {
-              formattedPrice = "Harga Tidak Valid";
-            }
-          } else {
-            formattedPrice = "Harga Tidak Diketahui";
-          }
-          return GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => DetailMotorPage(
-                        motor: motor,
-                        isGuest: _userId == null,
-                      )));
-            },
-            child: Container(
-              width: 200,
-              margin: const EdgeInsets.only(right: 15),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                    spreadRadius: 1,
-                  ),
-                ],
-                border: Border.all(color: AppColors.divider),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Gambar motor with status badge
-                  Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(18)),
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          height: 140,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Shimmer.fromColors(
-                            baseColor: Colors.grey[300]!,
-                            highlightColor: Colors.grey[100]!,
-                            child: Container(
-                              height: 140,
-                              color: Colors.white,
-                            ),
-                          ),
-                          errorWidget: (context, error, stackTrace) {
-                            return Image.asset(
-                              "assets/images/default_motor.png",
-                              height: 140,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        ),
-                      ),
-                      // Status badge
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: (motor["status"] ?? "unknown") == "available"
-                                ? AppColors.success
-                                : (motor["status"] ?? "unknown") == "booked"
-                                    ? AppColors.error
-                                    : Colors.grey,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            (motor["status"] ?? "unknown") == "booked"
-                                ? "in use"
-                                : (motor["status"] ?? "unknown"),
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  // Konten teks
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          motor["name"] ?? "Nama Tidak Diketahui",
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(Icons.category,
-                                  size: 12, color: AppColors.primary),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              "Type: ${motor["type"] ?? "unknown"}",
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: AppColors.textMedium,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Container(
-                              padding: EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: AppColors.secondary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(Icons.location_on,
-                                  size: 12, color: AppColors.primary),
-                            ),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                (motor["vendor"]?["kecamatan"]
-                                            ?["nama_kecamatan"]
-                                        ?.toString()
-                                        .replaceAll('\r', '')
-                                        .replaceAll('\n', '')
-                                        .trim()) ??
-                                    "Tidak Diketahui",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: AppColors.textMedium,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 8),
-                        _buildRatingDisplay(motor["rating"]?.toString() ?? "0"),
-                        SizedBox(height: 10),
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.success.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: AppColors.success.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.monetization_on,
-                                size: 16,
-                                color: AppColors.success,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                "Rp $formattedPrice/hari",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.success,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+        _motorList.isEmpty
+            ? Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  children: [
+                    Icon(Icons.motorcycle_outlined,
+                        size: 50, color: Colors.grey[400]),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Tidak ada motor tersedia",
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              )
+            : SizedBox(
+                height: 280,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _motorList.length,
+                  itemBuilder: (context, index) {
+                    final motor = _motorList[index];
+
+                    String path = motor["image"]?.toString().trim() ?? "";
+                    String imageUrl = path.isNotEmpty
+                        ? (path.startsWith("http") ? path : "$baseUrl$path")
+                        : "assets/images/default_motor.png";
+
+                    String formattedPrice;
+                    if (motor["price"] != null) {
+                      final priceValue =
+                          num.tryParse(motor["price"].toString());
+                      if (priceValue != null) {
+                        formattedPrice = NumberFormat.decimalPattern('id')
+                            .format(priceValue);
+                      } else {
+                        formattedPrice = "Harga Tidak Valid";
+                      }
+                    } else {
+                      formattedPrice = "Harga Tidak Diketahui";
+                    }
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => DetailMotorPage(
+                                  motor: motor,
+                                  isGuest: _userId == null,
+                                )));
+                      },
+                      child: Container(
+                        width: 180,
+                        margin: const EdgeInsets.only(right: 15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                          border: Border.all(color: Colors.blue.shade50),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Gambar motor with status badge
+                            Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(15)),
+                                  child: Image.network(
+                                    imageUrl,
+                                    height: 120,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Image.asset(
+                                        "assets/images/default_motor.png",
+                                        height: 120,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  ),
+                                ),
+                                // Status badge
+                                Positioned(
+                                  top: 10,
+                                  right: 10,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: (motor["status"] ?? "unknown") ==
+                                              "available"
+                                          ? Colors.green
+                                          : (motor["status"] ?? "unknown") ==
+                                                  "booked"
+                                              ? Colors.red
+                                              : Colors.grey,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      (motor["status"] ?? "unknown") == "booked"
+                                          ? "in use"
+                                          : (motor["status"] ?? "unknown"),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Konten teks
+                            Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    motor["name"] ?? "Nama Tidak Diketahui",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: primaryBlue,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.category,
+                                          size: 12, color: Colors.grey[600]),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        "Type: ${motor["type"] ?? "unknown"}",
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[700]),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.location_on,
+                                          size: 12, color: Colors.grey[600]),
+                                      SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          (motor["vendor"]?["kecamatan"]
+                                                      ?["nama_kecamatan"]
+                                                  ?.toString()
+                                                  .replaceAll('\r', '')
+                                                  .replaceAll('\n', '')
+                                                  .trim()) ??
+                                              "Tidak Diketahui",
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[700]),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 6),
+                                  _buildRatingDisplay(
+                                      motor["rating"]?.toString() ?? "0"),
+                                  SizedBox(height: 6),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade50,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                          color: Colors.green.shade200),
+                                    ),
+                                    child: Text(
+                                      "Rp $formattedPrice/hari",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          );
-        },
-      ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: () async {
           await _loadUserData();
@@ -1408,7 +1091,6 @@ class _HomePageUserState extends State<HomePageUser>
           await _fetchMotors();
           await _fetchKecamatan();
         },
-        color: AppColors.primary,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
@@ -1427,7 +1109,6 @@ class _HomePageUserState extends State<HomePageUser>
                       return vendorKecamatan == _selectedKecamatan;
                     }).toList()),
               _buildMotorSection(),
-              SizedBox(height: 30),
             ],
           ),
         ),

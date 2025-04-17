@@ -69,7 +69,7 @@ class _DataVendorState extends State<DataVendor>
   Future<List<Map<String, dynamic>>> fetchReviewsByMotorVendor(
       int vendorId) async {
     final response = await http.get(Uri.parse(
-        'http://192.168.95.159:8080/reviews/vendor/$vendorId')); // Ganti localhost dengan IP lokal Anda
+        'http://192.168.6.159:8080/reviews/vendor/$vendorId')); // Ganti localhost dengan IP lokal Anda
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
     } else {
@@ -545,93 +545,93 @@ class _DataVendorState extends State<DataVendor>
     );
   }
 
-Widget _buildReviewCard(Map<String, dynamic> review) {
-  return Card(
-    margin: EdgeInsets.only(bottom: 16),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(12), // Rounded corners
-    ),
-    elevation: 5, // Add elevation for shadow effect
-    child: Padding(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Customer Name and Rating
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundImage: review['customer']['profile_image'] != null
-                    ? NetworkImage('${ApiConfig.baseUrl}${review['customer']['profile_image']}')
-                    : null,
-                child: review['customer']['profile_image'] == null
-                    ? Icon(Icons.person, size: 24, color: Colors.white)
-                    : null,
-                radius: 20,
-              ),
-              SizedBox(width: 12),
-              Text(
-                review['customer']['name'] ?? "Nama Tidak Diketahui",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 8),
-          
-          // Rating Stars (above the review text)
-          Row(
-            children: [
-              ...List.generate(5, (index) {
-                return Icon(
-                  index < review['rating']
-                      ? Icons.star
-                      : Icons.star_border,
-                  color: Colors.amber,
-                  size: 18,
-                );
-              }),
-            ],
-          ),
-          SizedBox(height: 10),
-          
-          // Review Content with Quotation Marks
-          Text(
-            '"${review['review'] ?? "Tidak ada ulasan"}"',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-              fontStyle: FontStyle.italic, // Italicized for a quotation effect
-            ),
-            textAlign: TextAlign.justify, // Ensure the text is justified
-          ),
-          SizedBox(height: 8),
-          
-          // Vendor's Reply (if available)
-          if (review['vendor_reply'] != null)
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                "Balasan Vendor: ${review['vendor_reply']}",
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue[800],
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-        ],
+  Widget _buildReviewCard(Map<String, dynamic> review) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12), // Rounded corners
       ),
-    ),
-  );
-}
+      elevation: 5, // Add elevation for shadow effect
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Customer Name and Rating
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: review['customer']['profile_image'] != null
+                      ? NetworkImage(
+                          '${ApiConfig.baseUrl}${review['customer']['profile_image']}')
+                      : null,
+                  child: review['customer']['profile_image'] == null
+                      ? Icon(Icons.person, size: 24, color: Colors.white)
+                      : null,
+                  radius: 20,
+                ),
+                SizedBox(width: 12),
+                Text(
+                  review['customer']['name'] ?? "Nama Tidak Diketahui",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+
+            // Rating Stars (above the review text)
+            Row(
+              children: [
+                ...List.generate(5, (index) {
+                  return Icon(
+                    index < review['rating'] ? Icons.star : Icons.star_border,
+                    color: Colors.amber,
+                    size: 18,
+                  );
+                }),
+              ],
+            ),
+            SizedBox(height: 10),
+
+            // Review Content with Quotation Marks
+            Text(
+              '"${review['review'] ?? "Tidak ada ulasan"}"',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontStyle:
+                    FontStyle.italic, // Italicized for a quotation effect
+              ),
+              textAlign: TextAlign.justify, // Ensure the text is justified
+            ),
+            SizedBox(height: 8),
+
+            // Vendor's Reply (if available)
+            if (review['vendor_reply'] != null)
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "Balasan Vendor: ${review['vendor_reply']}",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue[800],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildContactButton() {
     return Container(
