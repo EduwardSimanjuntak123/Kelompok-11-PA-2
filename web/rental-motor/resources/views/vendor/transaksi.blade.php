@@ -6,7 +6,7 @@
 
     <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold">Data Transaksi Vendor</h1>
+            <h1 class="text-4xl font-extrabold mb-6 text-center text-gray-800">Data Transaksi Vendor</h1>
             <div class="flex space-x-4">
                 <!-- Tombol Cetak Laporan -->
                 <button onclick="openModal('printModal')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">

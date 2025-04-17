@@ -4,11 +4,14 @@
 
 @section('content')
     <!-- Greeting -->
+    {{-- @dd($ratingData) --}}
     <div class="bg-white shadow-xl rounded-2xl p-6 mb-6">
         <h2 class="text-2xl font-extrabold text-gray-800 mb-2">
             Selamat Datang, {{ session('user.vendor.shop_name') ?? 'Vendor' }}
         </h2>
-        <p class="text-gray-600">ID Vendor Anda: <span class="font-semibold">{{ $id }}</span></p>
+        <p class="text-blue-600">
+            <span class="font-semibold">{{ $ratingData['user']['name'] }}</span>
+        </p>
     </div>
 
     @php
@@ -54,6 +57,7 @@
     @endphp
 
     <!-- Summary Cards -->
+
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white shadow rounded-xl p-4 text-center">
             <p class="text-sm text-gray-500">Motor Aktif</p>
@@ -61,7 +65,6 @@
                 {{ count($motorData['data'] ?? []) }}
             </h3>
         </div>
-
         <a href="{{ route('vendor.kelola', ['id' => $userId]) }}">
             <div class="bg-white shadow rounded-xl p-4 text-center">
                 <p class="text-sm text-gray-500">Pesanan Masuk (Pending)</p>

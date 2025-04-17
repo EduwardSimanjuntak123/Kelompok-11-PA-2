@@ -33,7 +33,7 @@
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Header Section -->
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">Profil Vendor</h1>
+            <h1 class="text-4xl font-extrabold mb-6 text-center text-gray-800">Profil Vendor</h1>
             <div class="flex space-x-3">
                 <button onclick="openModal('editModal')"
                     class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
@@ -135,8 +135,8 @@
                             <p class="text-gray-800 font-semibold">{{ $vendor['shop_name'] ?? '-' }}</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">ID Kecamatan</p>
-                            <p class="text-gray-800 font-semibold">{{ $vendor['id_kecamatan'] ?? '-' }}</p>
+                            <p class="text-sm font-medium text-gray-500">Nama Kecamatan</p>
+                            <p class="text-gray-800 font-semibold">{{ $vendor['kecamatan']['nama_kecamatan'] ?? '-' }}</p>
                         </div>
                         <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
                             <p class="text-sm font-medium text-gray-500">Alamat Toko</p>
@@ -152,8 +152,10 @@
                     <!-- Timestamps -->
                     <div class="text-sm text-gray-500 border-t border-gray-200 pt-4">
                         <div class="flex justify-between">
-                            <span>Dibuat: {{ $user['created_at'] }}</span>
-                            <span>Diubah: {{ $user['updated_at'] }}</span>
+                            <span>Dibuat:
+                                {{ \Carbon\Carbon::parse($user['created_at'])->translatedFormat('d F Y H:i') }}</span>
+                            <span>Diubah:
+                                {{ \Carbon\Carbon::parse($user['updated_at'])->translatedFormat('d F Y H:i') }}</span>
                         </div>
                     </div>
                 </div>
@@ -221,9 +223,9 @@
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Kecamatan</label>
-                                    <input type="text" name="id_kecamatan"
-                                        value="{{ $vendor['id_kecamatan'] ?? '' }}"
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Kecamatan</label>
+                                    <input type="text" name="nama_kecamatan"
+                                        value="{{ $vendor['kecamatan']['nama_kecamatan'] ?? '' }}"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                                 </div>
                                 <div>

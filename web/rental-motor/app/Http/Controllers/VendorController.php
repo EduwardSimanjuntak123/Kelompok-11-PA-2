@@ -144,8 +144,8 @@ class VendorController extends Controller
         if ($shopDescription = $request->input('shop_description')) {
             $multipart[] = ['name' => 'shop_description', 'contents' => $shopDescription];
         }
-        if ($idKecamatan = $request->input('id_kecamatan')) {
-            $multipart[] = ['name' => 'id_kecamatan', 'contents' => $idKecamatan];
+        if ($idKecamatan = $request->input('nama_kecamatan')) {
+            $multipart[] = ['name' => 'nama_kecamatan', 'contents' => $idKecamatan];
         }
 
         // Upload file profile_image

@@ -4,7 +4,7 @@
 
 @section('content')
     <div class="container mx-auto p-6">
-        <h2 class="text-3xl font-bold mb-8 text-center text-gray-800">Ulasan Pelanggan</h2>
+        <h2 class="text-4xl font-extrabold mb-6 text-center text-gray-800">Ulasan Pelanggan</h2>
 
         <div class="bg-gray-100 shadow-xl rounded-lg p-6">
             @if (isset($Reviews) && count($Reviews) > 0)

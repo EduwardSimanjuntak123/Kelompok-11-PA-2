@@ -63,28 +63,35 @@
                             <tr class="border-b border-gray-200 hover:bg-gray-100" data-status="{{ $pesanan['status'] }}">
                                 <td class="py-3 px-4 text-center align-top">{{ $loop->iteration }}</td>
 
-                                <td class="py-3 px-4 text-left align-top">
-                                    <div><strong class="font-bold">Customer:</strong> {{ $pesanan['customer_name'] ?? '-' }}
-                                    </div>
-
-                                    <div><strong class="font-bold">Tanggal Booking:</strong>
-                                        <span class="format-datetime">{{ $pesanan['booking_date'] ?? '-' }}</span>
-                                    </div>
-
-                                    <div><strong class="font-bold">Tanggal Mulai:</strong>
-                                        <span class="format-datetime">{{ $pesanan['start_date'] ?? '-' }}</span>
-                                    </div>
-
-                                    <div><strong class="font-bold">Tanggal Selesai:</strong>
-                                        <span class="format-datetime">{{ $pesanan['end_date'] ?? '-' }}</span>
-                                    </div>
-
-                                    <div><strong class="font-bold">Lokasi Jemput:</strong>
-                                        {{ $pesanan['pickup_location'] ?? '-' }}
+                                <td class="py-4 px-6 text-left align-top">
+                                    <div class="space-y-2 text-gray-700">
+                                        <div>
+                                            <span class="font-bold text-gray-900">Customer:</span>
+                                            <span class="text-blue-600 ; font-semibold">{{ $pesanan['customer_name'] ?? '-' }}</span>
+                                        </div>
+                                
+                                        <div>
+                                            <span class="font-bold text-gray-900">Tanggal Booking:</span>
+                                            <span class="format-datetime ">{{ $pesanan['booking_date'] ?? '-' }}</span>
+                                        </div>
+                                
+                                        <div>
+                                            <span class="font-bold text-gray-900">Tanggal Mulai:</span>
+                                            <span class="format-datetime ">{{ $pesanan['start_date'] ?? '-' }}</span>
+                                        </div>
+                                
+                                        <div>
+                                            <span class="font-bold text-gray-900">Tanggal Selesai:</span>
+                                            <span class="format-datetime">{{ $pesanan['end_date'] ?? '-' }}</span>
+                                        </div>
+                                
+                                        <div>
+                                            <span class="font-bold text-gray-900">Lokasi Jemput:</span>
+                                            <span>{{ $pesanan['pickup_location'] ?? '-' }}</span>
+                                        </div>
                                     </div>
                                 </td>
-
-
+                                
                                 <!-- Detail Motor -->
                                 <td class="py-3 px-4 text-left align-top">
                                     @if (isset($pesanan['motor']))

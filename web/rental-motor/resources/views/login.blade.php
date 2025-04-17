@@ -30,23 +30,62 @@
             color: #FEA501;
         }
 
-         .error-message {
-            color: #dc2626; /* Tailwind's red-600 */
-            font-size: 0.875rem; /* text-sm */
-            margin-top: 0.5rem; /* mt-2 */
+        .error-message {
+            color: #dc2626;
+            /* Tailwind's red-600 */
+            font-size: 0.875rem;
+            /* text-sm */
+            margin-top: 0.5rem;
+            /* mt-2 */
         }
+        
+    @keyframes fade-right {
+        0% {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes zoom-in {
+        0% {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    .animate-fade-right {
+        animation: fade-right 1s ease-out forwards;
+    }
+
+    .animate-zoom-in {
+        animation: zoom-in 1s ease-out forwards;
+    }
+
+
     </style>
 </head>
 
 <body>
     <div class="inner-background">
-        <!-- Gambar Motor -->
-        <div class="hidden md:block w-1/2 pr-10">
-            <img src="{{ asset('scopp.png') }}" alt="Motorcycle" class="w-full max-w-md drop-shadow-xl">
+        <div class="hidden md:flex w-1/2 pr-10 flex-col justify-center animate-fade-right">
+            <h1 class="text-4xl font-bold text-[#FEA501] mb-4 leading-tight drop-shadow-lg">
+                Portal Resmi Admin & Vendor MotorRent!
+            </h1>
+            <p class="text-lg text-gray-100 drop-shadow-md">
+                Akses sistem pengelolaan rental motor secara efisien dan aman.
+            </p>            
         </div>
-
+        
         <!-- Form Login -->
-        <div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-2xl w-96">
+        <div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-2xl w-96 animate-zoom-in">
             <div class="flex justify-center mb-4">
                 <img src="{{ asset('logo.jpg') }}" alt="Motorrent Logo" class="w-24">
             </div>
@@ -95,16 +134,16 @@
                     const passwordInput = document.getElementById('passwordInput');
                     let isPasswordVisible = false;
 
-                    togglePassword.addEventListener('click', function () {
+                    togglePassword.addEventListener('click', function() {
                         isPasswordVisible = !isPasswordVisible;
                         passwordInput.type = isPasswordVisible ? 'text' : 'password';
-                        togglePassword.src = isPasswordVisible
-                            ? "{{ asset('eyesolid.svg') }}"
-                            : "{{ asset('eyeslash.svg') }}";
+                        togglePassword.src = isPasswordVisible ?
+                            "{{ asset('eyesolid.svg') }}" :
+                            "{{ asset('eyeslash.svg') }}";
                     });
 
                     const form = document.querySelector('form');
-                    form.addEventListener('submit', function (event) {
+                    form.addEventListener('submit', function(event) {
                         document.getElementById('emailError').innerText = '';
                         document.getElementById('passwordError').innerText = '';
                         document.getElementById('generalError').innerText = '';
@@ -142,7 +181,8 @@
                     LOGIN
                 </button>
 
-                <a href="{{ url('/') }}" class="block text-center text-blue-700 font-semibold underline text-base mt-4 hover:text-blue-900">
+                <a href="{{ url('/') }}"
+                    class="block text-center text-blue-700 font-semibold underline text-base mt-4 hover:text-blue-900">
                     Back
                 </a>
             </form>
