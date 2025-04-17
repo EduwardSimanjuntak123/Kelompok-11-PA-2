@@ -27,7 +27,7 @@ class DetailMotorPage extends StatefulWidget {
 
 Future<List<Map<String, dynamic>>> fetchReviewsForMotor(int motorId) async {
   final response =
-      await http.get(Uri.parse('http://192.168.95.159:8080/reviews/motor/$motorId'));
+      await http.get(Uri.parse('http://192.168.6.159:8080/reviews/motor/$motorId'));
 
   if (response.statusCode == 200) {
     // Successfully fetched the reviews

@@ -5,7 +5,7 @@ class ReviewService {
   Future<bool> submitReview(
       int bookingId, int rating, String review, String token) async {
     final url =
-        Uri.parse('http://192.168.168.159:8080/customer/review/$bookingId');
+        Uri.parse('http://192.168.6.159:8080/customer/review/$bookingId');
 
     // Create the request body in the correct format
     final requestBody = {

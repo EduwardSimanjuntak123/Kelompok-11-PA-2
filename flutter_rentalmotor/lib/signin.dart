@@ -4,6 +4,9 @@ import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/registrasi/SignUpCustomer.dart';
 import 'package:flutter_rentalmotor/services/api_service.dart';
 import 'package:flutter_rentalmotor/vendor/homepagevendor.dart';
+import 'package:flutter_rentalmotor/welcome.dart';
+
+
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -206,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
             GestureDetector(
               onTap: () {
                 Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => SignUpCustomer()));
+                    MaterialPageRoute(builder: (context) => WelcomePage()));
               },
               child: Text("Sign up",
                   style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),

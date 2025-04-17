@@ -345,77 +345,62 @@ class _DetailPesananState extends State<DetailPesanan>
                           ),
                           SizedBox(height: 12),
 
-                          // Grid of status filters instead of horizontal scroll
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              childAspectRatio: 2.5,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
+                          // Replace the GridView.builder with this dropdown button
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            itemCount: statuses.length,
-                            itemBuilder: (context, index) {
-                              final status = statuses[index];
-                              final isSelected = selectedStatus == status;
-
-                          
-                              // Get status color for the chip
-                              Color statusColor = status == 'Semua'
-                                  ? primaryBlue
-                                  : getStatusColor(status);
-
-                              return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    selectedStatus = status;
-                                  });
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: selectedStatus,
+                                isExpanded: true,
+                                icon: Icon(Icons.keyboard_arrow_down,
+                                    color: primaryBlue),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      selectedStatus = newValue;
+                                    });
+                                  }
                                 },
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? statusColor
-                                        : statusColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: statusColor,
-                                      width: 1,
+                                items: statuses.map<DropdownMenuItem<String>>(
+                                    (String value) {
+                                  Color statusColor = value == 'Semua'
+                                      ? primaryBlue
+                                      : getStatusColor(value);
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Row(
+                                      children: [
+                                        if (value != 'Semua')
+                                          Icon(
+                                            getStatusIcon(value),
+                                            size: 14,
+                                            color: statusColor,
+                                          ),
+                                        if (value != 'Semua')
+                                          SizedBox(width: 8),
+                                        Text(
+                                          value[0].toUpperCase() +
+                                              value.substring(1),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: statusColor,
+                                            fontWeight: value == selectedStatus
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (status != 'Semua')
-                                        Icon(
-                                          getStatusIcon(status),
-                                          size: 14,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : statusColor,
-                                        ),
-                                      if (status != 'Semua') SizedBox(width: 4),
-                                      Text(
-                                        status[0].toUpperCase() +
-                                            status.substring(1),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : statusColor,
-                                          fontWeight: isSelected
-                                              ? FontWeight.bold
-                                              : FontWeight.normal,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
                           ),
                         ],
                       ),
