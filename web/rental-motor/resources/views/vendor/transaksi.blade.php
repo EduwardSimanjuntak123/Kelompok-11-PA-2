@@ -32,12 +32,26 @@
                             {{ \Carbon\Carbon::parse($transaction['booking_date'])->format('Y-m-d H:i:s') }}</p>
                     </div>
                 @endforeach
-            @else
-                <div class="p-6 bg-yellow-100 text-yellow-800 rounded text-center shadow">
-                    😕 Tidak ada data transaksi yang tersedia.
-                </div>
-            @endif
         </div>
+        <div class="mt-8 flex items-center justify-between">
+            {{-- Kiri: info rangkuman --}}
+            <div class="text-sm text-gray-600">
+                Menampilkan {{ $transactions->firstItem() }}
+                - {{ $transactions->lastItem() }} dari total
+                {{ $transactions->total() }} data
+            </div>
+
+            {{-- Kanan: pagination --}}
+            <div>
+                {!! $transactions->links('layouts.pagination') !!}
+            </div>
+        </div>
+    @else
+        <div class="p-6 bg-yellow-100 text-yellow-800 rounded text-center shadow">
+            😕 Tidak ada data transaksi yang tersedia.
+        </div>
+        @endif
+    </div>
 
     </div>
 

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\TransactionExport;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 class TransaksiController extends Controller
 {
@@ -16,46 +18,71 @@ class TransaksiController extends Controller
     public function index()
     {
         try {
+            // Ambil token
             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
-            if (!$token) {
+            if (! $token) {
                 Log::error("Token tidak ditemukan");
-                return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
+                return redirect()->route('login')
+                                 ->with('error', 'Anda harus login terlebih dahulu.');
             }
-            
-            // Ambil transaksi
-            $url = "{$this->apiBaseUrl}/transaction";
+
+            // Fetch transaksi
+            $url         = "{$this->apiBaseUrl}/transaction";
             Log::info("Mengirim request ke: " . $url);
-            $response = Http::withToken($token)->timeout(10)->get($url);
+            $response    = Http::withToken($token)
+                               ->timeout(10)
+                               ->get($url);
             Log::info("Response body: " . $response->body());
-            
-            if ($response->successful()) {
-                $jsonData = $response->json();
-                $transactions = isset($jsonData['data']) ? $jsonData['data'] : $jsonData;
-            } else {
-                Log::error("Gagal mengambil data transaksi. HTTP Status: " . $response->status());
-                $transactions = [];
-            }
-            
-            // Ambil motor vendor dari API
-            $urlMotors = "{$this->apiBaseUrl}/motor/vendor";
+            $jsonData    = $response->successful() 
+                           ? $response->json() 
+                           : [];
+            $transactions = $jsonData['data'] ?? $jsonData;
+
+            // Fetch motor vendor
+            $urlMotors      = "{$this->apiBaseUrl}/motor/vendor";
             Log::info("Mengirim request motor ke: " . $urlMotors);
-            $responseMotors = Http::withToken($token)->timeout(10)->get($urlMotors);
+            $responseMotors = Http::withToken($token)
+                                 ->timeout(10)
+                                 ->get($urlMotors);
             Log::info("Response motor: " . $responseMotors->body());
-            if ($responseMotors->successful()) {
-                $jsonMotor = $responseMotors->json();
-                $motors = isset($jsonMotor['data']) ? $jsonMotor['data'] : $jsonMotor;
-            } else {
-                Log::error("Gagal mengambil data motor. HTTP Status: " . $responseMotors->status());
-                $motors = [];
-            }
+            $jsonMotor      = $responseMotors->successful() 
+                              ? $responseMotors->json() 
+                              : [];
+            $motors         = $jsonMotor['data'] ?? $jsonMotor;
+
         } catch (\Exception $e) {
             Log::error("Kesalahan saat mengambil data: " . $e->getMessage());
             $transactions = [];
-            $motors = [];
+            $motors       = [];
         }
-        
-        return view('vendor.transaksi', compact('transactions', 'motors'));
+
+        // === START: manual paginasi ===
+        $perPage     = 5;
+        $currentPage = Paginator::resolveCurrentPage('page'); // ambil ?page=…
+        $collection  = collect($transactions);
+
+        // slice dan re-index
+        $currentItems = $collection->forPage($currentPage, $perPage)->values();
+
+        $paginatedTransactions = new LengthAwarePaginator(
+            $currentItems,
+            $collection->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path'     => Paginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
+        // === END: manual paginasi ===
+
+        // Kirim view sekali saja, dengan paginator
+        return view('vendor.transaksi', [
+            'transactions' => $paginatedTransactions,
+            'motors'       => $motors,
+        ]);
     }
+
 
     // Fungsi untuk menambahkan transaksi manual (sudah ada)
     public function addTransactionManual(Request $request)

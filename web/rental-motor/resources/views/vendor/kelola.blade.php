@@ -67,35 +67,37 @@
                                     <div class="space-y-2 text-gray-700">
                                         <div>
                                             <span class="font-bold text-gray-900">Customer:</span>
-                                            <span class="text-blue-600 ; font-semibold">{{ $pesanan['customer_name'] ?? '-' }}</span>
+                                            <span
+                                                class="text-blue-600 ; font-semibold">{{ $pesanan['customer_name'] ?? '-' }}</span>
                                         </div>
-                                
+
                                         <div>
                                             <span class="font-bold text-gray-900">Tanggal Booking:</span>
                                             <span class="format-datetime ">{{ $pesanan['booking_date'] ?? '-' }}</span>
                                         </div>
-                                
+
                                         <div>
                                             <span class="font-bold text-gray-900">Tanggal Mulai:</span>
                                             <span class="format-datetime ">{{ $pesanan['start_date'] ?? '-' }}</span>
                                         </div>
-                                
+
                                         <div>
                                             <span class="font-bold text-gray-900">Tanggal Selesai:</span>
                                             <span class="format-datetime">{{ $pesanan['end_date'] ?? '-' }}</span>
                                         </div>
-                                
+
                                         <div>
                                             <span class="font-bold text-gray-900">Lokasi Jemput:</span>
                                             <span>{{ $pesanan['pickup_location'] ?? '-' }}</span>
                                         </div>
                                     </div>
                                 </td>
-                                
+
                                 <!-- Detail Motor -->
                                 <td class="py-3 px-4 text-left align-top">
                                     @if (isset($pesanan['motor']))
-                                        <div><strong class="font-bold">Nama Motor:</strong> {{ $pesanan['motor']['name'] ?? '-' }}
+                                        <div><strong class="font-bold">Nama Motor:</strong>
+                                            {{ $pesanan['motor']['name'] ?? '-' }}
                                         </div>
                                         <div><strong class="font-bold">Merek Motor:</strong>
                                             {{ $pesanan['motor']['brand'] ?? '-' }}</div>
@@ -107,7 +109,7 @@
                                         <div>Data motor tidak tersedia.</div>
                                     @endif
                                 </td>
-                            
+
                                 <!-- Gambar Motor -->
                                 <td class="py-3 px-4 text-center align-top">
                                     @if (isset($pesanan['motor']['image']))
@@ -176,6 +178,20 @@
                 </table>
             </div>
         @endif
+
+        <div class="mt-8 flex items-center justify-between">
+            {{-- Kiri: info rangkuman --}}
+            <div class="text-sm text-gray-600">
+                Menampilkan {{ $bookings->firstItem() }}
+                - {{ $bookings->lastItem() }} dari total
+                {{ $bookings->total() }} data
+            </div>
+
+            {{-- Kanan: pagination --}}
+            <div>
+                {!! $bookings->links('layouts.pagination') !!}
+            </div>
+        </div>
 
         <!-- Modal untuk Booking Manual -->
         <div id="addBookingModal"
@@ -519,7 +535,7 @@
 
                 const form = modal.querySelector("form");
                 if (form) {
-                    form.reset(); 
+                    form.reset();
                 }
 
                 const errorMessages = modal.querySelectorAll(".error-message");

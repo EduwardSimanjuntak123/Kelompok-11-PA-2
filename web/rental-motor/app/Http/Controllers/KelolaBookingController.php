@@ -7,6 +7,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 class KelolaBookingController extends Controller
 {
@@ -49,6 +51,31 @@ class KelolaBookingController extends Controller
             $bookings = [];
             $motors = [];
         }
+         // === START: manual pagination untuk $bookings ===
+    $perPage     = 5;
+    $currentPage = Paginator::resolveCurrentPage('page');      // ambil ?page=…
+    $collection  = collect($bookings);                        // bungkus array jadi Collection
+    $currentItems = $collection
+                        ->forPage($currentPage, $perPage)     // slice data
+                        ->values();                           // reindex
+
+    $paginatedBookings = new LengthAwarePaginator(
+        $currentItems,                // data halaman ini
+        $collection->count(),         // total item
+        $perPage,                     // item per halaman
+        $currentPage,                 // halaman sekarang
+        [
+            'path'     => Paginator::resolveCurrentPath(),
+            'pageName' => 'page',
+        ]
+    );
+    // === END: manual pagination ===
+
+    // Kirim view sekali, dengan paginator
+    return view('vendor.kelola', [
+        'bookings' => $paginatedBookings,
+        'motors'   => $motors,
+    ]);
 
         return view('vendor.kelola', compact('bookings', 'motors'));
     }
