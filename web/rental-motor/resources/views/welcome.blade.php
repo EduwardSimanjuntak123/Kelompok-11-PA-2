@@ -5,6 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MOTORENT - Rental Motor</title>
+    <!-- Swiper CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         html,
@@ -155,59 +161,81 @@
     <!-- Halaman 4: Pilih Motor -->
     <section id="pick-motor" class="relative flex flex-col items-center justify-center h-screen bg-cover bg-center"
         style="background-image: url('{{ asset('rentsection.png') }}');">
+
         <!-- Judul -->
         <h2 class="absolute top-10 left-1/2 transform -translate-x-1/2 text-4xl font-bold text-white drop-shadow-lg">
             Pilih Motor Anda
         </h2>
 
-        <!-- Gambar Motor -->
-        <div class="relative flex items-center justify-center w-full max-w-5xl mt-12">
-            <!-- Motor Kiri -->
-            <img src="{{ asset('m1.png') }}" alt="Motor Kiri" class="w-1/4 transform -translate-x-6">
-
-            <!-- Motor Tengah -->
-            <img src="{{ asset('m2.png') }}" alt="Motor Tengah" class="w-1/4 z-10">
-
-            <!-- Motor Kanan -->
-            <img src="{{ asset('m3.png') }}" alt="Motor Kanan" class="w-1/4 transform translate-x-6">
-        </div>
-
-        <!-- Indicator Slide -->
-        <div class="flex space-x-2 mt-4">
-            <span class="w-6 h-1 bg-gray-600 rounded-full"></span>
-            <span class="w-6 h-1 bg-gray-300 rounded-full"></span>
-            <span class="w-6 h-1 bg-gray-300 rounded-full"></span>
-            <span class="w-6 h-1 bg-gray-300 rounded-full"></span>
+        <div class="swiper w-full max-w-5xl mt-20">
+            <div class="swiper-wrapper">
+                <!-- Slide 1 -->
+                <div class="swiper-slide swiper-slide-custom flex justify-center">
+                    <img src="{{ asset('m1.png') }}" alt="Motor 1" class="w-3/5 object-contain" />
+                </div>
+                <!-- Slide 2 -->
+                <div class="swiper-slide swiper-slide-custom flex justify-center">
+                    <img src="{{ asset('m2.png') }}" alt="Motor 2" class="w-3/5 object-contain" />
+                </div>
+                <!-- Slide 3 -->
+                <div class="swiper-slide swiper-slide-custom flex justify-center">
+                    <img src="{{ asset('m3.png') }}" alt="Motor 3" class="w-3/5 object-contain" />
+                </div>
+                <!-- Slide 4 -->
+                <div class="swiper-slide swiper-slide-custom flex justify-center">
+                    <img src="{{ asset('scopp.png') }}" alt="Motor 4" class="w-3/5 object-contain" />
+                </div>
+            </div>
+            <!-- Pagination -->
+            <div class="swiper-pagination mt-4"></div>
         </div>
 
         <!-- Spesifikasi Motor -->
-        <div class="flex justify-center space-x-8 text-lg font-medium mt-6 text-white">
+        <div class="flex flex-wrap justify-center gap-8 text-white text-center text-base font-medium mt-10">
+            <!-- Kecepatan -->
             <div class="flex flex-col items-center">
-                <img src="{{ asset('speed.png') }}" alt="Speed Icon" class="w-7 h-7 mb-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path d="M12 16v.01" />
+                    <path d="M10 12a2 2 0 1 1 4 0m-4 0a2 2 0 0 0 4 0" />
+                    <path d="M12 4a8 8 0 1 0 8 8" />
+                    <path d="M16 12l2.5 -2.5" />
+                </svg>
                 <p>100 km/jam</p>
             </div>
-            <div class="flex flex-col items-center text-2xl">
-                <span>🛵</span>
-                <p class="text-base mt-1">2 Kursi</p>
+
+            <!-- Jumlah Kursi -->
+            <div class="flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 20H4v-2a3 3 0 015.356-1.857M15 11a4 4 0 10-8 0 4 4 0 008 0zm6 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <p>2 Kursi</p>
             </div>
-            <div class="flex flex-col items-center text-2xl">
-                <span>⛽</span>
-                <p class="text-base mt-1">20 Liter</p>
+
+            <!-- Kapasitas Tangki -->
+            <div class="flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9.75 3v4.5m0 0a2.25 2.25 0 004.5 0V3m-4.5 4.5H8.25A2.25 2.25 0 006 9.75v8.25A2.25 2.25 0 008.25 20.25h7.5A2.25 2.25 0 0018 18V9.75a2.25 2.25 0 00-2.25-2.25H14.25" />
+                </svg>
+                <p>20 Liter</p>
             </div>
         </div>
-
 
         <!-- Harga & Tombol -->
-        <div class="flex bg-white shadow-lg rounded-full px-6 py-3 mt-8 space-x-4 items-center">
-            <span class="text-green-600 text-2xl font-bold">Rp 150.000<span class="text-gray-600 text-lg">/24
-                    jam</span></span>
-            <button class="px-4 py-2 bg-gray-200 rounded-md text-gray-700 hover:bg-gray-300 transition">Lihat
-                detail</button>
-            <button class="px-5 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition">Sewa
-                sekarang</button>
+        <div class="flex bg-white/90 shadow-xl rounded-full px-8 py-4 mt-10 space-x-6 items-center backdrop-blur-sm">
+            <span class="text-green-600 text-xl md:text-2xl font-semibold">
+                Rp 150.000<span class="text-gray-600 text-base md:text-lg"> /24 jam</span>
+            </span>
+            <button
+                class="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition font-semibold shadow-md">
+                Sewa sekarang
+            </button>
         </div>
     </section>
-
 
 
     <!-- Halaman 4: Testimoni Pelanggan -->
@@ -342,5 +370,43 @@
     </footer>
 
 </body>
+
+<script>
+    const swiper = new Swiper(".swiper", {
+        loop: true,
+        centeredSlides: true,
+        slidesPerView: 3,
+        spaceBetween: 30,
+        autoplay: {
+            delay: 3000,
+            disableOnInteraction: false,
+        },
+        pagination: {
+            el: ".swiper-pagination",
+            clickable: true,
+        },
+        on: {
+            slideChangeTransitionEnd: function() {
+                updateSlideScaling();
+            },
+            init: function() {
+                updateSlideScaling();
+            }
+        }
+    });
+
+    function updateSlideScaling() {
+        const slides = document.querySelectorAll('.swiper-slide-custom');
+        slides.forEach((slide) => {
+            slide.classList.remove('scale-110');
+            slide.classList.add('scale-90');
+        });
+        const activeSlide = document.querySelector('.swiper-slide-active');
+        if (activeSlide) {
+            activeSlide.classList.remove('scale-90');
+            activeSlide.classList.add('scale-110');
+        }
+    }
+</script>
 
 </html>
