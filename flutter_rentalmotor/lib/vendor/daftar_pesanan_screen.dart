@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_rentalmotor/services/kelola_Booking_service.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class DaftarPesananVendorScreen extends StatefulWidget {
   const DaftarPesananVendorScreen({Key? key}) : super(key: key);
@@ -14,7 +15,7 @@ class DaftarPesananVendorScreen extends StatefulWidget {
 
 class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
   final storage = const FlutterSecureStorage();
-  final String baseUrl = 'http://192.168.6.159:8080';
+  final String baseUrl = '${ApiConfig.baseUrl}';
   bool isLoading = true;
   List<dynamic> bookings = [];
   String selectedStatus = 'Semua';
