@@ -6,9 +6,10 @@ import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
+import 'package:flutter_rentalmotor/services/detail_motor_api.dart';
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 
 const String baseUrl = ApiConfig.baseUrl;
 
@@ -26,9 +27,9 @@ class DetailMotorPage extends StatefulWidget {
   @override
   _DetailMotorPageState createState() => _DetailMotorPageState();
 }
+
 Future<List<Map<String, dynamic>>> fetchReviewsForMotor(int motorId) async {
-  final response =
-      await http.get(Uri.parse('$baseUrl/reviews/motor/$motorId'));
+  final response = await http.get(Uri.parse('$baseUrl/reviews/motor/$motorId'));
 
   if (response.statusCode == 200) {
     // Successfully fetched the reviews
@@ -41,6 +42,8 @@ Future<List<Map<String, dynamic>>> fetchReviewsForMotor(int motorId) async {
 
 class _DetailMotorPageState extends State<DetailMotorPage>
     with SingleTickerProviderStateMixin {
+  Map<String, dynamic>? motor;
+  bool _isLoadingMotor = true;
   int _selectedIndex = 0;
   final Color primaryBlue = Color(0xFF2C567E);
   final Color accentColor = Color(0xFFFF9800);
@@ -56,8 +59,8 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   @override
   void initState() {
     super.initState();
+    fetchMotorDetail();
     fetchMotorReviews();
-
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
@@ -81,9 +84,27 @@ class _DetailMotorPageState extends State<DetailMotorPage>
     _animationController.forward();
   }
 
+  Future<void> fetchMotorDetail() async {
+    try {
+      final result = await DetailMotorApi.fetchMotorById(widget.motorId);
+      if (result != null) {
+        setState(() {
+          motor = result;
+          _isLoadingMotor = false;
+        });
+      } else {
+        // Data motor tidak ditemukan
+        setState(() => _isLoadingMotor = false);
+      }
+    } catch (e) {
+      print('Error fetching motor: $e');
+      setState(() => _isLoadingMotor = false);
+    }
+  }
+
   Future<void> fetchMotorReviews() async {
     try {
-      final reviews = await fetchReviewsForMotor(widget.motor["id"]);
+      final reviews = await fetchReviewsForMotor(motor?["id"] ?? "Tidak Diketahui");
       setState(() {
         _reviewList = reviews;
         _isLoadingReviews = false; // Set loading state to false
@@ -140,7 +161,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
 
   @override
   Widget build(BuildContext context) {
-    String? imagePath = widget.motor["image"];
+    String? imagePath = motor?["image"] ?? "";
     String imageUrl;
 
     if (imagePath == null || imagePath.isEmpty) {
@@ -218,7 +239,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                     children: [
                       Positioned.fill(
                         child: Hero(
-                          tag: "motor-${widget.motor["id"] ?? "unknown"}",
+                          tag: "motor-${motor?["id"] ?? ""}",
                           child: imageUrl.startsWith("http")
                               ? Image.network(
                                   imageUrl,
@@ -268,7 +289,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
-                                    widget.motor["type"] ?? "Tidak Diketahui",
+                                    motor?["type"] ?? "Tidak Diketahui",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -282,12 +303,12 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                       horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
                                     color: _getStatusColor(
-                                        widget.motor["status"] ?? "unknown"),
+                                        motor?["color"] ?? "Tidak Diketahui"),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
                                     _getStatusText(
-                                        widget.motor["status"] ?? "unknown"),
+                                        motor?["color"] ?? "Tidak Diketahui"),
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -299,7 +320,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                             ),
                             SizedBox(height: 12),
                             Text(
-                              widget.motor["name"] ?? "Nama Tidak Diketahui",
+                              motor?["name"] ?? "Tidak Diketahui",
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -319,7 +340,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                 Icon(Icons.star, color: Colors.amber, size: 18),
                                 SizedBox(width: 4),
                                 Text(
-                                  "${widget.motor["rating"] ?? "0.0"}",
+                                  "${motor?["rating"] ?? "0.0"}",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -330,7 +351,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                     color: Colors.green, size: 18),
                                 SizedBox(width: 4),
                                 Text(
-                                  "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}/hari",
+                                  "Rp ${motor?["price"] ?? "Tidak Diketahui"}/hari",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -361,12 +382,12 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                           border: Border.all(color: Colors.grey[200]!),
                         ),
                         child: Text(
-                          (widget.motor["description"]
+                          (motor?["description"]
                                       ?.toString()
                                       .trim()
                                       .isNotEmpty ??
                                   false)
-                              ? widget.motor["description"]
+                              ? motor!["description"]
                               : "Tidak ada deskripsi.",
                           style: TextStyle(
                             fontSize: 14,
@@ -561,27 +582,21 @@ class _DetailMotorPageState extends State<DetailMotorPage>
         runSpacing: 12, // jarak vertikal antar baris box
         alignment: WrapAlignment.spaceBetween, // rata kanan-kiri
         children: [
-          _buildInfoBox(Icons.star, "${widget.motor["rating"] ?? "0.0"}",
+          _buildInfoBox(Icons.star, "${motor?["type"] ?? "Tidak Diketahui"}",
               "Rating", Colors.amber),
           _buildInfoBox(
               Icons.attach_money,
-              "Rp ${widget.motor["price"] ?? "Tidak Diketahui"}",
+              "Rp ${motor?["type"] ?? "Tidak Diketahui"}",
               "Harga",
               Colors.green),
-          _buildInfoBox(Icons.motorcycle,
-              widget.motor["type"] ?? "Tidak Diketahui", "Tipe", Colors.blue),
-          _buildInfoBox(
-              Icons.color_lens,
-              widget.motor["color"] ?? "Tidak Diketahui",
-              "Warna",
-              Colors.purple),
+          _buildInfoBox(Icons.motorcycle, motor?["type"] ?? "Tidak Diketahui",
+              "Tipe", Colors.blue),
+          _buildInfoBox(Icons.color_lens, motor?["type"] ?? "Tidak Diketahui",
+              "Warna", Colors.purple),
           _buildInfoBox(Icons.branding_watermark,
-              widget.motor["brand"] ?? "Tidak Diketahui", "Brand", Colors.teal),
-          _buildInfoBox(
-              Icons.confirmation_number,
-              widget.motor["model"] ?? "Tidak Diketahui",
-              "Model",
-              Colors.orange),
+              motor?["type"] ?? "Tidak Diketahui", "Brand", Colors.teal),
+          _buildInfoBox(Icons.confirmation_number,
+              motor?["type"] ?? "Tidak Diketahui", "Model", Colors.orange),
         ],
       ),
     );
@@ -638,7 +653,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   }
 
   Widget _buildVendorInfo() {
-    final vendor = widget.motor["vendor"];
+    final vendor = motor?["vendor"] ?? "Tidak Diketahui";
     if (vendor == null) {
       return Text("Informasi vendor tidak tersedia.");
     }
@@ -782,7 +797,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                       context,
                       MaterialPageRoute(
                         builder: (context) => SewaMotorPage(
-                          motor: widget.motor,
+                          motor: motor!,
                           isGuest: widget.isGuest,
                         ),
                       ),
