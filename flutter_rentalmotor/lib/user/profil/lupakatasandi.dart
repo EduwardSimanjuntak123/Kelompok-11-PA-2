@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import '../verifikasi_kode_screen.dart';
 
 // Import service yang telah dibuat
-import 'package:flutter_rentalmotor/services/change_password_api.dart';
+import 'package:flutter_rentalmotor/services/customer/change_password_api.dart';
 
 class LupaKataSandiScreen extends StatefulWidget {
   final String email;

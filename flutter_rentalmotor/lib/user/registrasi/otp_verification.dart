@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_rentalmotor/services/auth_service.dart';
+import 'package:flutter_rentalmotor/services/autentifikasi/auth_service.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 
 class OTPVerificationScreen extends StatefulWidget {

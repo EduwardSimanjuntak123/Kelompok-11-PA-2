@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/notification_model.dart';
+import '../../models/notification_model.dart';
 
 class NotificationService {
   static const String key = 'notifications';

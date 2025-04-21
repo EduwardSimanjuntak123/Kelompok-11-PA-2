@@ -1,6 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
+import '../../config/api_config.dart';
 
 class BatalkanPesananAPI {
   static final storage = FlutterSecureStorage();

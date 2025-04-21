@@ -2,8 +2,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../config/api_config.dart';
-import '../models/vendor_profile_model.dart';
+import '../../config/api_config.dart';
+import '../../models/vendor_profile_model.dart';
 
 class VendorService {
   final FlutterSecureStorage storage = const FlutterSecureStorage();

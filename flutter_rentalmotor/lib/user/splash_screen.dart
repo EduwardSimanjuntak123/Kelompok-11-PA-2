@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/vendor/homepagevendor.dart';
+import 'package:flutter_rentalmotor/vendor/homepage/homepagevendor.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {

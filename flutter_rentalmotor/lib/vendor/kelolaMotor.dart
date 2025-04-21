@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rentalmotor/services/vendor_motor_api.dart'; // Import VendorMotorApi
+import 'package:flutter_rentalmotor/services/vendor/vendor_motor_api.dart'; // Import VendorMotorApi
 import 'package:flutter_rentalmotor/models/motor_model.dart'; // Import MotorModel
 import 'package:flutter_rentalmotor/vendor/motor_detail_screen.dart'; // Import MotorDetailScreen
 import 'package:flutter_rentalmotor/vendor/CreateMotorScreen.dart'; // Import CreateMotorScreen

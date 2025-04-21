@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/services/api_service.dart';
-import 'package:flutter_rentalmotor/vendor/homepagevendor.dart';
+import 'package:flutter_rentalmotor/services/autentifikasi/api_service.dart';
+import 'package:flutter_rentalmotor/vendor/homepage/homepagevendor.dart';
 import 'package:flutter_rentalmotor/welcome.dart';
 
 

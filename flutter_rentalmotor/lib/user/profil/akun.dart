@@ -4,7 +4,7 @@ import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/profil/lupakatasandi.dart';
 import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
-import 'package:flutter_rentalmotor/services/profile_api.dart';
+import 'package:flutter_rentalmotor/services/customer/profile_api.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';

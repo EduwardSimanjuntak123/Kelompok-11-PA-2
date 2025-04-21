@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rentalmotor/services/vendor_review_api.dart';
+import 'package:flutter_rentalmotor/services/vendor/vendor_review_api.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
 

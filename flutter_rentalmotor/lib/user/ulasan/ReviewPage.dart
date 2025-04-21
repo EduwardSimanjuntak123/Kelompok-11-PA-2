@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_rentalmotor/services/review_service.dart';
+import 'package:flutter_rentalmotor/services/customer/review_service.dart';
 
 class ReviewPage extends StatefulWidget {
   final int bookingId;

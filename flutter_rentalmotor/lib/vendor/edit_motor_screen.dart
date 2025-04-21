@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // Import image_picker
 import 'dart:io';
 import 'package:flutter_rentalmotor/models/motor_model.dart';
-import 'package:flutter_rentalmotor/services/vendor_motor_api.dart'; // Import VendorMotorApi
+import 'package:flutter_rentalmotor/services/vendor/vendor_motor_api.dart'; // Import VendorMotorApi
 
 class EditMotorScreen extends StatefulWidget {
   final MotorModel motor;

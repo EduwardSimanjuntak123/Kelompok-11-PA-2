@@ -10,7 +10,7 @@ import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
-import 'package:flutter_rentalmotor/services/homepage_api.dart';
+import 'package:flutter_rentalmotor/services/customer/homepage_api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';

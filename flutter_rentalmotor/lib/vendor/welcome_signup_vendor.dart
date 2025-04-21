@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'package:flutter_rentalmotor/vendor/homepagevendor.dart';
+import 'package:flutter_rentalmotor/vendor/homepage/homepagevendor.dart';
 
 class WelcomeSignupVendorPage extends StatefulWidget {
   const WelcomeSignupVendorPage({Key? key}) : super(key: key);

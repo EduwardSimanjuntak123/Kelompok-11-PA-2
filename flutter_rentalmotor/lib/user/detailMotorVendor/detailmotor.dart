@@ -6,7 +6,7 @@ import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
-import 'package:flutter_rentalmotor/services/detail_motor_api.dart';
+import 'package:flutter_rentalmotor/services/customer/detail_motor_api.dart';
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';

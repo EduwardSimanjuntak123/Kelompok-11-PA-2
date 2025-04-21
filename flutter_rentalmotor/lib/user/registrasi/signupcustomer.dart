@@ -5,7 +5,7 @@ import 'package:flutter_rentalmotor/user/registrasi/otp_verification.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_rentalmotor/services/auth_service.dart';
+import 'package:flutter_rentalmotor/services/autentifikasi/auth_service.dart';
 
 class SignUpCustomer extends StatefulWidget {
   const SignUpCustomer({Key? key}) : super(key: key);

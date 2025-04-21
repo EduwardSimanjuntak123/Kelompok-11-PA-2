@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
-import 'package:flutter_rentalmotor/services/create_booking_api.dart';
+import 'package:flutter_rentalmotor/services/customer/create_booking_api.dart';
 
 class SewaMotorPage extends StatefulWidget {
   final Map<String, dynamic> motor;

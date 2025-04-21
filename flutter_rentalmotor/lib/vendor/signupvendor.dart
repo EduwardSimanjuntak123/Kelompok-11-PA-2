@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_rentalmotor/services/reg_vendor_api.dart';
+import 'package:flutter_rentalmotor/services/autentifikasi/reg_vendor_api.dart';
 import 'package:flutter_rentalmotor/user/registrasi/otp_verification.dart';
 
 

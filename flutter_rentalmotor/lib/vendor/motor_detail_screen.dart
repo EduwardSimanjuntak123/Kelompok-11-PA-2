@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/vendor/edit_motor_screen.dart';
 import 'package:flutter_rentalmotor/models/motor_model.dart';
-import 'package:flutter_rentalmotor/services/vendor_motor_api.dart'; // Add API service for fetching motor data
+import 'package:flutter_rentalmotor/services/vendor/vendor_motor_api.dart'; // Add API service for fetching motor data
 
 class MotorDetailScreen extends StatefulWidget {
   final MotorModel motor;

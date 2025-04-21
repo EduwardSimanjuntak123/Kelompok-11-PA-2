@@ -8,9 +8,9 @@ import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
 import 'package:flutter_rentalmotor/user/chat/chat_page.dart';
-import 'package:flutter_rentalmotor/services/vendor_service.dart';
+import 'package:flutter_rentalmotor/services/customer/vendor_service.dart';
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
-import 'package:flutter_rentalmotor/services/chat_services.dart';
+import 'package:flutter_rentalmotor/services/customer/chat_services.dart';
 import 'package:http/http.dart' as http; // Pastikan untuk mengimpor http
 import 'dart:convert'; // Pastikan untuk mengimpor json
 
