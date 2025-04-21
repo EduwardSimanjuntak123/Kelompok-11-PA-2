@@ -15,23 +15,23 @@ import (
 )
 
 func saveUserImage(c *gin.Context, field string) (string, error) {
-    file, err := c.FormFile(field)
-    if err != nil {
-        return "", nil
-    }
+	file, err := c.FormFile(field)
+	if err != nil {
+		return "", nil
+	}
 
-    filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
-    filePath := filepath.Join("./fileserver/users", filename)
+	filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+	filePath := filepath.Join("./fileserver/users", filename)
 
-    if err := os.MkdirAll("./fileserver/users", os.ModePerm); err != nil {
-        return "", err
-    }
+	if err := os.MkdirAll("./fileserver/users", os.ModePerm); err != nil {
+		return "", err
+	}
 
-    if err := c.SaveUploadedFile(file, filePath); err != nil {
-        return "", err
-    }
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		return "", err
+	}
 
-    return "/fileserver/users/" + filename, nil
+	return "/fileserver/users/" + filename, nil
 }
 func RegisterCustomer(c *gin.Context) {
 	var input struct {
@@ -106,7 +106,6 @@ func RegisterCustomer(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "OTP telah dikirim ke email, harap verifikasi", "profile_image": profileImage})
 }
 
-
 // VerifyOTP menangani verifikasi OTP yang telah dikirim ke email pengguna.
 // Jika OTP valid dan belum kadaluarsa, status pengguna akan diupdate menjadi "active" dan record OTP dihapus.
 func VerifyOTP(c *gin.Context) {
@@ -115,26 +114,38 @@ func VerifyOTP(c *gin.Context) {
 		OTP   string `json:"otp" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": err.Error(),
+		})
 		return
 	}
 
 	// Cari record OTP di tabel otp_requests
 	var otpRequest models.OtpRequest
 	if err := config.DB.Where("email = ? AND otp = ?", input.Email, input.OTP).First(&otpRequest).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "OTP tidak ditemukan atau tidak valid"})
+		c.JSON(http.StatusNotFound, gin.H{
+			"status":  "error",
+			"message": "OTP tidak ditemukan atau tidak valid",
+		})
 		return
 	}
 
 	if time.Now().After(otpRequest.ExpiresAt) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "OTP telah kadaluarsa"})
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"status":  "error",
+			"message": "OTP telah kadaluarsa",
+		})
 		return
 	}
 
 	// Update status user menjadi "active"
 	var user models.User
 	if err := config.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan"})
+		c.JSON(http.StatusNotFound, gin.H{
+			"status":  "error",
+			"message": "User tidak ditemukan",
+		})
 		return
 	}
 	config.DB.Model(&user).Update("status", "active")
@@ -142,5 +153,8 @@ func VerifyOTP(c *gin.Context) {
 	// Hapus record OTP yang sudah digunakan
 	config.DB.Delete(&otpRequest)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Verifikasi berhasil, akun telah diaktifkan"})
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Verifikasi berhasil, akun telah diaktifkan",
+	})
 }

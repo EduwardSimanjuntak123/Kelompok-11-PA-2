@@ -5,9 +5,10 @@ import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
+
 import 'package:flutter_rentalmotor/user/chat/chat_page.dart';
 import 'package:flutter_rentalmotor/services/vendor_service.dart';
-import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
 import 'package:flutter_rentalmotor/services/chat_services.dart';
 import 'package:http/http.dart' as http; // Pastikan untuk mengimpor http
@@ -36,6 +37,8 @@ class _DataVendorState extends State<DataVendor>
   bool _isLoading = true;
   int? _userId;
   String _errorMessage = '';
+  final String baseUrl = ApiConfig.baseUrl;
+
   final VendorService _vendorService = VendorService();
   late TabController _tabController;
 
@@ -69,7 +72,7 @@ class _DataVendorState extends State<DataVendor>
   Future<List<Map<String, dynamic>>> fetchReviewsByMotorVendor(
       int vendorId) async {
     final response = await http.get(Uri.parse(
-        'http://192.168.6.159:8080/reviews/vendor/$vendorId')); // Ganti localhost dengan IP lokal Anda
+        '$baseUrl/reviews/vendor/$vendorId')); // Ganti localhost dengan IP lokal Anda
     if (response.statusCode == 200) {
       return List<Map<String, dynamic>>.from(json.decode(response.body));
     } else {
@@ -708,7 +711,7 @@ class _DataVendorState extends State<DataVendor>
             context,
             MaterialPageRoute(
               builder: (context) => DetailMotorPage(
-                motor: motor,
+                motorId: motor["id"],
                 isGuest: _userId == null,
               ),
             ),

@@ -1,7 +1,12 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_rentalmotor/config/api_config.dart';
+
 
 class ReviewService {
+  final String baseUrl = ApiConfig.baseUrl;
+
+
   Future<bool> submitReview(
       int bookingId, int rating, String review, String token) async {
     final url =

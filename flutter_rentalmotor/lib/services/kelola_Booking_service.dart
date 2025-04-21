@@ -2,10 +2,12 @@
 
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_rentalmotor/config/api_config.dart';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class KelolaBookingService {
-  final String baseUrl = 'http://192.168.6.159:8080';
+  final String baseUrl = ApiConfig.baseUrl;
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   Future<void> confirmBooking(String bookingId) async {

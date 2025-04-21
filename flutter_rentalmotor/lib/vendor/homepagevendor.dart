@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/vendor/lupakatasandiv.dart';
@@ -31,6 +32,7 @@ class _DashboardState extends State<HomepageVendor> {
   String? businessName;
   String? vendorAddress;
   String? vendorImagePath;
+    String? vendorEmail;
   List<dynamic> motorList = [];
   bool isLoading = true;
   bool isRefreshing = false;
@@ -40,114 +42,83 @@ class _DashboardState extends State<HomepageVendor> {
     super.initState();
     loadVendorData();
   }
+Future<void> loadVendorData() async {
+  print("Memulai load data vendor...");
+  setState(() => isLoading = true);
 
-  Future<void> loadVendorData() async {
-    setState(() {
-      isLoading = true;
-    });
+  try {
+    final prefs = await SharedPreferences.getInstance();
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
 
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('auth_token');
-      final String baseUrl = ApiConfig.baseUrl;
+    final token = await storage.read(key: "auth_token");
+    print("Mengambil token dari Storage");
 
-      final response = await http.get(
-        Uri.parse('$baseUrl/vendor/profile'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+    final String baseUrl = ApiConfig.baseUrl;
+    final url = Uri.parse('$baseUrl/vendor/profile');
+    print("Mengirim request GET ke: $url");
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final user = data['user'];
-        final vendor = user['vendor'];
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
 
-        setState(() {
-          vendorId = vendor['id'];
-          businessName = vendor['shop_name'];
-          vendorAddress = vendor['shop_address'];
-          vendorImagePath = user['profile_image'];
-        });
+    print("Response Status Code: ${response.statusCode}");
+    print("Response Body: ${response.body}");
 
-        prefs.setInt('vendorId', vendorId!);
-        prefs.setString('businessName', businessName!);
-        prefs.setString('vendorAddress', vendorAddress!);
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final user = data['user'];
+      final vendor = user['vendor'];
 
-        await fetchMotorList(token);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Gagal memuat data vendor"),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (vendor == null) {
+        print("Warning: Data vendor kosong meskipun role vendor.");
+        throw Exception("Data vendor tidak ditemukan");
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
+
       setState(() {
-        isLoading = false;
+        vendorId = vendor['id'];
+        businessName = vendor['shop_name'];
+        vendorAddress = vendor['shop_address'];
+        vendorImagePath = user['profile_image'];
+        vendorEmail = user['email'];
       });
+
+      print("Data vendor berhasil di-load:");
+      print("- Vendor ID: $vendorId");
+      print("- Business Name: $businessName");
+      print("- Address: $vendorAddress");
+      print("- Email: $vendorEmail");
+      print("- Profile Image: $vendorImagePath");
+
+      // Simpan ke SharedPreferences
+      await prefs.setInt('vendorId', vendorId!);
+      await prefs.setString('businessName', businessName!);
+      await prefs.setString('vendorAddress', vendorAddress!);
+      await prefs.setString('vendorEmail', vendorEmail!);
+      print("Data disimpan ke SharedPreferences");
+
+    } else {
+      final error = json.decode(response.body)['error'] ?? "Gagal memuat data vendor";
+      print("Error: $error");
+      throw Exception(error);
     }
+  } catch (e) {
+    print("Error dalam loadVendorData: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Error: ${e.toString()}"),
+        backgroundColor: Colors.red,
+      ),
+    );
+  } finally {
+    print("Load data vendor selesai.");
+    setState(() => isLoading = false);
   }
+}
 
-  Future<void> fetchMotorList(String? token) async {
-    try {
-      final String baseUrl = ApiConfig.baseUrl;
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/motor/vendor'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          motorList = data['data'];
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Gagal memuat daftar motor: ${response.statusCode}"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _refreshData() async {
-    setState(() {
-      isRefreshing = true;
-    });
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('auth_token');
-      await fetchMotorList(token);
-    } finally {
-      setState(() {
-        isRefreshing = false;
-      });
-    }
-  }
 
   void _showLogoutDialog(BuildContext context) {
     showDialog(
@@ -208,9 +179,9 @@ class _DashboardState extends State<HomepageVendor> {
       key: _scaffoldKey,
       backgroundColor: const Color(0xFF1A567D),
       drawer: _buildDrawer(fullImageUrl),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        child: Stack(
+      body: 
+      
+        Stack(
           children: [
             // Header background
             Container(
@@ -259,7 +230,7 @@ class _DashboardState extends State<HomepageVendor> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                businessName ?? "Hallo, Vendor",
+                                businessName ?? "bus, Vendor",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -360,18 +331,8 @@ class _DashboardState extends State<HomepageVendor> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF1A567D),
-        child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CreateMotorScreen()),
-          ).then((_) => _refreshData());
-        },
-      ),
-    );
+      );
+  
   }
 
   Widget _buildHeaderButton(
@@ -427,13 +388,22 @@ class _DashboardState extends State<HomepageVendor> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            businessName ?? 'Nama Bisnis',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+  businessName ?? 'Nama Bisnis',
+  style: const TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: Colors.white,
+  ),
+),
+const SizedBox(height: 4),
+Text(
+  vendorEmail ?? 'Email belum tersedia',
+  style: const TextStyle(
+    fontSize: 14,
+    color: Colors.white70,
+  ),
+),
+
                           const SizedBox(height: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -501,7 +471,7 @@ class _DashboardState extends State<HomepageVendor> {
                       context,
                       MaterialPageRoute(
                           builder: (context) => KelolaMotorScreen()),
-                    ).then((_) => _refreshData());
+                    );
                   },
                 ),
                 _buildDrawerItem(
@@ -571,8 +541,7 @@ class _DashboardState extends State<HomepageVendor> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => LupaKataSandivScreen()),
+                     MaterialPageRoute(builder: (context) => LupaKataSandivScreen(email: vendorEmail ?? '')),
                     );
                   },
                 ),

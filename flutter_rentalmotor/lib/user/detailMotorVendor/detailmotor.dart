@@ -9,25 +9,26 @@ import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+
 const String baseUrl = ApiConfig.baseUrl;
 
 class DetailMotorPage extends StatefulWidget {
-  final Map<String, dynamic> motor;
+  final int motorId;
   final bool isGuest;
+  final String baseUrl = ApiConfig.baseUrl;
 
   const DetailMotorPage({
     Key? key,
-    required this.motor,
+    required this.motorId,
     this.isGuest = false,
   }) : super(key: key);
 
   @override
   _DetailMotorPageState createState() => _DetailMotorPageState();
 }
-
 Future<List<Map<String, dynamic>>> fetchReviewsForMotor(int motorId) async {
   final response =
-      await http.get(Uri.parse('http://192.168.6.159:8080/reviews/motor/$motorId'));
+      await http.get(Uri.parse('$baseUrl/reviews/motor/$motorId'));
 
   if (response.statusCode == 200) {
     // Successfully fetched the reviews
@@ -56,7 +57,6 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   void initState() {
     super.initState();
     fetchMotorReviews();
-    print("🔍 MOTOR DATA: ${widget.motor}");
 
     // Initialize animation controller
     _animationController = AnimationController(

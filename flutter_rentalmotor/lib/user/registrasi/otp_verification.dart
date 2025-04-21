@@ -131,34 +131,34 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 6,
-                (index) => Container(
-                  width: 45,
-                  height: 50,
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: TextField(
-                    controller: _otpControllers[index],
-                    focusNode: _focusNodes[index],
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    maxLength: 1,
-                    decoration: const InputDecoration(
-                      counterText: "",
-                      border: InputBorder.none,
+                (index) => Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    onChanged: (value) {
-                      if (value.isEmpty && index > 0) {
-                        _focusNodes[index - 1].requestFocus();
-                      } else if (value.isNotEmpty && index == 5) {
-                        _verifyOTP();
-                      }
-                    },
+                    child: TextField(
+                      controller: _otpControllers[index],
+                      focusNode: _focusNodes[index],
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      maxLength: 1,
+                      decoration: const InputDecoration(
+                        counterText: "",
+                        border: InputBorder.none,
+                      ),
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      onChanged: (value) {
+                        if (value.isEmpty && index > 0) {
+                          _focusNodes[index - 1].requestFocus();
+                        } else if (value.isNotEmpty && index == 5) {
+                          _verifyOTP();
+                        }
+                      },
+                    ),
                   ),
                 ),
               ),

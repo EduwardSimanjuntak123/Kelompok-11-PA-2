@@ -1,13 +1,11 @@
-import 'dart:convert'; // Untuk JSON decoding
+import 'dart:convert'; 
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/notifikasi/notifikasi.dart';
 import 'package:flutter_rentalmotor/user/chat/chat_room_list_page.dart';
-
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/MotorListPage.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/VendorListPage.dart';
-
 import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:flutter_rentalmotor/signin.dart';
@@ -124,7 +122,7 @@ class _HomePageUserState extends State<HomePageUser> {
     print({
       {userId}
     });
-    String wsUrl = "ws://192.168.95.159:8080/ws/notifikasi?user_id=$userId";
+    String wsUrl = "ws://192.168.9.93:8080/ws/notifikasi?user_id=$userId";
     _channel = IOWebSocketChannel.connect(wsUrl);
 
     // Log untuk memverifikasi jika WebSocket terhubung
@@ -909,8 +907,8 @@ class _HomePageUserState extends State<HomePageUser> {
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => DetailMotorPage(
-                                  motor: motor,
-                                  isGuest: _userId == null,
+                                      motorId: motor["id"], // Kirim cuma id
+    isGuest: _userId == null,
                                 )));
                       },
                       child: Container(

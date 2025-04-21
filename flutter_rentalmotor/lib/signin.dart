@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/user/registrasi/SignUpCustomer.dart';
 import 'package:flutter_rentalmotor/services/api_service.dart';
 import 'package:flutter_rentalmotor/vendor/homepagevendor.dart';
 import 'package:flutter_rentalmotor/welcome.dart';
@@ -36,62 +35,62 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Future<void> _handleLogin() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = "";
-    });
+Future<void> _handleLogin() async {
+  setState(() {
+    _isLoading = true;
+    _errorMessage = "";
+  });
 
-    try {
-      print("Memulai proses login...");
-      final response = await loginUser(
-        emailController.text.trim(),
-        passwordController.text,
-      );
+  try {
+    print("Memulai proses login...");
+    final response = await loginUser(
+      emailController.text.trim(),
+      passwordController.text,
+    );
 
-      if (response.containsKey("error")) {
-        setState(() {
-          _errorMessage = response["error"];
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final user = response["user"];
-      final role = user["role"];
-      final token = response["token"];
-
-      // Simpan data login ke SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', token);
-      await prefs.setString('user_name', user["name"]);
-      await prefs.setInt('user_id', user["id"]);
-
-      if (role == "customer") {
-        _showSuccessDialog();
-      } else if (role == "vendor") {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomepageVendor()),
-        );
-      } else {
-        setState(() {
-          _errorMessage = "Akses ditolak! Role tidak dikenali.";
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
+    if (response.containsKey("error")) {
       setState(() {
-        _errorMessage = "Terjadi kesalahan saat login. Coba lagi nanti.";
+        _errorMessage = response["error"];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final user = response["user"];
+    final role = user["role"];
+    final token = response["token"];
+
+    // Simpan token ke Secure Storage
+    await storage.write(key: 'auth_token', value: token);
+
+    // Simpan data user ke SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_name', user["name"]);
+    await prefs.setInt('user_id', user["id"]);
+    await prefs.setString('user_role', role);
+
+    if (role == "customer") {
+      _showSuccessDialog();
+    } else if (role == "vendor") {
+      // Navigasi ke HomepageVendor dengan data vendor
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomepageVendor()),
+      );
+    } else {
+      setState(() {
+        _errorMessage = "Akses ditolak! Role tidak dikenali.";
         _isLoading = false;
       });
     }
+  } catch (e) {
+    setState(() {
+      _errorMessage = "Terjadi kesalahan saat login. Coba lagi nanti.";
+      _isLoading = false;
+    });
+    print("Error during login: $e");
   }
-
-  Future<void> _saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
-  }
+}
 
   void _showSuccessDialog() {
     showDialog(

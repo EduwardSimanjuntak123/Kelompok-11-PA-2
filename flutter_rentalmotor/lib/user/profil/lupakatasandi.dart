@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../verifikasi_kode_screen.dart';
-import 'package:flutter_rentalmotor/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/user/pesanan/detailpesanan.dart';
-import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import '../verifikasi_kode_screen.dart';
+
+// Import service yang telah dibuat
+import 'package:flutter_rentalmotor/services/change_password_api.dart';
 
 class LupaKataSandiScreen extends StatefulWidget {
   final String email;
@@ -15,7 +15,7 @@ class LupaKataSandiScreen extends StatefulWidget {
 
 class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
   final TextEditingController _emailController = TextEditingController();
-  int _selectedIndex = 2;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -33,26 +33,29 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
   // Validasi email sederhana menggunakan regex
   bool _isEmailValid(String email) {
     final emailRegex = RegExp(
-      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\.[a-zA-Z]+",
+      r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
     );
     return emailRegex.hasMatch(email);
   }
 
-  void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pushReplacement(
+  // Fungsi untuk memanggil API request-reset-password-otp
+  Future<void> _requestResetPasswordOtp(String email) async {
+    setState(() => _isLoading = true);
+
+    bool success = await requestResetPasswordOtp(email);
+
+    setState(() => _isLoading = false);
+
+    if (success) {
+      Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => HomePageUser()),
+        MaterialPageRoute(
+          builder: (_) => VerifikasiKodeScreen(email: email),
+        ),
       );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => DetailPesanan()),
-      );
-    } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => Akun()),
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mengirim OTP. Coba lagi.')),
       );
     }
   }
@@ -61,7 +64,6 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // AppBar diset dengan PreferredSize 0
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(0),
         child: AppBar(
@@ -75,21 +77,18 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
       ),
       body: Column(
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
               children: [
                 IconButton(
                   icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                 ),
                 const Expanded(
                   child: Center(
                     child: Text(
-                      "Lupa Kata Sandi",
+                      'Lupa Kata Sandi',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -102,7 +101,6 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
             ),
           ),
           const SizedBox(height: 40),
-          // Main content
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -110,14 +108,13 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Masukkan Email Anda untuk memulihkan kata sandi Anda",
+                    'Masukkan Email Anda untuk memulihkan kata sandi Anda',
                     style: TextStyle(
                       color: Colors.black54,
                       fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Email input
                   Container(
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade300),
@@ -129,80 +126,53 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
                       readOnly: true,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(Icons.email_outlined),
-                        hintText: "Email",
+                        hintText: 'Email',
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Confirm button
                   SizedBox(
                     width: double.infinity,
+                    height: 50,
                     child: ElevatedButton(
-                      onPressed: () {
-                        String email = _emailController.text.trim();
-                        if (!_isEmailValid(email)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Email tidak valid'),
-                            ),
-                          );
-                          return;
-                        }
-                        // Navigasi ke halaman VerifikasiKodeScreen dengan email yang valid
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => VerifikasiKodeScreen(
-                              email: email,
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              String email = _emailController.text.trim();
+                              if (!_isEmailValid(email)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Email tidak valid'),
+                                  ),
+                                );
+                                return;
+                              }
+                              _requestResetPasswordOtp(email);
+                            },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A5276),
+                        backgroundColor: _isLoading ? Colors.grey : const Color(0xFF1A5276),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text(
-                        "Konfirmasi Email",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            )
+                          : const Text(
+                              'Konfirmasi Email',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-      // Footer dengan BottomNavigationBar
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF2C567E),
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Beranda',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: 'Pesanan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Akun',
           ),
         ],
       ),

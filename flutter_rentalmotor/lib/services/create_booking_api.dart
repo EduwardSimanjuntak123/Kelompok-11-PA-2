@@ -126,7 +126,7 @@ class BookingService {
                 context,
                 MaterialPageRoute(
                   builder: (_) => DetailMotorPage(
-                    motor: motorData,
+                    motorId:motorData["id"],
                     isGuest: isGuest,
                   ),
                 ),

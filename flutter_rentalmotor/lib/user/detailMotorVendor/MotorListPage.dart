@@ -824,7 +824,7 @@ class _MotorListPageState extends State<MotorListPage>
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
             builder: (context) =>
-                DetailMotorPage(motor: motor, isGuest: widget.isGuest)));
+                DetailMotorPage(motorId: motor["id"], isGuest: widget.isGuest)));
       },
       child: Container(
         decoration: BoxDecoration(

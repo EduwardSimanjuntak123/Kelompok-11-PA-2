@@ -19,6 +19,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
+
 func GetVendorByID(c *gin.Context) {
 	// Ambil ID vendor dari parameter URL
 	vendorID := c.Param("id")
@@ -41,7 +42,6 @@ func GetVendorByID(c *gin.Context) {
 		"data":    vendor,
 	})
 }
-
 
 // RegisterVendor mendaftarkan vendor baru
 func RegisterVendor(c *gin.Context) {
@@ -66,6 +66,13 @@ func RegisterVendor(c *gin.Context) {
 	var existingUser models.User
 	if err := config.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Email sudah digunakan"})
+		return
+	}
+
+	// Cek apakah nomor telepon sudah terdaftar
+	var existingPhone models.User
+	if err := config.DB.Where("phone = ?", input.Phone).First(&existingPhone).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Nomor telepon sudah digunakan"})
 		return
 	}
 
@@ -136,7 +143,6 @@ func RegisterVendor(c *gin.Context) {
 	})
 }
 
-
 // CompleteBooking menyelesaikan booking dan membuat transaksi otomatis
 func CompleteBooking(c *gin.Context) {
 	id := c.Param("id")
@@ -202,7 +208,6 @@ func CompleteBooking(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Booking selesai, transaksi dibuat otomatis"})
 }
 
-
 func CreateTransaction(booking models.Booking) error {
 	// Pastikan relasi Motor sudah terisi
 	if booking.Motor == nil {
@@ -246,38 +251,36 @@ func CreateTransaction(booking models.Booking) error {
 	return nil
 }
 
-
 // GetVendorProfile mengambil data vendor beserta data user
 func GetVendorProfile(c *gin.Context) {
-    userID, exists := c.Get("user_id")
-    if !exists {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan, harap login ulang"})
-        return
-    }
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan, harap login ulang"})
+		return
+	}
 
-    var user models.User
-    if err := config.DB.
-        Select("id, name, email, role, phone, address, profile_image, status, created_at, updated_at").
-        Preload("Vendor", func(db *gorm.DB) *gorm.DB {
-            return db.Select("id, user_id, id_kecamatan,rating, shop_name, shop_address, shop_description, status, created_at, updated_at").
-                Preload("Kecamatan", func(db *gorm.DB) *gorm.DB {
-                    return db.Select("id_kecamatan, nama_kecamatan") // Preload kecamatan data
-                })
-        }).
-        Where("id = ? AND name IS NOT NULL AND email IS NOT NULL", userID).
-        First(&user).Error; err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan atau bukan vendor"})
-        return
-    }
+	var user models.User
+	if err := config.DB.
+		Select("id, name, email, role, phone, address, profile_image, status, created_at, updated_at").
+		Preload("Vendor", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, user_id, id_kecamatan,rating, shop_name, shop_address, shop_description, status, created_at, updated_at").
+				Preload("Kecamatan", func(db *gorm.DB) *gorm.DB {
+					return db.Select("id_kecamatan, nama_kecamatan") // Preload kecamatan data
+				})
+		}).
+		Where("id = ? AND name IS NOT NULL AND email IS NOT NULL", userID).
+		First(&user).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User tidak ditemukan atau bukan vendor"})
+		return
+	}
 
-    if user.Role != "vendor" || user.Vendor == nil || user.Vendor.ID == 0 {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
-        return
-    }
+	if user.Role != "vendor" || user.Vendor == nil || user.Vendor.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
 
-    c.JSON(http.StatusOK, gin.H{"user": user})
+	c.JSON(http.StatusOK, gin.H{"user": user})
 }
-
 
 // EditProfileVendor mengupdate data profil vendor
 func EditProfileVendor(c *gin.Context) {
@@ -346,7 +349,6 @@ func EditProfileVendor(c *gin.Context) {
 		}
 		userInput["profile_image"] = imagePath
 	}
-
 
 	userInput["updated_at"] = time.Now()
 	vendorInput["updated_at"] = time.Now()
@@ -469,4 +471,3 @@ func GetAllVendor(c *gin.Context) {
 		"data":    vendors,
 	})
 }
-

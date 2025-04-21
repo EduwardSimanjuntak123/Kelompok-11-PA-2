@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/services/vendor_review_api.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
+
 
 class UlasanVendorScreen extends StatefulWidget {
   const UlasanVendorScreen({Key? key}) : super(key: key);
@@ -14,6 +16,7 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
   bool isRefreshing = false;
   final Map<String, TextEditingController> _controllers = {};
   final Set<String> _isEditing = {};
+    final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void initState() {
@@ -282,7 +285,7 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
                   radius: 30,
                   backgroundColor: Colors.grey.shade200,
                   backgroundImage: profileImage.isNotEmpty
-                      ? NetworkImage('${VendorReviewApi.baseUrl}$profileImage')
+                      ? NetworkImage('$baseUrl$profileImage')
                       : null,
                   child: profileImage.isEmpty
                       ? const Icon(Icons.person, color: Colors.grey, size: 30)
@@ -393,7 +396,7 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: Image.network(
-                              '${VendorReviewApi.baseUrl}$motorImage',
+                              '$baseUrl$motorImage',
                               width: 100,
                               height: 80,
                               fit: BoxFit.cover,

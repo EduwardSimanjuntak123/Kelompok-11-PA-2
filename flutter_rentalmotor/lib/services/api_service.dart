@@ -15,24 +15,38 @@ Future<void> saveToken(String token) async {
 }
 
 // Fungsi untuk menyimpan data vendor atau customer
+// Fungsi untuk menyimpan data vendor atau customer
 Future<void> saveVendorData(Map<String, dynamic> user) async {
   final prefs = await SharedPreferences.getInstance();
+  final storage = FlutterSecureStorage();
 
   final role = user['role'];
   final userId = user['id'];
+  final userName = user['name']; // Simpan nama user
+
+  // Simpan data dasar user
+  await prefs.setInt('userId', userId);
+  await prefs.setString('userName', userName);
+  await prefs.setString('userRole', role);
 
   if (role == 'vendor') {
     final vendor = user['vendor'];
     if (vendor != null) {
+      // Simpan data vendor ke SharedPreferences
       await prefs.setInt('vendorId', vendor['id']);
       await prefs.setString('businessName', vendor['business_name']);
       await prefs.setString('vendorAddress', vendor['address']);
+      
+      // Simpan juga ke Secure Storage untuk keamanan
+      await storage.write(key: 'vendorId', value: vendor['id'].toString());
+      await storage.write(key: 'businessName', value: vendor['business_name']);
+      await storage.write(key: 'vendorAddress', value: vendor['address']);
+      
       print("✅ Data vendor berhasil disimpan!");
     } else {
       print("⚠️ Data vendor kosong meskipun role vendor.");
     }
   } else if (role == 'customer') {
-    await prefs.setInt('userId', userId);
     print("✅ Data customer berhasil disimpan (userId: $userId)!");
   } else {
     print("⚠️ Role tidak dikenal: $role");

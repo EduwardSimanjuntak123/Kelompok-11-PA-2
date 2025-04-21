@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_rentalmotor/vendor/verifikasi_kode_screen.dart';
 
 class LupaKataSandivScreen extends StatefulWidget {
-  const LupaKataSandivScreen({Key? key}) : super(key: key);
+  final String email; // <-- Tambahkan ini
+
+  const LupaKataSandivScreen({Key? key, required this.email}) : super(key: key); // <-- Wajib
 
   @override
   State<LupaKataSandivScreen> createState() => _LupaKataSandivScreenState();
@@ -15,7 +17,7 @@ class _LupaKataSandivScreenState extends State<LupaKataSandivScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController.text = "Kelompok11@gmail.com"; 
+    _emailController.text = widget.email; // <-- Isi dari parameter
   }
 
   @override
@@ -63,7 +65,7 @@ class _LupaKataSandivScreenState extends State<LupaKataSandivScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 48), 
+                const SizedBox(width: 48),
               ],
             ),
           ),

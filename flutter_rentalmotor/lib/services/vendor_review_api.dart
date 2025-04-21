@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
+    final String baseUrl = ApiConfig.baseUrl;
+
 
 class VendorReviewApi {
-  static const String baseUrl = 'http://192.168.6.159:8080';
+
   static final storage = FlutterSecureStorage();
 
   static Future<List<dynamic>> fetchReviews() async {
@@ -11,6 +14,7 @@ class VendorReviewApi {
     if (token == null) throw Exception('Token tidak ditemukan');
 
     final response = await http.get(
+      
       Uri.parse('$baseUrl/vendor/reviews'),
       headers: {
         'Content-Type': 'application/json',
