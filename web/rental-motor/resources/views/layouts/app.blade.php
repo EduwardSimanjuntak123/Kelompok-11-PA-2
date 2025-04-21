@@ -9,6 +9,7 @@
     <title>@yield('title')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
 <body class="bg-gray-100 flex">
@@ -113,8 +114,8 @@
                     </li>
                 @endif
                 <li>
-                    <form method="GET" action="{{ url('logout') }}">
-                        <button type="submit"
+                    <form id="logout-form" method="GET" action="{{ url('logout') }}">
+                        <button type="button" onclick="confirmLogout()"
                             class="w-full text-left px-4 py-2 rounded hover:bg-white hover:text-blue-600">
                             Logout
                         </button>
@@ -130,6 +131,24 @@
             @yield('content')
         </div>
     </main>
+
+    <script>
+        function confirmLogout() {
+            Swal.fire({
+                title: 'Apakah Anda yakin ingin keluar?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Iya',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>
