@@ -10,10 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"gorm.io/gorm"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"gorm.io/gorm"
 )
 
 // Upgrader untuk WebSocket
@@ -107,9 +106,6 @@ func ChatWebSocket(c *gin.Context) {
 	}
 }
 
-
-
-
 // broadcastMessage mengirim ke semua koneksi di chatRoom
 func broadcastMessage(chatRoomID uint, message []byte) {
 	chatRoomMutex.Lock()
@@ -121,7 +117,6 @@ func broadcastMessage(chatRoomID uint, message []byte) {
 		}
 	}
 }
-
 
 // SendMessage melalui endpoint HTTP
 func SendMessage(c *gin.Context) {
@@ -176,9 +171,6 @@ func SendMessage(c *gin.Context) {
 		"data":    message,
 	})
 }
-
-
-
 
 // GetChatMessages mengambil pesan berdasarkan chat_room_id
 func GetChatMessages(c *gin.Context) {
@@ -236,7 +228,6 @@ func GetChatMessages(c *gin.Context) {
 	})
 }
 
-
 func MarkMessageAsRead(c *gin.Context) {
 	messageID := c.Param("id")
 	var msg models.Message
@@ -259,6 +250,7 @@ type ChatRoomRequest struct {
 	CustomerID uint `json:"customer_id,omitempty"`
 	VendorID   uint `json:"vendor_id,omitempty"`
 }
+
 func GetOrCreateChatRoom(c *gin.Context) {
 	var req ChatRoomRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -271,16 +263,24 @@ func GetOrCreateChatRoom(c *gin.Context) {
 
 	// Cek apakah vendor_id ada dalam tabel users
 	var vendor models.User
-	result := config.DB.Where("id = ?", req.VendorID).First(&vendor)
-	if result.Error != nil {
+	if err := config.DB.First(&vendor, req.VendorID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Vendor tidak ditemukan"})
 		return
 	}
 
-	// Melanjutkan proses seperti biasa
+	// Cek apakah chat room sudah ada
 	var room models.ChatRoom
-	result = config.DB.Where("customer_id = ? AND vendor_id = ?", req.CustomerID, req.VendorID).First(&room)
-	if result.Error == nil {
+	err := config.DB.
+		Preload("Customer").
+		Preload("Vendor").
+		Preload("Messages", func(db *gorm.DB) *gorm.DB {
+			return db.Order("sent_at ASC") // urutkan pesan lama ke baru
+		}).
+		Preload("Messages.Sender"). // preload sender info tiap message
+		Where("customer_id = ? AND vendor_id = ?", req.CustomerID, req.VendorID).
+		First(&room).Error
+
+	if err == nil {
 		c.JSON(http.StatusOK, gin.H{"message": "Chat room ditemukan", "chat_room": room})
 		return
 	}
@@ -295,10 +295,21 @@ func GetOrCreateChatRoom(c *gin.Context) {
 		return
 	}
 
+	// Setelah buat baru, preload juga semua relasi
+	if err := config.DB.
+		Preload("Customer").
+		Preload("Vendor").
+		Preload("Messages", func(db *gorm.DB) *gorm.DB {
+			return db.Order("sent_at ASC")
+		}).
+		Preload("Messages.Sender").
+		First(&newRoom, newRoom.ID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memuat chat room setelah dibuat"})
+		return
+	}
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Chat room berhasil dibuat", "chat_room": newRoom})
 }
-
-
 
 func GetUserChatRooms(c *gin.Context) {
 	// Ambil user_id dari query parameter
@@ -312,25 +323,21 @@ func GetUserChatRooms(c *gin.Context) {
 
 	var chatRooms []models.ChatRoom
 	if err := config.DB.
-	Preload("Customer").
-	Preload("Vendor").
-	Preload("Messages", func(db *gorm.DB) *gorm.DB {
-		return db.Order("sent_at desc").Limit(1)
-	}).
-	Preload("Messages.Sender"). // ⬅️ preload data Sender
-	Preload("Messages.ChatRoom"). // ⬅️ preload data ChatRoom
-	Where("customer_id = ? OR vendor_id = ?", userID, userID).
-	Find(&chatRooms).Error; err != nil {
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil chat rooms"})
-	return
-}
+		Preload("Customer").
+		Preload("Vendor").
+		Preload("Messages", func(db *gorm.DB) *gorm.DB {
+			return db.Order("sent_at desc").Limit(1)
+		}).
+		Preload("Messages.Sender").   // ⬅️ preload data Sender
+		Preload("Messages.ChatRoom"). // ⬅️ preload data ChatRoom
+		Where("customer_id = ? OR vendor_id = ?", userID, userID).
+		Find(&chatRooms).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil chat rooms"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"user_id":    userID,
 		"chat_rooms": chatRooms,
 	})
 }
-
-
-
-

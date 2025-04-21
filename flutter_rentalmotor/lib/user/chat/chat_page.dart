@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/config/api_config.dart';
@@ -27,8 +28,9 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scrollController = ScrollController();
   List<Message> _messages = [];
   bool _isLoading = true;
-  late WebSocketChannel _channel;
+  WebSocketChannel? _channel;
   int _currentUser_Id = 0;
+  bool _isConnected = false;
 
   @override
   void initState() {
@@ -44,7 +46,14 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _getCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
-    _currentUser_Id = prefs.getInt('user_id') ?? 0;
+    setState(() {
+      _currentUser_Id = prefs.getInt('user_id') ?? 0;
+    });
+    if (_currentUser_Id == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User ID tidak ditemukan')),
+      );
+    }
   }
 
   Future<void> _markMessageAsRead(int messageId) async {
@@ -112,30 +121,102 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _connectWebSocket() {
-    // Gunakan _currentUser_Id sebagai sender_id untuk WebSocket
-    _channel = WebSocketChannel.connect(
-      Uri.parse(
-          '${ApiConfig.wsUrl}/ws/chat?chat_room_id=${widget.chatRoomId}&sender_id=$_currentUser_Id'),
-    );
-
-    _channel.stream.listen((data) {
-      final newMessage = Message.fromJson(jsonDecode(data));
+    try {
+      // Sesuaikan dengan format endpoint WebSocket di backend Go
+      final wsUrl = '${ApiConfig.wsUrl}/ws/chat?sender_id=$_currentUser_Id&chat_room_id=${widget.chatRoomId}';
+      print('Connecting to WebSocket: $wsUrl');
+      
+      _channel = IOWebSocketChannel.connect(Uri.parse(wsUrl));
+      
       setState(() {
-        _messages.add(newMessage);
+        _isConnected = true;
       });
+      
+      _channel!.stream.listen(
+        (dynamic data) {
+          print('WebSocket received: $data');
+          try {
+            final Map<String, dynamic> messageData = jsonDecode(data);
+            final newMessage = Message.fromJson(messageData);
+          
+          setState(() {
+            // Cek apakah pesan sudah ada di list (untuk menghindari duplikasi)
+            bool isDuplicate = false;
+            for (var msg in _messages) {
+              // Jika ID sama dan bukan 0 (pesan sementara), maka duplikat
+              if (msg.id == newMessage.id && newMessage.id != 0) {
+                isDuplicate = true;
+                break;
+              }
+              
+              // Jika konten dan waktu kirim hampir sama, mungkin duplikat
+              if (msg.content == newMessage.content && 
+                  msg.senderId == newMessage.senderId &&
+                  msg.id == 0 && // Hanya cek untuk pesan sementara (id=0)
+                  newMessage.sentAt.difference(msg.sentAt).inSeconds.abs() < 5) {
+                // Ganti pesan sementara dengan pesan dari server
+                _messages[_messages.indexOf(msg)] = newMessage;
+                isDuplicate = true;
+                break;
+              }
+            }
+            
+            // Jika bukan duplikat, tambahkan ke daftar pesan
+            if (!isDuplicate) {
+              _messages.add(newMessage);
+            }
+          });
 
-      if (newMessage.senderId != _currentUser_Id) {
-        _markMessageAsRead(newMessage.id);
-        _showIncomingMessageNotification(widget.receiverName);
+          if (newMessage.senderId != _currentUser_Id) {
+            _markMessageAsRead(newMessage.id);
+            _showIncomingMessageNotification(widget.receiverName);
+          }
+          _scrollToBottom();
+        } catch (e) {
+          print('Error parsing WebSocket message: $e');
+          print('Raw message: $data');
+        }
+      },
+      onError: (error) {
+        print('WebSocket Error: $error');
+        setState(() {
+          _isConnected = false;
+        });
+        // Coba reconnect setelah error
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted) {
+            _connectWebSocket();
+          }
+        });
+      },
+      onDone: () {
+        print('WebSocket connection closed');
+        setState(() {
+          _isConnected = false;
+        });
+        // Coba reconnect ketika koneksi tertutup
+        if (mounted) {
+          Future.delayed(const Duration(seconds: 3), () {
+            if (mounted && !_isConnected) {
+              _connectWebSocket();
+            }
+          });
+        }
+      },
+    );
+  } catch (e) {
+    print('Error connecting to WebSocket: $e');
+    setState(() {
+      _isConnected = false;
+    });
+    // Coba reconnect setelah error
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        _connectWebSocket();
       }
-      _scrollToBottom();
-    }, onError: (error) {
-      print('WebSocket Error: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('WebSocket Error: $error')),
-      );
     });
   }
+}
 
   void _showIncomingMessageNotification(String senderName) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -151,8 +232,18 @@ class _ChatPageState extends State<ChatPage> {
     if (_messageController.text.trim().isEmpty) return;
 
     final messageText = _messageController.text.trim();
-    final newMessage = Message(
-      id: 0,
+    _messageController.clear();
+
+    // Buat objek pesan untuk dikirim melalui WebSocket
+    final messageObj = {
+      'ChatRoomID': widget.chatRoomId,
+      'SenderID': _currentUser_Id,
+      'Message': messageText,
+    };
+
+    // Tampilkan pesan di UI terlebih dahulu (optimistic UI)
+    final tempMessage = Message(
+      id: 0, // ID sementara, akan diupdate setelah respons dari server
       chatRoomId: widget.chatRoomId,
       senderId: _currentUser_Id,
       content: messageText,
@@ -161,33 +252,42 @@ class _ChatPageState extends State<ChatPage> {
     );
 
     setState(() {
-      _messages.add(newMessage);
-      _messageController.clear();
+      _messages.add(tempMessage);
     });
     _scrollToBottom();
 
     try {
+      // Kirim pesan melalui HTTP API
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/chat/message'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'chat_room_id': widget.chatRoomId,
-          // Kirim _currentUser_Id sebagai sender_id agar dapat berupa vendor atau customer
           'sender_id': _currentUser_Id,
           'content': messageText,
         }),
       );
 
-      if (response.statusCode != 200) {
-        throw Exception('Gagal mengirim pesan ke server');
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('Gagal mengirim pesan ke server: ${response.statusCode}');
       }
-    } catch (e) {
-      print('Error sending message: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal mengirim pesan: $e')),
-      );
-    }
+    
+    // PENTING: Jangan kirim lagi melalui WebSocket karena server sudah melakukan broadcast
+    // Hapus atau komentari kode berikut untuk menghindari duplikasi pesan
+    // if (_isConnected && _channel != null) {
+    //   try {
+    //     _channel!.sink.add(jsonEncode(messageObj));
+    //   } catch (e) {
+    //     print('Error sending message via WebSocket: $e');
+    //   }
+    // }
+  } catch (e) {
+    print('Error sending message: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Gagal mengirim pesan: $e')),
+    );
   }
+}
 
   Future<bool> _confirmExitChat() async {
     final result = await showDialog<bool>(
@@ -210,7 +310,9 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
-    _channel.sink.close();
+    if (_channel != null) {
+      _channel!.sink.close();
+    }
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -222,7 +324,26 @@ class _ChatPageState extends State<ChatPage> {
       onWillPop: _confirmExitChat,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Chat'),
+          title: Row(
+            children: [
+              const Text('Chat'),
+              if (!_isConnected)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'Offline',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           backgroundColor: const Color(0xFF2C567E),
         ),
         body: Column(

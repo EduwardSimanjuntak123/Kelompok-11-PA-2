@@ -60,8 +60,10 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   void initState() {
     super.initState();
     fetchMotorDetail();
-    fetchMotorReviews();
-    // Initialize animation controller
+    _initAnimation();
+  }
+
+  void _initAnimation() {
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 800),
@@ -80,7 +82,6 @@ class _DetailMotorPageState extends State<DetailMotorPage>
       curve: Curves.easeOutCubic,
     ));
 
-    // Start animation
     _animationController.forward();
   }
 
@@ -90,29 +91,66 @@ class _DetailMotorPageState extends State<DetailMotorPage>
       if (result != null) {
         setState(() {
           motor = result;
-          _isLoadingMotor = false;
         });
-      } else {
-        // Data motor tidak ditemukan
-        setState(() => _isLoadingMotor = false);
+        await fetchMotorReviews(); // fetch reviews setelah motor berhasil
       }
     } catch (e) {
-      print('Error fetching motor: $e');
-      setState(() => _isLoadingMotor = false);
+      print('Error fetching motor detail: $e');
+      // Tambahkan penanganan error yang lebih baik
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memuat detail motor: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingMotor = false;
+        });
+      }
     }
   }
 
   Future<void> fetchMotorReviews() async {
     try {
-      final reviews = await fetchReviewsForMotor(motor?["id"] ?? "Tidak Diketahui");
-      setState(() {
-        _reviewList = reviews;
-        _isLoadingReviews = false; // Set loading state to false
-      });
+      if (motor != null && motor!["id"] != null) {
+        final motorId = motor!["id"];
+        // Pastikan motorId adalah int
+        final int motorIdInt = motorId is int 
+            ? motorId 
+            : int.tryParse(motorId.toString()) ?? 0;
+            
+        if (motorIdInt > 0) {
+          final reviews = await fetchReviewsForMotor(motorIdInt);
+          if (mounted) {
+            setState(() {
+              _reviewList = reviews;
+              _isLoadingReviews = false;
+            });
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              _isLoadingReviews = false;
+            });
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoadingReviews = false;
+          });
+        }
+      }
     } catch (e) {
-      setState(() {
-        _isLoadingReviews = false; // Set loading state to false on error
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingReviews = false;
+        });
+      }
       print("Error fetching reviews: $e");
     }
   }
@@ -161,6 +199,33 @@ class _DetailMotorPageState extends State<DetailMotorPage>
 
   @override
   Widget build(BuildContext context) {
+    // Tampilkan loading indicator jika data masih dimuat
+    if (_isLoadingMotor) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: primaryBlue,
+          elevation: 0,
+          title: Text("Detail Motor"),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: primaryBlue),
+              SizedBox(height: 16),
+              Text("Memuat detail motor...", 
+                style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     String? imagePath = motor?["image"] ?? "";
     String imageUrl;
 
@@ -340,7 +405,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                 Icon(Icons.star, color: Colors.amber, size: 18),
                                 SizedBox(width: 4),
                                 Text(
-                                  "${motor?["rating"] ?? "0.0"}",
+                                  "${motor != null ? (motor!["rating"] != null ? motor!["rating"].toString() : "0") : "0"}",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -351,7 +416,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                     color: Colors.green, size: 18),
                                 SizedBox(width: 4),
                                 Text(
-                                  "Rp ${motor?["price"] ?? "Tidak Diketahui"}/hari",
+                                  "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}/hari",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -479,18 +544,22 @@ class _DetailMotorPageState extends State<DetailMotorPage>
             Row(
               children: [
                 CircleAvatar(
-                  backgroundImage: review['customer']['profile_image'] != null
+                  backgroundImage: review['customer'] != null && 
+                                  review['customer']['profile_image'] != null
                       ? NetworkImage(
                           '${ApiConfig.baseUrl}${review['customer']['profile_image']}')
                       : null,
-                  child: review['customer']['profile_image'] == null
+                  child: review['customer'] == null || 
+                         review['customer']['profile_image'] == null
                       ? Icon(Icons.person, size: 24, color: Colors.white)
                       : null,
                   radius: 20,
                 ),
                 SizedBox(width: 12),
                 Text(
-                  review['customer']['name'] ?? "Nama Tidak Diketahui",
+                  review['customer'] != null 
+                      ? (review['customer']['name'] ?? "Nama Tidak Diketahui")
+                      : "Nama Tidak Diketahui",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -504,13 +573,27 @@ class _DetailMotorPageState extends State<DetailMotorPage>
             // Bintang Rating
             Row(
               children: [
-                ...List.generate(5, (index) {
-                  return Icon(
-                    index < review['rating'] ? Icons.star : Icons.star_border,
-                    color: Colors.amber,
-                    size: 18,
+                () {
+                  double rating = 0;
+                  if (review['rating'] == null) {
+                    rating = 0;
+                  } else if (review['rating'] is int) {
+                    rating = (review['rating'] as int).toDouble();
+                  } else if (review['rating'] is String) {
+                    rating = double.tryParse(review['rating'] as String) ?? 0.0;
+                  } else if (review['rating'] is double) {
+                    rating = review['rating'];
+                  }
+                  return Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < rating ? Icons.star : Icons.star_border,
+                        color: Colors.amber,
+                        size: 18,
+                      );
+                    }),
                   );
-                }),
+                }(),
               ],
             ),
             SizedBox(height: 10),
@@ -582,21 +665,44 @@ class _DetailMotorPageState extends State<DetailMotorPage>
         runSpacing: 12, // jarak vertikal antar baris box
         alignment: WrapAlignment.spaceBetween, // rata kanan-kiri
         children: [
-          _buildInfoBox(Icons.star, "${motor?["type"] ?? "Tidak Diketahui"}",
-              "Rating", Colors.amber),
+          _buildInfoBox(
+              Icons.star,
+              "${motor != null ? (motor!["rating"] != null ? motor!["rating"].toString() : "0") : "0"}",
+              "Rating",
+              Colors.amber),
           _buildInfoBox(
               Icons.attach_money,
-              "Rp ${motor?["type"] ?? "Tidak Diketahui"}",
+              "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}",
               "Harga",
               Colors.green),
-          _buildInfoBox(Icons.motorcycle, motor?["type"] ?? "Tidak Diketahui",
-              "Tipe", Colors.blue),
-          _buildInfoBox(Icons.color_lens, motor?["type"] ?? "Tidak Diketahui",
-              "Warna", Colors.purple),
-          _buildInfoBox(Icons.branding_watermark,
-              motor?["type"] ?? "Tidak Diketahui", "Brand", Colors.teal),
-          _buildInfoBox(Icons.confirmation_number,
-              motor?["type"] ?? "Tidak Diketahui", "Model", Colors.orange),
+          _buildInfoBox(
+              Icons.motorcycle,
+              motor != null
+                  ? (motor!["type"]?.toString() ?? "Tidak Diketahui")
+                  : "Tidak Diketahui",
+              "Tipe",
+              Colors.blue),
+          _buildInfoBox(
+              Icons.color_lens,
+              motor != null
+                  ? (motor!["color"]?.toString() ?? "Tidak Diketahui")
+                  : "Tidak Diketahui",
+              "Warna",
+              Colors.purple),
+          _buildInfoBox(
+              Icons.branding_watermark,
+              motor != null
+                  ? (motor!["brand"]?.toString() ?? "Tidak Diketahui")
+                  : "Tidak Diketahui",
+              "Brand",
+              Colors.teal),
+          _buildInfoBox(
+              Icons.confirmation_number,
+              motor != null
+                  ? (motor!["year"]?.toString() ?? "Tidak Diketahui")
+                  : "Tidak Diketahui",
+              "Tahun",
+              Colors.orange),
         ],
       ),
     );
@@ -653,27 +759,45 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   }
 
   Widget _buildVendorInfo() {
-    final vendor = motor?["vendor"] ?? "Tidak Diketahui";
+    final vendor = motor?["vendor"];
     if (vendor == null) {
       return Text("Informasi vendor tidak tersedia.");
     }
 
-    String namaKecamatan = vendor["kecamatan"]?["nama_kecamatan"]
-            ?.toString()
+    String namaKecamatan = vendor["kecamatan"] != null && 
+                          vendor["kecamatan"]["nama_kecamatan"] != null
+        ? vendor["kecamatan"]["nama_kecamatan"]
+            .toString()
             .replaceAll('\r', '')
             .replaceAll('\n', '')
-            .trim() ??
-        "Tidak Diketahui";
+            .trim()
+        : "Tidak Diketahui";
 
     return GestureDetector(
       onTap: () {
         // Redirect to vendor page when clicked
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DataVendor(vendorId: vendor["id"]),
-          ),
-        );
+        if (vendor["id"] != null) {
+          // Pastikan vendor id adalah int
+          final vendorId = vendor["id"] is int 
+              ? vendor["id"] 
+              : int.tryParse(vendor["id"].toString()) ?? 0;
+              
+          if (vendorId > 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DataVendor(vendorId: vendorId),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("ID vendor tidak valid"),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
       },
       child: Container(
         padding: EdgeInsets.all(15),
@@ -698,8 +822,9 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage: (vendor["user"]?["profile_image"] != null &&
-                          vendor["user"]["profile_image"].toString().isNotEmpty)
+                  backgroundImage: (vendor["user"] != null && 
+                                  vendor["user"]["profile_image"] != null &&
+                                  vendor["user"]["profile_image"].toString().isNotEmpty)
                       ? NetworkImage(
                           "$baseUrl${vendor["user"]["profile_image"]}")
                       : AssetImage("assets/images/default_profile.png")
@@ -793,15 +918,24 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SewaMotorPage(
-                          motor: motor!,
-                          isGuest: widget.isGuest,
+                    if (motor != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SewaMotorPage(
+                            motor: motor!,
+                            isGuest: widget.isGuest,
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Data motor tidak tersedia"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   },
                   borderRadius: BorderRadius.circular(15),
                   child: Center(
@@ -849,4 +983,28 @@ class _DetailMotorPageState extends State<DetailMotorPage>
             ),
     );
   }
+}
+
+String _formatCurrency(dynamic amount) {
+  if (amount == null) return "0";
+  
+  // Pastikan amount adalah numeric
+  int value;
+  if (amount is String) {
+    value = int.tryParse(amount) ?? 0;
+  } else if (amount is int) {
+    value = amount;
+  } else if (amount is double) {
+    value = amount.toInt();
+  } else {
+    value = 0;
+  }
+
+  // Format dengan pemisah ribuan
+  String result = value.toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+    (Match m) => "${m[1]}.",
+  );
+  
+  return result;
 }

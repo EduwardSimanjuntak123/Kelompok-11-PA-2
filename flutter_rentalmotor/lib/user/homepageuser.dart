@@ -1,4 +1,4 @@
-import 'dart:convert'; 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
 import 'package:flutter_rentalmotor/user/notifikasi/notifikasi.dart';
@@ -19,6 +19,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
+import 'package:http/http.dart' as http;
 
 const Color primaryBlue = Color(0xFF2196F3);
 
@@ -48,6 +49,22 @@ class _HomePageUserState extends State<HomePageUser> {
   List<Map<String, dynamic>> _notifications = [];
   int get _unreadCount {
     return _notifications.where((notif) => notif['read'] == false).length;
+  }
+
+  // Tambahkan variabel untuk menyimpan jumlah pesan yang belum dibaca
+  List<Map<String, dynamic>> _chatRooms = [];
+  int get _unreadMessagesCount {
+    int count = 0;
+    for (var room in _chatRooms) {
+      if (room['messages'] != null) {
+        for (var message in room['messages']) {
+          if (message['sender_id'] != _userId && message['is_read'] == false) {
+            count++;
+          }
+        }
+      }
+    }
+    return count;
   }
 
   @override
@@ -97,7 +114,29 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
-  /// Cek status login dan ambil user_name dari SharedPreferences
+  // Tambahkan fungsi untuk mengambil daftar chat rooms
+  Future<void> _fetchChatRooms() async {
+    if (_userId == null) return;
+
+    try {
+      final url =
+          Uri.parse("${ApiConfig.baseUrl}/chat/rooms?user_id=$_userId");
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _chatRooms = List<Map<String, dynamic>>.from(data['chat_rooms']);
+        });
+      } else {
+        print('Gagal mengambil chat rooms: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching chat rooms: $e');
+    }
+  }
+
+  // Tambahkan pemanggilan _fetchChatRooms() di _checkLoginStatus()
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
@@ -110,6 +149,7 @@ class _HomePageUserState extends State<HomePageUser> {
 
     _fetchVendors();
     _fetchMotors();
+    _fetchChatRooms(); // Tambahkan ini
 
     // Kalau user_id tersedia, buat koneksi WebSocket
     if (_userId != null) {
@@ -122,7 +162,7 @@ class _HomePageUserState extends State<HomePageUser> {
     print({
       {userId}
     });
-    String wsUrl = "ws://192.168.9.93:8080/ws/notifikasi?user_id=$userId";
+    String wsUrl = "${ApiConfig.wsUrl}/notifikasi?user_id=$userId";
     _channel = IOWebSocketChannel.connect(wsUrl);
 
     // Log untuk memverifikasi jika WebSocket terhubung
@@ -401,23 +441,38 @@ class _HomePageUserState extends State<HomePageUser> {
                   ),
                 ),
                 // Icon chat yang juga memiliki badge jika ada pesan yang belum dibaca
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                badges.Badge(
+                  showBadge: _unreadMessagesCount > 0,
+                  badgeContent: Text(
+                    _unreadMessagesCount.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 10),
                   ),
-                  child: IconButton(
-                    icon: Image.asset("assets/images/chat.png",
-                        width: 24, height: 24),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => const ChatRoomListPage()),
-                      );
-                    },
+                  badgeStyle: badges.BadgeStyle(
+                    badgeColor: Colors.red,
+                    elevation: 2,
+                  ),
+                  position: badges.BadgePosition.topEnd(top: -5, end: -5),
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: Image.asset("assets/images/chat.png",
+                          width: 24, height: 24),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                      onPressed: () {
+                        Navigator.of(context)
+                            .push(MaterialPageRoute(
+                                builder: (context) => const ChatRoomListPage()))
+                            .then((_) {
+                          // Refresh chat rooms setelah kembali dari halaman chat
+                          _fetchChatRooms();
+                        });
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -567,32 +622,39 @@ class _HomePageUserState extends State<HomePageUser> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: primaryBlue,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.store, color: primaryBlue, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        "Daftar Vendor",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+              Flexible(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: primaryBlue,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Row(
+                        children: [
+                          Icon(Icons.store, color: primaryBlue, size: 20),
+                          SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              "Daftar Vendor",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -784,32 +846,39 @@ class _HomePageUserState extends State<HomePageUser> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 4,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: primaryBlue,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Row(
-                    children: [
-                      Icon(Icons.motorcycle, color: primaryBlue, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        "Rekomendasi Motor",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+              Flexible(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: primaryBlue,
+                        borderRadius: BorderRadius.circular(2),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Row(
+                        children: [
+                          Icon(Icons.motorcycle, color: primaryBlue, size: 20),
+                          SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              "Rekomendasi Motor",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -907,8 +976,8 @@ class _HomePageUserState extends State<HomePageUser> {
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => DetailMotorPage(
-                                      motorId: motor["id"], // Kirim cuma id
-    isGuest: _userId == null,
+                                  motorId: int.parse(motor["id"].toString()), // Konversi ke int
+                                  isGuest: _userId == null,
                                 )));
                       },
                       child: Container(
@@ -968,7 +1037,7 @@ class _HomePageUserState extends State<HomePageUser> {
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
+                                                                                    color: Colors.black.withOpacity(0.2),
                                           blurRadius: 4,
                                           offset: Offset(0, 2),
                                         ),
