@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_rentalmotor/services/vendor/kelola_Booking_service.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'package:flutter_rentalmotor/vendor/detail_booking_screen.dart';
 
 class DaftarPesananVendorScreen extends StatefulWidget {
   const DaftarPesananVendorScreen({Key? key}) : super(key: key);
@@ -49,7 +50,7 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
   @override
   void initState() {
     super.initState();
-    fetchBookings();
+    _refreshData();  // Refresh data saat aplikasi dibuka
   }
 
   Future<void> fetchBookings() async {
@@ -166,139 +167,130 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
   Widget buildBookingCard(dynamic booking) {
     final motor = booking['motor'];
     final imageUrl =
-        motor?['image']?.replaceFirst("localhost", "192.168.132.159");
+        motor?['image']?.replaceFirst("localhost", "192.168.132.159"); // Menggunakan baseUrl
     final status = booking['status'] ?? '-';
     final statusColor = statusColors[status] ?? Colors.grey;
 
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      elevation: 3,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with status
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(15)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Booking #${booking['id'] ?? '-'}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetailBookingPage(bookingId: booking['id']),
           ),
-
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Motor Image
-                if (imageUrl != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      imageUrl,
-                      width: 100,
-                      height: 100,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 100,
-                        height: 100,
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.motorcycle,
-                            color: Colors.grey, size: 40),
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.motorcycle,
-                        color: Colors.grey, size: 40),
-                  ),
-
-                const SizedBox(width: 16),
-
-                // Booking details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        motor?['name'] ?? 'Tidak diketahui',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Customer: ${booking['customer_name'] ?? 'Tidak diketahui'}',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildInfoRow(Icons.calendar_today,
-                          'Booking: ${formatDate(booking['booking_date'])}'),
-                      _buildInfoRow(Icons.play_circle_outline,
-                          'Mulai: ${formatDate(booking['start_date'])}'),
-                      _buildInfoRow(Icons.stop_circle_outlined,
-                          'Selesai: ${formatDate(booking['end_date'])}'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Action buttons
-          if (_shouldShowActions(status))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        );
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+          side: BorderSide(color: Colors.grey.shade200),
+        ),
+        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        elevation: 3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: statusColor.withOpacity(0.1),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(15)),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: _buildActionButtons(booking),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Booking #${booking['id'] ?? '-'}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      status,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (imageUrl != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        '$baseUrl$imageUrl', // Menggunakan baseUrl untuk gambar
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 100,
+                          height: 100,
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.motorcycle,
+                              color: Colors.grey, size: 40),
+                        ),
+                      ),
+                    )
+                  else
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.motorcycle,
+                          color: Colors.grey, size: 40),
+                    ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          motor?['name'] ?? 'Tidak diketahui',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Customer: ${booking['customer_name'] ?? 'Tidak diketahui'}',
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildInfoRow(Icons.calendar_today,
+                            'Booking: ${formatDate(booking['booking_date'])}'),
+                        _buildInfoRow(Icons.play_circle_outline,
+                            'Mulai: ${formatDate(booking['start_date'])}'),
+                        _buildInfoRow(Icons.stop_circle_outlined,
+                            'Selesai: ${formatDate(booking['end_date'])}'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -316,135 +308,6 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
               style: const TextStyle(fontSize: 14),
               overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  bool _shouldShowActions(String status) {
-    return ['pending', 'confirmed', 'in transit', 'awaiting return']
-        .contains(status);
-  }
-
-  List<Widget> _buildActionButtons(dynamic booking) {
-    final status = booking['status'];
-    final id = booking['id'];
-
-    switch (status) {
-      case 'pending':
-        return [
-          _buildActionButton(
-            label: 'Tolak',
-            icon: Icons.cancel,
-            color: Colors.red,
-            onPressed: () => _showConfirmationDialog(
-              'Tolak Pesanan',
-              'Apakah Anda yakin ingin menolak pesanan ini?',
-              () => _bookingService.rejectBooking(id),
-            ),
-          ),
-          const SizedBox(width: 8),
-          _buildActionButton(
-            label: 'Terima',
-            icon: Icons.check_circle,
-            color: Colors.green,
-            onPressed: () => _showConfirmationDialog(
-              'Terima Pesanan',
-              'Apakah Anda yakin ingin menerima pesanan ini?',
-              () => _bookingService.confirmBooking(id),
-            ),
-          ),
-        ];
-      case 'confirmed':
-        return [
-          _buildActionButton(
-            label: 'Dalam Perjalanan',
-            icon: Icons.directions_bike,
-            color: Colors.blue,
-            onPressed: () => _showConfirmationDialog(
-              'Ubah Status',
-              'Ubah status menjadi "Dalam Perjalanan"?',
-              () => _bookingService.setBookingToTransit(id),
-            ),
-          ),
-        ];
-      case 'in transit':
-        return [
-          _buildActionButton(
-            label: 'Digunakan',
-            icon: Icons.motorcycle,
-            color: Colors.teal,
-            onPressed: () => _showConfirmationDialog(
-              'Ubah Status',
-              'Ubah status menjadi "Digunakan"?',
-              () => _bookingService.setBookingToInUse(id),
-            ),
-          ),
-        ];
-      case 'awaiting return':
-        return [
-          _buildActionButton(
-            label: 'Selesai',
-            icon: Icons.done_all,
-            color: Colors.green,
-            onPressed: () => _showConfirmationDialog(
-              'Selesaikan Pesanan',
-              'Apakah Anda yakin ingin menyelesaikan pesanan ini?',
-              () => _bookingService.completeBooking(id),
-            ),
-          ),
-        ];
-      default:
-        return [];
-    }
-  }
-
-  Widget _buildActionButton({
-    required String label,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onPressed,
-  }) {
-    return ElevatedButton.icon(
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      ),
-      onPressed: onPressed,
-    );
-  }
-
-  void _showConfirmationDialog(
-      String title, String message, Function() onConfirm) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onConfirm();
-              _refreshData();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1976D2),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Konfirmasi'),
           ),
         ],
       ),

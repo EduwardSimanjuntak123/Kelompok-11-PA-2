@@ -7,7 +7,7 @@ import 'package:shimmer/shimmer.dart';
 
 // Import services
 import 'package:flutter_rentalmotor/services/vendor/vendor_api_service.dart';
-import 'package:flutter_rentalmotor/services/dashboardVendorservice.dart';
+import 'package:flutter_rentalmotor/services/vendor/DashboardVendorService.dart';
 
 // Import models
 import 'package:flutter_rentalmotor/models/DashboardData.dart';

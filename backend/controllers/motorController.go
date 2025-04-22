@@ -287,6 +287,48 @@ func GetAllMotorbyVendor(c *gin.Context) {
 		"data":    motors,
 	})
 }
+func GetMotorByIDolehvendor(c *gin.Context) {
+	var motor models.Motor
+
+	// Ambil user_id dari token
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan dalam token"})
+		return
+	}
+
+	// Cek apakah user memiliki vendor terkait
+	var vendor models.Vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	// Ambil ID motor dari parameter URL
+	motorID := c.Param("id")
+
+	// Cari motor berdasarkan vendor_id dan motor_id
+	if err := config.DB.
+		Where("vendor_id = ? AND id = ?", vendor.ID, motorID).
+		First(&motor).Error; err != nil {
+		// Jika motor tidak ditemukan
+		if err.Error() == "record not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Motor tidak ditemukan"})
+			return
+		}
+		// Jika ada error lainnya
+		fmt.Printf("❌ Gagal mengambil data motor: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
+		return
+	}
+
+	// Kembalikan data motor
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Berhasil mengambil data motor",
+		"data":    motor,
+	})
+}
+
 
 // Fungsi untuk menghapus motor
 func DeleteMotor(c *gin.Context) {
