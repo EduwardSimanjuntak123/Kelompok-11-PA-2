@@ -13,7 +13,12 @@ use Illuminate\Pagination\Paginator;
 
 class TransaksiController extends Controller
 {
-    protected $apiBaseUrl = 'http://localhost:8080'; // URL backend
+    protected $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->apiBaseUrl = config('api.base_url');
+    }
 
     public function index()
     {

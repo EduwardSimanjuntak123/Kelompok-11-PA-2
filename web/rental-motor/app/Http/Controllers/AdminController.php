@@ -9,7 +9,12 @@ use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
 {
-    protected $apiBaseUrl = 'http://localhost:8080';
+    protected $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->apiBaseUrl = config('api.base_url');
+    }
     public function dashboard()
     {
         $token = session()->get('token');
@@ -18,7 +23,7 @@ class AdminController extends Controller
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
     
-        $response = Http::withToken($token)->get("http://localhost:8080/admin/CustomerandVendor");
+        $response = Http::withToken($token)->get("{$this->apiBaseUrl}/admin/CustomerandVendor");
     
         if ($response->failed()) {
             Log::error('Gagal fetch data dari API /admin/CustomerandVendor', [

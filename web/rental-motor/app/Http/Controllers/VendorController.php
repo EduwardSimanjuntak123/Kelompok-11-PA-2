@@ -10,7 +10,12 @@ use Carbon\Carbon;
 
 class VendorController extends Controller
 {
-    protected $apiBaseUrl = 'http://localhost:8080';
+    protected $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->apiBaseUrl = config('api.base_url');
+    }
 
     // Menampilkan profil vendor
     public function profile()

@@ -12,7 +12,6 @@ use Illuminate\Pagination\Paginator;
 
 class KelolaBookingController extends Controller
 {
-    private $apiBaseUrl = 'http://localhost:8080'; // Sesuaikan dengan backend
     public function index($id)
     {
         try {
@@ -22,20 +21,20 @@ class KelolaBookingController extends Controller
             }
 
             // Get bookings from Go backend
-            $urlBookings = "{$this->apiBaseUrl}/vendor/bookings";
+            $urlBookings = config('api.base_url') . '/vendor/bookings';
             Log::info("Mengirim request booking ke: " . $urlBookings);
             $responseBookings = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token
             ])->timeout(10)->get($urlBookings, [
-                'vendor_id' => $id
-            ]);
+                        'vendor_id' => $id
+                    ]);
             Log::info("Response booking: " . $responseBookings->body());
             $bookings = ($responseBookings->successful() && is_array($responseBookings->json()))
-                        ? $responseBookings->json()
-                        : [];
-            
+                ? $responseBookings->json()
+                : [];
+
             // Get vendor motors from Go backend
-            $urlMotors = "{$this->apiBaseUrl}/motor/vendor";
+            $urlMotors = config('api.base_url') . '/motor/vendor';
             Log::info("Mengirim request motor ke: " . $urlMotors);
             $responseMotors = Http::withToken($token)->timeout(10)->get($urlMotors);
             Log::info("Response motor: " . $responseMotors->body());
@@ -51,31 +50,31 @@ class KelolaBookingController extends Controller
             $bookings = [];
             $motors = [];
         }
-         // === START: manual pagination untuk $bookings ===
-    $perPage     = 5;
-    $currentPage = Paginator::resolveCurrentPage('page');      // ambil ?page=…
-    $collection  = collect($bookings);                        // bungkus array jadi Collection
-    $currentItems = $collection
-                        ->forPage($currentPage, $perPage)     // slice data
-                        ->values();                           // reindex
+        // === START: manual pagination untuk $bookings ===
+        $perPage = 5;
+        $currentPage = Paginator::resolveCurrentPage('page');      // ambil ?page=…
+        $collection = collect($bookings);                        // bungkus array jadi Collection
+        $currentItems = $collection
+            ->forPage($currentPage, $perPage)     // slice data
+            ->values();                           // reindex
 
-    $paginatedBookings = new LengthAwarePaginator(
-        $currentItems,                // data halaman ini
-        $collection->count(),         // total item
-        $perPage,                     // item per halaman
-        $currentPage,                 // halaman sekarang
-        [
-            'path'     => Paginator::resolveCurrentPath(),
-            'pageName' => 'page',
-        ]
-    );
-    // === END: manual pagination ===
+        $paginatedBookings = new LengthAwarePaginator(
+            $currentItems,                // data halaman ini
+            $collection->count(),         // total item
+            $perPage,                     // item per halaman
+            $currentPage,                 // halaman sekarang
+            [
+                'path' => Paginator::resolveCurrentPath(),
+                'pageName' => 'page',
+            ]
+        );
+        // === END: manual pagination ===
 
-    // Kirim view sekali, dengan paginator
-    return view('vendor.kelola', [
-        'bookings' => $paginatedBookings,
-        'motors'   => $motors,
-    ]);
+        // Kirim view sekali, dengan paginator
+        return view('vendor.kelola', [
+            'bookings' => $paginatedBookings,
+            'motors' => $motors,
+        ]);
 
         return view('vendor.kelola', compact('bookings', 'motors'));
     }
@@ -89,7 +88,7 @@ class KelolaBookingController extends Controller
                 return redirect()->route('login')->with('error', 'Anda harus login untuk melakukan aksi ini.');
             }
 
-            $url = "{$this->apiBaseUrl}/bookings/{$id}/confirm";
+            $url = config('api.base_url') . '/bookings/{$id}/confirm';
 
             Log::info("Mengirim request konfirmasi booking ke: {$url}");
 
@@ -97,7 +96,7 @@ class KelolaBookingController extends Controller
                 'Authorization' => 'Bearer ' . $token,
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json'
-            ])->timeout(10)->post($url, []); 
+            ])->timeout(10)->post($url, []);
 
             if ($response->successful()) {
                 Log::info("Booking ID {$id} berhasil dikonfirmasi.");
@@ -121,7 +120,7 @@ class KelolaBookingController extends Controller
                 return redirect()->route('login')->with('error', 'Anda harus login untuk melakukan aksi ini.');
             }
 
-            $url = "{$this->apiBaseUrl}/bookings/{$id}/reject";
+            $url = config('api.base_url') . 'bookings/{$id}/reject';
 
             Log::info("Mengirim request penolakan booking ke: {$url}");
 
@@ -129,7 +128,7 @@ class KelolaBookingController extends Controller
                 'Authorization' => 'Bearer ' . $token,
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json'
-            ])->timeout(10)->post($url, []); 
+            ])->timeout(10)->post($url, []);
 
             if ($response->successful()) {
                 Log::info("Booking ID {$id} berhasil ditolak.");
@@ -153,7 +152,7 @@ class KelolaBookingController extends Controller
                 return redirect()->route('login')->with('error', 'Anda harus login untuk melakukan aksi ini.');
             }
 
-            $url = "{$this->apiBaseUrl}/bookings/{$id}/complete";
+            $url = config('api.base_url') . 'bookings/{$id}/complete';
             dd($url);
             Log::info("Mengirim request penyelesaian booking ke: {$url}");
 
@@ -161,7 +160,7 @@ class KelolaBookingController extends Controller
                 'Authorization' => 'Bearer ' . $token,
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json'
-            ])->timeout(10)->post($url, []); 
+            ])->timeout(10)->post($url, []);
 
             if ($response->successful()) {
                 Log::info("Booking ID {$id} berhasil diselesaikan.");
@@ -178,94 +177,89 @@ class KelolaBookingController extends Controller
 
 
     public function addManualBooking(Request $request)
-{
-    try {
-        $token = session()->get('token');
-        if (!$token) {
-            return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
-        }
+    {
+        try {
+            $token = session()->get('token');
+            if (!$token) {
+                return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
+            }
 
-        // Validasi input (tanpa end_date, pakai duration)
-        $validated = $request->validate([
-            'motor_id'           => 'required|integer',
-            'customer_name'      => 'required|string',
-            'start_date_date'    => 'required|date_format:Y-m-d',
-            'start_date_time'    => 'required|date_format:H:i',
-            'duration'           => 'required|integer|min:1',
-            'pickup_location'    => 'required|string',
-            'photo_id'           => 'nullable|file|mimes:jpg,jpeg,png',
-            'ktp_id'             => 'nullable|file|mimes:jpg,jpeg,png',
-        ]);
+            // Validasi input (tanpa end_date, pakai duration)
+            $validated = $request->validate([
+                'motor_id' => 'required|integer',
+                'customer_name' => 'required|string',
+                'start_date_date' => 'required|date_format:Y-m-d',
+                'start_date_time' => 'required|date_format:H:i',
+                'duration' => 'required|integer|min:1',
+                'pickup_location' => 'required|string',
+                'photo_id' => 'nullable|file|mimes:jpg,jpeg,png',
+                'ktp_id' => 'nullable|file|mimes:jpg,jpeg,png',
+            ]);
 
-        // Gabungkan input tanggal dan waktu; tambahkan ":00" untuk detik
-        $startDateInput = $validated['start_date_date'] . 'T' . $validated['start_date_time'] . ':00';
+            // Gabungkan input tanggal dan waktu; tambahkan ":00" untuk detik
+            $startDateInput = $validated['start_date_date'] . 'T' . $validated['start_date_time'] . ':00';
 
-        // Buat objek Carbon dari input
-        $carbonStartDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $startDateInput, 'Asia/Jakarta');
+            // Buat objek Carbon dari input
+            $carbonStartDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $startDateInput, 'Asia/Jakarta');
 
-        // Cek apakah tanggal mulai yang dimasukkan sudah lewat waktu saat ini
-        if ($carbonStartDate->lt(\Carbon\Carbon::now('Asia/Jakarta'))) {
-            return redirect()->back()->with('error', 'Tanggal dan jam mulai tidak boleh kurang dari waktu saat ini.');
-        }
+            // Cek apakah tanggal mulai yang dimasukkan sudah lewat waktu saat ini
+            if ($carbonStartDate->lt(\Carbon\Carbon::now('Asia/Jakarta'))) {
+                return redirect()->back()->with('error', 'Tanggal dan jam mulai tidak boleh kurang dari waktu saat ini.');
+            }
 
-        // Setelah validasi, format objek Carbon menjadi string ISO8601
-        $startDate = $carbonStartDate->format('Y-m-d\TH:i:sP');
+            // Setelah validasi, format objek Carbon menjadi string ISO8601
+            $startDate = $carbonStartDate->format('Y-m-d\TH:i:sP');
 
-        // Bangun data multipart untuk dikirim ke API backend
-        $multipart = [
-            ['name' => 'motor_id',        'contents' => $validated['motor_id']],
-            ['name' => 'customer_name',   'contents' => trim($validated['customer_name'])],
-            ['name' => 'start_date',      'contents' => $startDate],
-            ['name' => 'duration',        'contents' => $validated['duration']],
-            ['name' => 'pickup_location', 'contents' => $validated['pickup_location']],
-            ['name' => 'type',            'contents' => 'manual'],
-            ['name' => 'status',          'contents' => 'confirmed'],
-        ];
-
-        // Optional file upload (foto ID dan KTP)
-        if ($request->hasFile('photo_id')) {
-            $photo = $request->file('photo_id');
-            $multipart[] = [
-                'name'     => 'photo_id',
-                'contents' => fopen($photo->getPathname(), 'r'),
-                'filename' => $photo->getClientOriginalName()
+            // Bangun data multipart untuk dikirim ke API backend
+            $multipart = [
+                ['name' => 'motor_id', 'contents' => $validated['motor_id']],
+                ['name' => 'customer_name', 'contents' => trim($validated['customer_name'])],
+                ['name' => 'start_date', 'contents' => $startDate],
+                ['name' => 'duration', 'contents' => $validated['duration']],
+                ['name' => 'pickup_location', 'contents' => $validated['pickup_location']],
+                ['name' => 'type', 'contents' => 'manual'],
+                ['name' => 'status', 'contents' => 'confirmed'],
             ];
+
+            // Optional file upload (foto ID dan KTP)
+            if ($request->hasFile('photo_id')) {
+                $photo = $request->file('photo_id');
+                $multipart[] = [
+                    'name' => 'photo_id',
+                    'contents' => fopen($photo->getPathname(), 'r'),
+                    'filename' => $photo->getClientOriginalName()
+                ];
+            }
+            if ($request->hasFile('ktp_id')) {
+                $ktp = $request->file('ktp_id');
+                $multipart[] = [
+                    'name' => 'ktp_id',
+                    'contents' => fopen($ktp->getPathname(), 'r'),
+                    'filename' => $ktp->getClientOriginalName()
+                ];
+            }
+
+            Log::info("Manual Booking (pakai duration):", [
+                'start_date' => $startDate,
+                'duration' => $validated['duration'],
+                'validated' => $validated
+            ]);
+
+            $response = Http::withToken($token)
+                ->asMultipart()
+                ->post(config('api.base_url') . '/vendor/manual/bookings', $multipart);
+
+            if ($response->successful()) {
+                return redirect()->back()
+                    ->with('message', 'Booking manual berhasil dibuat');
+            } else {
+                return redirect()->back()
+                    ->with('error', 'Gagal menambahkan booking manual: ' . $response->body());
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Error saat booking manual (duration): " . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-        if ($request->hasFile('ktp_id')) {
-            $ktp = $request->file('ktp_id');
-            $multipart[] = [
-                'name'     => 'ktp_id',
-                'contents' => fopen($ktp->getPathname(), 'r'),
-                'filename' => $ktp->getClientOriginalName()
-            ];
-        }
-
-        Log::info("Manual Booking (pakai duration):", [
-            'start_date' => $startDate,
-            'duration'   => $validated['duration'],
-            'validated'  => $validated
-        ]);
-
-        $response = Http::withToken($token)
-            ->asMultipart()
-            ->post($this->apiBaseUrl . '/vendor/manual/bookings', $multipart);
-
-        if ($response->successful()) {
-            return redirect()->back()
-                ->with('message', 'Booking manual berhasil dibuat');
-        } else {
-            return redirect()->back()
-                ->with('error', 'Gagal menambahkan booking manual: ' . $response->body());
-        }
-
-    } catch (\Exception $e) {
-        Log::error("Error saat booking manual (duration): " . $e->getMessage());
-        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
-}
-
-    
-
-    
-    
 }

@@ -10,7 +10,12 @@ use Illuminate\Support\Facades\Auth;
 
 class ulasanController extends Controller
 {
-    private $apiBaseUrl = 'http://localhost:8080'; // Sesuaikan dengan backend
+    protected $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->apiBaseUrl = config('api.base_url');
+    }
     public function index($id)
     {
         try {

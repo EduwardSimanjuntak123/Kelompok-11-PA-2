@@ -8,7 +8,12 @@ use Illuminate\Support\Facades\Log;
 
 class nonaktifController extends Controller
 {
-    private $apiBaseUrl = 'http://localhost:8080'; // Ganti sesuai URL backend kamu
+    protected $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->apiBaseUrl = config('api.base_url');
+    }
 
     /**
      * Menampilkan daftar vendor

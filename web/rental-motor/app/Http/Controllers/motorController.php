@@ -8,7 +8,12 @@ use Illuminate\Support\Facades\Log;
 
 class MotorController extends Controller
 {
-    protected $apiBaseUrl = 'http://localhost:8080'; // Pastikan API URL benar
+    protected $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->apiBaseUrl = config('api.base_url');
+    }
 
     public function index()
     {
@@ -131,7 +136,7 @@ class MotorController extends Controller
             return redirect()->route('vendor.motor');
         } catch (\Exception $e) {
             Log::error('Gagal update motor: ' . $e->getMessage());
-            session()->flash('message', 'Terjadi kesalahan saat memperbarui motor.');
+            session()->flash('message', value: 'Terjadi kesalahan saat memperbarui motor.');
             session()->flash('type', 'error');
             return redirect()->route('vendor.motor');
         }

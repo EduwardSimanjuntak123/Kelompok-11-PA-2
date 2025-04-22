@@ -12,6 +12,7 @@
 
     <div class="container mx-auto p-8">
         <h2 class="text-4xl font-extrabold mb-6 text-center text-gray-800">Kelola Pemesanan</h2>
+        {{-- @dd($bookings) --}}
         <!-- Filter dan Booking Manual dalam satu baris -->
         <div class="mb-6 flex items-center justify-between">
             <div class="relative w-60">
@@ -109,12 +110,11 @@
                                         <div>Data motor tidak tersedia.</div>
                                     @endif
                                 </td>
-
                                 <!-- Gambar Motor -->
                                 <td class="py-3 px-4 text-center align-top">
                                     @if (isset($pesanan['motor']['image']))
-                                        <img src="{{ $pesanan['motor']['image'] }}" alt="Motor"
-                                            class="w-30 h-30 object-cover rounded mx-auto">
+                                        <img src="{{ config('api.base_url') }}{{ $pesanan['motor']['image'] }}"
+                                            alt="Motor" class="w-30 h-30 object-cover rounded mx-auto">
                                     @else
                                         <span class="text-gray-400">-</span>
                                     @endif
@@ -329,7 +329,7 @@
         </script>
 
         <script>
-            const BASE_API = "http://localhost:8080";
+           const BASE_API = "{{ config('api.base_url') }}";
 
             // SweetAlert dari session
             @if (session('message'))
