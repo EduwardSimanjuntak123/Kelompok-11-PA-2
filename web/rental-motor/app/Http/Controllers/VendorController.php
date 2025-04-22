@@ -68,7 +68,7 @@ class VendorController extends Controller
                 // Ambil daftar motor vendor
                 $motorResponse = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
-                ])->get('http://localhost:8080/motor/vendor/');
+                ])->get(config('api.base_url') . 'motor/vendor/');
     
                 if ($motorResponse->successful()) {
                     $motorData = $motorResponse->json();
@@ -77,7 +77,7 @@ class VendorController extends Controller
                 // Ambil profil vendor (rating)
                 $ratingResponse = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
-                ])->get('http://localhost:8080/vendor/profile');
+                ])->get(config('api.base_url') .'vendor/profile');
     
                 if ($ratingResponse->successful()) {
                     $ratingData = $ratingResponse->json();
@@ -86,7 +86,7 @@ class VendorController extends Controller
                 // Ambil daftar booking
                 $bookingResponse = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
-                ])->get('http://localhost:8080/vendor/bookings');
+                ])->get(config('api.base_url') .'vendor/bookings');
     
                 if ($bookingResponse->successful()) {
                     $bookingData = $bookingResponse->json();
@@ -95,7 +95,7 @@ class VendorController extends Controller
                 // Ambil data transaksi
                 $transactionResponse = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
-                ])->get('http://localhost:8080/transaction/');
+                ])->get(config('api.base_url') .'transaction/');
     
                 if ($transactionResponse->successful()) {
                     $transactions = $transactionResponse->json();
