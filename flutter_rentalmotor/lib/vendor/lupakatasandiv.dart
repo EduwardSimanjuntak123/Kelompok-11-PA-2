@@ -1,29 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_rentalmotor/services/customer/change_password_api.dart';
 import 'package:flutter_rentalmotor/vendor/verifikasi_kode_screen.dart';
 
 class LupaKataSandivScreen extends StatefulWidget {
-  final String email; // <-- Tambahkan ini
+  final String email;
 
-  const LupaKataSandivScreen({Key? key, required this.email}) : super(key: key); // <-- Wajib
+  const LupaKataSandivScreen({
+    Key? key,
+    required this.email, // pastikan parameter ini ada
+  }) : super(key: key);
 
   @override
-  State<LupaKataSandivScreen> createState() => _LupaKataSandivScreenState();
+  State<LupaKataSandivScreen> createState() => _LupaKataSandivScreen();
 }
 
-class _LupaKataSandivScreenState extends State<LupaKataSandivScreen> {
+class _LupaKataSandivScreen extends State<LupaKataSandivScreen> {
   final TextEditingController _emailController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
-    _emailController.text = widget.email; // <-- Isi dari parameter
+    _emailController.text = widget.email;
   }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    super.dispose();
+  Future<void> _requestOtp() async {
+    String email = _emailController.text.trim();
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan isi email')),
+      );
+      return;
+    }
+
+    bool success = await requestResetPasswordOtp(email);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OTP telah dikirim ke email Anda')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VerifikasiKodevScreen(email: email),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mengirim OTP')),
+      );
+    }
   }
 
   @override
@@ -43,7 +69,6 @@ class _LupaKataSandivScreenState extends State<LupaKataSandivScreen> {
       ),
       body: Column(
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
@@ -57,7 +82,7 @@ class _LupaKataSandivScreenState extends State<LupaKataSandivScreen> {
                 const Expanded(
                   child: Center(
                     child: Text(
-                      "Lupa Kata Sandi",
+                      "Reset Kata Sandi",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -69,10 +94,7 @@ class _LupaKataSandivScreenState extends State<LupaKataSandivScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 40),
-
-          // Main content
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -80,15 +102,21 @@ class _LupaKataSandivScreenState extends State<LupaKataSandivScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    "Masukkan Email Anda untuk memulihkan kata sandi Anda",
+                    "Alamat Email",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Masukkan email yang terdaftar untuk menerima kode OTP.",
                     style: TextStyle(
                       color: Colors.black54,
                       fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Email input
                   Container(
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade300),
@@ -98,30 +126,18 @@ class _LupaKataSandivScreenState extends State<LupaKataSandivScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
-                        prefixIcon: Icon(Icons.email_outlined),
-                        hintText: "Email",
+                        labelText: "Email",
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // Confirm button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => VerifikasiKodevScreen(
-                              email: _emailController.text,
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _requestOtp,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1A5276),
                         foregroundColor: Colors.white,

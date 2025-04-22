@@ -459,6 +459,44 @@ func GetVendorBookings(c *gin.Context) {
 }
 
 
+// GetBookingByIDForVendor mengambil detail booking berdasarkan ID oleh vendor
+func GetBookingByIDForVendor(c *gin.Context) {
+	id := c.Param("id")
+
+	// Ambil user_id dari JWT token
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+		return
+	}
+
+	// Cari vendor berdasarkan user_id
+	var vendor models.Vendor
+	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	// Ambil booking berdasarkan ID
+	var booking models.Booking
+	if err := config.DB.Preload("Motor").Preload("Customer").Where("id = ?", id).First(&booking).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
+		return
+	}
+
+	// Pastikan booking milik vendor yang sedang login
+	if booking.VendorID != vendor.ID {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk melihat booking ini"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"booking": booking,
+	})
+}
+
+
+
 func GetCustomerBookings(c *gin.Context) {
 	// Ambil user_id dari token JWT
 	userID, exists := c.Get("user_id")

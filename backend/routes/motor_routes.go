@@ -18,6 +18,7 @@ func MotorRoutes(router *gin.Engine) {
 		motorVendor := router.Group("/motor/vendor")
 		motorVendor.Use(middleware.AuthMiddleware("vendor"))
 		{
+			motorVendor.GET("/:id", controllers.GetMotorByIDolehvendor) // Vendor hanya melihat motor mereka sendiri
 			motorVendor.GET("/", controllers.GetAllMotorbyVendor) // Vendor hanya melihat motor mereka sendiri
 			motorVendor.POST("/", controllers.CreateMotor)        // Vendor bisa menambahkan motor
 			motorVendor.PUT("/:id", controllers.UpdateMotor)      // Vendor bisa mengupdate motor mereka

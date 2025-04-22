@@ -24,7 +24,9 @@ func VendorRoutes(router *gin.Engine) {
 			vendor.POST("/manual/bookings", controllers.CreateManualBooking)
 
 			// Booking
+			vendor.GET("/bookings/:id", controllers.GetBookingByIDForVendor)
 			vendor.GET("/bookings", controllers.GetVendorBookings)
+
 			vendor.PUT("/bookings/:id/confirm", controllers.ConfirmBooking)
 			vendor.PUT("/bookings/:id/reject", controllers.RejectBooking)
 			

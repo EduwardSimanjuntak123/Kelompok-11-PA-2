@@ -1,5 +1,3 @@
-// lib/services/vendor_motor_api.dart
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -39,6 +37,33 @@ class VendorMotorApi {
     }
 
     return motorList;
+  }
+
+  // Fetch motor details by ID from the API
+  Future<MotorModel> fetchMotorDetail(int motorId) async {
+    try {
+      String? token = await storage.read(key: 'auth_token');
+      final String baseUrl = ApiConfig.baseUrl;
+
+      final response = await http.get(
+        Uri.parse(
+            '$baseUrl/motor/vendor/$motorId'), // Use motorId to fetch details
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return MotorModel.fromJson(
+            data['data']); // Return motor data as MotorModel
+      } else {
+        throw Exception("Failed to load motor details: ${response.statusCode}");
+      }
+    } catch (e) {
+      throw Exception("Error: $e");
+    }
   }
 
   // Update motor details using PUT request with multipart/form-data
@@ -88,6 +113,31 @@ class VendorMotorApi {
           print("Failed to update motor: $value");
         }
       });
+    } catch (e) {
+      throw Exception("Error: $e");
+    }
+  }
+
+  // Delete motor from the API
+  Future<void> deleteMotor(int motorId) async {
+    try {
+      String? token = await storage.read(key: 'auth_token');
+      final String baseUrl = ApiConfig.baseUrl;
+
+      final response = await http.delete(
+        Uri.parse(
+            '$baseUrl/motor/vendor/$motorId'), // API endpoint to delete motor
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print("Motor deleted successfully: $motorId");
+      } else {
+        throw Exception("Failed to delete motor: ${response.statusCode}");
+      }
     } catch (e) {
       throw Exception("Error: $e");
     }

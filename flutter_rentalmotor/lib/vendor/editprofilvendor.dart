@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -8,14 +13,64 @@ class EditProfile extends StatefulWidget {
 }
 
 class _EditProfileState extends State<EditProfile> {
-  TextEditingController nameController =
-      TextEditingController(text: "Kelompok Kuuu");
-  TextEditingController emailController =
-      TextEditingController(text: "Kelompok11@gmail.com");
-  TextEditingController phoneController =
-      TextEditingController(text: "081365438970");
-  TextEditingController addressController = TextEditingController(
-      text: "Dusun III Sidaji, Kec. Simarmata, Kab. Simanindo, Sumatera Utara");
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
+
+  TextEditingController nameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
+  TextEditingController addressController = TextEditingController();
+
+  String? profileImageUrl;
+  File? selectedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    getVendorProfile();
+  }
+
+  Future<void> getVendorProfile() async {
+    final token = await storage.read(key: 'auth_token');
+
+    if (token == null) {
+      debugPrint('Token tidak ditemukan');
+      return;
+    }
+
+    final response = await http.get(
+      Uri.parse('http://192.168.9.159:8080/vendor/profile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonBody = json.decode(response.body);
+      final data = jsonBody['user'];
+      setState(() {
+        nameController.text = data['name'] ?? '';
+        emailController.text = data['email'] ?? '';
+        phoneController.text = data['phone'] ?? '';
+        addressController.text = data['address'] ?? '';
+        profileImageUrl = data['profile_image'] != null
+            ? 'http://192.168.9.159:8080${data['profile_image']}'
+            : null;
+      });
+    } else {
+      debugPrint('Gagal mengambil data profil: ${response.body}');
+    }
+  }
+
+  Future<void> pickImage() async {
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        selectedImage = File(pickedFile.path);
+      });
+    }
+  }
 
   void showSuccessDialog() {
     showDialog(
@@ -126,33 +181,43 @@ class _EditProfileState extends State<EditProfile> {
                           ),
                         ],
                       ),
-                      child: const CircleAvatar(
+                      child: CircleAvatar(
                         radius: 60,
                         backgroundColor: Colors.grey,
-                        child:
-                            Icon(Icons.person, size: 60, color: Colors.white),
+                        backgroundImage: selectedImage != null
+                            ? FileImage(selectedImage!)
+                            : (profileImageUrl != null
+                                ? NetworkImage(profileImageUrl!)
+                                : null) as ImageProvider?,
+                        child: selectedImage == null && profileImageUrl == null
+                            ? const Icon(Icons.person,
+                                size: 60, color: Colors.white)
+                            : null,
                       ),
                     ),
                     Positioned(
                       bottom: 0,
                       right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: const Color(0xFF1976D2), width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 5,
-                              spreadRadius: 1,
-                            ),
-                          ],
+                      child: GestureDetector(
+                        onTap: pickImage,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: const Color(0xFF1976D2), width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 5,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.camera_alt,
+                              color: Color(0xFF1976D2), size: 24),
                         ),
-                        child: const Icon(Icons.camera_alt,
-                            color: Color(0xFF1976D2), size: 24),
                       ),
                     ),
                   ],

@@ -19,11 +19,13 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
     fetchMotorData();
   }
 
+  // Fetching motor data from the API
   Future<void> fetchMotorData() async {
     try {
       VendorMotorApi api = VendorMotorApi();
       List<dynamic> data = await api.fetchMotorData();
-      List<MotorModel> motorData = data.map((motorJson) => MotorModel.fromJson(motorJson)).toList();
+      List<MotorModel> motorData =
+          data.map((motorJson) => MotorModel.fromJson(motorJson)).toList();
 
       setState(() {
         motorList = motorData;
@@ -34,6 +36,12 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
         SnackBar(
           content: Text("Error: $e"),
           backgroundColor: Colors.red,
+          action: SnackBarAction(
+            label: 'Retry',
+            onPressed: () {
+              fetchMotorData(); // Retry fetching motor data
+            },
+          ),
         ),
       );
       setState(() {
@@ -42,6 +50,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
     }
   }
 
+  // Handling the refresh action triggered by swipe-down
   Future<void> _handleRefresh() async {
     await fetchMotorData();
   }
@@ -63,8 +72,11 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
                       style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   )
-                : ListView.builder(
+                : ListView.separated(
                     itemCount: motorList.length,
+                    separatorBuilder: (context, index) {
+                      return Divider(); // Adds a divider between list items
+                    },
                     itemBuilder: (context, index) {
                       MotorModel motor = motorList[index];
                       return ListTile(
@@ -75,7 +87,8 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => MotorDetailScreen(motor: motor),
+                              builder: (context) => MotorDetailScreen(
+                                  motorId: motor.id), // Passing motor ID
                             ),
                           );
                         },
@@ -88,7 +101,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => CreateMotorScreen()),
-          ).then((_) => fetchMotorData());
+          ).then((_) => fetchMotorData()); // Refresh after adding a motor
         },
         child: Icon(Icons.add),
         backgroundColor: Colors.blue,
