@@ -72,7 +72,7 @@
                         $profileUrl = '#';
                     }
                 @endphp
-                <li>
+                <li>    
                     <a href="{{ $profileUrl }}"
                         class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs($userRole === 'admin' ? 'admin.profile' : 'vendor.profile') ? 'bg-white text-blue-600' : '' }}">
                         Kelola Profil
@@ -84,6 +84,12 @@
                         <a href="{{ route('admin.nonaktif', ['id' => $userId]) }}"
                             class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('admin.nonaktif') ? 'bg-white text-blue-600' : '' }}">
                             Nonaktifkan Akun Vendor
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('admin.kecamatan', ['id' => $userId]) }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('admin.kecamatan') ? 'bg-white text-blue-600' : '' }}">
+                            Kelola kecamatan
                         </a>
                     </li>
                 @elseif ($userRole === 'vendor')

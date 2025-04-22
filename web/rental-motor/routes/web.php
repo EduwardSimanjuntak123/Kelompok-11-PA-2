@@ -39,6 +39,8 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::get('/admin/profile/{id}', [AdminController::class, 'profile'])->name('admin.profile');
         Route::view('/nonaktif', 'nonaktif')->name('nonaktif');
         Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::get('/admin/kecamatan', [AdminController::class, 'kelolaKecamatan'])->name('admin.kecamatan');
+
 
     });
 
