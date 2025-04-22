@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_rentalmotor/signin.dart';
+import 'package:flutter_rentalmotor/services/customer/change_password_api.dart'; // import service update password
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_rentalmotor/vendor/homepage/homepagevendor.dart'; // ganti dengan halaman HomePage kamu
 
 class KataSandiBaruScreenv extends StatefulWidget {
   final String email;
@@ -11,18 +13,22 @@ class KataSandiBaruScreenv extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<KataSandiBaruScreenv> createState() => _KataSandiBaruScreenState();
+  State<KataSandiBaruScreenv> createState() => _KataSandiBaruScreenvState();
 }
 
-class _KataSandiBaruScreenState extends State<KataSandiBaruScreenv> {
+class _KataSandiBaruScreenvState extends State<KataSandiBaruScreenv> {
+  final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
+  bool _obscureOldPassword = true;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
+    _oldPasswordController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -49,7 +55,7 @@ class _KataSandiBaruScreenState extends State<KataSandiBaruScreenv> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  "Successfully",
+                  "Berhasil Mengubah Kata Sandi",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -62,7 +68,9 @@ class _KataSandiBaruScreenState extends State<KataSandiBaruScreenv> {
                     Navigator.pop(context);
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              HomepageVendor()), // ganti dengan homepage kamu
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -71,7 +79,8 @@ class _KataSandiBaruScreenState extends State<KataSandiBaruScreenv> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text("Oke", style: TextStyle(color: Colors.white)),
+                  child:
+                      const Text("Oke", style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),
@@ -79,6 +88,35 @@ class _KataSandiBaruScreenState extends State<KataSandiBaruScreenv> {
         );
       },
     );
+  }
+
+  Future<void> _handleUpdatePassword() async {
+    final oldPassword = _oldPasswordController.text.trim();
+    final newPassword = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (oldPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan isi semua field')),
+      );
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kata sandi baru tidak cocok')),
+      );
+      return;
+    }
+
+    final success = await updatePassword(oldPassword, newPassword);
+    if (success) {
+      _showSuccessDialog();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mengubah kata sandi')),
+      );
+    }
   }
 
   @override
@@ -98,7 +136,6 @@ class _KataSandiBaruScreenState extends State<KataSandiBaruScreenv> {
       ),
       body: Column(
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
@@ -113,10 +150,8 @@ class _KataSandiBaruScreenState extends State<KataSandiBaruScreenv> {
                   child: Center(
                     child: Text(
                       "Kata Sandi Baru",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -128,116 +163,96 @@ class _KataSandiBaruScreenState extends State<KataSandiBaruScreenv> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Kata Sandi Baru",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Silahkan tulis Kata Sandi baru Anda",
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: TextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Kata Sandi Lama",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _oldPasswordController,
+                      obscureText: _obscureOldPassword,
                       decoration: InputDecoration(
-                        labelText: "Kata Sandi",
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        labelText: "Kata Sandi Lama",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey,
-                          ),
+                          icon: Icon(_obscureOldPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility),
                           onPressed: () {
-                            setState(() {
-                              _obscurePassword = !_obscurePassword;
-                            });
+                            setState(() =>
+                                _obscureOldPassword = !_obscureOldPassword);
                           },
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 20),
+                    const Text("Kata Sandi Baru",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: "Kata Sandi Baru",
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility),
+                          onPressed: () {
+                            setState(
+                                () => _obscurePassword = !_obscurePassword);
+                          },
+                        ),
+                      ),
                     ),
-                    child: TextField(
+                    const SizedBox(height: 20),
+                    const Text("Konfirmasi Kata Sandi Baru",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    TextField(
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirmPassword,
                       decoration: InputDecoration(
                         labelText: "Konfirmasi Kata Sandi",
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8)),
                         suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                            color: Colors.grey,
-                          ),
+                          icon: Icon(_obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility),
                           onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword = !_obscureConfirmPassword;
-                            });
+                            setState(() => _obscureConfirmPassword =
+                                !_obscureConfirmPassword);
                           },
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_passwordController.text.isEmpty ||
-                            _confirmPasswordController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Silahkan isi semua field')),
-                          );
-                          return;
-                        }
-                        if (_passwordController.text != _confirmPasswordController.text) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Kata sandi tidak cocok')),
-                          );
-                          return;
-                        }
-                        _showSuccessDialog();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A5276),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _handleUpdatePassword,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1A5276),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
                         ),
-                      ),
-                      child: const Text(
-                        "Konfirmasi Kata Sandi",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        child: const Text("Konfirmasi Kata Sandi",
+                            style: TextStyle(fontSize: 16)),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

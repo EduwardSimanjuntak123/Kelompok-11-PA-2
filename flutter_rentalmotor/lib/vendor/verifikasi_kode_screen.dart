@@ -2,6 +2,48 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:flutter_rentalmotor/vendor/kata_sandi_baru_screenv.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
+
+final String baseUrl = ApiConfig.baseUrl;
+
+Future<bool> requestVerifyOtp(String email, String otp) async {
+  final url = '$baseUrl/verify-otp'; // Replace with your actual API URL
+  final headers = {
+    'Content-Type': 'application/json',
+  };
+  final body = jsonEncode({
+    'email': email,
+    'otp': otp,
+  });
+
+  print("Verifying OTP for email: $email with OTP: $otp");
+
+  try {
+    final response = await http.post(
+      Uri.parse(url),
+      headers: headers,
+      body: body,
+    );
+
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      return responseBody['status'] ==
+          'success'; // Adjust based on your API response structure
+    } else {
+      print("Failed to verify OTP: ${response.body}");
+      return false;
+    }
+  } catch (e) {
+    print('Error during OTP verification: $e');
+    return false;
+  }
+}
 
 class VerifikasiKodevScreen extends StatefulWidget {
   final String email;
@@ -17,8 +59,8 @@ class VerifikasiKodevScreen extends StatefulWidget {
 
 class _VerifikasiKodevScreenState extends State<VerifikasiKodevScreen> {
   final List<TextEditingController> _codeControllers =
-      List.generate(4, (index) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
+      List.generate(6, (index) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
 
   int _remainingSeconds = 29;
   Timer? _timer;
@@ -29,7 +71,7 @@ class _VerifikasiKodevScreenState extends State<VerifikasiKodevScreen> {
     _startTimer();
 
     // Auto-focus ke kolom berikutnya jika diisi
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 5; i++) {
       _codeControllers[i].addListener(() {
         if (_codeControllers[i].text.length == 1) {
           _focusNodes[i + 1].requestFocus();
@@ -66,18 +108,25 @@ class _VerifikasiKodevScreenState extends State<VerifikasiKodevScreen> {
     return '00:${seconds.toString().padLeft(2, '0')}';
   }
 
-  void _verifyCode() {
+  void _verifyCode() async {
     String code = _codeControllers.map((c) => c.text).join();
-    if (code.length == 4) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => KataSandiBaruScreenv(email: widget.email),
-        ),
-      );
+    if (code.length == 6) {
+      bool isVerified = await requestVerifyOtp(widget.email, code);
+      if (isVerified) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => KataSandiBaruScreenv(email: widget.email),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kode OTP salah')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silahkan masukkan kode 4 digit')),
+        const SnackBar(content: Text('Silahkan masukkan kode 6 digit')),
       );
     }
   }
@@ -140,42 +189,45 @@ class _VerifikasiKodevScreenState extends State<VerifikasiKodevScreen> {
             const SizedBox(height: 24),
 
             // Kotak Input Kode Verifikasi
+// Kotak Input Kode Verifikasi
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
-                4,
-                (index) => Container(
-                  width: 50,
-                  height: 50,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: TextField(
-                    controller: _codeControllers[index],
-                    focusNode: _focusNodes[index],
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    maxLength: 1,
-                    decoration: const InputDecoration(
-                      counterText: "",
-                      border: InputBorder.none,
+                6,
+                (index) => Expanded(
+                  // Use Expanded to make the TextFields flexible
+                  child: Container(
+                    height: 50,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                    child: TextField(
+                      controller: _codeControllers[index],
+                      focusNode: _focusNodes[index],
+                      textAlign: TextAlign.center,
+                      keyboardType: TextInputType.number,
+                      maxLength: 1,
+                      decoration: const InputDecoration(
+                        counterText: "",
+                        border: InputBorder.none,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                      ],
+                      onChanged: (value) {
+                        if (value.isEmpty && index > 0) {
+                          _focusNodes[index - 1].requestFocus();
+                        } else if (value.isNotEmpty && index == 5) {
+                          _verifyCode();
+                        }
+                      },
                     ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
-                    onChanged: (value) {
-                      if (value.isEmpty && index > 0) {
-                        _focusNodes[index - 1].requestFocus();
-                      } else if (value.isNotEmpty && index == 3) {
-                        _verifyCode();
-                      }
-                    },
                   ),
                 ),
               ),

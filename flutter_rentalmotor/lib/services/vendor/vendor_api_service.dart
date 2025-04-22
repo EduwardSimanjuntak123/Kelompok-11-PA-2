@@ -27,11 +27,13 @@ class VendorApiService {
         final user = data['user'];
         final vendor = user['vendor'];
 
+        // Periksa apakah vendor ada
         if (vendor == null) {
-          throw Exception("Data vendor tidak ditemukan");
+          // Menangani jika data vendor kosong atau null
+          throw Exception("Data vendor tidak ditemukan.");
         }
 
-        // Save to SharedPreferences
+        // Menyimpan informasi vendor di SharedPreferences
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('vendorId', vendor['id']);
         await prefs.setString('businessName', vendor['shop_name']);
@@ -50,7 +52,8 @@ class VendorApiService {
         throw Exception(error);
       }
     } catch (e) {
-      rethrow;
+      print("Error loading vendor profile: $e");
+      throw Exception("Gagal memuat profil vendor");
     }
   }
 
@@ -70,12 +73,20 @@ class VendorApiService {
       );
 
       if (bookingsResponse.statusCode == 200) {
-        return json.decode(bookingsResponse.body);
+        final bookingsData = json.decode(bookingsResponse.body);
+
+        // Pastikan bahwa data bookings tidak kosong atau null
+        if (bookingsData == null || bookingsData.isEmpty) {
+          return [];  // Kembalikan list kosong jika tidak ada data
+        }
+
+        return bookingsData;
       } else {
         throw Exception("Gagal memuat data pesanan");
       }
     } catch (e) {
-      rethrow;
+      print("Error loading bookings: $e");
+      throw Exception("Gagal memuat data pesanan");
     }
   }
 
@@ -95,12 +106,20 @@ class VendorApiService {
       );
 
       if (transactionsResponse.statusCode == 200) {
-        return json.decode(transactionsResponse.body);
+        final transactionsData = json.decode(transactionsResponse.body);
+
+        // Pastikan bahwa data transaksi tidak kosong atau null
+        if (transactionsData == null || transactionsData.isEmpty) {
+          return [];  // Kembalikan list kosong jika tidak ada data transaksi
+        }
+
+        return transactionsData;
       } else {
         throw Exception("Gagal memuat data transaksi");
       }
     } catch (e) {
-      rethrow;
+      print("Error loading transactions: $e");
+      throw Exception("Gagal memuat data transaksi");
     }
   }
 

@@ -3,16 +3,16 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
-      final String baseUrl = ApiConfig.baseUrl;
+final String baseUrl = ApiConfig.baseUrl;
 
-// Fungsi untuk request reset password OTP
+/// Fungsi untuk meminta OTP reset password
 Future<bool> requestResetPasswordOtp(String email) async {
-  final FlutterSecureStorage storage = FlutterSecureStorage();
-  final String? token = await storage.read(key: "auth_token"); // Ambil token
+  final storage = FlutterSecureStorage();
+  final token = await storage.read(key: "auth_token");
 
   if (token == null) {
     print("Token tidak ditemukan");
-    return false; // Jika token tidak ada, return false
+    return false;
   }
 
   final url = Uri.parse("$baseUrl/request-reset-password-otp");
@@ -23,11 +23,35 @@ Future<bool> requestResetPasswordOtp(String email) async {
     final response = await http.post(
       url,
       headers: {
-        'Authorization': 'Bearer $token',  // Menyertakan token dalam header
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: json.encode({
-        'email': email,  // Mengirim email yang dimasukkan
+      body: jsonEncode({'email': email}),
+    );
+
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
+    return response.statusCode == 200;
+  } catch (e) {
+    print("Error during OTP request: $e");
+    return false;
+  }
+}
+
+/// Fungsi untuk memverifikasi OTP
+Future<bool> requestVerifyOtp(String email, String otp) async {
+  final url = Uri.parse("$baseUrl/verify-otp");
+
+  print("Verifying OTP for email: $email with OTP: $otp");
+
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': email,
+        'otp': otp,
       }),
     );
 
@@ -35,53 +59,18 @@ Future<bool> requestResetPasswordOtp(String email) async {
     print("Response body: ${response.body}");
 
     if (response.statusCode == 200) {
-      return true; // Berhasil, return true
-    } else {
-      print("Failed to request OTP: ${response.body}");
-      return false; // Gagal, return false
-    }
-  } catch (e) {
-    // Jika terjadi error saat request
-    print('Error during OTP request: $e');
-    return false;
-  }
-}
-
-Future<bool> requestVerifyOtp(String email, String otp) async {
-  final url = '$baseUrl/verify-otp'; // Replace with your actual API URL
-  final headers = {
-    'Content-Type': 'application/json',
-  };
-  final body = jsonEncode({
-    'email': email,
-    'otp': otp,
-  });
-
-  print("Verifying OTP for email: $email with OTP: $otp");
-
-  try {
-    final response = await http.post(
-      Uri.parse(url),
-      headers: headers,
-      body: body,
-    );
-
-    print("Response status: ${response.statusCode}");
-    print("Response body: ${response.body}");
-
-    if (response.statusCode == 200) {
       final responseBody = jsonDecode(response.body);
-      return responseBody['status'] == 'success'; // Adjust based on your API response structure
+      return responseBody['status'] == 'success';
     } else {
-      print("Failed to verify OTP: ${response.body}");
       return false;
     }
   } catch (e) {
-    print('Error during OTP verification: $e');
+    print("Error during OTP verification: $e");
     return false;
   }
 }
 
+/// Fungsi untuk mengganti password
 Future<bool> updatePassword(String oldPassword, String newPassword) async {
   final storage = FlutterSecureStorage();
   final token = await storage.read(key: "auth_token");
@@ -91,36 +80,29 @@ Future<bool> updatePassword(String oldPassword, String newPassword) async {
     return false;
   }
 
-  final url = '$baseUrl/reset-password';
-  final headers = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer $token',
-  };
+  final url = Uri.parse("$baseUrl/reset-password");
 
-  final body = jsonEncode({
-    'old_password': oldPassword.trim(),
-    'new_password': newPassword.trim(),
-  });
+  print("Sending request to update password");
 
   try {
     final response = await http.post(
-      Uri.parse(url),
-      headers: headers,
-      body: body,
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      }),
     );
 
     print("Response status: ${response.statusCode}");
     print("Response body: ${response.body}");
 
-    //anggap semua 200 OK sebagai sukses:
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      return false;
-    }
+    return response.statusCode == 200;
   } catch (e) {
-    print('Error updating password: $e');
+    print("Error during password update: $e");
     return false;
   }
 }
-

@@ -59,25 +59,35 @@ class _DashboardState extends State<HomepageVendor> {
     setState(() => isLoading = true);
 
     try {
-      // Load vendor profile
+      // Load data vendor
       final vendorData = await _apiService.getVendorProfile();
+      if (vendorData == null) {
+        throw Exception("Gagal memuat data vendor");
+      }
 
-      // Load dashboard data
-      final dashboard = await _dashboardService.getDashboardData();
+      // Load data dashboard
+      final dashboardDataResponse = await _dashboardService.getDashboardData();
+      if (dashboardDataResponse == null) {
+        throw Exception("Gagal memuat data dashboard");
+      }
+
+      // Pengecekan tipe sebelum menetapkan
+      if (dashboardDataResponse is DashboardData) {
+        dashboardData = dashboardDataResponse;
+      } else {
+        throw Exception("Tipe data tidak sesuai untuk dashboard");
+      }
 
       setState(() {
-        // Set vendor data
-        vendorId = vendorData['vendorId'];
-        businessName = vendorData['businessName'];
-        vendorAddress = vendorData['vendorAddress'];
-        vendorImagePath = vendorData['vendorImagePath'];
-        vendorEmail = vendorData['vendorEmail'];
-
-        // Set dashboard data
-        dashboardData = dashboard;
+        // Set data vendor dengan pengecekan null
+        vendorId = vendorData['vendorId'] ?? 'Tidak Diketahui';
+        businessName = vendorData['businessName'] ?? 'Nama Bisnis Tidak Ada';
+        vendorAddress = vendorData['vendorAddress'] ?? 'Alamat Tidak Ada';
+        vendorImagePath = vendorData['vendorImagePath'] ?? 'default_image_path';
+        vendorEmail = vendorData['vendorEmail'] ?? 'Email Tidak Ada';
       });
     } catch (e) {
-      print("Error loading data: $e");
+      print("Error memuat data: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error: ${e.toString()}"),

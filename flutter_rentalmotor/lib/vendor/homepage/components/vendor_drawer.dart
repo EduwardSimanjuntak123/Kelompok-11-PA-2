@@ -149,6 +149,18 @@ class VendorDrawer extends StatelessWidget {
                 ),
                 _buildDrawerItem(
                   context,
+                  icon: Icons.person,
+                  title: "Edit Informasi Toko",
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(builder: (context) => EditProfile()),
+                    // ).then((_) => onProfileUpdated());
+                  },
+                ),
+                _buildDrawerItem(
+                  context,
                   icon: Icons.motorcycle,
                   title: "Kelola Motor",
                   onTap: () {
@@ -316,13 +328,13 @@ class VendorDrawer extends StatelessWidget {
                 Navigator.pop(context);
                 final apiService = VendorApiService();
                 await apiService.logout();
-                
+
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (context) => LoginScreen()),
                   (route) => false,
                 );
-                
+
                 onLogout();
               },
               style: ElevatedButton.styleFrom(
