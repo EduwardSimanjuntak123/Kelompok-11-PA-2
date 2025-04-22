@@ -48,7 +48,6 @@
         </div>
 
         <!-- Main Profile Card -->
-        {{-- @dd($user); --}}
         <div class="bg-white rounded-xl shadow-md overflow-hidden">
             <div class="md:flex">
                 <!-- Sidebar (Images and Actions) -->
@@ -57,7 +56,7 @@
                     <div class="relative mb-6">
                         <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
                             <img id="profileImagePreview"
-                                src="{{ 'http://localhost:8080' . ($user['profile_image'] ?: '/fileserver/vendor/placeholder.jpg') }}"
+                                src="{{ config('api.base_url').$user['profile_image']}}"
                                 alt="Foto Profil" class="w-full h-full object-cover">
                         </div>
                         <button onclick="openPhotoModal('profile')"

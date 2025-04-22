@@ -21,6 +21,7 @@ class VendorController extends Controller
     public function profile()
     {
         $token = Session::get('token');
+        Log::info('Token saat dashboard:', ['token' => $token]);
         if (!$token) {
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
@@ -68,17 +69,20 @@ class VendorController extends Controller
                 // Ambil daftar motor vendor
                 $motorResponse = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
-                ])->get(config('api.base_url') . 'motor/vendor/');
-    
+                ])->get(config('api.base_url') . '/motor/vendor/');
+                Log::info('Token saat dashboard:', ['token' => $token]);
                 if ($motorResponse->successful()) {
                     $motorData = $motorResponse->json();
                 }
+                
     
                 // Ambil profil vendor (rating)
                 $ratingResponse = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
-                ])->get(config('api.base_url') .'vendor/profile');
-    
+                ])->get(config('api.base_url') .'/vendor/profile');
+    // Tambahkan debug ini
+Log::info('Rating Response Status: ' . $ratingResponse->status());
+Log::info('Rating Response Body: ' . $ratingResponse->body());
                 if ($ratingResponse->successful()) {
                     $ratingData = $ratingResponse->json();
                 }
@@ -86,7 +90,7 @@ class VendorController extends Controller
                 // Ambil daftar booking
                 $bookingResponse = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
-                ])->get(config('api.base_url') .'vendor/bookings');
+                ])->get(config('api.base_url') .'/vendor/bookings');
     
                 if ($bookingResponse->successful()) {
                     $bookingData = $bookingResponse->json();
@@ -95,7 +99,7 @@ class VendorController extends Controller
                 // Ambil data transaksi
                 $transactionResponse = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token
-                ])->get(config('api.base_url') .'transaction/');
+                ])->get(config('api.base_url') .'/transaction/');
     
                 if ($transactionResponse->successful()) {
                     $transactions = $transactionResponse->json();
