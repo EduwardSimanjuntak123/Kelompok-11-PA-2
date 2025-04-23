@@ -15,25 +15,40 @@
         {{-- @dd($bookings) --}}
         <!-- Filter dan Booking Manual dalam satu baris -->
         <div class="mb-6 flex items-center justify-between">
-            <div class="relative w-60">
-                <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 019 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
-                </svg>
-                <select id="statusFilter"
-                    class="block w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl text-gray-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                    <option value="all">Semua Status</option>
-                    <option value="pending">Menunggu Konfirmasi</option>
-                    <option value="confirmed">Dikonfirmasi</option>
-                    <option value="in transit">Motor Sedang Diantar</option>
-                    <option value="in use">Sedang Digunakan</option>
-                    <option value="awaiting return">Menunggu Pengembalian</option>
-                    <option value="completed">Pesanan Selesai</option>
-                    <option value="rejected">Booking Ditolak</option>
-                </select>
-            </div>
-
+            <!-- Form Filter Status -->
+            <form method="GET" class="flex items-center gap-2">
+                <label for="status" class="text-sm font-medium">Filter Status:</label>
+                <div class="relative w-60">
+                    
+                    <select id="status" name="status" onchange="this.form.submit()"
+                        class="block w-full pl-10 pr-4 py-2 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="all" {{ request('status', 'all') == 'all' ? 'selected' : '' }}>
+                            Semua Status
+                        </option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>
+                            Menunggu Konfirmasi
+                        </option>
+                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>
+                            Dikonfirmasi
+                        </option>
+                        <option value="in transit" {{ request('status') == 'in transit' ? 'selected' : '' }}>
+                            Motor Sedang Diantar
+                        </option>
+                        <option value="in use" {{ request('status') == 'in use' ? 'selected' : '' }}>
+                            Sedang Digunakan
+                        </option>
+                        <option value="awaiting return" {{ request('status') == 'awaiting return' ? 'selected' : '' }}>
+                            Menunggu Pengembalian
+                        </option>
+                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>
+                            Pesanan Selesai
+                        </option>
+                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>
+                            Booking Ditolak
+                        </option>
+                    </select>
+                </div>
+            </form>
 
             <!-- Tombol Booking Manual -->
             <button onclick="openModal('addBookingModal')"
@@ -41,6 +56,7 @@
                 + Booking Manual
             </button>
         </div>
+
 
 
 
@@ -121,53 +137,54 @@
                                 </td>
 
                                 <!-- Status -->
-                                <td class="py-3 px-4 text-center align-top">
+                                <td class="py-3 px-4 text-center">
+                                    @php $s = $pesanan['status']; @endphp
                                     <strong
                                         class="
-                                        @if ($pesanan['status'] == 'pending') text-yellow-600
-                                        @elseif($pesanan['status'] == 'confirmed') text-blue-600
-                                        @elseif($pesanan['status'] == 'in transit') text-indigo-600
-                                        @elseif($pesanan['status'] == 'in use') text-purple-600
-                                        @elseif($pesanan['status'] == 'awaiting return') text-orange-600
-                                        @elseif($pesanan['status'] == 'completed') text-green-600
-                                        @elseif($pesanan['status'] == 'rejected') text-red-600
-                                        @else text-gray-600 @endif
-                                    ">
-                                        @if ($pesanan['status'] == 'pending')
+              @if ($s == 'pending') text-yellow-600
+              @elseif($s == 'confirmed') text-blue-600
+              @elseif($s == 'in transit') text-indigo-600
+              @elseif($s == 'in use') text-purple-600
+              @elseif($s == 'awaiting return') text-orange-600
+              @elseif($s == 'completed') text-green-600
+              @elseif($s == 'rejected') text-red-600
+              @else text-gray-600 @endif
+            ">
+                                        @if ($s == 'pending')
                                             Menunggu Konfirmasi
-                                        @elseif($pesanan['status'] == 'confirmed')
+                                        @elseif($s == 'confirmed')
                                             Dikonfirmasi
-                                        @elseif($pesanan['status'] == 'in transit')
+                                        @elseif($s == 'in transit')
                                             Motor Sedang Diantar
-                                        @elseif($pesanan['status'] == 'in use')
+                                        @elseif($s == 'in use')
                                             Sedang Digunakan
-                                        @elseif($pesanan['status'] == 'awaiting return')
+                                        @elseif($s == 'awaiting return')
                                             Menunggu Pengembalian
-                                        @elseif($pesanan['status'] == 'completed')
+                                        @elseif($s == 'completed')
                                             Pesanan Selesai
-                                        @elseif($pesanan['status'] == 'rejected')
+                                        @elseif($s == 'rejected')
                                             Booking Ditolak
                                         @else
-                                            {{ ucfirst($pesanan['status']) }}
+                                            {{ ucfirst($s) }}
                                         @endif
                                     </strong>
                                 </td>
 
                                 <!-- Aksi -->
-                                <td class="py-3 px-4 text-center align-top">
-                                    @if ($pesanan['status'] == 'pending')
+                                <td class="py-3 px-4 text-center">
+                                    @if ($s == 'pending')
                                         <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'confirm')"
                                             class="bg-green-600 text-white px-3 py-1 rounded-lg">Setujui</button>
                                         <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'reject')"
                                             class="bg-red-600 text-white px-3 py-1 rounded-lg">Tolak</button>
-                                    @elseif ($pesanan['status'] == 'confirmed')
+                                    @elseif ($s == 'confirmed')
                                         <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'transit')"
                                             class="bg-blue-600 text-white px-3 py-1 rounded-lg">Antar Motor</button>
-                                    @elseif ($pesanan['status'] == 'in transit')
+                                    @elseif ($s == 'in transit')
                                         <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'inuse')"
                                             class="bg-indigo-600 text-white px-3 py-1 rounded-lg">Sedang
                                             Berlangsung</button>
-                                    @elseif ($pesanan['status'] == 'in use' || $pesanan['status'] == 'awaiting return')
+                                    @elseif (in_array($s, ['in use', 'awaiting return']))
                                         <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'complete')"
                                             class="bg-green-600 text-white px-3 py-1 rounded-lg">Motor Kembali</button>
                                     @endif
@@ -329,7 +346,7 @@
         </script>
 
         <script>
-           const BASE_API = "{{ config('api.base_url') }}";
+            const BASE_API = "{{ config('api.base_url') }}";
 
             // SweetAlert dari session
             @if (session('message'))

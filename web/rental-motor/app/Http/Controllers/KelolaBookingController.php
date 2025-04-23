@@ -12,7 +12,7 @@ use Illuminate\Pagination\Paginator;
 
 class KelolaBookingController extends Controller
 {
-    public function index($id)
+    public function index(Request $request, $id)
     {
         try {
             $token = session('token');
@@ -20,7 +20,7 @@ class KelolaBookingController extends Controller
                 return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
             }
 
-            // Get bookings from Go backend
+            // Ambil semua booking
             $urlBookings = config('api.base_url') . '/vendor/bookings';
             Log::info("Mengirim request booking ke: " . $urlBookings);
             $responseBookings = Http::withHeaders([
@@ -33,51 +33,57 @@ class KelolaBookingController extends Controller
                 ? $responseBookings->json()
                 : [];
 
-            // Get vendor motors from Go backend
+            // Ambil semua motor
             $urlMotors = config('api.base_url') . '/motor/vendor';
             Log::info("Mengirim request motor ke: " . $urlMotors);
             $responseMotors = Http::withToken($token)->timeout(10)->get($urlMotors);
             Log::info("Response motor: " . $responseMotors->body());
-            if ($responseMotors->successful()) {
-                $jsonMotor = $responseMotors->json();
-                $motors = isset($jsonMotor['data']) ? $jsonMotor['data'] : $jsonMotor;
-            } else {
-                Log::error("Gagal mengambil data motor. HTTP Status: " . $responseMotors->status());
-                $motors = [];
-            }
+            $motors = $responseMotors->successful()
+                ? (isset($responseMotors->json()['data']) ? $responseMotors->json()['data'] : $responseMotors->json())
+                : [];
+
         } catch (\Exception $e) {
             Log::error('Gagal mengambil data booking atau motor: ' . $e->getMessage());
             $bookings = [];
             $motors = [];
         }
-        // === START: manual pagination untuk $bookings ===
+
+        // START: FILTER BERDASARKAN STATUS
+        $collection = collect($bookings);
+
+        if ($request->has('status') && $request->status != 'all') {
+            $status = $request->status;
+            $collection = $collection->filter(function ($item) use ($status) {
+                return isset($item['status']) && $item['status'] == $status;
+            })->values(); // reindex ulang
+        }
+        // END: FILTER
+
+        // START: MANUAL PAGINATION
         $perPage = 5;
-        $currentPage = Paginator::resolveCurrentPage('page');      // ambil ?page=…
-        $collection = collect($bookings);                        // bungkus array jadi Collection
+        $currentPage = Paginator::resolveCurrentPage('page');
         $currentItems = $collection
-            ->forPage($currentPage, $perPage)     // slice data
-            ->values();                           // reindex
+            ->forPage($currentPage, $perPage)
+            ->values();
 
         $paginatedBookings = new LengthAwarePaginator(
-            $currentItems,                // data halaman ini
-            $collection->count(),         // total item
-            $perPage,                     // item per halaman
-            $currentPage,                 // halaman sekarang
+            $currentItems,
+            $collection->count(),
+            $perPage,
+            $currentPage,
             [
                 'path' => Paginator::resolveCurrentPath(),
                 'pageName' => 'page',
             ]
         );
-        // === END: manual pagination ===
+        // END: MANUAL PAGINATION
 
-        // Kirim view sekali, dengan paginator
         return view('vendor.kelola', [
             'bookings' => $paginatedBookings,
             'motors' => $motors,
         ]);
-
-        return view('vendor.kelola', compact('bookings', 'motors'));
     }
+
 
     public function confirm($id)
     {
