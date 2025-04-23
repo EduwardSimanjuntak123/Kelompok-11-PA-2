@@ -1,10 +1,10 @@
 // lib/screens/edit_motor_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // Import image_picker
+import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:flutter_rentalmotor/models/motor_model.dart';
-import 'package:flutter_rentalmotor/services/vendor/vendor_motor_api.dart'; // Import VendorMotorApi
+import 'package:flutter_rentalmotor/services/vendor/vendor_motor_api.dart';
 
 class EditMotorScreen extends StatefulWidget {
   final MotorModel motor;
@@ -24,16 +24,14 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
   late String motorStatus;
   late String motorType;
   late String motorDescription;
-  late String motorImage; // Image URL
+  late String motorImage;
   late double motorRating;
-  File? _image; // Variable to hold the selected image
-
+  File? _image;
   final _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    // Initialize fields with existing motor data
     motorName = widget.motor.name;
     motorYear = widget.motor.year;
     motorPrice = widget.motor.price;
@@ -41,35 +39,27 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
     motorStatus = widget.motor.status;
     motorType = widget.motor.type;
     motorDescription = widget.motor.description;
-    motorImage = widget.motor.image ?? ''; // Set image if available
+    motorImage = widget.motor.image ?? '';
     motorRating = widget.motor.rating;
   }
 
-  // Pick an image from the gallery
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _image =
-            File(pickedFile.path); // Save picked image to the file variable
-        print(
-            "Image selected: ${_image!.path}"); // Debugging: Print selected image path
+        _image = File(pickedFile.path);
       });
-    } else {
-      print("No image selected!"); // Debugging: If no image is selected
     }
   }
 
-  // Function to submit form data and update motor with image upload
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
 
-      // Create a MotorModel object with updated data
       MotorModel updatedMotor = MotorModel(
         id: widget.motor.id,
         name: motorName,
-        brand: widget.motor.brand, // Keeping original brand
+        brand: widget.motor.brand,
         year: motorYear,
         price: motorPrice,
         color: motorColor,
@@ -80,24 +70,11 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
         rating: motorRating,
       );
 
-      // Debugging: Log the data being passed to the updateMotor function
-      print("Updated motor data: ${updatedMotor.toJson()}");
-
-      // Call the VendorMotorApi to update motor data with image
       try {
         VendorMotorApi vendorMotorApi = VendorMotorApi();
-
-        // Log before calling the updateMotor function
-        print("Calling updateMotor API...");
-
-        // Call the updateMotor function with the updated data and selected image
         await vendorMotorApi.updateMotor(updatedMotor, _image);
-
-        // After the update, return to the previous screen without showing success snackbar
-        Navigator.pop(context); // Go back to the previous screen
+        Navigator.pop(context);
       } catch (e) {
-        // Handle error if API call fails
-        print("Error updating motor: $e");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
@@ -105,119 +82,157 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
     }
   }
 
+  void _confirmUpdate() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Update'),
+        content:
+            const Text('Apakah Anda yakin ingin memperbarui data motor ini?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop(); // tutup dialog
+            },
+            child: const Text(
+              'Batal',
+              style: TextStyle(color: Colors.black), // warna hitam
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop(); // tutup dialog
+              _submitForm(); // lanjutkan update
+            },
+            child: const Text(
+              'Ya, Update',
+              style: TextStyle(color: Colors.black), // warna hitam
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Motor'),
+        title: const Text(
+          'Edit Motor',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1A567D),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
             children: [
-              TextFormField(
+              _buildTextField(
+                label: 'Motor Name',
                 initialValue: motorName,
-                decoration: const InputDecoration(labelText: 'Motor Name'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter motor name';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  motorName = value!;
-                },
+                onSaved: (val) => motorName = val!,
               ),
-              TextFormField(
+              _buildTextField(
+                label: 'Year',
                 initialValue: motorYear.toString(),
-                decoration: const InputDecoration(labelText: 'Year'),
                 keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter motor year';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  motorYear = int.parse(value!);
-                },
+                onSaved: (val) => motorYear = int.parse(val!),
               ),
-              TextFormField(
+              _buildTextField(
+                label: 'Price',
                 initialValue: motorPrice.toString(),
-                decoration: const InputDecoration(labelText: 'Price'),
                 keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter motor price';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  motorPrice = double.parse(value!);
-                },
+                onSaved: (val) => motorPrice = double.parse(val!),
               ),
-              TextFormField(
+              _buildTextField(
+                label: 'Color',
                 initialValue: motorColor,
-                decoration: const InputDecoration(labelText: 'Color'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter motor color';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  motorColor = value!;
-                },
+                onSaved: (val) => motorColor = val!,
               ),
-              TextFormField(
+              _buildTextField(
+                label: 'Status',
                 initialValue: motorStatus,
-                decoration: const InputDecoration(labelText: 'Status'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter motor status';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  motorStatus = value!;
-                },
+                onSaved: (val) => motorStatus = val!,
               ),
-              TextFormField(
+              _buildTextField(
+                label: 'Type',
                 initialValue: motorType,
-                decoration: const InputDecoration(labelText: 'Type'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter motor type';
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  motorType = value!;
-                },
+                onSaved: (val) => motorType = val!,
               ),
               TextFormField(
                 initialValue: motorDescription,
                 decoration: const InputDecoration(labelText: 'Description'),
                 maxLines: 4,
-                onSaved: (value) {
-                  motorDescription = value!;
-                },
-              ),
-              // Image Picker
-              ElevatedButton(
-                onPressed: _pickImage,
-                child: Text(_image == null ? 'Pick Image' : 'Change Image'),
+                onSaved: (val) => motorDescription = val!,
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _submitForm,
-                child: const Text('Update Motor'),
+                onPressed: _pickImage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text(
+                  _image == null ? 'Pick Image' : 'Change Image',
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton(
+                onPressed: _confirmUpdate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text(
+                  'Update Motor',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required String initialValue,
+    TextInputType keyboardType = TextInputType.text,
+    required FormFieldSetter<String> onSaved,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        initialValue: initialValue,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        keyboardType: keyboardType,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter ${label.toLowerCase()}';
+          }
+          return null;
+        },
+        onSaved: onSaved,
       ),
     );
   }

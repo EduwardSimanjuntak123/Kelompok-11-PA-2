@@ -25,6 +25,8 @@ class VendorMotorApi {
           'Authorization': 'Bearer $token',
         },
       );
+      print('← Response Status: ${response.statusCode}');
+      print('← Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -53,7 +55,8 @@ class VendorMotorApi {
           'Authorization': 'Bearer $token',
         },
       );
-
+      print('← Response Status: ${response.statusCode}');
+      print('← Response Body: ${response.body}');
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return MotorModel.fromJson(

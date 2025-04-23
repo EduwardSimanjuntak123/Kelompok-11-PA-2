@@ -3,6 +3,7 @@ import 'package:flutter_rentalmotor/services/vendor/vendor_motor_api.dart'; // I
 import 'package:flutter_rentalmotor/models/motor_model.dart'; // Import MotorModel
 import 'package:flutter_rentalmotor/vendor/motor_detail_screen.dart'; // Import MotorDetailScreen
 import 'package:flutter_rentalmotor/vendor/CreateMotorScreen.dart'; // Import CreateMotorScreen
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class KelolaMotorScreen extends StatefulWidget {
   @override
@@ -12,6 +13,7 @@ class KelolaMotorScreen extends StatefulWidget {
 class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
   bool isLoading = true;
   List<MotorModel> motorList = [];
+  final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void initState() {
@@ -59,7 +61,15 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Kelola Motor'),
+        title: Text('Kelola Motor',
+            style: TextStyle(fontSize: 22)), // Memperbesar ukuran teks judul
+        backgroundColor:
+            const Color(0xFF1A567D), // Background AppBar menjadi biru
+        titleTextStyle: TextStyle(color: Colors.white),
+        // Mengubah warna teks menjadi putih
+        iconTheme: IconThemeData(
+            color: Colors
+                .white), // Mengubah warna ikon (termasuk tombol back) menjadi putih
       ),
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
@@ -80,9 +90,50 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen> {
                     itemBuilder: (context, index) {
                       MotorModel motor = motorList[index];
                       return ListTile(
-                        title: Text(motor.name),
-                        subtitle: Text('Tahun: ${motor.year}'),
-                        trailing: Text('Status: ${motor.status}'),
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                        leading: motor.image != null
+                            ? Image.network(
+                                '$baseUrl${motor.image}', // Gambar motor dari URL
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              )
+                            : Container(
+                                width: 80,
+                                height: 80,
+                                color: Colors
+                                    .grey), // Gambar default jika tidak ada
+                        title: Text(
+                          motor.name,
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight:
+                                  FontWeight.bold), // Memperbesar nama motor
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Tahun: ${motor.year}',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            Text(
+                              'Deskripsi: ${motor.description}',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                        trailing: Text(
+                          'Status: ${motor.status}',
+                          style: TextStyle(
+                            color: motor.status == 'available'
+                                ? Colors.green
+                                : Colors.red,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ), // Warna status menjadi hijau jika available
+                        ),
                         onTap: () {
                           Navigator.push(
                             context,

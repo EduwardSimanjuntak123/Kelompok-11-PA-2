@@ -78,12 +78,10 @@ func CreateBooking(c *gin.Context) {
         return
     }
 
-    // **Konversi ke UTC sebelum validasi**
     startDateUTC := bookingInput.StartDate.UTC()
     endDateUTC := startDateUTC.Add(time.Duration(bookingInput.Duration*24) * time.Hour)
 
     if err := checkBookingConflict(startDateUTC, endDateUTC, bookingInput.MotorID); err != nil {
-
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
@@ -102,13 +100,12 @@ func CreateBooking(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data motor"})
         return
     }
-    
-    if motor.Status == "unavailable" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Tidak bisa booking, motor sedang perbaikan/rusak"})
-		return
-	}
 
-    // **Pastikan durasi valid**
+    if motor.Status == "unavailable" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Tidak bisa booking, motor sedang perbaikan/rusak"})
+        return
+    }
+
     duration := int(endDateUTC.Sub(startDateUTC).Hours() / 24)
     if duration <= 0 {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Durasi booking tidak valid"})
@@ -116,16 +113,16 @@ func CreateBooking(c *gin.Context) {
     }
 
     booking := models.Booking{
-        CustomerID:     new(uint),
-        CustomerName:   customer.Name,
-        VendorID:       motor.VendorID,
-        MotorID:        bookingInput.MotorID,
-        BookingDate:    time.Now().UTC(), // Simpan booking date dalam UTC
-        StartDate:      startDateUTC,
-        EndDate:        endDateUTC,
-        PickupLocation: bookingInput.PickupLocation,
+        CustomerID:      new(uint),
+        CustomerName:    customer.Name,
+        VendorID:        motor.VendorID,
+        MotorID:         bookingInput.MotorID,
+        BookingDate:     time.Now().UTC(),
+        StartDate:       startDateUTC,
+        EndDate:         endDateUTC,
+        PickupLocation:  bookingInput.PickupLocation,
         DropoffLocation: bookingInput.DropoffLocation,
-        Status:         "pending",
+        Status:          "pending",
     }
     *booking.CustomerID = userID.(uint)
 
@@ -159,6 +156,32 @@ func CreateBooking(c *gin.Context) {
     }
 
     tx.Commit()
+
+    // Kirim notifikasi ke vendor
+    notification := models.Notification{
+        UserID:    motor.VendorID,
+        Message:   fmt.Sprintf("Ada booking baru dari %s untuk motor %s pada tanggal %s", customer.Name, motor.Name, booking.StartDate.Format("02 Jan 2006")),
+        Status:    "unread",
+        BookingID: booking.ID,
+        CreatedAt: time.Now(),
+    }
+
+    if err := config.DB.Create(&notification).Error; err != nil {
+        log.Println("❗ Gagal menyimpan notifikasi vendor:", err)
+    } else {
+        notifPayload := map[string]interface{}{
+            "message":    notification.Message,
+            "booking_id": notification.BookingID,
+        }
+
+        notifJSON, err := json.Marshal(notifPayload)
+        if err != nil {
+            log.Println("❗ Gagal encode notifikasi ke JSON (vendor):", err)
+        } else {
+            websocket.SendNotificationToUser(motor.VendorID, string(notifJSON))
+        }
+    }
+
     c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dibuat", "booking": booking})
 }
 

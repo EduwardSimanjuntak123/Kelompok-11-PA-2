@@ -5,18 +5,18 @@ import 'dart:io';
 import '../services/vendor/vendor_profile_service.dart';
 import '../config/api_config.dart';
 
-class EditProfile extends StatefulWidget {
-  const EditProfile({super.key});
+class Edittokovendor extends StatefulWidget {
+  const Edittokovendor({super.key});
 
   @override
-  State<EditProfile> createState() => _EditProfileState();
+  State<Edittokovendor> createState() => _EdittokovendorState();
 }
 
-class _EditProfileState extends State<EditProfile> {
+class _EdittokovendorState extends State<Edittokovendor> {
   final VendorService _vendorService = VendorService();
-  TextEditingController nameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController phoneController = TextEditingController();
+  TextEditingController shopNameController = TextEditingController();
+  TextEditingController districtController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
   TextEditingController addressController = TextEditingController();
 
   String? profileImageUrl;
@@ -33,10 +33,10 @@ class _EditProfileState extends State<EditProfile> {
       final profile = await _vendorService.getVendorProfile();
       if (profile != null) {
         setState(() {
-          nameController.text = profile.name ?? '';
-          emailController.text = profile.email ?? '';
-          phoneController.text = profile.phone ?? '';
-          addressController.text = profile.address ?? '';
+          shopNameController.text = profile.shopName ?? '';
+          districtController.text = profile.districtName ?? '';
+          descriptionController.text = profile.shopDescription ?? '';
+          addressController.text = profile.shopAddress ?? '';
           profileImageUrl = profile.profileImage != null
               ? '${ApiConfig.baseUrl}${profile.profileImage}'
               : null;
@@ -60,8 +60,8 @@ class _EditProfileState extends State<EditProfile> {
   Future<void> saveProfile() async {
     try {
       await _vendorService.updateVendorProfile(
-        name: nameController.text,
-        phone: phoneController.text,
+        shopName: shopNameController.text,
+        phone: descriptionController.text,
         address: addressController.text,
         imageFile: selectedImage,
       );
@@ -123,7 +123,7 @@ class _EditProfileState extends State<EditProfile> {
         leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context)),
-        title: const Text('Edit Profile',
+        title: const Text('Edit Usaha',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
@@ -132,7 +132,7 @@ class _EditProfileState extends State<EditProfile> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 30),
             decoration: const BoxDecoration(
-                color: const Color(0xFF1A567D),
+                color: Color(0xFF1A567D),
                 borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(30),
                     bottomRight: Radius.circular(30))),
@@ -182,7 +182,7 @@ class _EditProfileState extends State<EditProfile> {
                                       spreadRadius: 1)
                                 ]),
                             child: const Icon(Icons.camera_alt,
-                                color: const Color(0xFF1A567D), size: 24)))),
+                                color: Color(0xFF1A567D), size: 24)))),
               ]),
             ),
           ),
@@ -198,17 +198,18 @@ class _EditProfileState extends State<EditProfile> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Informasi Pribadi',
+                      const Text('Informasi Usaha',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1A567D))),
+                              color: Color(0xFF1A567D))),
                       const SizedBox(height: 20),
-                      _buildProfileField('Nama', nameController, Icons.person),
-                      _buildProfileField('Email', emailController, Icons.email,
-                          readOnly: true, showLock: true),
                       _buildProfileField(
-                          'No. Telepon', phoneController, Icons.phone),
+                          'Nama Usaha', shopNameController, Icons.store),
+                      _buildProfileField(
+                          'Kecamatan', districtController, Icons.map),
+                      _buildProfileField('Deskripsi Usaha',
+                          descriptionController, Icons.description),
                       _buildProfileField(
                           'Alamat', addressController, Icons.location_on,
                           isMultiline: true),

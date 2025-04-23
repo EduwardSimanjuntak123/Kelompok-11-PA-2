@@ -4,6 +4,12 @@ import 'package:flutter_rentalmotor/vendor/chatvendor.dart';
 import 'package:flutter_rentalmotor/vendor/notifikasivendor.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
+import 'dart:convert';
+
+import 'package:permission_handler/permission_handler.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Import services
 import 'package:flutter_rentalmotor/services/vendor/vendor_api_service.dart';
@@ -36,6 +42,15 @@ class _DashboardState extends State<HomepageVendor> {
   final VendorApiService _apiService = VendorApiService();
   final DashboardService _dashboardService = DashboardService();
 
+  // WebSocket & notifikasi
+  IOWebSocketChannel? _channel;
+  List<Map<String, dynamic>> _notifications = [];
+  int get _unreadCount =>
+      _notifications.where((n) => n['read'] == false).length;
+
+  final FlutterLocalNotificationsPlugin _localNotifPlugin =
+      FlutterLocalNotificationsPlugin();
+
   // Vendor data
   int? vendorId;
   String? businessName;
@@ -52,7 +67,163 @@ class _DashboardState extends State<HomepageVendor> {
   @override
   void initState() {
     super.initState();
+    _initLocalNotifications();
     _loadData();
+    _loadNotifications();
+    // WebSocket akan dikoneksikan setelah vendorId tersedia
+  }
+
+  @override
+  void dispose() {
+    _channel?.sink.close();
+    super.dispose();
+  }
+
+  void _initLocalNotifications() async {
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initSettings = InitializationSettings(android: androidSettings);
+    await _localNotifPlugin.initialize(initSettings);
+  }
+
+  void _showLocalNotification(String title, String body) async {
+    const androidDetails = AndroidNotificationDetails(
+      'vendor_channel',
+      'Vendor Notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    const notificationDetails = NotificationDetails(android: androidDetails);
+
+    await _localNotifPlugin.show(
+      DateTime.now().millisecond, // unique ID
+      title,
+      body,
+      notificationDetails,
+    );
+  }
+
+  void _connectWebSocket(int userId) {
+    // Tutup koneksi yang ada jika ada
+    _channel?.sink.close();
+
+    final wsUrl = "${ApiConfig.wsUrl}/ws/notifikasi?user_id=$userId";
+    debugPrint("user id untuk notifiaksi: $userId");
+    debugPrint("http untuk notifiaksi: $wsUrl");
+
+    _channel = IOWebSocketChannel.connect(wsUrl);
+
+    _channel!.stream.listen((data) async {
+      debugPrint("WS notifikasi: $data");
+      try {
+        final outer = json.decode(data);
+        final inner = json.decode(outer['message']);
+        final bookingId = inner['booking_id'];
+        final message = inner['message'];
+
+        final newNotification = {
+          'text': "Booking #$bookingId: $message",
+          'read': false,
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+
+        setState(() => _notifications.insert(0, newNotification));
+        await _saveNotifications();
+
+        _showLocalNotification("Booking #$bookingId", message);
+      } catch (e) {
+        debugPrint("Error parsing notification: $e");
+        final fallbackNotification = {
+          'text': data.toString(),
+          'read': false,
+          'timestamp': DateTime.now().toIso8601String(),
+        };
+        setState(() => _notifications.insert(0, fallbackNotification));
+        await _saveNotifications();
+      }
+    }, onError: (e) {
+      debugPrint("WebSocket error: $e");
+      // Coba koneksi ulang setelah beberapa detik
+      Future.delayed(const Duration(seconds: 5), () {
+        if (vendorId != null) _connectWebSocket(vendorId!);
+      });
+    }, onDone: () {
+      debugPrint("WebSocket connection closed");
+      // Coba koneksi ulang setelah beberapa detik
+      Future.delayed(const Duration(seconds: 5), () {
+        if (vendorId != null) _connectWebSocket(vendorId!);
+      });
+    });
+  }
+
+  Future<void> _saveNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      prefs.setString('vendor_notifications', json.encode(_notifications));
+    } catch (e) {
+      debugPrint("Error saving notifications: $e");
+    }
+  }
+
+  Future<void> _loadNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final notificationsString = prefs.getString('vendor_notifications');
+      if (notificationsString != null) {
+        final List loaded = json.decode(notificationsString);
+        setState(
+            () => _notifications = List<Map<String, dynamic>>.from(loaded));
+      }
+    } catch (e) {
+      debugPrint("Error loading notifications: $e");
+    }
+  }
+
+  Widget _buildNotifikasiButton() {
+    return Stack(
+      children: [
+        _buildHeaderButton(
+          icon: Icons.notifications_none,
+          onTap: () async {
+            // Tandai semua notifikasi sebagai dibaca
+            setState(() {
+              for (var notification in _notifications) {
+                notification['read'] = true;
+              }
+            });
+            await _saveNotifications();
+
+            // Navigasi ke halaman notifikasi
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => NotifikasiPagev(notifications: _notifications),
+              ),
+            );
+          },
+        ),
+        if (_unreadCount > 0)
+          Positioned(
+            right: 4,
+            top: 4,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                  color: Colors.red, shape: BoxShape.circle),
+              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+              child: Center(
+                child: Text(
+                  '$_unreadCount',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Future<void> _loadData() async {
@@ -80,12 +251,17 @@ class _DashboardState extends State<HomepageVendor> {
 
       setState(() {
         // Set data vendor dengan pengecekan null
-        vendorId = vendorData['vendorId'] ?? 'Tidak Diketahui';
+        vendorId = vendorData['vendorId'];
         businessName = vendorData['businessName'] ?? 'Nama Bisnis Tidak Ada';
         vendorAddress = vendorData['vendorAddress'] ?? 'Alamat Tidak Ada';
         vendorImagePath = vendorData['vendorImagePath'] ?? 'default_image_path';
         vendorEmail = vendorData['vendorEmail'] ?? 'Email Tidak Ada';
       });
+
+      // Koneksi WebSocket setelah vendorId tersedia
+      if (vendorId != null) {
+        _connectWebSocket(vendorId!);
+      }
     } catch (e) {
       print("Error memuat data: $e");
       ScaffoldMessenger.of(context).showSnackBar(
@@ -215,14 +391,7 @@ class _DashboardState extends State<HomepageVendor> {
                       // Action buttons
                       Row(
                         children: [
-                          _buildHeaderButton(
-                            icon: Icons.notifications_none,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => NotifikasiPagev()),
-                            ),
-                          ),
+                          _buildNotifikasiButton(),
                           const SizedBox(width: 8),
                           _buildHeaderButton(
                             icon: Icons.chat_bubble_outline,

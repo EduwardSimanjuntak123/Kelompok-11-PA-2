@@ -170,7 +170,7 @@ class _VendorListPageState extends State<VendorListPage>
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              expandedHeight: 180.0, // Increased from 120 to 180
+              expandedHeight: 180.0,  
               floating: false,
               pinned: true,
               elevation: 0,
@@ -248,22 +248,31 @@ class _VendorListPageState extends State<VendorListPage>
                         ),
                       ),
 
-                      // Title and subtitle
+                      // Judul & Subjudul
                       Positioned(
-                        top: 60,
+                        top: 50,
                         left: 20,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Temukan Vendor',
+                              'Daftar Vendor',
                               style: TextStyle(
                                 color: Colors.white,
+                                fontSize: 22,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 24,
                               ),
                             ),
                             SizedBox(height: 4),
+                            Text(
+                              'Temukan Vendor',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.95),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(height: 2),
                             Text(
                               'Pilih vendor terpercaya untuk kebutuhan Anda',
                               style: TextStyle(

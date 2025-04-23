@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/services/vendor/vendor_review_api.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
-
 class UlasanVendorScreen extends StatefulWidget {
   const UlasanVendorScreen({Key? key}) : super(key: key);
 
@@ -16,7 +15,7 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
   bool isRefreshing = false;
   final Map<String, TextEditingController> _controllers = {};
   final Set<String> _isEditing = {};
-    final String baseUrl = ApiConfig.baseUrl;
+  final String baseUrl = ApiConfig.baseUrl;
 
   @override
   void initState() {
@@ -563,7 +562,7 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
                             icon: const Icon(Icons.save),
                             label: const Text('Simpan'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
+                              backgroundColor: Colors.green,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -616,7 +615,7 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
                           icon: const Icon(Icons.edit),
                           label: const Text('Edit Balasan'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
+                            backgroundColor: Colors.green,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -641,8 +640,14 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ulasan Pengguna'),
-        backgroundColor: const Color(0xFF2C567E),
+        title: const Text(
+          'Ulasan Pengguna',
+          style: TextStyle(color: Colors.white), // Warna teks putih
+        ),
+        iconTheme: const IconThemeData(
+            color: Colors.white), // Warna ikon tombol back jadi putih
+        backgroundColor:
+            const Color(0xFF1A567D), // Atau ganti dengan warna lain sesuai tema kamu
         elevation: 0,
       ),
       body: RefreshIndicator(

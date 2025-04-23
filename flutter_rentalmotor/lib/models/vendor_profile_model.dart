@@ -1,5 +1,6 @@
 class VendorProfileModel {
   final int id;
+  final String name;
   final String shopName;
   final String shopAddress;
   final String email;
@@ -11,6 +12,7 @@ class VendorProfileModel {
 
   VendorProfileModel({
     required this.id,
+    required this.name,
     required this.shopName,
     required this.shopAddress,
     required this.email,

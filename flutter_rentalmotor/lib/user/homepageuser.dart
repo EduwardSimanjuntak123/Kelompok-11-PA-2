@@ -11,11 +11,10 @@ import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/customer/homepage_api.dart';
+import 'package:flutter_rentalmotor/services/web_socket_channel/websocket_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:badges/badges.dart' as badges;
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
@@ -31,8 +30,10 @@ class HomePageUser extends StatefulWidget {
 }
 
 class _HomePageUserState extends State<HomePageUser> {
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  late WebSocketService _webSocketService;
+
   int _selectedIndex = 0;
   String _userName = "Pengguna";
   int? _userId;
@@ -44,7 +45,6 @@ class _HomePageUserState extends State<HomePageUser> {
   String _selectedKecamatan = "Semua"; // Default: tampilkan semua
   final String baseUrl = ApiConfig.baseUrl;
 
-  WebSocketChannel? _channel;
   // List notifikasi
   List<Map<String, dynamic>> _notifications = [];
   int get _unreadCount {
@@ -70,48 +70,95 @@ class _HomePageUserState extends State<HomePageUser> {
   @override
   void initState() {
     super.initState();
+    _initializeLocalNotifications();
+    _webSocketService = WebSocketService(
+      onNotificationReceived: _handleNewNotification,
+      notificationsPlugin: _flutterLocalNotificationsPlugin,
+    );
+    _loadNotificationsFromPrefs();
     _checkLoginStatus();
     _fetchKecamatan();
     _requestNotificationPermission();
-    _initializeLocalNotifications();
+  }
+
+  @override
+  void dispose() {
+    _webSocketService.dispose();
+    super.dispose();
   }
 
   /// Inisialisasi Local Notification
-  void _initializeLocalNotifications() async {
+  Future<void> _initializeLocalNotifications() async {
+    // Initialize Android settings
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
+    // Initialize iOS settings (if you're supporting iOS)
+    // const IOSInitializationSettings initializationSettingsIOS =
+    //     IOSInitializationSettings(
+    //   requestAlertPermission: true,
+    //   requestBadgePermission: true,
+    //   requestSoundPermission: true,
+    // );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-        onDidReceiveNotificationResponse: (details) {
-      debugPrint("Notification clicked with payload: ${details.payload}");
-    });
+    // Initialize settings for all platforms
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      // iOS: initializationSettingsIOS,
+    );
+
+    // Initialize the plugin
+    await _flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        // Handle notification tap
+        debugPrint('Notification clicked: ${response.payload}');
+        // You can navigate to a specific screen here based on the payload
+      },
+    );
+
+    // Create notification channel for Android 8.0+
+    await _createNotificationChannel();
   }
 
-  /// Tampilkan notifikasi lokal
-  Future<void> _showLocalNotification(String title, String message) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'channel_id', // ID channel unik
-      'Notifikasi Masuk',
-      channelDescription: 'Channel untuk notifikasi dari vendor',
+  Future<void> _createNotificationChannel() async {
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'rental_motor_channel_v3',
+      'Rental Motor Notifications',
+      description: 'Notifications for Rental Motor app',
       importance: Importance.max,
-      priority: Priority.high,
-      ticker: 'ticker',
+      playSound: true,
+      enableVibration: true,
     );
 
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    // Create the channel
+    await _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+  }
 
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      title,
-      message,
-      platformChannelSpecifics,
-      payload: 'data',
-    );
+  void _handleNewNotification(Map<String, dynamic> notification) {
+    setState(() {
+      _notifications.insert(0, notification);
+    });
+    _saveNotificationsToPrefs();
+  }
+
+  Future<void> _loadNotificationsFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final stored = prefs.getString('notification_list');
+      if (stored != null) {
+        final List<dynamic> decoded = json.decode(stored);
+        setState(() {
+          _notifications = List<Map<String, dynamic>>.from(decoded);
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading notifications: $e");
+    }
   }
 
   // Tambahkan fungsi untuk mengambil daftar chat rooms
@@ -119,8 +166,7 @@ class _HomePageUserState extends State<HomePageUser> {
     if (_userId == null) return;
 
     try {
-      final url =
-          Uri.parse("${ApiConfig.baseUrl}/chat/rooms?user_id=$_userId");
+      final url = Uri.parse("${ApiConfig.baseUrl}/chat/rooms?user_id=$_userId");
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -139,80 +185,53 @@ class _HomePageUserState extends State<HomePageUser> {
   // Tambahkan pemanggilan _fetchChatRooms() di _checkLoginStatus()
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getInt('user_id');
-    final userName = prefs.getString('user_name');
+
+    // Debug semua keys dan nilai user_id
+    debugPrint("All keys in prefs: ${prefs.getKeys()}");
+    debugPrint("Value of 'user_id': ${prefs.getInt('user_id')}");
+    debugPrint("Value of 'userId': ${prefs.getInt('userId')}");
+
+    // Konsolidasi: pakai key 'user_id', fallback ke 'userId'
+    int? id = prefs.getInt('user_id') ?? prefs.getInt('userId');
+    String? name = prefs.getString('user_name') ?? prefs.getString('userName');
+    String? token = prefs.getString('token');
+    String? role = prefs.getString('user_role') ?? prefs.getString('userRole');
+
+    if (token != null && role != null) {
+      debugPrint("Token: $token, Role: $role");
+    }
+
+    // Hapus key lama supaya tidak mengganggu panggilan berikutnya
+    if (prefs.containsKey('userId')) {
+      await prefs.remove('userId');
+    }
+    if (prefs.containsKey('userName')) {
+      await prefs.remove('userName');
+    }
 
     setState(() {
-      _userId = userId;
-      _userName = userName ?? "Pengguna";
+      _userId = id;
+      _userName = name ?? "Pengguna";
     });
 
+    // Panggil data lain (vendors, motors, chat rooms, dsb)
     _fetchVendors();
     _fetchMotors();
-    _fetchChatRooms(); // Tambahkan ini
+    _fetchChatRooms();
 
-    // Kalau user_id tersedia, buat koneksi WebSocket
+    // Jika sudah ada userId, barulah connect WS
     if (_userId != null) {
-      _connectWebSocket(_userId!);
+      _webSocketService.connectWebSocket(_userId!);
     }
   }
 
-  /// Membuat koneksi WebSocket
-  void _connectWebSocket(int userId) {
-    print({
-      {userId}
-    });
-    String wsUrl = "${ApiConfig.wsUrl}/notifikasi?user_id=$userId";
-    _channel = IOWebSocketChannel.connect(wsUrl);
-
-    // Log untuk memverifikasi jika WebSocket terhubung
-    _channel?.stream.listen((data) async {
-      debugPrint(
-          "WebSocket connected: $wsUrl"); // Log untuk memastikan WebSocket berhasil terhubung
-      debugPrint(
-          "Received data: $data"); // Log untuk melihat data yang diterima
-
-      try {
-        final Map<String, dynamic> outer = json.decode(data);
-        final Map<String, dynamic> inner = json.decode(outer['message']);
-        final int bookingId = inner['booking_id'];
-        final String message = inner['message'];
-
-        final newNotification = {
-          'text': "Booking #$bookingId: $message",
-          'read': false,
-          'timestamp': DateTime.now().toIso8601String(),
-        };
-
-        setState(() {
-          _notifications.add(newNotification);
-        });
-        await _saveNotificationToPrefs();
-
-        _showNotificationPopup("Booking #$bookingId: $message");
-        _showLocalNotification("Booking #$bookingId", message);
-      } catch (e) {
-        final fallbackNotification = {
-          'text': data.toString(),
-          'read': false,
-          'timestamp': DateTime.now().toIso8601String(),
-        };
-
-        setState(() {
-          _notifications.add(fallbackNotification);
-        });
-        await _saveNotificationToPrefs();
-        _showNotificationPopup(data.toString());
-      }
-    }, onError: (error) {
-      debugPrint(
-          "WebSocket error: $error"); // Log untuk menampilkan error jika ada masalah dengan WebSocket
-    });
-  }
-
-  Future<void> _saveNotificationToPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString('notification_list', json.encode(_notifications));
+  Future<void> _saveNotificationsToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('notification_list', json.encode(_notifications));
+    } catch (e) {
+      debugPrint("Error saving notifications: $e");
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -233,7 +252,6 @@ class _HomePageUserState extends State<HomePageUser> {
       if (mounted) {
         setState(() {
           _motorList = motors;
-
           _isLoading = false;
         });
       }
@@ -274,22 +292,6 @@ class _HomePageUserState extends State<HomePageUser> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
-  }
-
-  void _showNotificationPopup(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Notifikasi Baru"),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Tutup"),
-          ),
-        ],
-      ),
     );
   }
 
@@ -339,12 +341,6 @@ class _HomePageUserState extends State<HomePageUser> {
         ),
       ],
     );
-  }
-
-  @override
-  void dispose() {
-    _channel?.sink.close();
-    super.dispose();
   }
 
   Widget _buildHeader() {
@@ -424,6 +420,14 @@ class _HomePageUserState extends State<HomePageUser> {
                       padding: EdgeInsets.zero,
                       constraints: BoxConstraints(),
                       onPressed: () {
+                        // Mark all notifications as read
+                        setState(() {
+                          for (var notification in _notifications) {
+                            notification['read'] = true;
+                          }
+                        });
+                        _saveNotificationsToPrefs();
+
                         Navigator.of(context)
                             .push<List<Map<String, dynamic>>>(MaterialPageRoute(
                           builder: (context) =>
@@ -976,7 +980,8 @@ class _HomePageUserState extends State<HomePageUser> {
                       onTap: () {
                         Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => DetailMotorPage(
-                                  motorId: int.parse(motor["id"].toString()), // Konversi ke int
+                                  motorId: int.parse(motor["id"]
+                                      .toString()), // Konversi ke int
                                   isGuest: _userId == null,
                                 )));
                       },
@@ -1037,7 +1042,7 @@ class _HomePageUserState extends State<HomePageUser> {
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                                                                    color: Colors.black.withOpacity(0.2),
+                                          color: Colors.black.withOpacity(0.2),
                                           blurRadius: 4,
                                           offset: Offset(0, 2),
                                         ),

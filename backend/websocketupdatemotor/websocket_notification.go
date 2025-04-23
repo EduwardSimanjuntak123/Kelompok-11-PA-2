@@ -1,8 +1,9 @@
 package websocketupdatemotor
 
-
 import (
 	"net/http"
+	"rental-backend/config"
+	"rental-backend/models"
 	ws "rental-backend/websocket"
 	"strconv"
 
@@ -45,3 +46,41 @@ func WebSocketNotifikasiHandler(c *gin.Context) {
 		}
 	}
 }
+
+// Fungsi untuk mengubah status notifikasi
+func UpdateNotificationStatus(c *gin.Context) {
+	// Ambil notification_id dari parameter URL
+	notificationIDStr := c.Param("notification_id")
+	status := c.DefaultQuery("status", "") // Status harus di query parameter
+
+	// Validasi status, hanya "read" atau "unread"
+	if status != "read" && status != "unread" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "status tidak valid, hanya 'read' atau 'unread'"})
+		return
+	}
+
+	// Convert notification_id menjadi integer
+	notificationID, err := strconv.Atoi(notificationIDStr)
+	if err != nil || notificationID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "notification_id tidak valid"})
+		return
+	}
+
+	// Cari notifikasi berdasarkan ID
+	var notification models.Notification
+	if err := config.DB.First(&notification, notificationID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Notifikasi tidak ditemukan"})
+		return
+	}
+
+	// Perbarui status menjadi nilai yang baru
+	notification.Status = status
+	if err := config.DB.Save(&notification).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui status notifikasi"})
+		return
+	}
+
+	// Kirim respon sukses
+	c.JSON(http.StatusOK, gin.H{"message": "Status notifikasi berhasil diperbarui"})
+}
+
