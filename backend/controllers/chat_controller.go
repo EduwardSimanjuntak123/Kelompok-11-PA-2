@@ -328,8 +328,8 @@ func GetUserChatRooms(c *gin.Context) {
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {
 			return db.Order("sent_at desc").Limit(1)
 		}).
-		Preload("Messages.Sender").   // ⬅️ preload data Sender
-		Preload("Messages.ChatRoom"). // ⬅️ preload data ChatRoom
+		Preload("Messages.Sender").
+		Preload("Messages.ChatRoom").
 		Where("customer_id = ? OR vendor_id = ?", userID, userID).
 		Find(&chatRooms).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil chat rooms"})

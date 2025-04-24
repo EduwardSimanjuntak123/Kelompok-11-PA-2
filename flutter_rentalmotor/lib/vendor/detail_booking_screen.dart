@@ -31,7 +31,7 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
     try {
       final token = await storage.read(key: 'auth_token');
       final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/vendor/bookings/${widget.bookingId}'),
+        Uri.parse('$baseUrl/vendor/bookings/${widget.bookingId}'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
@@ -116,9 +116,7 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
           content: Text('Apakah Anda yakin ingin $actionText?'),
           actions: <Widget>[
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Batal'),
             ),
             TextButton(
@@ -150,9 +148,6 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
               .setBookingToInUse(widget.bookingId.toString());
           break;
         case 'in use':
-          await kelolaBookingService
-              .completeBooking(widget.bookingId.toString());
-          break;
         case 'awaiting return':
           await kelolaBookingService
               .completeBooking(widget.bookingId.toString());
@@ -226,6 +221,7 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
+                      // Informasi Booking
                       Card(
                         elevation: 5,
                         shape: RoundedRectangleBorder(
@@ -240,8 +236,6 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold)),
                               const Divider(),
-                              buildInfoRow(
-                                  'Booking ID', bookingData!['id'].toString()),
                               buildInfoRow('Nama Customer',
                                   bookingData!['customer']?['name']),
                               buildInfoRow('Telepon',
@@ -264,6 +258,8 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // Informasi Motor
                       Card(
                         elevation: 5,
                         shape: RoundedRectangleBorder(
@@ -278,6 +274,21 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold)),
                               const Divider(),
+
+                              // Menampilkan gambar motor di atas dan di tengah
+                              if (bookingData!['motor']?['image'] != null)
+                                Center(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.network(
+                                      '$baseUrl${bookingData!['motor']['image']}',
+                                      height: 180,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+
+                              // Informasi motor lainnya
                               buildInfoRow(
                                   'Nama Motor', bookingData!['motor']?['name']),
                               buildInfoRow(
@@ -292,21 +303,13 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                                   'Tipe', bookingData!['motor']?['type']),
                               buildInfoRow('Deskripsi',
                                   bookingData!['motor']?['description']),
-                              const SizedBox(height: 10),
-                              if (bookingData!['motor']?['image'] != null)
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.network(
-                                    '$baseUrl${bookingData!['motor']['image']}',
-                                    height: 180,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
+
+                      // Foto Identitas
                       if (bookingData!['photo_id'] != null ||
                           bookingData!['ktp_id'] != null)
                         Card(
@@ -366,7 +369,7 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                             ),
                           ),
                         ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       buildActionButton(bookingData!['status']),
                     ],
                   ),

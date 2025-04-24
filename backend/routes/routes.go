@@ -32,6 +32,9 @@ import (
 		// WebSocket route
 		router.GET("/ws/notifikasi", websocketupdatemotor.WebSocketNotifikasiHandler)
 		router.PUT("/notifications/:notification_id/status", websocketupdatemotor.UpdateNotificationStatus)
+		router.GET("/notifications", websocketupdatemotor.GetNotificationByUserID) 
+		router.DELETE("/notifications/:notification_id", websocketupdatemotor.DeleteNotificationByID) 
+
 		router.GET("/ws/motor", func(c *gin.Context) {
 			websocketupdatemotor.HandleMotorWebSocket(c.Writer, c.Request)
 		})

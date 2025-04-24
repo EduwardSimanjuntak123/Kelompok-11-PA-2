@@ -235,7 +235,9 @@ class VendorDrawer extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => NotifikasiPagev()),
+                        builder: (context) =>
+                            NotifikasiPagev(userId: vendorId!),
+                      ),
                     );
                   },
                 ),
