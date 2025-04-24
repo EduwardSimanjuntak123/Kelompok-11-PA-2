@@ -1,0 +1,110 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class KecamatanController extends Controller
+{
+    protected $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->apiBaseUrl = config('api.base_url');
+    }
+
+    public function index()
+    {
+        $kecamatans = [];
+
+        try {
+            $token = session('token', 'TOKEN_KAMU_DI_SINI');
+            $response = Http::withToken($token)->timeout(10)->get("{$this->apiBaseUrl}/kecamatan");
+
+            if ($response->successful()) {
+                $kecamatans = $response->json();
+            } else {
+                Log::warning("Gagal mengambil data kecamatan. Status: {$response->status()}");
+            }
+        } catch (\Exception $e) {
+            Log::error("Kesalahan saat mengambil data kecamatan: " . $e->getMessage());
+        }
+
+        return view('admin.kecamatan', compact('kecamatans'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'nama_kecamatan' => 'required|string|max:255',
+        ]);
+
+        try {
+            $token = session('token', 'TOKEN_KAMU_DI_SINI');
+            $response = Http::withToken($token)->post("{$this->apiBaseUrl}/kecamatan", $request->only('nama_kecamatan'));
+
+            $this->flashAlert($response->successful(), 'ditambahkan');
+
+            return redirect()->route('admin.kecamatan');
+        } catch (\Exception $e) {
+            Log::error("Gagal menyimpan kecamatan: " . $e->getMessage());
+            $this->flashAlert(false, 'ditambahkan');
+            return redirect()->route('admin.kecamatan');
+        }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nama_kecamatan' => 'required|string|max:255',
+        ]);
+
+        try {
+            $token = session('token', 'TOKEN_KAMU_DI_SINI');
+            $response = Http::withToken($token)->put("{$this->apiBaseUrl}/kecamatan/{$id}", $request->only('nama_kecamatan'));
+
+            // Mengirimkan flash message ke session
+            $this->flashAlert($response->successful(), 'diperbarui');
+
+            return redirect()->route('admin.kecamatan');
+        } catch (\Exception $e) {
+            Log::error("Gagal update kecamatan: " . $e->getMessage());
+            $this->flashAlert(false, 'diperbarui');
+            return redirect()->route('admin.kecamatan');
+        }
+    }
+
+    protected function flashAlert($success, $action)
+    {
+        if ($success) {
+            session()->flash('success', "Kecamatan berhasil {$action}.");
+        } else {
+            session()->flash('error', "Kecamatan gagal {$action}.");
+        }
+    }
+
+
+    public function destroy($id)
+    {
+        try {
+            $token = session('token', 'TOKEN_KAMU_DI_SINI');
+            $response = Http::withToken($token)->delete("{$this->apiBaseUrl}/kecamatan/{$id}");
+
+            $this->flashAlert($response->successful(), 'dihapus');
+
+            return redirect()->back();
+        } catch (\Exception $e) {
+            Log::error("Kesalahan saat menghapus kecamatan: " . $e->getMessage());
+            $this->flashAlert(false, 'dihapus');
+            return redirect()->back();
+        }
+    }
+
+    public function create()
+    {
+        return view('kecamatan.create');
+    }
+
+}

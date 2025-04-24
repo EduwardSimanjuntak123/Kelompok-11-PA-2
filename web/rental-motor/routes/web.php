@@ -9,6 +9,7 @@ use App\Http\Controllers\nonaktifController;
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\ulasanController;
 use App\Http\Controllers\VendorController;
+use App\Http\Controllers\KecamatanController;
 use App\Http\Middleware\CheckAuth;
 use App\Http\Middleware\RoleMiddleware;
 
@@ -39,8 +40,22 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::get('/admin/profile/{id}', [AdminController::class, 'profile'])->name('admin.profile');
         Route::view('/nonaktif', 'nonaktif')->name('nonaktif');
         Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-        Route::get('/admin/kecamatan', [AdminController::class, 'kelolaKecamatan'])->name('admin.kecamatan');
+        // Daftar kecamatan (index di /admin/kecamatan)
+        Route::get('/admin/kecamatan', [KecamatanController::class, 'index'])
+            ->name('admin.kecamatan');
 
+        // Modal Tambah → menyimpan
+        Route::post('/kecamatan', [KecamatanController::class, 'store'])
+            ->name('kecamatan.store');
+
+        // Modal Edit → form sudah di-handle di index lewat JS
+// Update data kecamatan
+        Route::put('/kecamatan/{id}', [KecamatanController::class, 'update'])
+            ->name('kecamatan.update');
+
+        // Hapus kecamatan
+        Route::delete('/kecamatan/{id}', [KecamatanController::class, 'destroy'])
+            ->name('kecamatan.destroy');
 
     });
 
@@ -54,7 +69,7 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::get('/transaksi', [TransaksiController::class, 'index'])->name('vendor.transaksi'); // Menampilkan daftar motor
         Route::get('/transaksi/export', [\App\Http\Controllers\TransaksiController::class, 'exportExcel'])->name('vendor.transactions.export');
         Route::post('/transaksi/add', [TransaksiController::class, 'addTransactionManual'])->name('vendor.transaksi.store');
-         // Menampilkan daftar motor
+        // Menampilkan daftar motor
         Route::post('/motor', [MotorController::class, 'store'])->name('motor.store');  // Menambah motor baru
         Route::get('/motor/{id}/edit', [MotorController::class, 'edit'])->name('motor.edit'); // Edit motor
         Route::put('/motor/{id}', [MotorController::class, 'update'])->name('motor.update'); // Update motor
@@ -72,11 +87,11 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::post('/review/{id}/reply', [ulasanController::class, 'submitReply'])->name('reviews.submitReply');
 
         Route::post('/booking/add', [KelolaBookingController::class, 'addManualBooking'])
-        ->name('vendor.manual.booking.store');
+            ->name('vendor.manual.booking.store');
         Route::put('/bookings/{id}/confirm', [KelolaBookingController::class, 'confirm'])->name('vendor.booking.confirm');
         Route::put('/bookings/{id}/reject', [KelolaBookingController::class, 'rejectBooking'])->name('vendor.booking.reject');
         Route::put('/bookings/{id}/complete', [KelolaBookingController::class, 'complete'])->name('vendor.booking.complete');
-        
+
 
         // Halaman Tambahan
         Route::view('/harga', 'harga')->name('harga');
