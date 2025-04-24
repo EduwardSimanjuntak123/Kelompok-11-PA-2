@@ -50,7 +50,7 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
   @override
   void initState() {
     super.initState();
-    _refreshData();  // Refresh data saat aplikasi dibuka
+    _refreshData(); // Refresh data saat aplikasi dibuka
   }
 
   Future<void> fetchBookings() async {
@@ -166,8 +166,8 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
 
   Widget buildBookingCard(dynamic booking) {
     final motor = booking['motor'];
-    final imageUrl =
-        motor?['image']?.replaceFirst("localhost", "192.168.132.159"); // Menggunakan baseUrl
+    final imageUrl = motor?['image']
+        ?.replaceFirst("localhost", "192.168.132.159"); // Menggunakan baseUrl
     final status = booking['status'] ?? '-';
     final statusColor = statusColors[status] ?? Colors.grey;
 
@@ -322,7 +322,7 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
           'Daftar Pesanan',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color(0xFF1976D2),
+        backgroundColor: const Color(0xFF1A567D),
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),

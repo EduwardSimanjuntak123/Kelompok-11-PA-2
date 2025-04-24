@@ -274,9 +274,18 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Tambah Motor"),
+        title: const Text(
+          "Tambah Motor",
+          style: TextStyle(
+            color: Colors.white, // Warna teks putih
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: const Color(0xFF2C567E),
         elevation: 0,
+        iconTheme: const IconThemeData(
+          color: Colors.white, // Warna ikon back jadi putih
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),

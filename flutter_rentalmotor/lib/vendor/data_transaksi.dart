@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'package:flutter_rentalmotor/vendor/detail_transaksi.dart'; // Pastikan untuk mengimpor halaman detail transaksi
 
 class TransactionReportScreen extends StatefulWidget {
   @override
@@ -50,7 +51,6 @@ class _TransactionReportScreenState extends State<TransactionReportScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        // Check if the response contains a 'data' field that is a list
         if (data is List) {
           setState(() {
             transactionList = data;
@@ -69,7 +69,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen> {
         print("Gagal memuat data transaksi. Status: ${response.statusCode}");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Gagal memuat data transaksi: ${response.statusCode}"),
+            content:
+                Text("Gagal memuat data transaksi: ${response.statusCode}"),
             backgroundColor: Colors.red,
           ),
         );
@@ -90,32 +91,106 @@ class _TransactionReportScreenState extends State<TransactionReportScreen> {
     }
   }
 
+  String formatDate(String? dateString) {
+    if (dateString == null) return '-';
+    try {
+      final dateTime = DateTime.parse(dateString);
+      return "${dateTime.day.toString().padLeft(2, '0')}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.year}";
+    } catch (e) {
+      return '-';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Laporan Transaksi')),
+      appBar: AppBar(
+        title: Text(
+          'Laporan Transaksi',
+          style: TextStyle(fontSize: 22, color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF1A567D),
+        titleTextStyle: TextStyle(color: Colors.white),
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: transactionList.length,
-              itemBuilder: (context, index) {
-                var transaction = transactionList[index];
+          : RefreshIndicator(
+              onRefresh: fetchTransactionData,
+              child: transactionList.isEmpty
+                  ? ListView(
+                      children: [
+                        SizedBox(height: 200),
+                        Center(
+                          child: Text(
+                            'Tidak ada transaksi tersedia',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      itemCount: transactionList.length,
+                      itemBuilder: (context, index) {
+                        var transaction = transactionList[index];
 
-                // Safely handling null and non-numeric 'total_price'
-                var totalPrice = transaction['total_price'];
-                int parsedPrice = 0;
-                if (totalPrice != null) {
-                  parsedPrice = (totalPrice is int)
-                      ? totalPrice
-                      : int.tryParse(totalPrice.toString()) ?? 0;
-                }
+                        var totalPrice = transaction['total_price'];
+                        int parsedPrice = 0;
+                        if (totalPrice != null) {
+                          parsedPrice = (totalPrice is int)
+                              ? totalPrice
+                              : int.tryParse(totalPrice.toString()) ?? 0;
+                        }
 
-                return ListTile(
-                  title: Text('Pelanggan: ${transaction['customer_name'] ?? 'Tidak Diketahui'}'),
-                  subtitle: Text('Status: ${transaction['status'] ?? '-'}'),
-                  trailing: Text('Rp $parsedPrice'),
-                );
-              },
+                        Color statusColor = transaction['status'] == 'completed'
+                            ? const Color.fromARGB(255, 156, 160, 156)
+                            : Colors.grey;
+
+                        Color priceColor = transaction['status'] == 'completed'
+                            ? Colors.green
+                            : Colors.black;
+
+                        String createdAt =
+                            formatDate(transaction['created_at']);
+
+                        return Card(
+                          margin: EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 15),
+                          elevation: 3,
+                          child: ListTile(
+                            contentPadding: EdgeInsets.all(15),
+                            title: Text(
+                              'Pelanggan: ${transaction['customer_name'] ?? 'Tidak Diketahui'}',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              'Dibuat pada: $createdAt',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: statusColor,
+                              ),
+                            ),
+                            trailing: Text(
+                              'Rp ${parsedPrice.toString()}',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: priceColor),
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TransactionDetailScreen(
+                                      transaction: transaction),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
             ),
     );
   }

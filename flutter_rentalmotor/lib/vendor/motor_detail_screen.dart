@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/vendor/edit_motor_screen.dart';
 import 'package:flutter_rentalmotor/models/motor_model.dart';
 import 'package:flutter_rentalmotor/services/vendor/vendor_motor_api.dart'; // Add API service for fetching motor data
@@ -204,9 +205,16 @@ class _MotorDetailScreenState extends State<MotorDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Motor Detail #${motor.id}'),
-        backgroundColor: const Color(0xFF1976D2),
+        title: Text(
+          'Motor Detail #${motor.id}',
+          style: TextStyle(
+            color: Colors.white, // Mengubah warna teks menjadi putih
+          ),
+        ),
+        backgroundColor: const Color(0xFF1A567D),
         elevation: 0,
+        iconTheme: IconThemeData(
+            color: Colors.white), // Mengubah warna tombol back menjadi putih
       ),
       body: isLoading
           ? const Center(
@@ -402,7 +410,9 @@ class _MotorDetailScreenState extends State<MotorDetailScreen> {
                             child: ElevatedButton(
                               onPressed: _navigateToEditScreen,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1976D2),
+                                backgroundColor: Colors.blue, // Biru standar
+                                foregroundColor:
+                                    Colors.white, // Teks berwarna putih
                               ),
                               child: const Text("Edit",
                                   style: TextStyle(fontSize: 16)),
@@ -415,6 +425,8 @@ class _MotorDetailScreenState extends State<MotorDetailScreen> {
                               onPressed: _confirmDelete,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.red,
+                                foregroundColor:
+                                    Colors.white, // Teks berwarna putih
                               ),
                               child: const Text("Delete",
                                   style: TextStyle(fontSize: 16)),

@@ -3,6 +3,8 @@ import 'package:flutter_rentalmotor/signin.dart';
 import 'package:flutter_rentalmotor/services/vendor/vendor_api_service.dart';
 import 'package:flutter_rentalmotor/vendor/lupakatasandiv.dart';
 import 'package:flutter_rentalmotor/vendor/editprofilvendor.dart';
+import 'package:flutter_rentalmotor/vendor/edittokovendor.dart';
+
 import 'package:flutter_rentalmotor/vendor/chatvendor.dart';
 import 'package:flutter_rentalmotor/vendor/kelolaMotor.dart';
 import 'package:flutter_rentalmotor/vendor/data_transaksi.dart';
@@ -153,10 +155,10 @@ class VendorDrawer extends StatelessWidget {
                   title: "Edit Informasi Toko",
                   onTap: () {
                     Navigator.pop(context);
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(builder: (context) => EditProfile()),
-                    // ).then((_) => onProfileUpdated());
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Edittokovendor()),
+                    ).then((_) => onProfileUpdated());
                   },
                 ),
                 _buildDrawerItem(
@@ -269,7 +271,7 @@ class VendorDrawer extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             child: const Text(
-              "© 2023 Rental Motor App",
+              "© 2025 Rental Motor Kel 11",
               style: TextStyle(color: Colors.grey),
             ),
           ),

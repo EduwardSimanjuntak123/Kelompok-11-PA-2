@@ -98,19 +98,51 @@ class _AkunState extends State<Akun> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi Logout'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: const [
+            Icon(Icons.logout, color: Colors.red),
+            SizedBox(width: 8),
+            Text(
+              'Konfirmasi Logout',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Apakah Anda yakin ingin keluar dari akun ini?',
+          style: TextStyle(fontSize: 16),
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: const Text(
+              'Batal',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red, // Tetap merah
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 2,
+            ),
             onPressed: () async {
               Navigator.pop(context);
               _logout();
             },
-            child: const Text('Logout'),
+            child: const Text(
+              'Logout',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -241,8 +273,13 @@ class _AkunState extends State<Akun> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("Profil Saya"),
+        title: const Text(
+          "Profil Saya",
+          style: TextStyle(color: Colors.white), // warna putih
+        ),
         backgroundColor: primaryBlue,
+        iconTheme:
+            IconThemeData(color: Colors.white), // jika ada ikon back, dll
       ),
       body: RefreshIndicator(
         onRefresh: _fetchProfile,

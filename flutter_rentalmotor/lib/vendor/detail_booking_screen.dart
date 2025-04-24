@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
-import 'package:flutter_rentalmotor/services/vendor/kelola_booking_service.dart'; // Pastikan file ini diimport
+import 'package:flutter_rentalmotor/services/vendor/kelola_booking_service.dart';
 
 class DetailBookingPage extends StatefulWidget {
   final int bookingId;
@@ -64,21 +64,28 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
 
   Widget buildInfoRow(String label, String? value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             "$label: ",
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
-          Expanded(child: Text(value ?? '-')),
+          Expanded(
+            child: Text(
+              value ?? '-',
+              style: const TextStyle(color: Colors.black87),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // Konfirmasi untuk tombol aksi
   void _showActionConfirmationDialog(String status) {
     String actionText;
     switch (status) {
@@ -127,7 +134,6 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
     );
   }
 
-  // Melakukan aksi untuk memperbarui status booking
   Future<void> _performAction(String status) async {
     try {
       switch (status) {
@@ -148,14 +154,13 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
               .completeBooking(widget.bookingId.toString());
           break;
         case 'awaiting return':
-          // Update status menjadi completed ketika motor sudah kembali
           await kelolaBookingService
               .completeBooking(widget.bookingId.toString());
           break;
         default:
           break;
       }
-      fetchBookingDetail(); // Reload data setelah aksi berhasil
+      fetchBookingDetail();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Status booking diperbarui!')),
       );
@@ -167,27 +172,36 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
   }
 
   Widget buildActionButton(String status) {
-    // Menyembunyikan tombol jika status sudah `completed` atau `rejected`
     if (status == 'completed' || status == 'rejected') {
-      return Container(); // Tidak ada tombol jika status sudah completed atau rejected
+      return Container();
     }
 
-    return ElevatedButton(
+    return ElevatedButton.icon(
       onPressed: () => _showActionConfirmationDialog(status),
-      child: Text(_getActionButtonText(status)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF1976D2),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+      label: Text(
+        _getActionButtonText(status),
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
     );
   }
 
   String _getActionButtonText(String status) {
     switch (status) {
       case 'pending':
-        return 'Konfirmasi pesanan';
+        return 'Konfirmasi Pesanan';
       case 'confirmed':
-        return 'ubah status ke sedang diantar';
+        return 'Ubah ke Sedang Diantar';
       case 'in transit':
-        return 'Motor sudah digunakan pelanggan';
+        return 'Motor Digunakan Pelanggan';
       case 'in use':
-        return 'Complete Booking';
+        return 'Selesaikan Pesanan';
       case 'awaiting return':
         return 'Motor Sudah Kembali';
       default:
@@ -199,8 +213,10 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail Pesanan'),
-        backgroundColor: const Color(0xFF1976D2),
+        title:
+            const Text('Detail Pesanan', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF1A567D),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -209,84 +225,147 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Detail Booking',
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 16),
-                      buildInfoRow('Booking ID', bookingData!['id'].toString()),
-                      buildInfoRow(
-                          'Nama Customer', bookingData!['customer']?['name']),
-                      buildInfoRow(
-                          'Telepon', bookingData!['customer']?['phone']),
-                      buildInfoRow(
-                          'Alamat', bookingData!['customer']?['address']),
-                      buildInfoRow('Status', bookingData!['status']),
-                      buildInfoRow('Tanggal Booking',
-                          formatDate(bookingData!['booking_date'])),
-                      buildInfoRow(
-                          'Mulai', formatDate(bookingData!['start_date'])),
-                      buildInfoRow(
-                          'Selesai', formatDate(bookingData!['end_date'])),
-                      buildInfoRow('Pickup', bookingData!['pickup_location']),
-                      buildInfoRow('Dropoff', bookingData!['dropoff_location']),
-                      const SizedBox(height: 16),
-                      Text('Informasi Motor',
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 10),
-                      buildInfoRow(
-                          'Nama Motor', bookingData!['motor']?['name']),
-                      buildInfoRow('Merk', bookingData!['motor']?['brand']),
-                      buildInfoRow(
-                          'Tahun', bookingData!['motor']?['year']?.toString()),
-                      buildInfoRow('Harga',
-                          'Rp ${bookingData!['motor']?['price'] ?? '-'}'),
-                      buildInfoRow('Warna', bookingData!['motor']?['color']),
-                      buildInfoRow('Tipe', bookingData!['motor']?['type']),
-                      buildInfoRow(
-                          'Deskripsi', bookingData!['motor']?['description']),
-                      const SizedBox(height: 16),
-
-                      // Menampilkan gambar motor
-                      if (bookingData!['motor']?['image'] != null)
-                        Image.network(
-                          '$baseUrl${bookingData!['motor']['image']}',
-                          height: 200,
+                      Card(
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Informasi Booking',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold)),
+                              const Divider(),
+                              buildInfoRow(
+                                  'Booking ID', bookingData!['id'].toString()),
+                              buildInfoRow('Nama Customer',
+                                  bookingData!['customer']?['name']),
+                              buildInfoRow('Telepon',
+                                  bookingData!['customer']?['phone']),
+                              buildInfoRow('Alamat',
+                                  bookingData!['customer']?['address']),
+                              buildInfoRow('Status', bookingData!['status']),
+                              buildInfoRow('Tanggal Booking',
+                                  formatDate(bookingData!['booking_date'])),
+                              buildInfoRow('Mulai',
+                                  formatDate(bookingData!['start_date'])),
+                              buildInfoRow('Selesai',
+                                  formatDate(bookingData!['end_date'])),
+                              buildInfoRow(
+                                  'Pickup', bookingData!['pickup_location']),
+                              buildInfoRow(
+                                  'Dropoff', bookingData!['dropoff_location']),
+                            ],
+                          ),
                         ),
+                      ),
                       const SizedBox(height: 16),
-
-                      // Menampilkan foto ID & Foto Diri
-                      if (bookingData!['photo_id'] != null)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Foto KTP & Foto Diri',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 10),
-                            Image.network(
-                              '$baseUrl${bookingData!['photo_id']}',
-                              height: 200,
+                      Card(
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Informasi Motor',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold)),
+                              const Divider(),
+                              buildInfoRow(
+                                  'Nama Motor', bookingData!['motor']?['name']),
+                              buildInfoRow(
+                                  'Merk', bookingData!['motor']?['brand']),
+                              buildInfoRow('Tahun',
+                                  bookingData!['motor']?['year']?.toString()),
+                              buildInfoRow('Harga',
+                                  'Rp ${bookingData!['motor']?['price'] ?? '-'}'),
+                              buildInfoRow(
+                                  'Warna', bookingData!['motor']?['color']),
+                              buildInfoRow(
+                                  'Tipe', bookingData!['motor']?['type']),
+                              buildInfoRow('Deskripsi',
+                                  bookingData!['motor']?['description']),
+                              const SizedBox(height: 10),
+                              if (bookingData!['motor']?['image'] != null)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.network(
+                                    '$baseUrl${bookingData!['motor']['image']}',
+                                    height: 180,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (bookingData!['photo_id'] != null ||
+                          bookingData!['ktp_id'] != null)
+                        Card(
+                          elevation: 5,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Foto Identitas',
+                                    style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold)),
+                                const Divider(),
+                                if (bookingData!['photo_id'] != null)
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("Foto KTP & Diri",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 8),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(
+                                          '$baseUrl${bookingData!['photo_id']}',
+                                          height: 180,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                const SizedBox(height: 12),
+                                if (bookingData!['ktp_id'] != null)
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("Foto KTP Tambahan",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 8),
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(
+                                          '$baseUrl${bookingData!['ktp_id']}',
+                                          height: 180,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-
-                      // Jika ada foto KTP
-                      if (bookingData!['ktp_id'] != null)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 10),
-                            Image.network(
-                              '$baseUrl${bookingData!['ktp_id']}',
-                              height: 200,
-                            ),
-                          ],
-                        ),
-
-                      // Tombol aksi sesuai status booking
                       const SizedBox(height: 20),
                       buildActionButton(bookingData!['status']),
                     ],
