@@ -72,47 +72,50 @@ class TransactionDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Pelanggan", style: titleStyle),
-                SizedBox(height: 4),
-                Text(customerName, style: contentStyle),
-                Divider(height: 24),
-                Text("Nama Motor", style: titleStyle),
-                Text("$motorName ($brand, $year)", style: contentStyle),
-                SizedBox(height: 12),
-                Text("Harga per Hari", style: titleStyle),
-                Text(pricePerDay, style: contentStyle),
-                SizedBox(height: 12),
-                Text("Durasi Sewa", style: titleStyle),
-                Text("$durationDays hari", style: contentStyle),
-                Divider(height: 24),
-                Text("Tipe", style: titleStyle),
-                Text(type.toUpperCase(), style: contentStyle),
-                Divider(height: 24),
-                Text("Tanggal Booking", style: titleStyle),
-                Text(bookingDate, style: contentStyle),
-                SizedBox(height: 12),
-                Text("Tanggal Mulai", style: titleStyle),
-                Text(startDate, style: contentStyle),
-                SizedBox(height: 12),
-                Text("Tanggal Selesai", style: titleStyle),
-                Text(endDate, style: contentStyle),
-                Divider(height: 24),
-                Text("Lokasi Penjemputan", style: titleStyle),
-                Text(pickup, style: contentStyle),
-                Divider(height: 24),
-                Text("Total Harga", style: titleStyle),
-                Text(totalPrice,
-                    style: contentStyle.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.blueAccent,
-                    )),
-                SizedBox(height: 30),
+                _buildInfoSection("Pelanggan", customerName),
+                _buildInfoSection("Nama Motor", "$motorName ($brand, $year)"),
+                _buildInfoSection("Harga per Hari", pricePerDay),
+                _buildInfoSection("Durasi Sewa", "$durationDays hari"),
+                _buildInfoSection("Tipe", type.toUpperCase()),
+                _buildInfoSection("Tanggal Booking", bookingDate),
+                _buildInfoSection("Tanggal Mulai", startDate),
+                _buildInfoSection("Tanggal Selesai", endDate),
+                _buildInfoSection("Lokasi Penjemputan", pickup),
+                _buildTotalPriceSection(totalPrice),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoSection(String title, String content) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: titleStyle),
+        SizedBox(height: 4),
+        Text(content, style: contentStyle),
+        Divider(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildTotalPriceSection(String totalPrice) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Total Harga", style: titleStyle),
+        SizedBox(height: 4),
+        Text(totalPrice,
+            style: contentStyle.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: Colors.blueAccent,
+            )),
+        SizedBox(height: 30),
+      ],
     );
   }
 

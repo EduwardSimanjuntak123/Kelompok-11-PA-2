@@ -197,7 +197,7 @@ class _DashboardState extends State<HomepageVendor> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => NotifikasiPagev(notifications: _notifications),
+                builder: (_) => NotifikasiPagev(userId: vendorId!),
               ),
             );
           },

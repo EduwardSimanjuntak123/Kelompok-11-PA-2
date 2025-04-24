@@ -431,7 +431,7 @@ class _HomePageUserState extends State<HomePageUser> {
                         Navigator.of(context)
                             .push<List<Map<String, dynamic>>>(MaterialPageRoute(
                           builder: (context) =>
-                              NotifikasiPage(notifications: _notifications),
+                              NotifikasiPage(userId: _userId!),
                         ))
                             .then((updatedNotifications) {
                           if (updatedNotifications != null) {
