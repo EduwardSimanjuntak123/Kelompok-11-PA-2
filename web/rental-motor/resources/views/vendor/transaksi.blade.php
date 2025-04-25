@@ -46,11 +46,16 @@
                 </div>
                 <div>{!! $transactions->links('layouts.pagination') !!}</div>
             </div>
-        @else
-            <div class="p-6 bg-yellow-100 text-yellow-800 rounded text-center shadow">
-                😕 Tidak ada data transaksi yang tersedia.
+            @else
+            <div class="flex flex-col items-center justify-center text-center p-6 bg-yellow-100 text-yellow-800 rounded shadow">
+                <!-- Icon No Transactions -->
+                <i class="fas fa-file-invoice-dollar fa-3x mb-4"></i>
+        
+                <h2 class="text-xl font-semibold">Belum Ada Transaksi</h2>
+                <p class="mt-2">Tidak ada data transaksi yang tersedia.</p>
             </div>
         @endif
+        
     </div>
 
     <!-- Modal content -->

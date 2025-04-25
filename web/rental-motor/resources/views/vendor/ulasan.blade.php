@@ -85,8 +85,15 @@
                     </div>
                 @endforeach
             @else
-                <p class="text-gray-600 text-center text-lg font-medium">Belum ada ulasan dari pelanggan.</p>
+                <div class="flex flex-col items-center justify-center text-center p-10 bg-white rounded-lg shadow-md">
+                    <!-- Gambar di atas teks -->
+                    <img src="{{ asset('no-reviews.jpg') }}" alt="No Reviews" class="w-40 h-40 object-contain mb-4" />
+
+                    <h2 class="text-2xl font-semibold text-gray-700">Belum Ada Ulasan</h2>
+                    <p class="text-gray-600 mt-2">Pelanggan belum memberikan ulasan untuk saat ini. Sabar ya!</p>
+                </div>
             @endif
+
         </div>
     </div>
     <script>

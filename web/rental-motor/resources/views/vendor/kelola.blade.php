@@ -61,7 +61,13 @@
 
 
         @if (empty($bookings) || count($bookings) == 0)
-            <p class="text-center text-gray-500">Tidak ada pemesanan untuk ditampilkan.</p>
+        <div class="flex flex-col items-center justify-center text-center p-10 bg-white rounded-lg shadow-md">
+            <!-- Icon di atas teks -->
+            <i class="fas fa-calendar-times fa-3x text-gray-400 mb-4"></i>
+    
+            <h2 class="text-2xl font-semibold text-gray-700">Belum Ada Pemesanan</h2>
+            <p class="text-gray-600 mt-2">Tidak ada pemesanan untuk ditampilkan.</p>
+        </div>
         @else
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white shadow-md rounded-lg table-fixed">
