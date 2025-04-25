@@ -4,7 +4,6 @@
 
 @section('content')
     <!-- Greeting -->
-    {{-- @dd($ratingData) --}}
     <div class="bg-white shadow-xl rounded-2xl p-6 mb-6">
         <h2 class="text-2xl font-extrabold text-gray-800 mb-2">
             Selamat Datang, {{ session('user.vendor.shop_name') ?? 'Vendor' }}

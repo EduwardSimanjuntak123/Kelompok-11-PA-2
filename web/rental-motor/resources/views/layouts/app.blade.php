@@ -37,7 +37,10 @@
 
     <!-- Sidebar -->
     <aside class="w-64 bg-blue-600 text-white min-h-screen p-6 space-y-6">
-        <h1 class="text-2xl font-bold">Rental Motor</h1>
+        {{-- Logo --}}
+        <a href="{{ url('/') }}" class="block">
+            <img src="{{ asset('logo1.png') }}" alt="Logo Rental Motor" class="h-12 w-auto mx-auto" />
+        </a>
         <nav>
             <ul class="space-y-4">
                 @php
@@ -72,7 +75,7 @@
                         $profileUrl = '#';
                     }
                 @endphp
-                <li>    
+                <li>
                     <a href="{{ $profileUrl }}"
                         class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs($userRole === 'admin' ? 'admin.profile' : 'vendor.profile') ? 'bg-white text-blue-600' : '' }}">
                         Kelola Profil
