@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Maatwebsite\Excel\Events\AfterSheet;
 
@@ -27,17 +28,22 @@ class TransactionExport implements
     protected $transactions;
     protected $monthName;
     protected $year;
+    protected $totalPendapatan;
 
     public function __construct(array $transactions, string $monthName, int $year)
     {
         $this->transactions = $transactions;
         $this->monthName = $monthName;
         $this->year = $year;
+        // Hitung total pendapatan berdasarkan total_price tiap transaksi
+        $this->totalPendapatan = collect($transactions)->sum(function ($trx) {
+            return $trx['total_price'] ?? 0;
+        });
     }
 
     public function startCell(): string
     {
-        return 'A2'; // Heading mulai dari baris kedua
+        return 'A2'; // Header kolom mulai di baris kedua
     }
 
     public function collection()
@@ -94,7 +100,7 @@ class TransactionExport implements
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
 
-                // Judul di baris 1
+                // Judul laporan di baris 1
                 $sheet->setCellValue('A1', "Laporan Transaksi Bulan {$this->monthName} {$this->year}");
                 $sheet->mergeCells('A1:H1');
                 $sheet->getStyle('A1')->applyFromArray([
@@ -102,17 +108,34 @@ class TransactionExport implements
                     'alignment' => ['horizontal' => 'center'],
                 ]);
 
-                // Auto-size tiap kolom
+                // Auto-size kolom A sampai H
                 foreach (range('A', 'H') as $col) {
                     $sheet->getColumnDimension($col)->setAutoSize(true);
                 }
 
-                // Border seluruh tabel
-                $highestRow = $sheet->getHighestRow();
-                $highestColumn = $sheet->getHighestColumn();
-                $cellRange = "A2:{$highestColumn}{$highestRow}";
+                // Tambahkan baris Total Pendapatan di bawah data, hanya di kolom Total Harga
+                $highestDataRow = $sheet->getHighestRow();
+                $summaryRow = $highestDataRow + 1;
 
-                $sheet->getStyle($cellRange)->applyFromArray([
+                // Label di kolom F (Total Harga) dan nilai di kolom G (difomat Rp)
+                $sheet->setCellValue("F{$summaryRow}", 'Total Pendapatan');
+                $sheet->setCellValue("G{$summaryRow}", 'Rp ' . number_format($this->totalPendapatan, 0, ',', '.'));
+
+                // Format tebal untuk baris summary
+                $sheet->getStyle("F{$summaryRow}:G{$summaryRow}")->getFont()->setBold(true);
+
+                // Beri warna latar belakang pada label total pendapatan untuk membedakan
+                $sheet->getStyle("F{$summaryRow}")->applyFromArray([
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['argb' => 'FFFFCC'], // warna kuning muda
+                    ],
+                ]);
+
+                // Terapkan border untuk seluruh tabel (header, data, dan summary)
+                $highestColumn = $sheet->getHighestColumn();
+                $fullRange = "A2:{$highestColumn}{$summaryRow}";
+                $sheet->getStyle($fullRange)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,

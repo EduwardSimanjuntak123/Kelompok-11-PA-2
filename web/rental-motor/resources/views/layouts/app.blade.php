@@ -105,7 +105,7 @@
                     </li>
                     <li>
                         <a href="{{ route('vendor.ulasan', ['id' => $userId]) }}"
-                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('ulasan') ? 'bg-white text-blue-600' : '' }}">
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.ulasan') ? 'bg-white text-blue-600' : '' }}">
                             Ulasan Pelanggan
                         </a>
                     </li>

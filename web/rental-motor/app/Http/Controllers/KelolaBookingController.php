@@ -59,6 +59,14 @@ class KelolaBookingController extends Controller
         }
         // END: FILTER
 
+        // START: URUTKAN status 'menunggu_konfirmasi' di atas, lalu berdasarkan start_date terbaru
+        $collection = $collection->sortBy(function ($item) {
+            $priority = $item['status'] === 'menunggu_konfirmasi' ? 0 : 1;
+            $startDate = isset($item['start_date']) ? Carbon::parse($item['start_date']) : Carbon::now();
+            return [$priority, -$startDate->timestamp]; // timestamp negatif untuk sort desc
+        })->values();
+        // END: URUTKAN
+
         // START: MANUAL PAGINATION
         $perPage = 5;
         $currentPage = Paginator::resolveCurrentPage('page');
@@ -83,7 +91,6 @@ class KelolaBookingController extends Controller
             'motors' => $motors,
         ]);
     }
-
 
     public function confirm($id)
     {

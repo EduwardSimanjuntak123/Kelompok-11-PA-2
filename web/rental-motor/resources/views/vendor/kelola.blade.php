@@ -19,7 +19,7 @@
             <form method="GET" class="flex items-center gap-2">
                 <label for="status" class="text-sm font-medium">Filter Status:</label>
                 <div class="relative w-60">
-                    
+
                     <select id="status" name="status" onchange="this.form.submit()"
                         class="block w-full pl-10 pr-4 py-2 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <option value="all" {{ request('status', 'all') == 'all' ? 'selected' : '' }}>
@@ -61,13 +61,13 @@
 
 
         @if (empty($bookings) || count($bookings) == 0)
-        <div class="flex flex-col items-center justify-center text-center p-10 bg-white rounded-lg shadow-md">
-            <!-- Icon di atas teks -->
-            <i class="fas fa-calendar-times fa-3x text-gray-400 mb-4"></i>
-    
-            <h2 class="text-2xl font-semibold text-gray-700">Belum Ada Pemesanan</h2>
-            <p class="text-gray-600 mt-2">Tidak ada pemesanan untuk ditampilkan.</p>
-        </div>
+            <div class="flex flex-col items-center justify-center text-center p-10 bg-white rounded-lg shadow-md">
+                <!-- Icon di atas teks -->
+                <i class="fas fa-calendar-times fa-3x text-gray-400 mb-4"></i>
+
+                <h2 class="text-2xl font-semibold text-gray-700">Belum Ada Pemesanan</h2>
+                <p class="text-gray-600 mt-2">Tidak ada pemesanan untuk ditampilkan.</p>
+            </div>
         @else
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white shadow-md rounded-lg table-fixed">
@@ -449,11 +449,13 @@
                     day: 'numeric'
                 });
 
-                const formattedTime = date.toLocaleTimeString('id-ID', {
+                let timeParts = date.toLocaleTimeString('id-ID', {
                     hour: '2-digit',
                     minute: '2-digit',
-                    second: '2-digit'
-                });
+                    hour12: false
+                }).replace(':', '.'); // ganti ':' jadi '.'
+
+                const formattedTime = `${timeParts} WIB`;
 
                 return `${formattedDate} / ${formattedTime}`;
             }
