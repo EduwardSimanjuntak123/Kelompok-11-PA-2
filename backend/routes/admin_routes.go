@@ -25,7 +25,7 @@ func AdminRoutes(router *gin.Engine) {
 			admin.POST("/location-recommendations", controllers.CreateLocationRecommendation)
 
 			admin.PUT("/location-recommendations/:id", controllers.UpdateLocationRecommendation)
-			admin.DELETE("admin/location-recommendations/:id", controllers.DeleteLocationRecommendation)
+			admin.DELETE("/location-recommendations/:id", controllers.DeleteLocationRecommendation)
 		}
 	}
 }
