@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/services/autentifikasi/reg_vendor_api.dart';
 import 'package:flutter_rentalmotor/user/registrasi/otp_verification.dart';
-
+import 'package:flutter_rentalmotor/signin.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({Key? key}) : super(key: key);
@@ -21,7 +21,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _shopNameController = TextEditingController();
   final TextEditingController _shopAddressController = TextEditingController();
-  final TextEditingController _shopDescriptionController = TextEditingController();
+  final TextEditingController _shopDescriptionController =
+      TextEditingController();
 
   int? _selectedKecamatanId;
   List<Map<String, dynamic>> _kecamatanList = [];
@@ -54,54 +55,60 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-Future<void> _handleRegister() async {
-  if (!_formKey.currentState!.validate() || _profileImage == null || _selectedKecamatanId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Lengkapi semua data dan pilih gambar profil.')),
-    );
-    return;
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate() ||
+        _profileImage == null ||
+        _selectedKecamatanId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Lengkapi semua data dan pilih gambar profil.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final data = {
+      'name': _nameController.text.trim(),
+      'email': _emailController.text.trim(),
+      'password': _passwordController.text.trim(),
+      'phone': _phoneController.text.trim(),
+      'shop_name': _shopNameController.text.trim(),
+      'shop_address': _shopAddressController.text.trim(),
+      'shop_description': _shopDescriptionController.text.trim(),
+      'id_kecamatan': _selectedKecamatanId.toString(),
+    };
+
+    final errorMessage = await registerVendor(data, _profileImage!);
+
+    setState(() => _isLoading = false);
+
+    if (errorMessage == 'success') {
+      final email = _emailController.text.trim();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OTPVerificationScreen(email: email),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
+    }
   }
-
-  setState(() => _isLoading = true);
-
-  final data = {
-    'name': _nameController.text.trim(),
-    'email': _emailController.text.trim(),
-    'password': _passwordController.text.trim(),
-    'phone': _phoneController.text.trim(),
-    'shop_name': _shopNameController.text.trim(),
-    'shop_address': _shopAddressController.text.trim(),
-    'shop_description': _shopDescriptionController.text.trim(),
-    'id_kecamatan': _selectedKecamatanId.toString(),
-  };
-
-  final errorMessage = await registerVendor(data, _profileImage!);
-
-  setState(() => _isLoading = false);
-
-  if (errorMessage == 'success') {
-  // Ambil email dari controller dan arahkan ke halaman OTP
-  final email = _emailController.text.trim();
-  Navigator.pushReplacement(
-    context,
-    MaterialPageRoute(
-      builder: (_) => OTPVerificationScreen(email: email),
-    ),
-  );
-} else {
-    // Menampilkan pesan error sesuai respons dari backend
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(errorMessage)),
-    );
-  }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Daftar Vendor'),
         backgroundColor: const Color(0xFF1A5276),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Daftar Vendor',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -111,9 +118,12 @@ Future<void> _handleRegister() async {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTextField(_nameController, 'Nama Lengkap'),
-              _buildTextField(_emailController, 'Email', keyboardType: TextInputType.emailAddress),
-              _buildTextField(_passwordController, 'Password', obscureText: true),
-              _buildTextField(_phoneController, 'No. Telepon', keyboardType: TextInputType.phone),
+              _buildTextField(_emailController, 'Email',
+                  keyboardType: TextInputType.emailAddress),
+              _buildTextField(_passwordController, 'Password',
+                  obscureText: true),
+              _buildTextField(_phoneController, 'No. Telepon',
+                  keyboardType: TextInputType.phone),
               _buildTextField(_shopNameController, 'Nama Toko'),
               _buildTextField(_shopAddressController, 'Alamat Toko'),
               _buildTextField(_shopDescriptionController, 'Deskripsi Toko'),
@@ -130,7 +140,8 @@ Future<void> _handleRegister() async {
                     child: Text(kecamatan['name']),
                   );
                 }).toList(),
-                onChanged: (value) => setState(() => _selectedKecamatanId = value),
+                onChanged: (value) =>
+                    setState(() => _selectedKecamatanId = value),
                 validator: (value) => value == null ? 'Pilih kecamatan' : null,
               ),
               const SizedBox(height: 16),
@@ -140,9 +151,12 @@ Future<void> _handleRegister() async {
                   child: CircleAvatar(
                     radius: 50,
                     backgroundColor: Colors.grey.shade300,
-                    backgroundImage: _profileImage != null ? FileImage(File(_profileImage!.path)) : null,
+                    backgroundImage: _profileImage != null
+                        ? FileImage(File(_profileImage!.path))
+                        : null,
                     child: _profileImage == null
-                        ? const Icon(Icons.camera_alt, size: 40, color: Colors.white)
+                        ? const Icon(Icons.camera_alt,
+                            size: 40, color: Colors.white)
                         : null,
                   ),
                 ),
@@ -155,12 +169,49 @@ Future<void> _handleRegister() async {
                   onPressed: _isLoading ? null : _handleRegister,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A5276),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Daftar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      : const Text(
+                          'Daftar',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Sudah punya akun? ",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LoginScreen(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Sign In",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -170,7 +221,8 @@ Future<void> _handleRegister() async {
   }
 
   Widget _buildTextField(TextEditingController controller, String label,
-      {bool obscureText = false, TextInputType keyboardType = TextInputType.text}) {
+      {bool obscureText = false,
+      TextInputType keyboardType = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(
@@ -181,7 +233,8 @@ Future<void> _handleRegister() async {
           labelText: label,
           border: const OutlineInputBorder(),
         ),
-        validator: (value) => value == null || value.isEmpty ? 'Tidak boleh kosong' : null,
+        validator: (value) =>
+            value == null || value.isEmpty ? 'Tidak boleh kosong' : null,
       ),
     );
   }

@@ -130,6 +130,73 @@ class _PesananPageState extends State<PesananPage> {
     }
   }
 
+  Future<void> showExtendRequestDialog(int bookingId) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(Duration(days: 1)),
+      firstDate: DateTime.now().add(Duration(days: 1)),
+      lastDate: DateTime.now().add(Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(primary: primaryBlue),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate != null) {
+      final success = await requestExtension(bookingId, pickedDate);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Permintaan perpanjangan berhasil dikirim."),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<bool> requestExtension(int bookingId, DateTime newEndDate) async {
+    try {
+      final response = await BatalkanPesananAPI.postRequestExtend(
+        bookingId,
+        newEndDate.toIso8601String().split('T')[0],
+      );
+
+      if (response['success'] == true) {
+        return true;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(response['message'] ?? 'Gagal mengajukan perpanjangan.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      return false;
+    }
+  }
+
   Future<void> cancelBooking(int bookingId) async {
     setState(() => _isCancelling = true);
 
@@ -450,13 +517,24 @@ class _PesananPageState extends State<PesananPage> {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 children: [
+                  if (status == 'pending') ...[
+                    buildButton(
+                      "Batalkan Pesanan",
+                      Colors.red,
+                      Colors.white,
+                      () {
+                        showCancelConfirmation(booking['id']);
+                      },
+                      Icons.cancel,
+                    ),
+                    SizedBox(height: 8),
+                  ],
                   if (status == 'completed' && !_hasReviewed) ...[
                     buildButton(
                       "Berikan Ulasan",
                       Colors.blue,
                       Colors.white,
                       () {
-                        // Show review dialog and post review
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -467,8 +545,8 @@ class _PesananPageState extends State<PesananPage> {
                       },
                       Icons.star,
                     ),
+                    SizedBox(height: 8),
                   ],
-                  // Add Chat Button
                   ChatVendorButton(
                     vendorId: booking['vendor_Id'] ?? 0,
                     vendorData: {
@@ -665,7 +743,8 @@ class ChatVendorButton extends StatelessWidget {
       debugPrint("Vendor ID: $vendorId");
       debugPrint("Vendor Data: $vendorData");
 
-      final chatRoom = await ChatService.getOrCreateChatRoom(vendorId: vendorId);
+      final chatRoom =
+          await ChatService.getOrCreateChatRoom(vendorId: vendorId);
 
       if (chatRoom != null) {
         final prefs = await SharedPreferences.getInstance();
@@ -675,7 +754,8 @@ class ChatVendorButton extends StatelessWidget {
         debugPrint("Customer ID: $customerId");
 
         if (customerId != null) {
-          final receiverId = vendorData?['user_id'] ?? 0; // Menggunakan vendorData untuk receiverId
+          final receiverId = vendorData?['user_id'] ??
+              0; // Menggunakan vendorData untuk receiverId
 
           // Debug output untuk receiverId
           debugPrint("Receiver ID: $receiverId");
