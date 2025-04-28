@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/user/pesanan/pesanan.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 import 'dart:convert';
 
@@ -41,7 +42,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
 
       // Mengirim permintaan HTTP dengan token di header Authorization
       final response = await http.get(
-        Uri.parse('http://192.168.24.159:8080/customer/bookings'),
+        Uri.parse('${ApiConfig.baseUrl}/customer/bookings'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -64,7 +65,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
 
   Future<void> _deleteNotification(int id) async {
     try {
-      final url = Uri.parse('http://192.168.24.159:8080/notifications/$id');
+      final url = Uri.parse('${ApiConfig.baseUrl}/notifications/$id');
       final response = await http.delete(url);
 
       if (response.statusCode == 200) {
@@ -86,7 +87,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
     if (imagePath != null && imagePath.isNotEmpty) {
       return imagePath.startsWith('http')
           ? imagePath
-          : 'http://192.168.24.159:8080$imagePath';
+          : 'http:// 192.168.87.159:8080$imagePath';
     }
     return null;
   }
@@ -96,7 +97,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
     debugPrint("User ID from parameter: $userId");
 
     final response = await http.get(
-      Uri.parse('http://192.168.24.159:8080/notifications?user_id=$userId'),
+      Uri.parse('${ApiConfig.baseUrl}/notifications?user_id=$userId'),
     );
 
     if (response.statusCode == 200) {
@@ -118,7 +119,7 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
   Future<void> _updateNotificationStatus(int id, String status) async {
     try {
       final url = Uri.parse(
-          'http://192.168.24.159:8080/notifications/$id/status?status=$status');
+          '${ApiConfig.baseUrl}/notifications/$id/status?status=$status');
       final response = await http.put(url);
 
       if (response.statusCode == 200) {

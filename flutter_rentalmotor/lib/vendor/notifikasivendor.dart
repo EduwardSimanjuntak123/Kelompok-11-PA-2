@@ -48,19 +48,50 @@ class NotifikasiPagev extends StatefulWidget {
   State<NotifikasiPagev> createState() => _NotifikasiPagevState();
 }
 
-class _NotifikasiPagevState extends State<NotifikasiPagev> {
+class _NotifikasiPagevState extends State<NotifikasiPagev>
+    with SingleTickerProviderStateMixin {
   List<AppNotification> _notifications = [];
   bool _isLoading = true;
   List<Map<String, dynamic>> _bookings = [];
   int _vendorId = 0;
   final storage = FlutterSecureStorage();
-  final String baseUrl = 'http://192.168.24.159:8080';
+  final String baseUrl = 'http://192.168.151.159:8080';
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  // Theme colors
+  final Color primaryColor = const Color(0xFF1A567D); // Modern indigo
+  final Color secondaryColor = const Color(0xFF00BFA5); // Modern teal
+  final Color accentColor = const Color(0xFFFF6D00); // Modern orange
+  final Color backgroundColor = const Color(0xFFF5F7FA); // Light gray
+  final Color cardColor = Colors.white;
+  final Color textPrimaryColor = const Color(0xFF263238); // Dark gray
+  final Color textSecondaryColor = const Color(0xFF607D8B); // Blue gray
+  final Color successColor = const Color(0xFF4CAF50); // Success green
+  final Color warningColor = const Color(0xFFFFC107); // Warning amber
+  final Color dangerColor = const Color(0xFFF44336); // Danger red
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
     debugPrint('NotifikasiPagev initialized with userId: ${widget.userId}');
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -69,6 +100,7 @@ class _NotifikasiPagevState extends State<NotifikasiPagev> {
       await _loadBookings();
       await _loadNotifications();
       debugPrint('Initial data loaded successfully');
+      _animationController.forward();
     } catch (e) {
       debugPrint('Error loading initial data: $e');
     }
@@ -248,16 +280,36 @@ class _NotifikasiPagevState extends State<NotifikasiPagev> {
   Widget build(BuildContext context) {
     debugPrint('Building NotifikasiPagev widget');
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text(
           'Notifikasi',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.white),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primaryColor, primaryColor.withOpacity(0.8)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+        ),
         actions: [
           if (_notifications.isNotEmpty)
             IconButton(
@@ -266,15 +318,44 @@ class _NotifikasiPagevState extends State<NotifikasiPagev> {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Hapus Semua Notifikasi'),
-                    content: const Text(
-                        'Apakah Anda yakin ingin menghapus semua notifikasi?'),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    title: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: dangerColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.delete_forever, color: dangerColor),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Hapus Semua Notifikasi',
+                          style: TextStyle(
+                            color: textPrimaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    content: Text(
+                      'Apakah Anda yakin ingin menghapus semua notifikasi?',
+                      style: TextStyle(
+                        color: textSecondaryColor,
+                        fontSize: 16,
+                      ),
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
+                        style: TextButton.styleFrom(
+                          foregroundColor: textSecondaryColor,
+                        ),
                         child: const Text('Batal'),
                       ),
-                      TextButton(
+                      ElevatedButton(
                         onPressed: () async {
                           for (var notif in _notifications) {
                             await _deleteNotification(notif.id);
@@ -282,8 +363,22 @@ class _NotifikasiPagevState extends State<NotifikasiPagev> {
                           setState(() => _notifications.clear());
                           Navigator.pop(context);
                         },
-                        child: const Text('Hapus',
-                            style: TextStyle(color: Colors.red)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: dangerColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete, size: 18),
+                            const SizedBox(width: 8),
+                            const Text('Hapus Semua'),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -292,69 +387,154 @@ class _NotifikasiPagevState extends State<NotifikasiPagev> {
             ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _notifications.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.notifications_off_outlined,
-                          size: 80, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Belum ada notifikasi',
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: () async {
-                    debugPrint('Manual refresh triggered');
-                    await _loadInitialData();
-                  },
-                  child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _notifications.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final notification = _notifications[index];
-                      return Dismissible(
-                        key: Key(notification.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
+      body: Stack(
+        children: [
+          // Background gradient at the top
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [primaryColor, primaryColor.withOpacity(0.8)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+
+          // Main content
+          SafeArea(
+            child: _isLoading
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            strokeWidth: 3,
+                          ),
                         ),
-                        onDismissed: (_) =>
-                            _deleteNotification(notification.id),
-                        child: _buildNotificationItem(context, notification),
-                      );
-                    },
-                  ),
-                ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Memuat notifikasi...',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : _notifications.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.notifications_off_outlined,
+                                size: 80,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              'Belum ada notifikasi',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Notifikasi akan muncul di sini',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    : FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            debugPrint('Manual refresh triggered');
+                            await _loadInitialData();
+                          },
+                          child: ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                            itemCount: _notifications.length,
+                            itemBuilder: (context, index) {
+                              final notification = _notifications[index];
+                              return Dismissible(
+                                key: Key(notification.id),
+                                direction: DismissDirection.endToStart,
+                                background: Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  decoration: BoxDecoration(
+                                    color: dangerColor,
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  alignment: Alignment.centerRight,
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: const Icon(Icons.delete,
+                                      color: Colors.white),
+                                ),
+                                onDismissed: (_) =>
+                                    _deleteNotification(notification.id),
+                                child: _buildNotificationCard(
+                                    context, notification),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           debugPrint('Manual refresh button pressed');
           await _loadInitialData();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Data refreshed')),
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.refresh, color: Colors.white),
+                  SizedBox(width: 10),
+                  Text('Notifikasi diperbarui'),
+                ],
+              ),
+              backgroundColor: successColor,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              margin: EdgeInsets.all(10),
+            ),
           );
         },
+        backgroundColor: primaryColor,
         child: const Icon(Icons.refresh),
         tooltip: 'Refresh Data',
+        elevation: 4,
       ),
     );
   }
 
-  Widget _buildNotificationItem(
+  Widget _buildNotificationCard(
       BuildContext context, AppNotification notification) {
     String title = 'Notifikasi';
     String message = notification.message;
@@ -367,26 +547,32 @@ class _NotifikasiPagevState extends State<NotifikasiPagev> {
       // Cari booking yang cocok berdasarkan nama pelanggan dan motor
       try {
         // Ekstrak nama pelanggan dan nama motor dari pesan
-        final customerNameMatch = RegExp(r'dari ([^untuk]+)').firstMatch(message);
-        final motorNameMatch = RegExp(r'untuk motor ([^pada]+)').firstMatch(message);
+        final customerNameMatch =
+            RegExp(r'dari ([^untuk]+)').firstMatch(message);
+        final motorNameMatch =
+            RegExp(r'untuk motor ([^pada]+)').firstMatch(message);
 
         if (customerNameMatch != null && motorNameMatch != null) {
           final customerName = customerNameMatch.group(1)?.trim();
           final motorName = motorNameMatch.group(1)?.trim();
 
-          debugPrint('Mencari booking dengan customer: $customerName, motor: $motorName');
+          debugPrint(
+              'Mencari booking dengan customer: $customerName, motor: $motorName');
 
           // Cari booking yang cocok
           final matchingBooking = _bookings.firstWhere(
             (b) =>
-                b['customer_name']?.toString().contains(customerName ?? '') == true &&
-                b['motor']?['name']?.toString().contains(motorName ?? '') == true,
+                b['customer_name']?.toString().contains(customerName ?? '') ==
+                    true &&
+                b['motor']?['name']?.toString().contains(motorName ?? '') ==
+                    true,
             orElse: () => {},
           );
 
           if (matchingBooking.isNotEmpty) {
             bookingId = matchingBooking['id'];
-            debugPrint('Menemukan booking ID: $bookingId dari pesan notifikasi');
+            debugPrint(
+                'Menemukan booking ID: $bookingId dari pesan notifikasi');
           }
         }
       } catch (e) {
@@ -395,142 +581,236 @@ class _NotifikasiPagevState extends State<NotifikasiPagev> {
     }
 
     final formattedDate =
-        DateFormat('dd-MM-yyyy HH:mm').format(notification.timestamp);
+        DateFormat('dd MMM yyyy • HH:mm').format(notification.timestamp);
 
-    return InkWell(
-      onTap: () async {
-        try {
-          await _markAsRead(notification);
-          debugPrint('Notifikasi ditekan: ${notification.id}');
-          debugPrint('Pesan: ${notification.message}');
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: notification.read ? cardColor : cardColor.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: notification.read
+            ? Border.all(color: Colors.grey.shade200)
+            : Border.all(color: primaryColor.withOpacity(0.5), width: 2),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () async {
+            try {
+              await _markAsRead(notification);
+              debugPrint('Notifikasi ditekan: ${notification.id}');
+              debugPrint('Pesan: ${notification.message}');
 
-          if (bookingId != null) {
-            debugPrint('Redirect ke detail pesanan dengan ID: $bookingId');
+              if (bookingId != null) {
+                debugPrint('Redirect ke detail pesanan dengan ID: $bookingId');
 
-            // Force reload bookings to ensure we have the latest data
-            await _loadBookings();
+                // Force reload bookings to ensure we have the latest data
+                await _loadBookings();
 
-            final booking = _bookings.firstWhere(
-              (b) => b['id'] == bookingId,
-              orElse: () => {},
-            );
-
-            if (booking.isNotEmpty) {
-              debugPrint('Booking ditemukan, data: ${json.encode(booking)}');
-              // Use Future.delayed to ensure the UI has time to update
-              Future.delayed(Duration.zero, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        DetailBookingPage(bookingId: booking['id']),
-                  ),
+                final booking = _bookings.firstWhere(
+                  (b) => b['id'] == bookingId,
+                  orElse: () => {},
                 );
-              });
-            } else {
-              debugPrint(
-                  'Booking dengan ID $bookingId tidak ditemukan dalam _bookings');
-              debugPrint(
-                  'Semua booking IDs: ${_bookings.map((b) => b['id']).toList()}');
 
-              // Try to navigate anyway with just the ID
-              Future.delayed(Duration.zero, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        DetailBookingPage(bookingId: bookingId!),
-                  ),
-                );
-              });
-            }
-          } else {
-            debugPrint('Booking ID tidak ditemukan di pesan notifikasi');
-          }
-        } catch (e) {
-          debugPrint('Error handling notification tap: $e');
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: notification.read ? Colors.white : Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.blue.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: bookingId != null &&
-                      _getMotorImageByBookingId(bookingId) != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        _getMotorImageByBookingId(bookingId)!,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          debugPrint('Error loading image: $error');
-                          return Icon(
-                            Icons.motorcycle,
-                            color: Colors.blue.shade700,
-                            size: 24,
-                          );
-                        },
+                if (booking.isNotEmpty) {
+                  debugPrint(
+                      'Booking ditemukan, data: ${json.encode(booking)}');
+                  // Use Future.delayed to ensure the UI has time to update
+                  Future.delayed(Duration.zero, () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            DetailBookingPage(bookingId: booking['id']),
                       ),
-                    )
-                  : Icon(
-                      title == 'Pesanan Masuk'
-                          ? Icons.motorcycle
-                          : Icons.notifications,
-                      color: Colors.blue.shade700,
-                      size: 24,
+                    );
+                  });
+                } else {
+                  debugPrint(
+                      'Booking dengan ID $bookingId tidak ditemukan dalam _bookings');
+                  debugPrint(
+                      'Semua booking IDs: ${_bookings.map((b) => b['id']).toList()}');
+
+                  // Try to navigate anyway with just the ID
+                  Future.delayed(Duration.zero, () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            DetailBookingPage(bookingId: bookingId!),
+                      ),
+                    );
+                  });
+                }
+              } else {
+                debugPrint('Booking ID tidak ditemukan di pesan notifikasi');
+              }
+            } catch (e) {
+              debugPrint('Error handling notification tap: $e');
+            }
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Notification Icon or Image
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: bookingId != null
+                        ? primaryColor.withOpacity(0.1)
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: bookingId != null
+                          ? primaryColor.withOpacity(0.3)
+                          : Colors.grey.shade300,
                     ),
+                  ),
+                  child: bookingId != null &&
+                          _getMotorImageByBookingId(bookingId) != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            _getMotorImageByBookingId(bookingId)!,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes !=
+                                          null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      primaryColor),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              debugPrint('Error loading image: $error');
+                              return Icon(
+                                Icons.motorcycle,
+                                color: primaryColor,
+                                size: 30,
+                              );
+                            },
+                          ),
+                        )
+                      : Icon(
+                          title == 'Pesanan Masuk'
+                              ? Icons.motorcycle
+                              : Icons.notifications,
+                          color: title == 'Pesanan Masuk'
+                              ? primaryColor
+                              : accentColor,
+                          size: 30,
+                        ),
+                ),
+                const SizedBox(width: 16),
+
+                // Notification Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title and Time
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: notification.read
+                                    ? textPrimaryColor
+                                    : primaryColor,
+                              ),
+                            ),
+                          ),
+                          if (!notification.read)
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+
+                      // Message
+                      Text(
+                        message,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: textPrimaryColor.withOpacity(0.8),
+                          height: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Time and Action Hint
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            formattedDate,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textSecondaryColor,
+                            ),
+                          ),
+                          if (bookingId != null)
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: primaryColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.visibility,
+                                      size: 12, color: primaryColor),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Lihat Detail',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: primaryColor,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(message,
-                      style:
-                          const TextStyle(fontSize: 14, color: Colors.black87)),
-                  const SizedBox(height: 6),
-                  Text(formattedDate,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-          ],
+          ),
         ),
       ),
     );

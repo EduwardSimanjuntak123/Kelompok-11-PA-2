@@ -22,6 +22,10 @@ func AdminRoutes(router *gin.Engine) {
 			admin.PUT("/activate-vendor/:id", controllers.ActivateVendor)
 			admin.PUT("/deactivate-vendor/:id", controllers.DeactivateVendor)
 			admin.GET("/CustomerandVendor", controllers.GetAllCustomersAndVendors)
+			admin.POST("/location-recommendations", controllers.CreateLocationRecommendation)
+
+			admin.PUT("/location-recommendations/:id", controllers.UpdateLocationRecommendation)
+			admin.DELETE("admin/location-recommendations/:id", controllers.DeleteLocationRecommendation)
 		}
 	}
 }

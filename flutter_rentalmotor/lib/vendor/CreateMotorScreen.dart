@@ -90,7 +90,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
       try {
         _formKey.currentState!.save();
 
-        final uri = Uri.parse("http://192.168.6.159:8080/motor/vendor/");
+        final uri = Uri.parse("http://192.168.87.159:8080/motor/vendor/");
         final request = http.MultipartRequest('POST', uri);
 
         // Ambil token dari secure storage

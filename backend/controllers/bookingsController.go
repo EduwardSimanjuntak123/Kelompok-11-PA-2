@@ -479,7 +479,7 @@ func GetBookingByIDForVendor(c *gin.Context) {
 
 	// Ambil booking berdasarkan ID
 	var booking models.Booking
-	if err := config.DB.Preload("Motor").Preload("Customer").Where("id = ?", id).First(&booking).Error; err != nil {
+	if err := config.DB.Preload("Motor").Preload("Customer").Preload("Vendor").Where("id = ?", id).First(&booking).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
 		return
 	}
@@ -497,67 +497,72 @@ func GetBookingByIDForVendor(c *gin.Context) {
 
 
 
-func GetCustomerBookings(c *gin.Context) {
-	// Ambil user_id dari token JWT
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Customer tidak terautentikasi"})
-		return
-	}
+	func GetCustomerBookings(c *gin.Context) {
+		// Ambil user_id dari token JWT
+		userID, exists := c.Get("user_id")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Customer tidak terautentikasi"})
+			return
+		}
 
-	var bookings []models.Booking
-	// Query booking berdasarkan customer_id dan preload data Motor
-	if err := config.DB.
-		Where("customer_id = ?", userID).
-		Preload("Motor", "id IS NOT NULL AND name IS NOT NULL").
-		Find(&bookings).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data booking"})
-		return
-	}
+		var bookings []models.Booking
+		// Query booking berdasarkan customer_id dan preload data Motor
+		if err := config.DB.
+			Where("customer_id = ?", userID).
+			Preload("Motor", "id IS NOT NULL AND name IS NOT NULL").
+			Preload("Vendor").
+			Find(&bookings).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data booking"})
+			return
+		}
 
-	// // Base URL untuk gambar
-	// baseURL := "http://localhost:8080"
-
-	// Format respons
-	var response []map[string]interface{}
-	for _, booking := range bookings {
-		motorData := map[string]interface{}{}
-		if booking.Motor != nil {
-			motorData = map[string]interface{}{
-				"id":            booking.Motor.ID,
-				"name":          booking.Motor.Name,
-				"brand":         booking.Motor.Brand,
-				"year":          booking.Motor.Year,
-				"price_per_day": booking.Motor.Price,
-				"total_price":   booking.Motor.Price * float64(booking.GetDurationDays()),
-				"image": func() string {
-					if booking.Motor.Image != "" {
-						if strings.HasPrefix(booking.Motor.Image, "http") {
+		// Format respons
+		var response []map[string]interface{}
+		for _, booking := range bookings {
+			motorData := map[string]interface{}{}
+			if booking.Motor != nil {
+				motorData = map[string]interface{}{
+					"id":            booking.Motor.ID,
+					"name":          booking.Motor.Name,
+					"brand":         booking.Motor.Brand,
+					"year":          booking.Motor.Year,
+					"price_per_day": booking.Motor.Price,
+					"total_price":   booking.Motor.Price * float64(booking.GetDurationDays()),
+					"image": func() string {
+						if booking.Motor.Image != "" {
+							if strings.HasPrefix(booking.Motor.Image, "http") {
+								return booking.Motor.Image
+							}
 							return booking.Motor.Image
 						}
-						return booking.Motor.Image
-					}
-					return "https://via.placeholder.com/150"
-				}(),
+						return "https://via.placeholder.com/150"
+					}(),
+				}
 			}
+
+			bookingData := map[string]interface{}{
+				"id":              booking.ID,
+				"vendor_Id":booking.Vendor.UserID,
+				"booking_date":    booking.BookingDate,
+				"start_date":      booking.StartDate,
+				"end_date":        booking.EndDate,
+				"status":          booking.Status,
+				"dropoff_location":booking.DropoffLocation,
+				"pickup_location": booking.PickupLocation,
+				"motor":           motorData,
+				"shop_name": func() string {
+    if booking.Vendor != nil {
+        return booking.Vendor.ShopName
+    }
+    return "Unknown Vendor" // fallback value
+}(),
+			}
+
+			response = append(response, bookingData)
 		}
 
-		bookingData := map[string]interface{}{
-			"id":              booking.ID,
-			"booking_date":    booking.BookingDate,
-			"start_date":      booking.StartDate,
-			"end_date":        booking.EndDate,
-			"status":          booking.Status,
-			"dropoff_location":booking.DropoffLocation,
-			"pickup_location": booking.PickupLocation,
-			"motor":           motorData,
-		}
-
-		response = append(response, bookingData)
+		c.JSON(http.StatusOK, response)
 	}
-
-	c.JSON(http.StatusOK, response)
-}
 
 func CreateManualBooking(c *gin.Context) {
 	// Ambil data teks dari form-data

@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
+
+import 'package:table_calendar/table_calendar.dart';
+import 'dart:convert';
 import 'package:flutter_rentalmotor/services/customer/create_booking_api.dart';
 
 class SewaMotorPage extends StatefulWidget {
@@ -21,10 +26,16 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   TextEditingController _durationController = TextEditingController();
   TextEditingController _pickupLocationController = TextEditingController();
   TextEditingController _dropoffLocationController = TextEditingController();
-
+  List<DateTime> _disabledDates = [];
   File? _photoId;
   File? _ktpId;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBookedDates(); // Tambahkan ini
+  }
 
   // Theme colors - Only blue theme
   final Color primaryBlue = Color(0xFF2C567E);
@@ -43,38 +54,169 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     super.dispose();
   }
 
-  void _selectDate(BuildContext context) async {
-    DateTime? pickedDate = await showDatePicker(
+  Future<void> _fetchBookedDates() async {
+    try {
+      final motorId = widget.motor['id'];
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/bookings/motor/$motorId'),
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> bookings = json.decode(response.body);
+
+        List<DateTime> disabled = [];
+
+        for (var booking in bookings) {
+          DateTime startDate = DateTime.parse(booking['start_date']).toLocal();
+          DateTime endDate = DateTime.parse(booking['end_date']).toLocal();
+
+          for (int i = 0; i <= endDate.difference(startDate).inDays; i++) {
+            disabled.add(startDate.add(Duration(days: i)));
+          }
+        }
+
+        setState(() {
+          _disabledDates = disabled;
+        });
+      }
+    } catch (e) {
+      print('❗ Error fetching booked dates: $e');
+    }
+  }
+
+  DateTime _getInitialAvailableDate() {
+    DateTime today = DateTime.now();
+
+    // Cek mulai dari hari ini sampai ke depan
+    for (int i = 0; i < 365; i++) {
+      DateTime checkDate = today.add(Duration(days: i));
+      bool isDisabled = _disabledDates.any((d) =>
+          d.year == checkDate.year &&
+          d.month == checkDate.month &&
+          d.day == checkDate.day);
+      if (!isDisabled) {
+        return checkDate;
+      }
+    }
+    // Kalau semua tanggal ke-disable (tidak mungkin sih), fallback
+    return today;
+  }
+
+  void _selectDate(BuildContext context) {
+    showDialog(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2101),
-      helpText: 'Pilih Tanggal',
-      locale: const Locale('id', 'ID'),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryBlue,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: primaryBlue,
-              ),
+      builder: (context) {
+        DateTime selectedDay = _getInitialAvailableDate();
+
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text('Pilih Tanggal',
+              style:
+                  TextStyle(color: primaryBlue, fontWeight: FontWeight.bold)),
+          content: Container(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TableCalendar(
+                  locale: 'id_ID',
+                  firstDay: DateTime.now(),
+                  lastDay: DateTime.now().add(Duration(days: 365)),
+                  focusedDay: selectedDay,
+                  selectedDayPredicate: (day) {
+                    return isSameDay(selectedDay, day);
+                  },
+                  availableCalendarFormats: const {
+                    CalendarFormat.month: 'Bulan',
+                  },
+                  onDaySelected: (selected, focused) {
+                    bool isDisabled = _disabledDates.any((d) =>
+                        d.year == selected.year &&
+                        d.month == selected.month &&
+                        d.day == selected.day);
+
+                    if (!isDisabled) {
+                      setState(() {
+                        _dateController.text =
+                            DateFormat('dd/MM/yyyy').format(selected);
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
+                  calendarBuilders: CalendarBuilders(
+                    defaultBuilder: (context, day, focusedDay) {
+                      bool isDisabled = _disabledDates.any((d) =>
+                          d.year == day.year &&
+                          d.month == day.month &&
+                          d.day == day.day);
+
+                      if (isDisabled) {
+                        return Center(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Text(
+                                '${day.day}',
+                                style: TextStyle(
+                                    color: Colors.redAccent,
+                                    decoration: TextDecoration.lineThrough),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return null;
+                    },
+                    todayBuilder: (context, day, focusedDay) {
+                      bool isDisabled = _disabledDates.any((d) =>
+                          d.year == day.year &&
+                          d.month == day.month &&
+                          d.day == day.day);
+
+                      if (isDisabled) {
+                        return Center(
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Text(
+                                '${day.day}',
+                                style: TextStyle(
+                                    color: Colors.redAccent,
+                                    decoration: TextDecoration.lineThrough),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return Container(
+                        margin: const EdgeInsets.all(6.0),
+                        decoration: BoxDecoration(
+                          color: primaryBlue,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${day.day}',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "* Tanggal dicoret merah berarti sudah dibooking",
+                  style: TextStyle(color: Colors.redAccent, fontSize: 12),
+                ),
+              ],
             ),
           ),
-          child: child!,
         );
       },
     );
-
-    if (pickedDate != null) {
-      setState(() {
-        _dateController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
-      });
-    }
   }
 
   Future<void> _selectTime(BuildContext context) async {
@@ -142,6 +284,63 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     }
   }
 
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.error, color: Colors.red),
+            SizedBox(width: 10),
+            Text('Gagal', style: TextStyle(color: Colors.red)),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Tutup', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessDialog(String message, dynamic motorData, bool isGuest) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green),
+            SizedBox(width: 10),
+            Text('Berhasil', style: TextStyle(color: Colors.green)),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Tutup dialog
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DetailMotorPage(
+                    motorId: motorData["id"],
+                    isGuest: isGuest,
+                  ),
+                ),
+              );
+            },
+            child: Text('Lanjut', style: TextStyle(color: Colors.green)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitRental() async {
     if (_dateController.text.isEmpty ||
         _timeController.text.isEmpty ||
@@ -149,14 +348,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         _pickupLocationController.text.isEmpty ||
         _photoId == null ||
         _ktpId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Harap isi semua kolom yang bertanda *'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+      _showErrorDialog('Harap isi semua kolom yang bertanda *');
       return;
     }
 
@@ -173,7 +365,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     final ktpId = _ktpId!;
 
     try {
-      bool success = await BookingService.createBooking(
+      final result = await BookingService.createBooking(
         context: context,
         motorId: widget.motor['id'],
         startDate: startDate,
@@ -186,42 +378,15 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         isGuest: widget.isGuest,
       );
 
-      if (success) {
-        // Sukses ditangani di BookingService
+      if (result['success']) {
+        _showSuccessDialog(
+            result['message'], result['motorData'], result['isGuest']);
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal melakukan pemesanan'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
+        _showErrorDialog(result['message']);
       }
     } catch (e) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.red),
-              SizedBox(width: 10),
-              Text("Sesi Berakhir"),
-            ],
-          ),
-          content: Text(e.toString().replaceAll('Exception: ', '')),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: Text("Login Ulang"),
-            ),
-          ],
-        ),
-      );
+      _showErrorDialog(
+          'Terjadi kesalahan: ${e.toString().replaceAll('Exception: ', '')}');
     } finally {
       setState(() {
         _isLoading = false;
@@ -364,16 +529,19 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                         ),
                         SizedBox(height: 8),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white.withOpacity(0.3)),
+                            border: Border.all(
+                                color: Colors.white.withOpacity(0.3)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.motorcycle, color: Colors.white, size: 20),
+                              Icon(Icons.motorcycle,
+                                  color: Colors.white, size: 20),
                               SizedBox(width: 8),
                               Text(
                                 "$formattedPrice / hari",
@@ -422,9 +590,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                       ],
                     ),
                   ),
-                  
                   SizedBox(height: 20),
-                  
                   Container(
                     padding: EdgeInsets.all(15),
                     decoration: BoxDecoration(
@@ -443,7 +609,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.event_note, color: primaryBlue, size: 22),
+                            Icon(Icons.event_note,
+                                color: primaryBlue, size: 22),
                             SizedBox(width: 10),
                             Text(
                               "Informasi Pemesanan",
@@ -456,7 +623,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                           ],
                         ),
                         Divider(height: 25, thickness: 1),
-                        
+
                         // Date and Time Fields
                         Row(
                           children: [
@@ -485,7 +652,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                             ),
                           ],
                         ),
-                        
+
                         _buildTextField(
                           _durationController,
                           "Durasi (hari) *",
@@ -498,9 +665,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                       ],
                     ),
                   ),
-                  
                   SizedBox(height: 15),
-                  
                   Container(
                     padding: EdgeInsets.all(15),
                     decoration: BoxDecoration(
@@ -519,7 +684,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.location_on, color: mediumBlue, size: 22),
+                            Icon(Icons.location_on,
+                                color: mediumBlue, size: 22),
                             SizedBox(width: 10),
                             Text(
                               "Informasi Lokasi",
@@ -532,7 +698,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                           ],
                         ),
                         Divider(height: 25, thickness: 1),
-                        
                         _buildTextField(
                           _pickupLocationController,
                           "Lokasi Pengambilan *",
@@ -541,7 +706,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                           null,
                           accentColor: mediumBlue,
                         ),
-                        
                         _buildTextField(
                           _dropoffLocationController,
                           "Lokasi Pengembalian",
@@ -553,9 +717,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                       ],
                     ),
                   ),
-                  
                   SizedBox(height: 15),
-                  
                   Container(
                     padding: EdgeInsets.all(15),
                     decoration: BoxDecoration(
@@ -587,7 +749,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                           ],
                         ),
                         Divider(height: 25, thickness: 1),
-                        
+
                         // Photo ID Section
                         Text(
                           "Foto Diri *",
@@ -612,7 +774,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                             margin: EdgeInsets.only(top: 8, bottom: 16),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: darkBlue.withOpacity(0.5), width: 2),
+                              border: Border.all(
+                                  color: darkBlue.withOpacity(0.5), width: 2),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
@@ -622,7 +785,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                               ),
                             ),
                           ),
-                        
+
+                        // KTP Section
                         // KTP Section
                         Text(
                           "Foto KTP *",
@@ -647,7 +811,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                             margin: EdgeInsets.only(top: 8, bottom: 16),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: darkBlue.withOpacity(0.5), width: 2),
+                              border: Border.all(
+                                  color: darkBlue.withOpacity(0.5), width: 2),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8),
@@ -657,10 +822,20 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                               ),
                             ),
                           ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            "* KTP asli tetap diberikan kepada pemilik rental saat penjemputan motor sebagai jaminan.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.redAccent,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-
                   SizedBox(height: 30),
                   Container(
                     width: double.infinity,
@@ -688,13 +863,15 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                         child: Center(
                           child: _isLoading
                               ? CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                   strokeWidth: 3,
                                 )
                               : Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                                    Icon(Icons.check_circle,
+                                        color: Colors.white, size: 20),
                                     SizedBox(width: 10),
                                     Text(
                                       "Submit Pemesanan",
@@ -775,7 +952,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     );
   }
 
-  Widget _buildImageInput(String label, File? file, Function() onTap, IconData icon, Color accentColor) {
+  Widget _buildImageInput(String label, File? file, Function() onTap,
+      IconData icon, Color accentColor) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -810,7 +988,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                 style: TextStyle(
                   color: file == null ? Colors.grey[600] : accentColor,
                   fontSize: 14,
-                  fontWeight: file == null ? FontWeight.normal : FontWeight.bold,
+                  fontWeight:
+                      file == null ? FontWeight.normal : FontWeight.bold,
                 ),
               ),
             ),

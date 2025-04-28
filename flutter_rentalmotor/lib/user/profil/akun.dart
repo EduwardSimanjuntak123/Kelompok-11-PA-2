@@ -436,9 +436,9 @@ class _AkunState extends State<Akun> {
                           ),
                           const SizedBox(height: 20),
                           _buildInfoTile(Icons.email, 'Email', _userEmail),
-                          _buildInfoTile(Icons.phone, 'Phone', _userPhone),
+                          _buildInfoTile(Icons.phone, 'No Telepon', _userPhone),
                           _buildInfoTile(
-                              Icons.location_on, 'Address', _userAddress),
+                              Icons.location_on, 'Alamat', _userAddress),
                         ],
                       ),
                     ),
@@ -475,7 +475,7 @@ class _AkunState extends State<Akun> {
                               ),
                               const SizedBox(width: 12),
                               const Text(
-                                'Settings',
+                                'Pengaturan',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -486,7 +486,7 @@ class _AkunState extends State<Akun> {
                           const SizedBox(height: 20),
                           _buildSettingButton(
                             Icons.edit,
-                            'Edit Profile',
+                            'Edit Profil',
                             primaryBlue,
                             () {
                               Navigator.push(
@@ -522,7 +522,7 @@ class _AkunState extends State<Akun> {
                           const SizedBox(height: 12),
                           _buildSettingButton(
                             Icons.logout,
-                            'Logout',
+                            'Keluar',
                             Colors.red,
                             () {
                               _showLogoutDialog(context);

@@ -3,24 +3,28 @@ import 'package:flutter/material.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'dart:async';
 
 class WebSocketService {
   IOWebSocketChannel? _channel;
+  Timer? _pingTimer;
+  IOWebSocketChannel? _chatNotificationChannel;
   final Function(Map<String, dynamic>) onNotificationReceived;
+  final Function(int)? onChatMessageReceived;
   final FlutterLocalNotificationsPlugin notificationsPlugin;
 
   WebSocketService({
     required this.onNotificationReceived,
+    this.onChatMessageReceived,
     required this.notificationsPlugin,
   });
 
   void connectWebSocket(int userId) {
-    // Close existing connection if any
+    // Tutup koneksi lama dulu kalau ada
     _channel?.sink.close();
+    _pingTimer?.cancel(); // Stop ping sebelumnya
 
-    // Ensure the WebSocket URL has the correct format with the /ws/ prefix
     final wsUrl = "${ApiConfig.wsUrl}/ws/notifikasi?user_id=$userId";
-
     debugPrint("Connecting to WebSocket: $wsUrl");
 
     try {
@@ -30,10 +34,8 @@ class WebSocketService {
         (data) async {
           debugPrint("WebSocket data received: $data");
           try {
-            // Parse the outer JSON object
             final Map<String, dynamic> outer = json.decode(data);
 
-            // The message field contains another JSON string that needs to be parsed
             if (outer.containsKey('message')) {
               final String messageStr = outer['message'];
               final Map<String, dynamic> inner = json.decode(messageStr);
@@ -52,7 +54,6 @@ class WebSocketService {
               onNotificationReceived(newNotification);
               _showLocalNotification("Booking #$bookingId", message);
             } else {
-              // Fallback if the expected format is different
               final fallbackNotification = {
                 'text': data.toString(),
                 'read': false,
@@ -64,40 +65,92 @@ class WebSocketService {
             }
           } catch (e) {
             debugPrint("Error parsing notification: $e");
-            // If parsing fails, still try to show the notification with the raw data
-            final fallbackNotification = {
-              'text': data.toString(),
-              'read': false,
-              'timestamp': DateTime.now().toIso8601String(),
-              'type': 'system',
-            };
-            onNotificationReceived(fallbackNotification);
-            _showLocalNotification("Notifikasi", "Ada notifikasi baru");
           }
         },
         onError: (error) {
           debugPrint("WebSocket error: $error");
-          // Try to reconnect after a delay
-          Future.delayed(const Duration(seconds: 5), () {
-            connectWebSocket(userId);
-          });
+          _reconnect(userId);
         },
         onDone: () {
           debugPrint("WebSocket connection closed");
-          // Try to reconnect after a delay
-          Future.delayed(const Duration(seconds: 5), () {
-            connectWebSocket(userId);
-          });
+          _reconnect(userId);
         },
       );
+
+      // Mulai timer untuk kirim ping setiap 30 detik
+      _pingTimer = Timer.periodic(Duration(seconds: 30), (_) {
+        debugPrint("Sending ping...");
+        _channel?.sink.add(json.encode({"type": "ping"}));
+      });
     } catch (e) {
       debugPrint("WebSocket connection error: $e");
-      // Try to reconnect after a delay
-      Future.delayed(const Duration(seconds: 5), () {
-        connectWebSocket(userId);
-      });
+      _reconnect(userId);
     }
   }
+
+  void _reconnect(int userId) {
+    _pingTimer?.cancel(); // Pastikan ping timer dihentikan dulu
+    Future.delayed(Duration(seconds: 5), () {
+      connectWebSocket(userId);
+    });
+  }
+  // void connectChatNotificationWebSocket(int userId) {
+  //   // Close existing connection if any
+  //   _chatNotificationChannel?.sink.close();
+
+  //   // Connect ke WebSocket khusus untuk notifikasi chat
+  //   final chatWsUrl =
+  //       "${ApiConfig.wsUrl}/ws/chat/notifications?user_id=$userId";
+
+  //   debugPrint("Connecting to Chat Notification WebSocket: $chatWsUrl");
+
+  //   try {
+  //     _chatNotificationChannel = IOWebSocketChannel.connect(chatWsUrl);
+
+  //     _chatNotificationChannel!.stream.listen(
+  //       (data) async {
+  //         debugPrint("Chat notification received: $data");
+  //         try {
+  //           final Map<String, dynamic> notification = json.decode(data);
+
+  //           // Jika ada callback untuk notifikasi chat, panggil
+  //           if (onChatMessageReceived != null &&
+  //               notification.containsKey('unread_count')) {
+  //             onChatMessageReceived!(notification['unread_count']);
+  //           }
+
+  //           // Tampilkan notifikasi lokal jika ada pesan baru
+  //           if (notification.containsKey('sender_name') &&
+  //               notification.containsKey('message')) {
+  //             _showLocalNotification(
+  //               "Pesan baru dari ${notification['sender_name']}",
+  //               notification['message'],
+  //             );
+  //           }
+  //         } catch (e) {
+  //           debugPrint("Error parsing chat notification: $e");
+  //         }
+  //       },
+  //       onError: (error) {
+  //         debugPrint("Chat notification WebSocket error: $error");
+  //         Future.delayed(const Duration(seconds: 5), () {
+  //           connectChatNotificationWebSocket(userId);
+  //         });
+  //       },
+  //       onDone: () {
+  //         debugPrint("Chat notification WebSocket connection closed");
+  //         Future.delayed(const Duration(seconds: 5), () {
+  //           connectChatNotificationWebSocket(userId);
+  //         });
+  //       },
+  //     );
+  //   } catch (e) {
+  //     debugPrint("Chat notification WebSocket connection error: $e");
+  //     Future.delayed(const Duration(seconds: 5), () {
+  //       connectChatNotificationWebSocket(userId);
+  //     });
+  //   }
+  // }
 
   Future<void> _showLocalNotification(String title, String body) async {
     // Configure Android notification details with high importance
@@ -130,5 +183,7 @@ class WebSocketService {
 
   void dispose() {
     _channel?.sink.close();
+    _chatNotificationChannel?.sink.close();
+    _pingTimer?.cancel();
   }
 }

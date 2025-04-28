@@ -26,7 +26,8 @@ class _MotorListPageState extends State<MotorListPage>
   int _selectedIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _animation;
-
+  String _selectedType = 'Semua';
+  List<String> _typeList = ['Semua', 'Matic', 'Manual', 'Kopling', 'Vespa'];
   // Filter variables
   String _searchQuery = '';
   String _selectedKecamatan = 'Semua';
@@ -115,13 +116,21 @@ class _MotorListPageState extends State<MotorListPage>
 
         // Filter by status
         final status = motor['status']?.toString().toLowerCase() ?? '';
-        final statusMatch = _selectedStatus == 'Semua' ||
-            (_selectedStatus == 'Tersedia' &&
-                status.toLowerCase() == 'tersedia') ||
-            (_selectedStatus == 'Tidak Tersedia' &&
-                status.toLowerCase() != 'tersedia');
+        bool statusMatch = true;
+        if (_selectedStatus != 'Semua') {
+          if (_selectedStatus == 'Tersedia') {
+            statusMatch = status == 'available';
+          } else if (_selectedStatus == 'Tidak Tersedia') {
+            statusMatch = status == 'booked' || status == 'unavailable';
+          }
+        }
 
-        return searchMatch && kecamatanMatch && statusMatch;
+        // Filter by type
+        final type = motor['type']?.toString().toLowerCase() ?? '';
+        final typeMatch =
+            _selectedType == 'Semua' || type == _selectedType.toLowerCase();
+
+        return searchMatch && kecamatanMatch && statusMatch && typeMatch;
       }).toList();
     });
   }
@@ -168,7 +177,7 @@ class _MotorListPageState extends State<MotorListPage>
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
             SliverAppBar(
-              expandedHeight: 220.0, // Increased from 200 to 220 for more space
+              expandedHeight: 220.0,
               floating: false,
               pinned: true,
               elevation: 0,
@@ -246,9 +255,9 @@ class _MotorListPageState extends State<MotorListPage>
                         ),
                       ),
 
-                      // Title and subtitle - Moved down to avoid overlap with icons
+                      // Title and subtitle
                       Positioned(
-                        top: 80, // Increased from 60 to 80 to avoid overlap
+                        top: 80,
                         left: 20,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,8 +504,7 @@ class _MotorListPageState extends State<MotorListPage>
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                childAspectRatio:
-                                    0.85, // Increased from 0.8 to 0.85 for more height
+                                childAspectRatio: 0.85,
                                 crossAxisSpacing: 12,
                                 mainAxisSpacing: 12,
                               ),
@@ -707,6 +715,65 @@ class _MotorListPageState extends State<MotorListPage>
                     ],
                   ),
                   SizedBox(height: 12),
+                  // Tambah di bawah status filter
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.category, color: Color(0xFF1565C0)),
+                        SizedBox(width: 8),
+                        Text(
+                          'Tipe Motor',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedType,
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down,
+                            color: Color(0xFF1565C0)),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedType = newValue;
+                            });
+                          }
+                        },
+                        items: _typeList
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              value,
+                              style: TextStyle(
+                                color: value == _selectedType
+                                    ? Color(0xFF1565C0)
+                                    : Colors.black87,
+                                fontWeight: value == _selectedType
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     decoration: BoxDecoration(
@@ -758,6 +825,7 @@ class _MotorListPageState extends State<MotorListPage>
                             setState(() {
                               _selectedKecamatan = 'Semua';
                               _selectedStatus = 'Semua';
+                              _selectedType = 'Semua'; // reset type juga
                             });
                           },
                           style: OutlinedButton.styleFrom(
@@ -823,8 +891,8 @@ class _MotorListPageState extends State<MotorListPage>
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) =>
-                DetailMotorPage(motorId: motor["id"], isGuest: widget.isGuest)));
+            builder: (context) => DetailMotorPage(
+                motorId: motor["id"], isGuest: widget.isGuest)));
       },
       child: Container(
         decoration: BoxDecoration(
@@ -841,137 +909,123 @@ class _MotorListPageState extends State<MotorListPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with status badge
-            Stack(
-              children: [
-                Hero(
-                  tag: 'motor-${motor["id"]}',
-                  child: Container(
-                    height: 95, // Further reduced from 100 to 95
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
+            Expanded(
+              child: Stack(
+                children: [
+                  Hero(
+                    tag: 'motor-${motor["id"]}',
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
                       ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
-                      child: Image.network(
-                        imageUrl,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey.shade200,
-                            child: Center(
-                              child: Icon(
-                                Icons.image_not_supported_outlined,
-                                color: Colors.grey.shade400,
-                                size: 40,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                        ),
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey.shade200,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  color: Colors.grey.shade400,
+                                  size: 40,
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 3), // Reduced padding
-                    decoration: BoxDecoration(
-                      color: statusMotor.toLowerCase() == "tersedia"
-                          ? Colors.green
-                          : Colors.orange,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          statusMotor.toLowerCase() == "tersedia"
-                              ? Icons.check_circle
-                              : Icons.info,
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (motor["status"] ?? "unknown") == "available"
+                            ? Colors.green
+                            : (motor["status"] ?? "unknown") == "booked"
+                                ? Colors.red
+                                : Colors.grey,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        (motor["status"] ?? "unknown") == "booked"
+                            ? "in use"
+                            : (motor["status"] ?? "unknown"),
+                        style: TextStyle(
                           color: Colors.white,
-                          size: 10, // Reduced size
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
                         ),
-                        SizedBox(width: 2), // Reduced spacing
-                        Text(
-                          statusMotor,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 9, // Reduced font size
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 3), // Reduced padding
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.star,
-                          color: Colors.amber,
-                          size: 12, // Reduced size
-                        ),
-                        SizedBox(width: 2),
-                        Text(
-                          rating,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10, // Reduced font size
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                            size: 12,
+                          ),
+                          SizedBox(width: 2),
+                          Text(
+                            rating,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-
-            // Content
             Padding(
-              padding: const EdgeInsets.all(
-                  6), // Further reduced padding from 8 to 6
+              padding: const EdgeInsets.all(6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 13, // Reduced from 14 to 13
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1565C0),
                     ),
@@ -984,14 +1038,14 @@ class _MotorListPageState extends State<MotorListPage>
                       Icon(
                         Icons.location_on,
                         color: Colors.grey.shade600,
-                        size: 10, // Reduced from 12 to 10
+                        size: 10,
                       ),
                       SizedBox(width: 2),
                       Expanded(
                         child: Text(
                           kecamatan,
                           style: TextStyle(
-                            fontSize: 10, // Reduced from 12 to 10
+                            fontSize: 10,
                             color: Colors.grey.shade700,
                           ),
                           maxLines: 1,
@@ -1000,14 +1054,12 @@ class _MotorListPageState extends State<MotorListPage>
                       ),
                     ],
                   ),
-                  SizedBox(height: 3), // Reduced from 4 to 3
+                  SizedBox(height: 3),
                   Container(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 3), // Reduced padding
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
-                      borderRadius:
-                          BorderRadius.circular(6), // Reduced from 8 to 6
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: Colors.green.shade200,
                       ),
@@ -1015,22 +1067,20 @@ class _MotorListPageState extends State<MotorListPage>
                     child: Text(
                       price,
                       style: TextStyle(
-                        fontSize: 11, // Reduced from 12 to 11
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF2E7D32),
                       ),
                     ),
                   ),
-                  SizedBox(height: 3), // Reduced from 4 to 3
+                  SizedBox(height: 3),
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: Color(0xFF1565C0),
-                      borderRadius:
-                          BorderRadius.circular(6), // Reduced from 8 to 6
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    padding: EdgeInsets.symmetric(
-                        vertical: 5), // Reduced from 6 to 5
+                    padding: EdgeInsets.symmetric(vertical: 5),
                     child: Center(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1040,14 +1090,14 @@ class _MotorListPageState extends State<MotorListPage>
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 11, // Reduced from 12 to 11
+                              fontSize: 11,
                             ),
                           ),
-                          SizedBox(width: 3), // Reduced from 4 to 3
+                          SizedBox(width: 3),
                           Icon(
                             Icons.arrow_forward,
                             color: Colors.white,
-                            size: 10, // Reduced from 12 to 10
+                            size: 10,
                           ),
                         ],
                       ),

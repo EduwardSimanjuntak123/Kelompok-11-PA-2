@@ -46,7 +46,7 @@ func ChatWebSocket(c *gin.Context) {
 	}
 	chatRoomID := uint(chatRoomIDInt)
 
-	// (Opsional) Validasi chat room ada
+	// Validasi chat room ada
 	var chatRoom models.ChatRoom
 	if err := config.DB.First(&chatRoom, chatRoomID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Chat room tidak ditemukan"})
@@ -95,11 +95,15 @@ func ChatWebSocket(c *gin.Context) {
 		msg.SenderID = senderID
 		msg.ChatRoomID = chatRoomID
 		msg.SentAt = time.Now()
+		msg.IsRead = false
 
 		if err := config.DB.Create(&msg).Error; err != nil {
 			log.Println("Gagal menyimpan pesan:", err)
 			continue
 		}
+
+		// Preload sender untuk respons
+		config.DB.Preload("Sender").First(&msg, msg.ID)
 
 		encodedMsg, _ := json.Marshal(msg)
 		broadcastMessage(chatRoomID, encodedMsg)
@@ -123,7 +127,7 @@ func SendMessage(c *gin.Context) {
 	var input struct {
 		ChatRoomID uint   `json:"chat_room_id" binding:"required"`
 		SenderID   uint   `json:"sender_id" binding:"required"`
-		Content    string `json:"content" binding:"required"`
+		Content    string `json:"message" binding:"required"`
 	}
 
 	// Mengambil data dari body request
@@ -154,6 +158,7 @@ func SendMessage(c *gin.Context) {
 		SenderID:   input.SenderID,
 		Message:    input.Content,
 		SentAt:     time.Now(),
+		IsRead:     false,
 	}
 
 	// Simpan pesan ke database
@@ -161,6 +166,9 @@ func SendMessage(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan pesan"})
 		return
 	}
+
+	// Preload sender untuk respons
+	config.DB.Preload("Sender").First(&message, message.ID)
 
 	// Broadcast pesan ke semua koneksi WebSocket yang terhubung di chat room
 	encodedMsg, _ := json.Marshal(message)
@@ -228,6 +236,7 @@ func GetChatMessages(c *gin.Context) {
 	})
 }
 
+// MarkMessageAsRead menandai pesan sebagai sudah dibaca
 func MarkMessageAsRead(c *gin.Context) {
 	messageID := c.Param("id")
 	var msg models.Message
@@ -245,10 +254,36 @@ func MarkMessageAsRead(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Pesan ditandai sebagai dibaca"})
 }
 
+// MarkAllMessagesAsRead menandai semua pesan di chat room sebagai sudah dibaca
+func MarkAllMessagesAsRead(c *gin.Context) {
+	var req struct {
+		ChatRoomID uint `json:"chat_room_id" binding:"required"`
+		UserID     uint `json:"user_id" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Data tidak valid",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Tandai semua pesan yang dikirim oleh lawan bicara sebagai sudah dibaca
+	if err := config.DB.Model(&models.Message{}).
+		Where("chat_room_id = ? AND is_read = false AND sender_id != ?", req.ChatRoomID, req.UserID).
+		Update("is_read", true).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui pesan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Semua pesan ditandai sebagai dibaca"})
+}
+
 // GetOrCreateChatRoom membuat atau ambil chat room
 type ChatRoomRequest struct {
-	CustomerID uint `json:"customer_id,omitempty"`
-	VendorID   uint `json:"vendor_id,omitempty"`
+	CustomerID uint `json:"customer_id" binding:"required"`
+	VendorID   uint `json:"vendor_id" binding:"required"`
 }
 
 func GetOrCreateChatRoom(c *gin.Context) {
@@ -268,6 +303,13 @@ func GetOrCreateChatRoom(c *gin.Context) {
 		return
 	}
 
+	// Cek apakah customer_id ada dalam tabel users
+	var customer models.User
+	if err := config.DB.First(&customer, req.CustomerID).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer tidak ditemukan"})
+		return
+	}
+
 	// Cek apakah chat room sudah ada
 	var room models.ChatRoom
 	err := config.DB.
@@ -281,7 +323,24 @@ func GetOrCreateChatRoom(c *gin.Context) {
 		First(&room).Error
 
 	if err == nil {
-		c.JSON(http.StatusOK, gin.H{"message": "Chat room ditemukan", "chat_room": room})
+		// Hitung jumlah pesan yang belum dibaca untuk customer dan vendor
+		var unreadForCustomer, unreadForVendor int64
+		config.DB.Model(&models.Message{}).
+			Where("chat_room_id = ? AND is_read = false AND sender_id != ?", room.ID, req.CustomerID).
+			Count(&unreadForCustomer)
+		
+		config.DB.Model(&models.Message{}).
+			Where("chat_room_id = ? AND is_read = false AND sender_id != ?", room.ID, req.VendorID).
+			Count(&unreadForVendor)
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Chat room ditemukan", 
+			"chat_room": room,
+			"unread_stats": gin.H{
+				"unread_for_customer": unreadForCustomer,
+				"unread_for_vendor": unreadForVendor,
+			},
+		})
 		return
 	}
 
@@ -308,9 +367,17 @@ func GetOrCreateChatRoom(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Chat room berhasil dibuat", "chat_room": newRoom})
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Chat room berhasil dibuat", 
+		"chat_room": newRoom,
+		"unread_stats": gin.H{
+			"unread_for_customer": 0,
+			"unread_for_vendor": 0,
+		},
+	})
 }
 
+// GetUserChatRooms mengambil semua chat room milik user
 func GetUserChatRooms(c *gin.Context) {
 	// Ambil user_id dari query parameter
 	userIDStr := c.Query("user_id")
@@ -329,15 +396,197 @@ func GetUserChatRooms(c *gin.Context) {
 			return db.Order("sent_at desc").Limit(1)
 		}).
 		Preload("Messages.Sender").
-		Preload("Messages.ChatRoom").
 		Where("customer_id = ? OR vendor_id = ?", userID, userID).
+		Order("updated_at DESC").
 		Find(&chatRooms).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil chat rooms"})
 		return
 	}
 
+	// Hitung jumlah pesan yang belum dibaca untuk setiap chat room
+	type ChatRoomWithUnread struct {
+		ChatRoom      models.ChatRoom `json:"chat_room"`
+		UnreadCount   int64           `json:"unread_count"`
+		LastMessage   *models.Message `json:"last_message,omitempty"`
+		OtherUserInfo gin.H           `json:"other_user_info"`
+	}
+
+	var result []ChatRoomWithUnread
+
+	for _, room := range chatRooms {
+		var unreadCount int64
+		config.DB.Model(&models.Message{}).
+			Where("chat_room_id = ? AND is_read = false AND sender_id != ?", room.ID, userID).
+			Count(&unreadCount)
+
+		// Ambil pesan terakhir
+		var lastMessage models.Message
+		hasLastMessage := false
+		if err := config.DB.
+			Preload("Sender").
+			Where("chat_room_id = ?", room.ID).
+			Order("sent_at desc").
+			First(&lastMessage).Error; err == nil {
+			hasLastMessage = true
+		}
+
+		// Tentukan info lawan bicara
+		var otherUserInfo gin.H
+		if room.CustomerID == userID {
+	otherUserInfo = gin.H{
+		"id":            room.VendorID,
+		"name":          room.Vendor.Name,
+		"role":          room.Vendor.Role,
+		"profile_image": room.Vendor.ProfileImage,
+	}
+	if room.Vendor.Vendor != nil {
+		otherUserInfo["shop_name"] = room.Vendor.Vendor.ShopName
+	}
+} else {
+	otherUserInfo = gin.H{
+		"id":            room.CustomerID,
+		"name":          room.Customer.Name,
+		"role":          room.Customer.Role,
+		"profile_image": room.Customer.ProfileImage,
+	}
+}
+
+
+		roomWithUnread := ChatRoomWithUnread{
+			ChatRoom:      room,
+			UnreadCount:   unreadCount,
+			OtherUserInfo: otherUserInfo,
+		}
+
+		if hasLastMessage {
+			roomWithUnread.LastMessage = &lastMessage
+		}
+
+		result = append(result, roomWithUnread)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"user_id":    userID,
-		"chat_rooms": chatRooms,
+		"chat_rooms": result,
+	})
+}
+
+// GetUnreadMessageCount mendapatkan jumlah pesan yang belum dibaca
+func GetUnreadMessageCount(c *gin.Context) {
+	userIDStr := c.Query("user_id")
+	userIDInt, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id tidak valid"})
+		return
+	}
+	userID := uint(userIDInt)
+
+	// Hitung total pesan yang belum dibaca di semua chat room
+	var totalUnread int64
+	if err := config.DB.Model(&models.Message{}).
+		Joins("JOIN chat_rooms ON messages.chat_room_id = chat_rooms.id").
+		Where("(chat_rooms.customer_id = ? OR chat_rooms.vendor_id = ?) AND messages.is_read = false AND messages.sender_id != ?", 
+			userID, userID, userID).
+		Count(&totalUnread).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung pesan yang belum dibaca"})
+		return
+	}
+
+	// Hitung jumlah pesan yang belum dibaca per chat room
+	type ChatRoomUnread struct {
+		ChatRoomID  uint  `json:"chat_room_id"`
+		UnreadCount int64 `json:"unread_count"`
+	}
+
+	var chatRoomUnreads []ChatRoomUnread
+	rows, err := config.DB.Raw(`
+		SELECT messages.chat_room_id, COUNT(*) as unread_count
+		FROM messages
+		JOIN chat_rooms ON messages.chat_room_id = chat_rooms.id
+		WHERE (chat_rooms.customer_id = ? OR chat_rooms.vendor_id = ?) 
+		AND messages.is_read = false 
+		AND messages.sender_id != ?
+		GROUP BY messages.chat_room_id
+	`, userID, userID, userID).Rows()
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung pesan yang belum dibaca per chat room"})
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var unread ChatRoomUnread
+		if err := rows.Scan(&unread.ChatRoomID, &unread.UnreadCount); err != nil {
+			continue
+		}
+		chatRoomUnreads = append(chatRoomUnreads, unread)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user_id":      userID,
+		"total_unread": totalUnread,
+		"chat_rooms":   chatRoomUnreads,
+	})
+}
+
+// DeleteChatRoom menghapus chat room dan semua pesannya
+func DeleteChatRoom(c *gin.Context) {
+	chatRoomID := c.Param("id")
+	
+	// Validasi chat room ada
+	var chatRoom models.ChatRoom
+	if err := config.DB.First(&chatRoom, chatRoomID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Chat room tidak ditemukan"})
+		return
+	}
+
+	// Hapus semua pesan di chat room
+	if err := config.DB.Where("chat_room_id = ?", chatRoomID).Delete(&models.Message{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus pesan"})
+		return
+	}
+
+	// Hapus chat room
+	if err := config.DB.Delete(&chatRoom).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus chat room"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Chat room berhasil dihapus"})
+}
+
+// SearchChatMessages mencari pesan berdasarkan kata kunci
+func SearchChatMessages(c *gin.Context) {
+	userIDStr := c.Query("user_id")
+	userIDInt, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id tidak valid"})
+		return
+	}
+	userID := uint(userIDInt)
+
+	keyword := c.Query("keyword")
+	if keyword == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Kata kunci pencarian tidak boleh kosong"})
+		return
+	}
+
+	var messages []models.Message
+	if err := config.DB.
+		Preload("Sender").
+		Preload("ChatRoom").
+		Joins("JOIN chat_rooms ON messages.chat_room_id = chat_rooms.id").
+		Where("(chat_rooms.customer_id = ? OR chat_rooms.vendor_id = ?) AND messages.message LIKE ?", 
+			userID, userID, "%"+keyword+"%").
+		Order("messages.sent_at DESC").
+		Find(&messages).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mencari pesan"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"keyword":  keyword,
+		"messages": messages,
 	})
 }

@@ -89,6 +89,7 @@ class _DetailPesananState extends State<DetailPesanan>
     try {
       String? token = await storage.read(key: "auth_token");
       print("TOKEN: $token");
+
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/customer/bookings'),
         headers: {
@@ -100,9 +101,14 @@ class _DetailPesananState extends State<DetailPesanan>
       if (response.statusCode == 200) {
         setState(() {
           bookings = json.decode(response.body);
-          // Sort bookings to show newest first (assuming there's a created_at field)
+
+          // Debug Print: print all bookings
+          debugPrint("=== DEBUG BOOKINGS DATA ===");
+          debugPrint(const JsonEncoder.withIndent('  ').convert(bookings));
+          debugPrint("============================");
+
+          // Sort bookings to show newest first
           bookings.sort((a, b) {
-            // First sort by status priority (pending first)
             int statusPriority(String status) {
               switch (status) {
                 case 'pending':
@@ -129,7 +135,6 @@ class _DetailPesananState extends State<DetailPesanan>
             int priorityA = statusPriority(a['status'] ?? '');
             int priorityB = statusPriority(b['status'] ?? '');
 
-            // If status priority is the same, sort by date (newest first)
             if (priorityA == priorityB) {
               DateTime dateA = a['created_at'] != null
                   ? DateTime.parse(a['created_at'])
@@ -137,11 +142,12 @@ class _DetailPesananState extends State<DetailPesanan>
               DateTime dateB = b['created_at'] != null
                   ? DateTime.parse(b['created_at'])
                   : DateTime.now();
-              return dateB.compareTo(dateA); // Newest first
+              return dateB.compareTo(dateA);
             }
 
-            return priorityA.compareTo(priorityB); // Sort by priority
+            return priorityA.compareTo(priorityB);
           });
+
           isLoading = false;
         });
       } else {

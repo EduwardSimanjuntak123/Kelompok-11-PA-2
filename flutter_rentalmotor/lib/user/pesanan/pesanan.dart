@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
-import 'package:flutter_rentalmotor/user/chat/chat_page.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/customer/cancelBooking_api.dart';
 import 'package:flutter_rentalmotor/user/ulasan/reviewpage.dart'; // Import ReviewPage
+import 'package:flutter_rentalmotor/user/chat/chat_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:flutter_rentalmotor/services/customer/chat_services.dart';
 
 class PesananPage extends StatefulWidget {
   final Map<String, dynamic> booking;
@@ -19,6 +22,20 @@ class _PesananPageState extends State<PesananPage> {
   int _selectedIndex = 1;
   bool _isCancelling = false;
   bool _hasReviewed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    debugBooking();
+  }
+
+  void debugBooking() {
+    debugPrint("=== DEBUG BOOKING DATA ===");
+    widget.booking.forEach((key, value) {
+      debugPrint("$key: $value");
+    });
+    debugPrint("===========================");
+  }
 
   // Blue theme colors
   final Color primaryBlue = Color(0xFF2C567E);
@@ -450,26 +467,14 @@ class _PesananPageState extends State<PesananPage> {
                       },
                       Icons.star,
                     ),
-                    SizedBox(height: 12),
                   ],
-                  buildButton(
-                    "Hubungi Vendor Sewa",
-                    primaryBlue,
-                    Colors.white,
-                    () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatPage(
-                          chatRoomId: widget.booking[
-                              'chat_room_id'], // pastikan field ini tersedia// biasanya user yang sedang login
-                          receiverId:
-                              widget.booking['vendor_id'], // dari data booking
-                          receiverName:
-                              widget.booking['vendor_name'] ?? 'Vendor',
-                        ),
-                      ),
-                    ),
-                    Icons.chat,
+                  // Add Chat Button
+                  ChatVendorButton(
+                    vendorId: booking['vendor_Id'] ?? 0,
+                    vendorData: {
+                      'user_id': booking['vendor_Id'],
+                      'shop_name': booking['shop_name'],
+                    },
                   ),
                 ],
               ),
@@ -633,6 +638,115 @@ class _PesananPageState extends State<PesananPage> {
                     color: textColor,
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ChatVendorButton extends StatelessWidget {
+  final int vendorId;
+  final Map<String, dynamic>? vendorData;
+
+  const ChatVendorButton({
+    Key? key,
+    required this.vendorId,
+    required this.vendorData,
+  }) : super(key: key);
+
+  Future<void> _startChat(BuildContext context) async {
+    try {
+      // Debug output untuk vendorId dan vendorData
+      debugPrint("Vendor ID: $vendorId");
+      debugPrint("Vendor Data: $vendorData");
+
+      final chatRoom = await ChatService.getOrCreateChatRoom(vendorId: vendorId);
+
+      if (chatRoom != null) {
+        final prefs = await SharedPreferences.getInstance();
+        final customerId = prefs.getInt('user_id');
+
+        // Debug output untuk customerId
+        debugPrint("Customer ID: $customerId");
+
+        if (customerId != null) {
+          final receiverId = vendorData?['user_id'] ?? 0; // Menggunakan vendorData untuk receiverId
+
+          // Debug output untuk receiverId
+          debugPrint("Receiver ID: $receiverId");
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatPage(
+                chatRoomId: chatRoom['id'],
+                receiverId: receiverId,
+                receiverName: vendorData?['shop_name'] ?? 'Nama Penerima',
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Silakan login untuk mulai chat')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memulai chat')),
+        );
+      }
+    } catch (e) {
+      // Debug output untuk error
+      debugPrint("Error starting chat: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 55,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF3E8EDE), Color(0xFF2C567E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0xFF2C567E).withOpacity(0.3),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _startChat(context),
+          borderRadius: BorderRadius.circular(15),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.chat, color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Text(
+                  "Chat Vendor",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
                   ),
                 ),
               ],

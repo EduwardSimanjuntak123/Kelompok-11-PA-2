@@ -23,6 +23,9 @@ func VendorRoutes(router *gin.Engine) {
 			vendor.PUT("/profile/edit", controllers.EditProfileVendor)
 			vendor.POST("/manual/bookings", controllers.CreateManualBooking)
 
+			vendor.PUT("/extensions/:id/approve", controllers.ApproveBookingExtension)
+			vendor.PUT("/extensions/:id/reject", controllers.RejectBookingExtension)
+
 			// Booking
 			vendor.GET("/bookings/:id", controllers.GetBookingByIDForVendor)
 			vendor.GET("/bookings", controllers.GetVendorBookings)

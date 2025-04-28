@@ -42,6 +42,8 @@ class _ChatPageState extends State<ChatPage> {
     await _getCurrentUser();
     await _loadMessages();
     _connectWebSocket();
+    // Tandai semua pesan sebagai dibaca saat membuka chat
+    _markAllMessagesAsRead();
   }
 
   Future<void> _getCurrentUser() async {
@@ -50,23 +52,32 @@ class _ChatPageState extends State<ChatPage> {
       _currentUser_Id = prefs.getInt('user_id') ?? 0;
     });
     if (_currentUser_Id == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User ID tidak ditemukan')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('User ID tidak ditemukan')));
     }
   }
 
-  Future<void> _markMessageAsRead(int messageId) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/messages/$messageId/read');
+  // Fungsi baru untuk menandai semua pesan sebagai dibaca
+  Future<void> _markAllMessagesAsRead() async {
     try {
-      final response = await http.put(url, headers: {
-        'Content-Type': 'application/json',
-      });
+      final url = Uri.parse('${ApiConfig.baseUrl}/chat/mark-all-read');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'chat_room_id': widget.chatRoomId,
+          'user_id': _currentUser_Id,
+        }),
+      );
+
       if (response.statusCode != 200) {
-        throw Exception('Gagal menandai pesan sebagai dibaca');
+        print(
+          'Gagal menandai semua pesan sebagai dibaca: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      print('Error mark as read: $e');
+      print('Error marking all messages as read: $e');
     }
   }
 
@@ -86,7 +97,8 @@ class _ChatPageState extends State<ChatPage> {
     try {
       final response = await http.get(
         Uri.parse(
-            '${ApiConfig.baseUrl}/chat/messages?chat_room_id=${widget.chatRoomId}&user_id=$_currentUser_Id'),
+          '${ApiConfig.baseUrl}/chat/messages?chat_room_id=${widget.chatRoomId}&user_id=$_currentUser_Id',
+        ),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -101,12 +113,6 @@ class _ChatPageState extends State<ChatPage> {
           _isLoading = false;
         });
 
-        // Tandai pesan yang belum dibaca dan bukan dikirim oleh user saat ini
-        for (var msg in loadedMessages) {
-          if (msg.senderId != _currentUser_Id && !msg.isRead) {
-            _markMessageAsRead(msg.id);
-          }
-        }
         _scrollToBottom();
       } else {
         throw Exception('Gagal mengambil pesan dari server');
@@ -114,109 +120,111 @@ class _ChatPageState extends State<ChatPage> {
     } catch (e) {
       setState(() => _isLoading = false);
       print('Error loading messages: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading messages: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading messages: $e')));
     }
   }
 
   void _connectWebSocket() {
     try {
       // Sesuaikan dengan format endpoint WebSocket di backend Go
-      final wsUrl = '${ApiConfig.wsUrl}/ws/chat?sender_id=$_currentUser_Id&chat_room_id=${widget.chatRoomId}';
+      final wsUrl =
+          '${ApiConfig.wsUrl}/ws/chat?sender_id=$_currentUser_Id&chat_room_id=${widget.chatRoomId}';
       print('Connecting to WebSocket: $wsUrl');
-      
+
       _channel = IOWebSocketChannel.connect(Uri.parse(wsUrl));
-      
+
       setState(() {
         _isConnected = true;
       });
-      
+
       _channel!.stream.listen(
         (dynamic data) {
           print('WebSocket received: $data');
           try {
             final Map<String, dynamic> messageData = jsonDecode(data);
             final newMessage = Message.fromJson(messageData);
-          
-          setState(() {
-            // Cek apakah pesan sudah ada di list (untuk menghindari duplikasi)
-            bool isDuplicate = false;
-            for (var msg in _messages) {
-              // Jika ID sama dan bukan 0 (pesan sementara), maka duplikat
-              if (msg.id == newMessage.id && newMessage.id != 0) {
-                isDuplicate = true;
-                break;
-              }
-              
-              // Jika konten dan waktu kirim hampir sama, mungkin duplikat
-              if (msg.content == newMessage.content && 
-                  msg.senderId == newMessage.senderId &&
-                  msg.id == 0 && // Hanya cek untuk pesan sementara (id=0)
-                  newMessage.sentAt.difference(msg.sentAt).inSeconds.abs() < 5) {
-                // Ganti pesan sementara dengan pesan dari server
-                _messages[_messages.indexOf(msg)] = newMessage;
-                isDuplicate = true;
-                break;
-              }
-            }
-            
-            // Jika bukan duplikat, tambahkan ke daftar pesan
-            if (!isDuplicate) {
-              _messages.add(newMessage);
-            }
-          });
 
-          if (newMessage.senderId != _currentUser_Id) {
-            _markMessageAsRead(newMessage.id);
-            _showIncomingMessageNotification(widget.receiverName);
+            setState(() {
+              // Cek apakah pesan sudah ada di list (untuk menghindari duplikasi)
+              bool isDuplicate = false;
+              for (var msg in _messages) {
+                // Jika ID sama dan bukan 0 (pesan sementara), maka duplikat
+                if (msg.id == newMessage.id && newMessage.id != 0) {
+                  isDuplicate = true;
+                  break;
+                }
+
+                // Jika konten dan waktu kirim hampir sama, mungkin duplikat
+                if (msg.content == newMessage.content &&
+                    msg.senderId == newMessage.senderId &&
+                    msg.id == 0 && // Hanya cek untuk pesan sementara (id=0)
+                    newMessage.sentAt.difference(msg.sentAt).inSeconds.abs() <
+                        5) {
+                  // Ganti pesan sementara dengan pesan dari server
+                  _messages[_messages.indexOf(msg)] = newMessage;
+                  isDuplicate = true;
+                  break;
+                }
+              }
+
+              // Jika bukan duplikat, tambahkan ke daftar pesan
+              if (!isDuplicate) {
+                _messages.add(newMessage);
+              }
+            });
+
+            // Tandai pesan yang diterima sebagai sudah dibaca jika bukan dari pengguna saat ini
+            if (newMessage.senderId != _currentUser_Id) {
+              _showIncomingMessageNotification(widget.receiverName);
+            }
+            _scrollToBottom();
+          } catch (e) {
+            print('Error parsing WebSocket message: $e');
+            print('Raw message: $data');
           }
-          _scrollToBottom();
-        } catch (e) {
-          print('Error parsing WebSocket message: $e');
-          print('Raw message: $data');
-        }
-      },
-      onError: (error) {
-        print('WebSocket Error: $error');
-        setState(() {
-          _isConnected = false;
-        });
-        // Coba reconnect setelah error
-        Future.delayed(const Duration(seconds: 3), () {
-          if (mounted) {
-            _connectWebSocket();
-          }
-        });
-      },
-      onDone: () {
-        print('WebSocket connection closed');
-        setState(() {
-          _isConnected = false;
-        });
-        // Coba reconnect ketika koneksi tertutup
-        if (mounted) {
+        },
+        onError: (error) {
+          print('WebSocket Error: $error');
+          setState(() {
+            _isConnected = false;
+          });
+          // Coba reconnect setelah error
           Future.delayed(const Duration(seconds: 3), () {
-            if (mounted && !_isConnected) {
+            if (mounted) {
               _connectWebSocket();
             }
           });
+        },
+        onDone: () {
+          print('WebSocket connection closed');
+          setState(() {
+            _isConnected = false;
+          });
+          // Coba reconnect ketika koneksi tertutup
+          if (mounted) {
+            Future.delayed(const Duration(seconds: 3), () {
+              if (mounted && !_isConnected) {
+                _connectWebSocket();
+              }
+            });
+          }
+        },
+      );
+    } catch (e) {
+      print('Error connecting to WebSocket: $e');
+      setState(() {
+        _isConnected = false;
+      });
+      // Coba reconnect setelah error
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          _connectWebSocket();
         }
-      },
-    );
-  } catch (e) {
-    print('Error connecting to WebSocket: $e');
-    setState(() {
-      _isConnected = false;
-    });
-    // Coba reconnect setelah error
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        _connectWebSocket();
-      }
-    });
+      });
+    }
   }
-}
 
   void _showIncomingMessageNotification(String senderName) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -233,13 +241,6 @@ class _ChatPageState extends State<ChatPage> {
 
     final messageText = _messageController.text.trim();
     _messageController.clear();
-
-    // Buat objek pesan untuk dikirim melalui WebSocket
-    final messageObj = {
-      'ChatRoomID': widget.chatRoomId,
-      'SenderID': _currentUser_Id,
-      'Message': messageText,
-    };
 
     // Tampilkan pesan di UI terlebih dahulu (optimistic UI)
     final tempMessage = Message(
@@ -264,44 +265,82 @@ class _ChatPageState extends State<ChatPage> {
         body: jsonEncode({
           'chat_room_id': widget.chatRoomId,
           'sender_id': _currentUser_Id,
-          'content': messageText,
+          'message': messageText, // Perhatikan nama field sesuai dengan backend
         }),
       );
 
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Gagal mengirim pesan ke server: ${response.statusCode}');
+        throw Exception(
+          'Gagal mengirim pesan ke server: ${response.statusCode}',
+        );
       }
-    
-    // PENTING: Jangan kirim lagi melalui WebSocket karena server sudah melakukan broadcast
-    // Hapus atau komentari kode berikut untuk menghindari duplikasi pesan
-    // if (_isConnected && _channel != null) {
-    //   try {
-    //     _channel!.sink.add(jsonEncode(messageObj));
-    //   } catch (e) {
-    //     print('Error sending message via WebSocket: $e');
-    //   }
-    // }
-  } catch (e) {
-    print('Error sending message: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Gagal mengirim pesan: $e')),
-    );
+    } catch (e) {
+      print('Error sending message: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal mengirim pesan: $e')));
+    }
   }
-}
+
+  // Fungsi untuk mencari pesan
+  Future<void> _searchMessages(String keyword) async {
+    if (keyword.isEmpty) {
+      _loadMessages(); // Jika keyword kosong, tampilkan semua pesan
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${ApiConfig.baseUrl}/chat/search?user_id=$_currentUser_Id&keyword=$keyword',
+        ),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<Message> searchResults = (data['messages'] as List)
+            .where(
+              (msg) => msg['chat_room_id'] == widget.chatRoomId,
+            ) // Filter hanya pesan di chat room ini
+            .map((msg) => Message.fromJson(msg))
+            .toList();
+
+        setState(() {
+          _messages = searchResults;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Gagal mencari pesan: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      print('Error searching messages: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error searching messages: $e')));
+    }
+  }
 
   Future<bool> _confirmExitChat() async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Keluar dari Chat?'),
-        content: const Text('Pesan baru tidak akan diterima jika Anda keluar.'),
+        content: const Text(
+          'Pesan baru tidak akan diterima jika Anda keluar.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Keluar')),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Keluar'),
+          ),
         ],
       ),
     );
@@ -326,12 +365,19 @@ class _ChatPageState extends State<ChatPage> {
         appBar: AppBar(
           title: Row(
             children: [
-              const Text('Chat'),
+              const SizedBox(width: 8),
+              Text(
+                widget.receiverName,
+                style: const TextStyle(color: Colors.white),
+              ),
               if (!_isConnected)
                 Padding(
                   padding: const EdgeInsets.only(left: 8.0),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(10),
@@ -345,17 +391,51 @@ class _ChatPageState extends State<ChatPage> {
             ],
           ),
           backgroundColor: const Color(0xFF2C567E),
+          iconTheme: const IconThemeData(color: Colors.white),
+          actions: [
+            // Tambahkan tombol pencarian
+            IconButton(
+              icon: const Icon(Icons.search, color: Colors.white),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    String searchKeyword = '';
+                    return AlertDialog(
+                      title: const Text('Cari Pesan'),
+                      content: TextField(
+                        onChanged: (value) {
+                          searchKeyword = value;
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Masukkan kata kunci...',
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _loadMessages(); // Reset pencarian
+                          },
+                          child: const Text('Batal'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _searchMessages(searchKeyword);
+                          },
+                          child: const Text('Cari'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ),
         body: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                widget.receiverName,
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -371,7 +451,9 @@ class _ChatPageState extends State<ChatPage> {
                               : Alignment.centerLeft,
                           child: Container(
                             margin: const EdgeInsets.symmetric(
-                                vertical: 5, horizontal: 10),
+                              vertical: 5,
+                              horizontal: 10,
+                            ),
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: isMe
@@ -390,15 +472,21 @@ class _ChatPageState extends State<ChatPage> {
                                 ),
                                 const SizedBox(height: 5),
                                 Text(
-                                  DateFormat('hh:mm a').format(message.sentAt),
+                                  DateFormat(
+                                    'hh:mm a',
+                                  ).format(message.sentAt),
                                   style: const TextStyle(
-                                      color: Colors.grey, fontSize: 12),
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
                                 ),
                                 if (isMe)
                                   Text(
                                     message.isRead ? "Dibaca" : "Terkirim",
                                     style: const TextStyle(
-                                        fontSize: 10, color: Colors.grey),
+                                      fontSize: 10,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                               ],
                             ),
@@ -455,10 +543,10 @@ class Message {
 
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['ID'] ?? 0,
-      chatRoomId: json['ChatRoomID'] ?? 0,
-      senderId: json['SenderID'] ?? 0,
-      content: json['Message'] ?? '',
+      id: json['ID'] ?? json['id'] ?? 0,
+      chatRoomId: json['ChatRoomID'] ?? json['chat_room_id'] ?? 0,
+      senderId: json['SenderID'] ?? json['sender_id'] ?? 0,
+      content: json['Message'] ?? json['message'] ?? '',
       sentAt: DateTime.parse(json['sent_at'] ?? DateTime.now().toString()),
       isRead: json['is_read'] ?? false,
     );

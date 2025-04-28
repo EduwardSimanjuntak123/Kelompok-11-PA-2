@@ -382,9 +382,9 @@ class _DataVendorState extends State<DataVendor>
                         labelColor: primaryBlue,
                         unselectedLabelColor: Colors.grey,
                         tabs: [
-                          Tab(text: "About"),
                           Tab(text: "Motors"),
                           Tab(text: "Ulasan"),
+                          Tab(text: "About"),
                         ],
                       ),
                     ),
@@ -394,52 +394,6 @@ class _DataVendorState extends State<DataVendor>
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          // About Tab
-                          SingleChildScrollView(
-                            padding: EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildSectionTitle("Tentang Vendor"),
-                                SizedBox(height: 16),
-                                Text(
-                                  _vendorData?['shop_description'] ??
-                                      "Deskripsi tidak tersedia",
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      height: 1.6,
-                                      color: Colors.black87),
-                                ),
-                                SizedBox(height: 24),
-                                _buildSectionTitle("Informasi Kontak"),
-                                SizedBox(height: 16),
-                                _buildContactItem(Icons.phone, "Telepon",
-                                    _vendorData?['phone'] ?? "Tidak tersedia"),
-                                _buildContactItem(Icons.email, "Email",
-                                    _vendorData?['email'] ?? "Tidak tersedia"),
-                                _buildContactItem(Icons.access_time,
-                                    "Jam Operasional", "08:00 - 20:00"),
-                                SizedBox(height: 24),
-                                _buildSectionTitle("Lokasi"),
-                                SizedBox(height: 16),
-                                _buildContactItem(
-                                    Icons.location_on,
-                                    "Alamat",
-                                    _vendorData?['shop_address'] ??
-                                        "Alamat tidak tersedia"),
-                                SizedBox(height: 20),
-                                _buildContactButton(),
-                                SizedBox(height: 20),
-                                ChatVendorButton(
-                                  vendorId: _vendorData?['user_id'] ??
-                                      _vendorData?['id'] ??
-                                      0,
-                                  vendorData: _vendorData,
-                                ),
-                              ],
-                            ),
-                          ),
-
                           // Motors Tab
                           _motorList.isEmpty
                               ? Center(
@@ -487,6 +441,53 @@ class _DataVendorState extends State<DataVendor>
                                     return _buildReviewCard(_reviewList[index]);
                                   },
                                 ),
+                          // About Tab
+                          SingleChildScrollView(
+                            padding: EdgeInsets.all(20),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildSectionTitle("Tentang Vendor"),
+                                SizedBox(height: 16),
+                                Text(
+                                  _vendorData?['shop_description'] ??
+                                      "Deskripsi tidak tersedia",
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      height: 1.6,
+                                      color: Colors.black87),
+                                ),
+                                SizedBox(height: 24),
+                                _buildSectionTitle("Informasi Kontak"),
+                                SizedBox(height: 16),
+                                _buildContactItem(
+                                    Icons.phone,
+                                    "Telepon",
+                                    _vendorData?['user']?['phone'] ??
+                                        "Tidak tersedia"),
+                                _buildContactItem(
+                                    Icons.email,
+                                    "Email",
+                                    _vendorData?['user']?['email'] ??
+                                        "Tidak tersedia"),
+                                SizedBox(height: 24),
+                                _buildSectionTitle("Lokasi"),
+                                SizedBox(height: 16),
+                                _buildContactItem(
+                                    Icons.location_on,
+                                    "Alamat",
+                                    _vendorData?['shop_address'] ??
+                                        "Alamat tidak tersedia"),
+                                SizedBox(height: 20),
+                                ChatVendorButton(
+                                  vendorId: _vendorData?['user_id'] ??
+                                      _vendorData?['id'] ??
+                                      0,
+                                  vendorData: _vendorData,
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -631,55 +632,6 @@ class _DataVendorState extends State<DataVendor>
                 ),
               ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContactButton() {
-    return Container(
-      width: double.infinity,
-      height: 55,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-            colors: [Color(0xFF3E8EDE), primaryBlue],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-              color: primaryBlue.withOpacity(0.3),
-              blurRadius: 8,
-              offset: Offset(0, 4)),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text("Menghubungi vendor..."),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: primaryBlue),
-            );
-          },
-          borderRadius: BorderRadius.circular(15),
-          child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.chat, color: Colors.white, size: 20),
-                SizedBox(width: 10),
-                Text("Hubungi Vendor",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1)),
-              ],
-            ),
-          ),
         ),
       ),
     );

@@ -21,7 +21,7 @@ type Booking struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 	DropoffLocation string   `json:"dropoff_location" form:"dropoff_location"`
 	// Field relasi; tidak di-bind dari input
-	Vendor   *Vendor `gorm:"foreignKey:VendorID" json:"vendor" binding:"-"`
+	Vendor   *Vendor `gorm:"foreignKey:VendorID;references:ID" json:"vendor"`
 	Customer *User   `gorm:"foreignKey:CustomerID" json:"customer" binding:"-"`
 	Motor    *Motor  `gorm:"foreignKey:MotorID" json:"motor" binding:"-"`
 }

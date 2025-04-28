@@ -12,7 +12,7 @@ Future<void> connectWebSocket() async {
   }
 
   final channel = WebSocketChannel.connect(
-    Uri.parse('ws://localhost:8080/ws?user_id=$userId'),
+    Uri.parse('ws://192.168.161.159:8080/ws?user_id=$userId'),
   );
 
   channel.stream.listen((message) {

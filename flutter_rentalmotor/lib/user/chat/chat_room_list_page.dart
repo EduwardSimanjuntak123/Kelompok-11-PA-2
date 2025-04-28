@@ -20,7 +20,8 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
   WebSocketChannel? _notificationChannel;
   bool _isConnected = false;
   bool _isLoading = true;
-  
+  int _totalUnreadMessages = 0;
+
   @override
   void initState() {
     super.initState();
@@ -35,6 +36,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
     if (id != null) {
       setState(() => userId = id);
       await _fetchChatRooms(id);
+      await _fetchUnreadCount(id);
       _connectToNotificationWebSocket(id);
     } else {
       print('⚠️ Tidak ditemukan user_id di SharedPreferences');
@@ -47,19 +49,20 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
       // Koneksi ke WebSocket notifikasi
       final wsUrl = '${ApiConfig.wsUrl}/ws/notifikasi?user_id=$userId';
       print('Connecting to notification WebSocket: $wsUrl');
-      
+
       _notificationChannel = IOWebSocketChannel.connect(Uri.parse(wsUrl));
-      
+
       setState(() {
         _isConnected = true;
       });
-      
+
       _notificationChannel!.stream.listen(
         (dynamic data) {
           print('Notification WebSocket received: $data');
           try {
             // Ketika ada notifikasi baru, refresh daftar chat rooms
             _fetchChatRooms(userId);
+            _fetchUnreadCount(userId);
           } catch (e) {
             print('Error handling notification: $e');
           }
@@ -107,7 +110,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
 
   Future<void> _fetchChatRooms(int userId) async {
     setState(() => _isLoading = true);
-    
+
     try {
       final url = Uri.parse("${ApiConfig.baseUrl}/chat/rooms?user_id=$userId");
       final response = await http.get(url);
@@ -121,7 +124,9 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
           });
         }
       } else {
-        print('❌ Gagal mengambil chat rooms dengan status: ${response.statusCode}');
+        print(
+          '❌ Gagal mengambil chat rooms dengan status: ${response.statusCode}',
+        );
         if (mounted) {
           setState(() => _isLoading = false);
         }
@@ -134,55 +139,46 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
     }
   }
 
-  // Fungsi untuk mengambil pesan terakhir dari list pesan
-  String _getLastMessage(dynamic room) {
-    if (room['messages'] != null && room['messages'].isNotEmpty) {
-      // Pastikan key pesan sesuai dengan yang dikirimkan backend,
-      // misalnya "message" (huruf kecil) atau "Message"
-      return room['messages'].last['message'] ?? "Tidak ada pesan";
-    }
-    return "Belum ada pesan";
-  }
+  // Fungsi baru untuk mengambil jumlah total pesan yang belum dibaca
+  Future<void> _fetchUnreadCount(int userId) async {
+    try {
+      final url = Uri.parse("${ApiConfig.baseUrl}/chat/unread?user_id=$userId");
+      final response = await http.get(url);
 
-  // Fungsi untuk mendapatkan waktu pesan terakhir
-  String _getLastMessageTime(dynamic room) {
-    if (room['messages'] != null && room['messages'].isNotEmpty) {
-      final lastMsg = room['messages'].last;
-      if (lastMsg['sent_at'] != null) {
-        try {
-          final DateTime sentAt = DateTime.parse(lastMsg['sent_at']);
-          final now = DateTime.now();
-          final difference = now.difference(sentAt);
-          
-          if (difference.inDays > 0) {
-            return '${difference.inDays}d ago';
-          } else if (difference.inHours > 0) {
-            return '${difference.inHours}h ago';
-          } else if (difference.inMinutes > 0) {
-            return '${difference.inMinutes}m ago';
-          } else {
-            return 'Just now';
-          }
-        } catch (e) {
-          return '';
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (mounted) {
+          setState(() {
+            _totalUnreadMessages = data['total_unread'];
+          });
         }
+      } else {
+        print(
+          '❌ Gagal mengambil jumlah pesan belum dibaca: ${response.statusCode}',
+        );
       }
+    } catch (e) {
+      print('❌ Error fetching unread count: $e');
     }
-    return '';
   }
 
-  // Tambahkan fungsi untuk menandai semua pesan di chat room sebagai sudah dibaca
+  // Fungsi untuk menandai semua pesan di chat room sebagai sudah dibaca
   Future<void> _markChatRoomAsRead(int chatRoomId) async {
     if (userId == null) return;
-    
+
     try {
-      final url = Uri.parse("${ApiConfig.baseUrl}/chat/room/$chatRoomId/read?user_id=$userId");
-      final response = await http.put(url);
+      final url = Uri.parse("${ApiConfig.baseUrl}/chat/mark-all-read");
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'chat_room_id': chatRoomId, 'user_id': userId}),
+      );
 
       if (response.statusCode == 200) {
         print('Chat room $chatRoomId marked as read');
-        // Refresh chat rooms setelah menandai sebagai dibaca
+        // Refresh chat rooms dan jumlah pesan belum dibaca
         _fetchChatRooms(userId!);
+        _fetchUnreadCount(userId!);
       } else {
         print('Failed to mark chat room as read: ${response.statusCode}');
       }
@@ -206,19 +202,32 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
         title: Row(
           children: [
             const Text("Pesan Masuk"),
+            if (_totalUnreadMessages > 0)
+              Container(
+                margin: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$_totalUnreadMessages',
+                  style: const TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
             if (!_isConnected)
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text(
-                    'Offline',
-                    style: TextStyle(fontSize: 12),
-                  ),
+                  child: const Text('Offline', style: TextStyle(fontSize: 12)),
                 ),
               ),
           ],
@@ -229,6 +238,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
             onPressed: () {
               if (userId != null) {
                 _fetchChatRooms(userId!);
+                _fetchUnreadCount(userId!);
               }
             },
           ),
@@ -241,7 +251,11 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(height: 16),
                       const Text(
                         "Belum ada percakapan",
@@ -260,52 +274,39 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                   onRefresh: () async {
                     if (userId != null) {
                       await _fetchChatRooms(userId!);
+                      await _fetchUnreadCount(userId!);
                     }
                   },
                   child: ListView.builder(
                     itemCount: chatRooms.length,
                     itemBuilder: (context, index) {
                       final room = chatRooms[index];
-                      final vendor = room['vendor'];
-                      final customer = room['customer'];
-                      
-                      // Pastikan vendor dan customer tidak null
-                      if (vendor == null || customer == null) {
-                        return const SizedBox.shrink();
-                      }
-                      
-                      final isUserVendor = userId == vendor['id'];
-                      final otherUser = isUserVendor ? customer : vendor;
-                      
-                      // Pastikan otherUser tidak null
-                      if (otherUser == null) {
-                        return const SizedBox.shrink();
-                      }
+                      final chatRoom = room['chat_room'];
+                      final unreadCount = room['unread_count'] ?? 0;
+                      final lastMessage = room['last_message'];
+                      debugPrint("🧩 Room ID: ${chatRoom['id']}");
+                      debugPrint("📦 lastMessage: $lastMessage");
+                      final otherUserInfo = room['other_user_info'];
 
-                      // Hitung jumlah pesan belum dibaca
-                      final unreadCount = room['messages']
-                              ?.where((msg) =>
-                                  msg['sender_id'] != userId &&
-                                  msg['is_read'] == false)
-                              .length ??
-                          0;
+                      // Pastikan data tidak null
+                      if (chatRoom == null || otherUserInfo == null) {
+                        return const SizedBox.shrink();
+                      }
 
                       // Ambil pesan terakhir untuk ditampilkan
-                      String lastMessage = "Belum ada pesan";
                       String lastMessageTime = "";
                       bool isLastMessageUnread = false;
-                      
-                      if (room['messages'] != null && room['messages'].isNotEmpty) {
-                        final lastMsg = room['messages'].last;
-                        lastMessage = lastMsg['message'] ?? "Tidak ada pesan";
-                        
+
+                      if (lastMessage != null) {
                         // Format waktu pesan terakhir
-                        if (lastMsg['sent_at'] != null) {
+                        if (lastMessage['sent_at'] != null) {
                           try {
-                            final DateTime sentAt = DateTime.parse(lastMsg['sent_at']);
+                            final DateTime sentAt = DateTime.parse(
+                              lastMessage['sent_at'],
+                            );
                             final now = DateTime.now();
                             final difference = now.difference(sentAt);
-                            
+
                             if (difference.inDays > 0) {
                               lastMessageTime = '${difference.inDays}d ago';
                             } else if (difference.inHours > 0) {
@@ -319,109 +320,117 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                             lastMessageTime = '';
                           }
                         }
-                        
+
                         // Cek apakah pesan terakhir belum dibaca dan bukan dari user saat ini
-                        isLastMessageUnread = lastMsg['sender_id'] != userId && lastMsg['is_read'] == false;
+                        isLastMessageUnread =
+                            lastMessage['SenderID'] != userId &&
+                                lastMessage['is_read'] == false;
                       }
 
                       return GestureDetector(
                         onTap: () {
-                          // Tandai chat room sebagai dibaca saat diklik
-                          if (unreadCount > 0) {
-                            _markChatRoomAsRead(room['id']);
+                          // Hanya tandai terbaca jika pesan terakhir dari lawan bicara
+                          if (unreadCount > 0 &&
+                              lastMessage != null &&
+                              lastMessage['SenderID'] != userId) {
+                            _markChatRoomAsRead(chatRoom['id']);
                           }
-                          
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => ChatPage(
-                                chatRoomId: room['id'],
-                                receiverId: otherUser['id'],
-                                receiverName:
-                                    otherUser['shop_name'] ?? otherUser['name'],
+                                chatRoomId: chatRoom['id'],
+                                receiverId: otherUserInfo['id'],
+                                receiverName: otherUserInfo['shop_name'] ??
+                                    otherUserInfo['name'],
                               ),
                             ),
                           ).then((_) {
-                            // Refresh chat rooms setelah kembali dari halaman chat
                             if (userId != null) {
                               _fetchChatRooms(userId!);
+                              _fetchUnreadCount(userId!);
                             }
                           });
                         },
                         child: Card(
-                            color:
-                                unreadCount > 0 ? Colors.blue.shade50 : Colors.white,
-                            elevation: 2,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundImage: NetworkImage(
-                                    '${ApiConfig.baseUrl}${otherUser['profile_image']}'),
-                                onBackgroundImageError: (_, __) {},
-                                child: otherUser['profile_image'] == null
-                                    ? const Icon(Icons.person)
-                                    : null,
+                          color: unreadCount > 0
+                              ? Colors.blue.shade50
+                              : Colors.white,
+                          elevation: 2,
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundImage: NetworkImage(
+                                '${ApiConfig.baseUrl}${otherUserInfo['profile_image']}',
                               ),
-                              title:
-                                  Text(otherUser['shop_name'] ?? otherUser['name']),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      // Indikator pesan belum dibaca
-                                      if (isLastMessageUnread)
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          margin: const EdgeInsets.only(right: 8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      Expanded(
-                                        child: Text(
-                                          lastMessage,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            fontWeight: isLastMessageUnread ? FontWeight.bold : FontWeight.normal,
-                                          ),
-                                        ),
-                                      ),
-                                      if (lastMessageTime.isNotEmpty)
-                                        Text(
-                                          lastMessageTime,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey,
-                                            fontWeight: isLastMessageUnread ? FontWeight.bold : FontWeight.normal,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  if (unreadCount > 0)
-                                    Text(
-                                      '$unreadCount pesan belum dibaca',
-                                      style: const TextStyle(
-                                          fontSize: 12, color: Colors.red),
-                                    ),
-                                ],
-                              ),
-                              trailing: unreadCount > 0
-                                  ? CircleAvatar(
-                                      backgroundColor: Colors.red,
-                                      radius: 12,
-                                      child: Text(
-                                        unreadCount.toString(),
-                                        style: const TextStyle(
-                                            fontSize: 12, color: Colors.white),
-                                      ),
-                                    )
+                              onBackgroundImageError: (_, __) {},
+                              child: otherUserInfo['profile_image'] == null
+                                  ? const Icon(Icons.person)
                                   : null,
-                            )),
+                            ),
+                            title: Text(
+                              otherUserInfo['shop_name'] ??
+                                  otherUserInfo['name'],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    // Indikator pesan belum dibaca
+                                    if (isLastMessageUnread)
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        margin: const EdgeInsets.only(right: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+
+                                    if (lastMessageTime.isNotEmpty)
+                                      Text(
+                                        lastMessageTime,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                          fontWeight: isLastMessageUnread
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                if (unreadCount > 0)
+                                  Text(
+                                    '$unreadCount pesan belum dibaca',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            trailing: unreadCount > 0
+                                ? CircleAvatar(
+                                    backgroundColor: Colors.red,
+                                    radius: 12,
+                                    child: Text(
+                                      unreadCount.toString(),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
                       );
                     },
                   ),
