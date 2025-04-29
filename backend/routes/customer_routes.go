@@ -24,6 +24,7 @@ func CustomerRoutes(router *gin.Engine) {
 			customer.GET("/profile", controllers.GetCustomerProfile)
 			customer.POST("/review/:id", controllers.CreateReview)
 			customer.GET("/extensions", controllers.GetCustomerBookingExtensions)
+			customer.GET("/bookings/:booking_id/extensions", controllers.GetBookingExtensionsByBookingID)
 
 			customer.PUT("/bookings/:id/cancel", controllers.CancelBooking)
 			customer.POST("/bookings/:id/extend", controllers.RequestBookingExtension)

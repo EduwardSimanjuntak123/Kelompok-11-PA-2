@@ -12,76 +12,86 @@ import (
 )
 
 func RequestBookingExtension(c *gin.Context) {
-	bookingID := c.Param("id")
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Customer tidak terautentikasi"})
-		return
-	}
+    bookingID := c.Param("id")
+    userID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Customer tidak terautentikasi"})
+        return
+    }
 
-	// Ambil booking
-	var booking models.Booking
-	if err := config.DB.First(&booking, bookingID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
-		return
-	}
+    // Ambil booking
+    var booking models.Booking
+    if err := config.DB.First(&booking, bookingID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
+        return
+    }
 
-	// Validasi bahwa booking milik customer dan status-nya "in use"
-	if booking.CustomerID == nil || *booking.CustomerID != userID.(uint) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki akses ke booking ini"})
-		return
-	}
-	if booking.Status != "in use" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Perpanjangan hanya bisa dilakukan saat status booking 'in use'"})
-		return
-	}
+    // Validasi booking
+    if booking.CustomerID == nil || *booking.CustomerID != userID.(uint) {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki akses ke booking ini"})
+        return
+    }
+    if booking.Status != "in use" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Perpanjangan hanya bisa dilakukan saat status booking 'in use'"})
+        return
+    }
 
-	// Ambil tanggal dari request body
-	var req struct {
-		RequestedEndDate string `json:"requested_end_date"` // Format: "YYYY-MM-DD"
-	}
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format data tidak valid"})
-		return
-	}
+    // Ambil durasi tambahan dari request body
+    var req struct {
+        AdditionalDays int `json:"additional_days"`
+    }
+    if err := c.ShouldBindJSON(&req); err != nil || req.AdditionalDays <= 0 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Durasi tambahan harus berupa angka lebih dari 0"})
+        return
+    }
 
-	// Parse tanggal (tanpa jam)
-	layout := "2006-01-02"
-	requestedDateOnly, err := time.Parse(layout, req.RequestedEndDate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Format tanggal salah, gunakan YYYY-MM-DD"})
-		return
-	}
+    // Hitung end date baru
+    newEndDate := booking.EndDate.AddDate(0, 0, req.AdditionalDays)
 
-	// Gabungkan jam dari end_date sebelumnya
-	hour, min, sec := booking.EndDate.Clock()
-	newEndDate := time.Date(
-		requestedDateOnly.Year(), requestedDateOnly.Month(), requestedDateOnly.Day(),
-		hour, min, sec, 0, booking.EndDate.Location(),
-	)
+    // Cek overlapping booking yang bentrok
+    var conflict int64
+    if err := config.DB.
+        Model(&models.Booking{}).
+        Where("motor_id = ?", booking.MotorID).
+        Where("status IN ?", []string{"confirmed", "in transit", "in use"}).
+        // overlapping: start < newEndDate AND end > current end date
+        Where("start_date < ? AND end_date > ?", newEndDate, booking.EndDate).
+        Where("id != ?", booking.ID).
+        Count(&conflict).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memeriksa konflik booking"})
+        return
+    }
+    if conflict > 0 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Tidak bisa perpanjang, sudah ada booking lain di periode tersebut"})
+        return
+    }
 
-	// Validasi tanggal baru harus setelah end_date sekarang
-	if !newEndDate.After(booking.EndDate) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Tanggal perpanjangan harus lebih lama dari end date saat ini"})
-		return
-	}
+    // Ambil harga per hari motor
+    var motor models.Motor
+    if err := config.DB.First(&motor, booking.MotorID).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
+        return
+    }
+    additionalPrice := float64(req.AdditionalDays) * motor.Price
 
-	// Simpan request perpanjangan
-	extension := models.BookingExtension{
-		BookingID:        booking.ID,
-		RequestedEndDate: newEndDate,
-		Status:           "pending",
-	}
-	if err := config.DB.Create(&extension).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan permintaan perpanjangan"})
-		return
-	}
+    // Simpan request perpanjangan termasuk harga tambahan
+    extension := models.BookingExtension{
+        BookingID:        booking.ID,
+        RequestedEndDate: newEndDate,
+        AdditionalPrice:  additionalPrice,
+        Status:           "pending",
+    }
+    if err := config.DB.Create(&extension).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan permintaan perpanjangan"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Permintaan perpanjangan berhasil diajukan",
-		"data":    extension,
-	})
+    c.JSON(http.StatusOK, gin.H{
+        "message": "Permintaan perpanjangan berhasil diajukan",
+        "data":    extension,
+    })
 }
+
 
 
 func ApproveBookingExtension(c *gin.Context) {
@@ -228,6 +238,8 @@ func GetPendingBookingExtensions(c *gin.Context) {
 			"requested_end_date": ext.RequestedEndDate,
 			"status":             ext.Status,
 			"requested_at":       ext.RequestedAt,
+			"additional_price": ext.AdditionalPrice,
+
 		})
 	}
 
@@ -266,6 +278,7 @@ func GetCustomerBookingExtensions(c *gin.Context) {
 			"status":             ext.Status,
 			"requested_at":       ext.RequestedAt,
 			"approved_at":        ext.ApprovedAt,
+			"additional_price": ext.AdditionalPrice,
 		})
 	}
 
@@ -293,16 +306,61 @@ func GetBookingsByMotorID(c *gin.Context) {
 		return
 	}
 
-	// Format data untuk response
-	var response []map[string]interface{}
-	for _, booking := range bookings {
-		response = append(response, map[string]interface{}{
-			"booking_id": booking.ID,
-			"start_date": booking.StartDate,
-			"end_date":   booking.EndDate,
-			"status":     booking.Status,
-		})
-	}
-
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, bookings)
 }
+
+
+func GetBookingExtensionsByBookingID(c *gin.Context) {
+    // pastikan customer terautentikasi
+    userID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Customer tidak terautentikasi"})
+        return
+    }
+
+    // parse booking ID dari path
+    bookingIDParam := c.Param("booking_id")
+    bookingID, err := strconv.ParseUint(bookingIDParam, 10, 64)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "ID booking tidak valid"})
+        return
+    }
+
+    // pastikan booking milik customer
+    var booking models.Booking
+    if err := config.DB.First(&booking, bookingID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
+        return
+    }
+    if booking.CustomerID == nil || *booking.CustomerID != userID.(uint) {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki akses ke booking ini"})
+        return
+    }
+
+    // ambil extension untuk booking tersebut
+    var extensions []models.BookingExtension
+    if err := config.DB.
+        Where("booking_id = ?", bookingID).
+        Order("requested_at DESC").
+        Find(&extensions).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data perpanjangan"})
+        return
+    }
+
+    // bentuk response
+    var resp []map[string]interface{}
+    for _, ext := range extensions {
+        resp = append(resp, map[string]interface{}{
+            "id":                ext.ID,
+            "booking_id":        ext.BookingID,
+            "requested_end_date": ext.RequestedEndDate,
+            "additional_price":  ext.AdditionalPrice,
+            "status":            ext.Status,
+            "requested_at":      ext.RequestedAt,
+            "approved_at":       ext.ApprovedAt,
+        })
+    }
+
+    c.JSON(http.StatusOK, gin.H{"extensions": resp})
+}
+
