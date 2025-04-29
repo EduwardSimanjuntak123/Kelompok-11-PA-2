@@ -169,8 +169,7 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
   void _prepareChartData() {
     // Get the last 7 days
     final now = DateTime.now();
-    final dates =
-        List.generate(7, (index) => now.subtract(Duration(days: index)));
+    final dates = List.generate(7, (index) => now.subtract(Duration(days: index)));
 
     // Initialize data for each day
     Map<String, Map<String, dynamic>> dailyData = {};
@@ -216,21 +215,29 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
     revenueSpots = [];
     transactionSpots = [];
     maxY = 0;
+    
+    // Find max count for better scaling
+    double maxCount = 0;
+    dailyData.values.forEach((data) {
+      if (data['count'] > maxCount) maxCount = data['count'].toDouble();
+    });
+    
+    // Scale factor for count to make it visible alongside revenue
+    double countScaleFactor = maxCount > 0 ? 100000 / maxCount : 100000;
 
     List<String> sortedDates = dailyData.keys.toList()..sort();
     for (int i = 0; i < sortedDates.length; i++) {
       String dateKey = sortedDates[i];
       double x = i.toDouble();
       double revenueY = dailyData[dateKey]!['revenue'].toDouble();
-      double countY = dailyData[dateKey]!['count'].toDouble();
+      double countY = dailyData[dateKey]!['count'].toDouble() * countScaleFactor;
 
       revenueSpots.add(FlSpot(x, revenueY));
-      transactionSpots
-          .add(FlSpot(x, countY * 100000)); // Scale up for visibility
+      transactionSpots.add(FlSpot(x, countY));
 
       // Update max Y value for scaling
       if (revenueY > maxY) maxY = revenueY;
-      if (countY * 100000 > maxY) maxY = countY * 100000;
+      if (countY > maxY) maxY = countY;
     }
 
     // Ensure maxY is not zero
@@ -497,149 +504,143 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                   SizedBox(height: 20),
                                   Container(
                                     height: 200,
-                                    child: LineChart(
-                                      LineChartData(
-                                        gridData: FlGridData(
-                                          show: true,
-                                          drawVerticalLine: true,
-                                          horizontalInterval: maxY / 5,
-                                          verticalInterval: 1,
-                                          getDrawingHorizontalLine: (value) {
-                                            return FlLine(
-                                              color:
-                                                  Colors.grey.withOpacity(0.2),
-                                              strokeWidth: 1,
-                                            );
-                                          },
-                                          getDrawingVerticalLine: (value) {
-                                            return FlLine(
-                                              color:
-                                                  Colors.grey.withOpacity(0.2),
-                                              strokeWidth: 1,
-                                            );
-                                          },
-                                        ),
-                                        titlesData: FlTitlesData(
-                                          show: true,
-                                          rightTitles: AxisTitles(
-                                            sideTitles:
-                                                SideTitles(showTitles: false),
+                                    width: double.infinity,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 16.0, top: 16.0),
+                                      child: LineChart(
+                                        LineChartData(
+                                          gridData: FlGridData(
+                                            show: true,
+                                            drawVerticalLine: true,
+                                            horizontalInterval: maxY / 5,
+                                            verticalInterval: 1,
+                                            getDrawingHorizontalLine: (value) {
+                                              return FlLine(
+                                                color: Colors.grey.withOpacity(0.2),
+                                                strokeWidth: 1,
+                                              );
+                                            },
+                                            getDrawingVerticalLine: (value) {
+                                              return FlLine(
+                                                color: Colors.grey.withOpacity(0.2),
+                                                strokeWidth: 1,
+                                              );
+                                            },
                                           ),
-                                          topTitles: AxisTitles(
-                                            sideTitles:
-                                                SideTitles(showTitles: false),
-                                          ),
-                                          bottomTitles: AxisTitles(
-                                            sideTitles: SideTitles(
-                                              showTitles: true,
-                                              reservedSize: 30,
-                                              interval: 1,
-                                              getTitlesWidget: (value, meta) {
-                                                final now = DateTime.now();
-                                                final date = now.subtract(
-                                                    Duration(
-                                                        days: (maxX - value)
-                                                            .toInt()));
-                                                return Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          top: 8.0),
-                                                  child: Text(
-                                                    DateFormat('dd/MM')
-                                                        .format(date),
-                                                    style: TextStyle(
-                                                      color: textSecondaryColor,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 10,
+                                          titlesData: FlTitlesData(
+                                            show: true,
+                                            rightTitles: AxisTitles(
+                                              sideTitles: SideTitles(showTitles: false),
+                                            ),
+                                            topTitles: AxisTitles(
+                                              sideTitles: SideTitles(showTitles: false),
+                                            ),
+                                            bottomTitles: AxisTitles(
+                                              sideTitles: SideTitles(
+                                                showTitles: true,
+                                                reservedSize: 30,
+                                                interval: 1,
+                                                getTitlesWidget: (value, meta) {
+                                                  if (value % 1 != 0) return const SizedBox.shrink();
+                                                  final now = DateTime.now();
+                                                  final date = now.subtract(Duration(days: (maxX - value).toInt()));
+                                                  return Padding(
+                                                    padding: const EdgeInsets.only(top: 8.0),
+                                                    child: Text(
+                                                      DateFormat('dd/MM').format(date),
+                                                      style: TextStyle(
+                                                        color: textSecondaryColor,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 10,
+                                                      ),
                                                     ),
-                                                  ),
-                                                );
-                                              },
+                                                  );
+                                                },
+                                              ),
                                             ),
-                                          ),
-                                          leftTitles: AxisTitles(
-                                            sideTitles: SideTitles(
-                                              showTitles: true,
-                                              reservedSize: 30,
-                                              interval: maxY / 5,
-                                              getTitlesWidget: (value, meta) {
-                                                return Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          right: 8.0),
-                                                  child: Text(
-                                                    formatCurrency(
-                                                        value.toInt()),
-                                                    style: TextStyle(
-                                                      color: textSecondaryColor,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 10,
+                                            leftTitles: AxisTitles(
+                                              sideTitles: SideTitles(
+                                                showTitles: true,
+                                                reservedSize: 40,
+                                                interval: maxY / 5,
+                                                getTitlesWidget: (value, meta) {
+                                                  String formattedValue = '';
+                                                  if (value >= 1000000) {
+                                                    formattedValue = '${(value / 1000000).toStringAsFixed(1)}M';
+                                                  } else if (value >= 1000) {
+                                                    formattedValue = '${(value / 1000).toStringAsFixed(0)}K';
+                                                  } else {
+                                                    formattedValue = value.toStringAsFixed(0);
+                                                  }
+                                                  return Padding(
+                                                    padding: const EdgeInsets.only(right: 8.0),
+                                                    child: Text(
+                                                      formattedValue,
+                                                      style: TextStyle(
+                                                        color: textSecondaryColor,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 10,
+                                                      ),
                                                     ),
-                                                  ),
-                                                );
-                                              },
+                                                  );
+                                                },
+                                              ),
                                             ),
                                           ),
+                                          borderData: FlBorderData(
+                                            show: false,
+                                          ),
+                                          minX: 0,
+                                          maxX: maxX,
+                                          minY: 0,
+                                          maxY: maxY,
+                                          lineBarsData: [
+                                            LineChartBarData(
+                                              spots: revenueSpots,
+                                              isCurved: true,
+                                              color: primaryColor,
+                                              barWidth: 3,
+                                              isStrokeCapRound: true,
+                                              dotData: FlDotData(
+                                                show: true,
+                                                getDotPainter: (spot, percent, barData, index) {
+                                                  return FlDotCirclePainter(
+                                                    radius: 4,
+                                                    color: primaryColor,
+                                                    strokeWidth: 2,
+                                                    strokeColor: Colors.white,
+                                                  );
+                                                },
+                                              ),
+                                              belowBarData: BarAreaData(
+                                                show: true,
+                                                color: primaryColor.withOpacity(0.2),
+                                              ),
+                                            ),
+                                            LineChartBarData(
+                                              spots: transactionSpots,
+                                              isCurved: true,
+                                              color: accentColor,
+                                              barWidth: 3,
+                                              isStrokeCapRound: true,
+                                              dotData: FlDotData(
+                                                show: true,
+                                                getDotPainter: (spot, percent, barData, index) {
+                                                  return FlDotCirclePainter(
+                                                    radius: 4,
+                                                    color: accentColor,
+                                                    strokeWidth: 2,
+                                                    strokeColor: Colors.white,
+                                                  );
+                                                },
+                                              ),
+                                              belowBarData: BarAreaData(
+                                                show: true,
+                                                color: accentColor.withOpacity(0.2),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        borderData: FlBorderData(
-                                          show: false,
-                                        ),
-                                        minX: 0,
-                                        maxX: maxX,
-                                        minY: 0,
-                                        maxY: maxY,
-                                        lineBarsData: [
-                                          LineChartBarData(
-                                            spots: revenueSpots,
-                                            isCurved: true,
-                                            color: primaryColor,
-                                            barWidth: 3,
-                                            isStrokeCapRound: true,
-                                            dotData: FlDotData(
-                                              show: true,
-                                              getDotPainter: (spot, percent,
-                                                  barData, index) {
-                                                return FlDotCirclePainter(
-                                                  radius: 4,
-                                                  color: primaryColor,
-                                                  strokeWidth: 2,
-                                                  strokeColor: Colors.white,
-                                                );
-                                              },
-                                            ),
-                                            belowBarData: BarAreaData(
-                                              show: true,
-                                              color:
-                                                  primaryColor.withOpacity(0.2),
-                                            ),
-                                          ),
-                                          LineChartBarData(
-                                            spots: transactionSpots,
-                                            isCurved: true,
-                                            color: accentColor,
-                                            barWidth: 3,
-                                            isStrokeCapRound: true,
-                                            dotData: FlDotData(
-                                              show: true,
-                                              getDotPainter: (spot, percent,
-                                                  barData, index) {
-                                                return FlDotCirclePainter(
-                                                  radius: 4,
-                                                  color: accentColor,
-                                                  strokeWidth: 2,
-                                                  strokeColor: Colors.white,
-                                                );
-                                              },
-                                            ),
-                                            belowBarData: BarAreaData(
-                                              show: true,
-                                              color:
-                                                  accentColor.withOpacity(0.2),
-                                            ),
-                                          ),
-                                        ],
                                       ),
                                     ),
                                   ),
