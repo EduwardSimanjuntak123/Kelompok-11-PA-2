@@ -68,33 +68,130 @@ class _PesananPageState extends State<PesananPage> {
         },
       );
 
-      debugPrint("==== API RESPONSE /bookings/motor/$motorId ====");
-      debugPrint(response.body);
-      debugPrint("===============================================");
-
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         final List<DateTime> dates = [];
 
         for (var booking in data) {
-          DateTime start = DateTime.parse(booking['start_date']);
-          DateTime end = DateTime.parse(booking['end_date']);
+          DateTime start = DateTime.parse(booking['start_date']).toLocal();
+          DateTime end = DateTime.parse(booking['end_date']).toLocal();
 
+          // Debugging: Menampilkan tanggal mulai dan selesai yang diterima dari API
+          debugPrint('Start Date: $start');
+          debugPrint('End Date: $end');
+
+          // Normalisasi untuk mengambil hanya tanggal
+          start = DateTime(start.year, start.month, start.day);
+          end = DateTime(end.year, end.month, end.day);
+
+          // Debugging: Menampilkan tanggal yang telah dinormalisasi
+          debugPrint('Normalized Start Date: $start');
+          debugPrint('Normalized End Date: $end');
+
+          // Menambahkan semua tanggal antara tanggal mulai dan selesai ke daftar
           for (int i = 0; i <= end.difference(start).inDays; i++) {
-            dates.add(start.add(Duration(days: i)));
+            final day = start.add(Duration(days: i));
+            dates.add(day);
+            // Debugging: Menampilkan setiap tanggal yang ditambahkan
+            debugPrint('Unavailable Date: $day');
           }
         }
 
-        // Normalize semua tanggal ke jam 00:00
-        return dates
-            .map((date) => DateTime(date.year, date.month, date.day))
-            .toList();
+        return dates;
       } else {
-        throw Exception("Failed to fetch bookings");
+        throw Exception("Gagal mengambil data pemesanan");
       }
     } catch (e) {
       debugPrint("Error fetching unavailable dates: $e");
       return [];
+    }
+  }
+
+  Widget _buildExtensionList() {
+    if (_loadingExt) return Center(child: CircularProgressIndicator());
+    if (_extensions.isEmpty) {
+      return Text('Belum ada permintaan perpanjangan');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _extensions.map((ext) {
+        final status = ext['status'];
+        final Color bgColor = status == 'pending'
+            ? Colors.yellow.shade100
+            : status == 'approved'
+                ? Colors.green.shade100
+                : Colors.red.shade100;
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.update, size: 20, color: primaryBlue),
+                  SizedBox(width: 8),
+                  Text(
+                    "Permintaan Perpanjangan",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              _buildExtensionDetail('Tanggal Permintaan',
+                  ext['requested_at']?.split('T')[0] ?? '-'),
+              _buildExtensionDetail('Tanggal Selesai Baru',
+                  ext['requested_end_date']?.split('T')[0] ?? '-'),
+              _buildExtensionDetail(
+                  'Harga Tambahan', 'Rp ${ext['additional_price'] ?? 0}'),
+              _buildExtensionDetail('Status', _capitalizeStatus(status)),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildExtensionDetail(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            ),
+          ),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _capitalizeStatus(String status) {
+    switch (status) {
+      case 'pending':
+        return 'Menunggu Konfirmasi';
+      case 'approved':
+        return 'Disetujui';
+      case 'rejected':
+        return 'Ditolak';
+      default:
+        return status;
     }
   }
 
@@ -119,7 +216,7 @@ class _PesananPageState extends State<PesananPage> {
     if (resp.statusCode == 200) {
       final data = jsonDecode(resp.body);
       setState(() {
-        _extensions = data['data'] ?? [];
+        _extensions = data['extensions'] ?? [];
         _loadingExt = false;
       });
     } else {
@@ -169,6 +266,29 @@ class _PesananPageState extends State<PesananPage> {
     }
   }
 
+// Fungsi untuk membangun lingkaran yang menandai tanggal pada kalender
+  Widget _buildCalendarCircle(int day, Color color) {
+    return Center(
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '$day',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> showCancelConfirmation(int bookingId) async {
     final result = await showDialog<bool>(
       context: context,
@@ -215,15 +335,30 @@ class _PesananPageState extends State<PesananPage> {
 
     final unavailableDates = await getUnavailableDates(motorId);
 
-    final DateTime nextDayAfterEnd = bookingEndDate.add(Duration(days: 1));
+    // Menambahkan jumlah hari tambahan yang diminta
+    int additionalDays = 3; // Misalnya, user ingin menambah 3 hari
 
-    bool cannotExtend = unavailableDates.contains(
-      DateTime(
-          nextDayAfterEnd.year, nextDayAfterEnd.month, nextDayAfterEnd.day),
-    );
+    // Menentukan tanggal akhir perpanjangan yang diinginkan
+    DateTime requestedEndDate =
+        bookingEndDate.add(Duration(days: additionalDays));
 
-    int additionalDays = 1;
+    // Debugging: Menampilkan tanggal perpanjangan yang diminta
+    debugPrint("Requested End Date (after extension): $requestedEndDate");
 
+    // Mengecek apakah ada pemesanan lain yang berbenturan dengan tanggal perpanjangan yang diminta
+    bool cannotExtend = false;
+
+    // Memeriksa seluruh rentang tanggal yang sudah dibooking dan apakah ada bentrok
+    for (DateTime date in unavailableDates) {
+      // Cek apakah ada pemesanan lain yang berbenturan dengan perpanjangan yang diminta
+      if (date.isAfter(bookingEndDate) && date.isBefore(requestedEndDate)) {
+        debugPrint("Cannot extend because booking exists on: $date");
+        cannotExtend = true;
+        break;
+      }
+    }
+
+    // Jika tidak ada bentrok, lanjutkan untuk menampilkan form perpanjangan
     await showDialog(
       context: context,
       builder: (context) {
@@ -240,6 +375,7 @@ class _PesananPageState extends State<PesananPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Bagian TableCalendar di dalam showExtendRequestDialog
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
@@ -257,79 +393,61 @@ class _PesananPageState extends State<PesananPage> {
                       titleCentered: true,
                     ),
                     calendarBuilders: CalendarBuilders(
-                      defaultBuilder: (context, day, focusedDay) {
+                      defaultBuilder: (context, day, _) {
                         final dayPure = DateTime(day.year, day.month, day.day);
 
-                        if (!dayPure.isBefore(startDate) &&
-                            !dayPure.isAfter(bookingEndDate)) {
-                          return Center(
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: Colors.orange[200], // Booking sendiri
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '${day.day}',
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13),
-                              ),
-                            ),
-                          );
+                        // Cek apakah tanggal berada dalam rentang booking
+                        final startDate =
+                            DateTime.parse(widget.booking['start_date']);
+                        final endDate =
+                            DateTime.parse(widget.booking['end_date']);
+
+                        // Normalisasi untuk membandingkan tanggal tanpa waktu
+                        final normalizedStartDate = DateTime(
+                            startDate.year, startDate.month, startDate.day);
+                        final normalizedEndDate =
+                            DateTime(endDate.year, endDate.month, endDate.day);
+
+                        // Menandai tanggal yang dibooking dengan warna oranye
+                        if (!dayPure.isBefore(normalizedStartDate) &&
+                            !dayPure.isAfter(normalizedEndDate)) {
+                          return _buildCalendarCircle(
+                              day.day,
+                              Colors.orange[
+                                  200]!); // Tanggal yang dipesan oleh pengguna
                         }
 
+                        // Cek apakah tanggal tersebut sudah dipesan orang lain
                         if (unavailableDates.contains(dayPure)) {
                           return Center(
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: Colors.red[100], // Booking orang lain
-                                shape: BoxShape.circle,
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                '${day.day}',
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13),
+                            child: Text(
+                              '${day.day}',
+                              style: TextStyle(
+                                color: Colors.red,
+                                decoration: TextDecoration.lineThrough,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           );
                         }
 
-                        return null;
-                      },
-                      disabledBuilder: (context, day, _) {
-                        return Center(
-                          child: Text(
-                            '${day.day}',
-                            style: TextStyle(
-                              color: Colors.red.withOpacity(0.5),
-                              decoration: TextDecoration.lineThrough,
-                            ),
-                          ),
-                        );
+                        return null; // Jika tidak ada penandaan
                       },
                     ),
-                    enabledDayPredicate: (day) {
-                      return !unavailableDates
-                          .contains(DateTime(day.year, day.month, day.day));
-                    },
                   ),
                 ),
+
                 SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildLegendItem(Colors.green[100]!, "Tersedia"),
+                    SizedBox(height: 6),
                     _buildLegendItem(Colors.orange[200]!, "Booking Anda"),
-                    _buildLegendItem(Colors.red[100]!, "Booking Lain"),
+                    SizedBox(height: 6),
+                    _buildLegendItem(
+                        Colors.red[100]!, "Tanggal yang sudah di Booking"),
                   ],
                 ),
                 SizedBox(height: 16),
@@ -346,7 +464,7 @@ class _PesananPageState extends State<PesananPage> {
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Tidak bisa perpanjang karena untuk besok motor sudah dipesan.',
+                            'Tidak bisa perpanjang karena tanggal yang diminta sudah berbenturan dengan booking lain.',
                             style: TextStyle(color: Colors.red, fontSize: 13),
                           ),
                         ),
@@ -360,6 +478,8 @@ class _PesananPageState extends State<PesananPage> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: 'Jumlah Hari Tambahan',
+                      fillColor: Colors.white,
+                      filled: true,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -421,32 +541,6 @@ class _PesananPageState extends State<PesananPage> {
         SizedBox(width: 6),
         Text(label, style: TextStyle(fontSize: 12)),
       ],
-    );
-  }
-
-  Widget _buildExtensionList() {
-    if (_loadingExt) return CircularProgressIndicator();
-    if (_extensions.isEmpty) return Text('Belum ada permintaan perpanjangan');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: _extensions.map((ext) {
-        final status = ext['status'];
-        return Card(
-          margin: EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text('Permintaan perpanjangan'),
-            subtitle: Text(
-                'Tanggal akhir baru: ${ext['requested_end_date'].split('T')[0]}\nHarga tambah: Rp ${ext['additional_price'].toStringAsFixed(0)}'),
-            trailing: Text(status,
-                style: TextStyle(
-                    color: status == 'pending'
-                        ? Colors.orange
-                        : status == 'approved'
-                            ? Colors.green
-                            : Colors.red)),
-          ),
-        );
-      }).toList(),
     );
   }
 
