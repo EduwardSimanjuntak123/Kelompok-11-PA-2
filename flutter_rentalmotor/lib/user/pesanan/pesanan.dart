@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:table_calendar/table_calendar.dart';
+import 'dart:convert';
 import 'package:flutter_rentalmotor/user/homepageuser.dart';
 import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
@@ -22,11 +25,13 @@ class _PesananPageState extends State<PesananPage> {
   int _selectedIndex = 1;
   bool _isCancelling = false;
   bool _hasReviewed = false;
-
+  List<dynamic> _extensions = [];
+  bool _loadingExt = true;
   @override
   void initState() {
     super.initState();
     debugBooking();
+    _fetchExtensions();
   }
 
   void debugBooking() {
@@ -47,6 +52,175 @@ class _PesananPageState extends State<PesananPage> {
     } else if (index == 2) {
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => Akun()));
+    }
+  }
+
+  Future<List<DateTime>> getUnavailableDates(int motorId) async {
+    try {
+      final token = await BatalkanPesananAPI.storage.read(key: "auth_token");
+      final url = Uri.parse("${ApiConfig.baseUrl}/bookings/motor/$motorId");
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final List<DateTime> dates = [];
+
+        for (var booking in data) {
+          DateTime start = DateTime.parse(booking['start_date']).toLocal();
+          DateTime end = DateTime.parse(booking['end_date']).toLocal();
+
+          // Debugging: Menampilkan tanggal mulai dan selesai yang diterima dari API
+          debugPrint('Start Date: $start');
+          debugPrint('End Date: $end');
+
+          // Normalisasi untuk mengambil hanya tanggal
+          start = DateTime(start.year, start.month, start.day);
+          end = DateTime(end.year, end.month, end.day);
+
+          // Debugging: Menampilkan tanggal yang telah dinormalisasi
+          debugPrint('Normalized Start Date: $start');
+          debugPrint('Normalized End Date: $end');
+
+          // Menambahkan semua tanggal antara tanggal mulai dan selesai ke daftar
+          for (int i = 0; i <= end.difference(start).inDays; i++) {
+            final day = start.add(Duration(days: i));
+            dates.add(day);
+            // Debugging: Menampilkan setiap tanggal yang ditambahkan
+            debugPrint('Unavailable Date: $day');
+          }
+        }
+
+        return dates;
+      } else {
+        throw Exception("Gagal mengambil data pemesanan");
+      }
+    } catch (e) {
+      debugPrint("Error fetching unavailable dates: $e");
+      return [];
+    }
+  }
+
+  Widget _buildExtensionList() {
+    if (_loadingExt) return Center(child: CircularProgressIndicator());
+    if (_extensions.isEmpty) {
+      return Text('Belum ada permintaan perpanjangan');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _extensions.map((ext) {
+        final status = ext['status'];
+        final Color bgColor = status == 'pending'
+            ? Colors.yellow.shade100
+            : status == 'approved'
+                ? Colors.green.shade100
+                : Colors.red.shade100;
+
+        return Container(
+          margin: EdgeInsets.only(bottom: 8),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.update, size: 20, color: primaryBlue),
+                  SizedBox(width: 8),
+                  Text(
+                    "Permintaan Perpanjangan",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              _buildExtensionDetail('Tanggal Permintaan',
+                  ext['requested_at']?.split('T')[0] ?? '-'),
+              _buildExtensionDetail('Tanggal Selesai Baru',
+                  ext['requested_end_date']?.split('T')[0] ?? '-'),
+              _buildExtensionDetail(
+                  'Harga Tambahan', 'Rp ${ext['additional_price'] ?? 0}'),
+              _buildExtensionDetail('Status', _capitalizeStatus(status)),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildExtensionDetail(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            ),
+          ),
+          Expanded(
+            flex: 6,
+            child: Text(
+              value,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _capitalizeStatus(String status) {
+    switch (status) {
+      case 'pending':
+        return 'Menunggu Konfirmasi';
+      case 'approved':
+        return 'Disetujui';
+      case 'rejected':
+        return 'Ditolak';
+      default:
+        return status;
+    }
+  }
+
+  Future<void> _fetchExtensions() async {
+    final bookingId = widget.booking['id'];
+    final token = await BatalkanPesananAPI.storage.read(key: 'auth_token');
+
+    final url = Uri.parse(
+        '${ApiConfig.baseUrl}/customer/bookings/$bookingId/extensions');
+
+    // Debugging: Menampilkan URL dan token yang digunakan
+    debugPrint('Request URL: $url');
+    debugPrint('Authorization Header: Bearer $token');
+
+    final resp =
+        await http.get(url, headers: {'Authorization': 'Bearer $token'});
+
+    // Debugging: Menampilkan status code dan response body
+    debugPrint('Response Status Code: ${resp.statusCode}');
+    debugPrint('Response Body: ${resp.body}');
+
+    if (resp.statusCode == 200) {
+      final data = jsonDecode(resp.body);
+      setState(() {
+        _extensions = data['extensions'] ?? [];
+        _loadingExt = false;
+      });
+    } else {
+      setState(() => _loadingExt = false);
     }
   }
 
@@ -92,6 +266,29 @@ class _PesananPageState extends State<PesananPage> {
     }
   }
 
+// Fungsi untuk membangun lingkaran yang menandai tanggal pada kalender
+  Widget _buildCalendarCircle(int day, Color color) {
+    return Center(
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '$day',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> showCancelConfirmation(int bookingId) async {
     final result = await showDialog<bool>(
       context: context,
@@ -127,6 +324,299 @@ class _PesananPageState extends State<PesananPage> {
 
     if (result == true) {
       await cancelBooking(bookingId);
+    }
+  }
+
+  Future<void> showExtendRequestDialog(int bookingId) async {
+    final motor = widget.booking['motor'];
+    final int motorId = motor['id'];
+    final bookingEndDate = DateTime.parse(widget.booking['end_date']);
+    final startDate = DateTime.parse(widget.booking['start_date']);
+
+    final unavailableDates = await getUnavailableDates(motorId);
+
+    // Menambahkan jumlah hari tambahan yang diminta
+    int additionalDays = 3; // Misalnya, user ingin menambah 3 hari
+
+    // Menentukan tanggal akhir perpanjangan yang diinginkan
+    DateTime requestedEndDate =
+        bookingEndDate.add(Duration(days: additionalDays));
+
+    // Debugging: Menampilkan tanggal perpanjangan yang diminta
+    debugPrint("Requested End Date (after extension): $requestedEndDate");
+
+    // Mengecek apakah ada pemesanan lain yang berbenturan dengan tanggal perpanjangan yang diminta
+    bool cannotExtend = false;
+
+    // Memeriksa seluruh rentang tanggal yang sudah dibooking dan apakah ada bentrok
+    for (DateTime date in unavailableDates) {
+      // Cek apakah ada pemesanan lain yang berbenturan dengan perpanjangan yang diminta
+      if (date.isAfter(bookingEndDate) && date.isBefore(requestedEndDate)) {
+        debugPrint("Cannot extend because booking exists on: $date");
+        cannotExtend = true;
+        break;
+      }
+    }
+
+    // Jika tidak ada bentrok, lanjutkan untuk menampilkan form perpanjangan
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: EdgeInsets.all(16),
+          title: Text(
+            'Ajukan Perpanjangan',
+            style: TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: primaryBlue),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Bagian TableCalendar di dalam showExtendRequestDialog
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey[100],
+                  ),
+                  child: TableCalendar(
+                    firstDay: DateTime.utc(2020, 1, 1),
+                    lastDay: DateTime.utc(2030, 12, 31),
+                    focusedDay: DateTime.now(),
+                    availableGestures: AvailableGestures.none,
+                    calendarFormat: CalendarFormat.month,
+                    startingDayOfWeek: StartingDayOfWeek.monday,
+                    headerStyle: HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                    ),
+                    calendarBuilders: CalendarBuilders(
+                      defaultBuilder: (context, day, _) {
+                        final dayPure = DateTime(day.year, day.month, day.day);
+
+                        // Cek apakah tanggal berada dalam rentang booking
+                        final startDate =
+                            DateTime.parse(widget.booking['start_date']);
+                        final endDate =
+                            DateTime.parse(widget.booking['end_date']);
+
+                        // Normalisasi untuk membandingkan tanggal tanpa waktu
+                        final normalizedStartDate = DateTime(
+                            startDate.year, startDate.month, startDate.day);
+                        final normalizedEndDate =
+                            DateTime(endDate.year, endDate.month, endDate.day);
+
+                        // Menandai tanggal yang dibooking dengan warna oranye
+                        if (!dayPure.isBefore(normalizedStartDate) &&
+                            !dayPure.isAfter(normalizedEndDate)) {
+                          return _buildCalendarCircle(
+                              day.day,
+                              Colors.orange[
+                                  200]!); // Tanggal yang dipesan oleh pengguna
+                        }
+
+                        // Cek apakah tanggal tersebut sudah dipesan orang lain
+                        if (unavailableDates.contains(dayPure)) {
+                          return Center(
+                            child: Text(
+                              '${day.day}',
+                              style: TextStyle(
+                                color: Colors.red,
+                                decoration: TextDecoration.lineThrough,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        }
+
+                        return null; // Jika tidak ada penandaan
+                      },
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildLegendItem(Colors.green[100]!, "Tersedia"),
+                    SizedBox(height: 6),
+                    _buildLegendItem(Colors.orange[200]!, "Booking Anda"),
+                    SizedBox(height: 6),
+                    _buildLegendItem(
+                        Colors.red[100]!, "Tanggal yang sudah di Booking"),
+                  ],
+                ),
+                SizedBox(height: 16),
+                if (cannotExtend) ...[
+                  Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red[50],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Tidak bisa perpanjang karena tanggal yang diminta sudah berbenturan dengan booking lain.',
+                            style: TextStyle(color: Colors.red, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                ],
+                if (!cannotExtend) ...[
+                  TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Jumlah Hari Tambahan',
+                      fillColor: Colors.white,
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onChanged: (value) {
+                      additionalDays = int.tryParse(value) ?? 1;
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Tutup', style: TextStyle(color: Colors.grey)),
+            ),
+            if (!cannotExtend) ...[
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryBlue,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () async {
+                  Navigator.of(context).pop();
+                  bool success =
+                      await requestExtensionDays(bookingId, additionalDays);
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text('Permintaan perpanjangan berhasil dikirim.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                },
+                child: Text('Kirim', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        SizedBox(width: 6),
+        Text(label, style: TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
+  Future<bool> requestExtensionDays(int bookingId, int additionalDays) async {
+    try {
+      final token = await BatalkanPesananAPI.storage.read(key: "auth_token");
+      final url =
+          Uri.parse("${ApiConfig.baseUrl}/customer/bookings/$bookingId/extend");
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'additional_days': additionalDays,
+        }),
+      );
+      debugPrint("=== RESPONSE EXTEND BOOKING ===");
+      debugPrint("Status Code: ${response.statusCode}");
+      debugPrint("Body: ${response.body}");
+      debugPrint("===============================");
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && responseData['success'] == true) {
+        return true;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(responseData['message'] ?? 'Gagal memperpanjang.'),
+              backgroundColor: Colors.red),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+      return false;
+    }
+  }
+
+  Future<bool> requestExtension(int bookingId, DateTime newEndDate) async {
+    try {
+      final response = await BatalkanPesananAPI.postRequestExtend(
+        bookingId,
+        newEndDate.toIso8601String().split('T')[0],
+      );
+
+      if (response['success'] == true) {
+        return true;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(response['message'] ?? 'Gagal mengajukan perpanjangan.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+        return false;
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      return false;
     }
   }
 
@@ -444,19 +934,61 @@ class _PesananPageState extends State<PesananPage> {
                 ],
               ),
             ),
+// Tambahkan di bawah Booking Details Card
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Permintaan Perpanjangan",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  _buildExtensionList(), // Ini menampilkan daftar perpanjangan
+                ],
+              ),
+            ),
 
             // Action Buttons
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Column(
                 children: [
+                  if (status == 'pending') ...[
+                    buildButton(
+                      "Batalkan Pesanan",
+                      Colors.red,
+                      Colors.white,
+                      () {
+                        showCancelConfirmation(booking['id']);
+                      },
+                      Icons.cancel,
+                    ),
+                    SizedBox(height: 8),
+                  ],
+                  if (status == 'in use') ...[
+                    buildButton(
+                      "Ajukan Perpanjangan",
+                      primaryBlue,
+                      Colors.white,
+                      () {
+                        showExtendRequestDialog(booking['id']);
+                      },
+                      Icons.date_range,
+                    ),
+                    SizedBox(height: 8),
+                  ],
                   if (status == 'completed' && !_hasReviewed) ...[
                     buildButton(
                       "Berikan Ulasan",
                       Colors.blue,
                       Colors.white,
                       () {
-                        // Show review dialog and post review
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -467,8 +999,8 @@ class _PesananPageState extends State<PesananPage> {
                       },
                       Icons.star,
                     ),
+                    SizedBox(height: 8),
                   ],
-                  // Add Chat Button
                   ChatVendorButton(
                     vendorId: booking['vendor_Id'] ?? 0,
                     vendorData: {
@@ -665,7 +1197,8 @@ class ChatVendorButton extends StatelessWidget {
       debugPrint("Vendor ID: $vendorId");
       debugPrint("Vendor Data: $vendorData");
 
-      final chatRoom = await ChatService.getOrCreateChatRoom(vendorId: vendorId);
+      final chatRoom =
+          await ChatService.getOrCreateChatRoom(vendorId: vendorId);
 
       if (chatRoom != null) {
         final prefs = await SharedPreferences.getInstance();
@@ -675,7 +1208,8 @@ class ChatVendorButton extends StatelessWidget {
         debugPrint("Customer ID: $customerId");
 
         if (customerId != null) {
-          final receiverId = vendorData?['user_id'] ?? 0; // Menggunakan vendorData untuk receiverId
+          final receiverId = vendorData?['user_id'] ??
+              0; // Menggunakan vendorData untuk receiverId
 
           // Debug output untuk receiverId
           debugPrint("Receiver ID: $receiverId");
