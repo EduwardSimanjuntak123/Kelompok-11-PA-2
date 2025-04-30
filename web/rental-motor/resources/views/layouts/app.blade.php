@@ -95,6 +95,12 @@
                             Kelola kecamatan
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ route('admin.titiklokasi', ['id' => $userId]) }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('admin.titiklokasi') ? 'bg-white text-blue-600' : '' }}">
+                            Rekomendasi Lokasi
+                        </a>
+                    </li>
                 @elseif ($userRole === 'vendor')
                     <!-- Menu untuk Vendor -->
                     <li>
@@ -113,6 +119,12 @@
                         <a href="{{ route('vendor.kelola', ['id' => $userId]) }}"
                             class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.kelola') ? 'bg-white text-blue-600' : '' }}">
                             Setujui/Tolak Pesanan
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('vendor.perpanjangansewa', ['id' => $userId]) }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.perpanjangansewa') ? 'bg-white text-blue-600' : '' }}">
+                            Perpanjangan Sewa
                         </a>
                     </li>
                     <li>

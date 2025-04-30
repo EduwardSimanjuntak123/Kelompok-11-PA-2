@@ -10,6 +10,8 @@ use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\ulasanController;
 use App\Http\Controllers\VendorController;
 use App\Http\Controllers\KecamatanController;
+use App\Http\Controllers\TitikLokasiController;
+use App\Http\Controllers\PerpanjanganSewaController;
 use App\Http\Middleware\CheckAuth;
 use App\Http\Middleware\RoleMiddleware;
 
@@ -57,6 +59,17 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::delete('/kecamatan/{id}', [KecamatanController::class, 'destroy'])
             ->name('kecamatan.destroy');
 
+        // Daftar kecamatan (index di /admin/titiklokasi)
+        Route::get('/admin/titiklokasi', [TitikLokasiController::class, 'index'])
+            ->name('admin.titiklokasi');
+
+        Route::post('/admin/titiklokasi/{id_kecamatan}', [TitikLokasiController::class, 'store'])
+            ->name('titiklokasi.store');
+
+        Route::put('admin/titiklokasi/{id}', [TitikLokasiController::class, 'update'])->name('titiklokasi.update');
+
+        Route::delete('/admin/titiklokasi/{id}', [TitikLokasiController::class, 'destroy']);
+
     });
 
     // Route untuk vendor (penjual motor)
@@ -97,6 +110,9 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::view('/harga', 'harga')->name('harga');
         Route::view('/ulasan', 'ulasan')->name('ulasan');
         Route::view('/input', 'input')->name('input');
+
+        Route::get('/perpanjangansewa', [PerpanjanganSewaController::class, 'index'])->name('vendor.perpanjangansewa');
+        
     });
 
 });
