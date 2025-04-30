@@ -147,12 +147,18 @@ class MotorController extends Controller
         try {
             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
             $response = Http::withToken($token)
-                            ->delete("{$this->apiBaseUrl}/motor/vendor/{$id}");
+                ->delete("{$this->apiBaseUrl}/motor/vendor/{$id}");
 
-            session()->flash('message', $response->successful() ? 'Motor berhasil dihapus.' : 'Gagal menghapus motor.');
-            session()->flash('type', $response->successful() ? 'success' : 'error');
+if ($response->successful()) {
+    session()->flash('message', 'Motor berhasil dihapus.');
+    session()->flash('type', 'success');
+} else {
+    $error = $response->json('error') ?? 'Gagal menghapus motor.';
+    session()->flash('message', $error);
+    session()->flash('type', 'error');
+}
 
-            return redirect()->back();
+return redirect()->back();
         } catch (\Exception $e) {
             Log::error('Kesalahan saat menghapus motor: ' . $e->getMessage());
             session()->flash('message', 'Terjadi kesalahan saat menghapus motor.');
