@@ -324,6 +324,63 @@ func GetPendingBookingExtensions(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+// GetVendorBookingExtensions menampilkan semua permintaan perpanjangan
+// untuk vendor yang sedang login, diurutkan berdasarkan tanggal request terbaru.
+func GetVendorBookingExtensions(c *gin.Context) {
+    // Ambil user_id (vendor) dari context
+    rawUserID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+        return
+    }
+    userID := rawUserID.(uint)
+
+    // Cari record Vendor untuk dapat vendor.ID
+    var vendor models.Vendor
+    if err := config.DB.
+        Select("id").
+        Where("user_id = ?", userID).
+        First(&vendor).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+        return
+    }
+
+    // Ambil semua BookingExtension yang booking-nya milik vendor ini
+    var extensions []models.BookingExtension
+    if err := config.DB.
+        Preload("Booking").
+        Preload("Booking.Motor").
+        Where("status IN ?", []string{"pending", "approved", "rejected"}).
+        Order("requested_at DESC").
+        Find(&extensions).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data perpanjangan"})
+        return
+    }
+
+    // Filter hanya yang milik vendor
+    var result []map[string]interface{}
+    for _, ext := range extensions {
+        if ext.Booking.VendorID != vendor.ID {
+            continue
+        }
+        result = append(result, map[string]interface{}{
+            "extension_id":       ext.ID,
+            "booking_id":         ext.BookingID,
+            "customer_id":        ext.Booking.CustomerID,
+            "customer_name":      ext.Booking.CustomerName,
+            "motor_id":           ext.Booking.MotorID,
+            "motor_name":         ext.Booking.Motor.Name,
+            "requested_end_date": ext.RequestedEndDate,
+            "additional_price":   ext.AdditionalPrice,
+            "status":             ext.Status,
+            "requested_at":       ext.RequestedAt,
+            "approved_at":        ext.ApprovedAt,
+        })
+    }
+
+    c.JSON(http.StatusOK, gin.H{"extensions": result})
+}
+
 
 func GetCustomerBookingExtensions(c *gin.Context) {
 	userID, exists := c.Get("user_id")

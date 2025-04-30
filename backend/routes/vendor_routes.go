@@ -22,7 +22,7 @@ func VendorRoutes(router *gin.Engine) {
 			vendor.POST("/review/:id/reply", controllers.ReplyReview)
 			vendor.PUT("/profile/edit", controllers.EditProfileVendor)
 			vendor.POST("/manual/bookings", controllers.CreateManualBooking)
-
+			vendor.GET("/extensions", controllers.GetVendorBookingExtensions)
 			vendor.PUT("/extensions/:id/approve", controllers.ApproveBookingExtension)
 			vendor.PUT("/extensions/:id/reject", controllers.RejectBookingExtension)
 
