@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
+	"rental-backend/websocket"
 	"strconv"
 
 	"time"
@@ -19,24 +23,26 @@ func RequestBookingExtension(c *gin.Context) {
         return
     }
 
-    // Ambil booking
+    // Ambil data booking
     var booking models.Booking
     if err := config.DB.First(&booking, bookingID).Error; err != nil {
         c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
         return
     }
 
-    // Validasi booking
+    // Validasi pemilik booking
     if booking.CustomerID == nil || *booking.CustomerID != userID.(uint) {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki akses ke booking ini"})
         return
     }
+
+    // Hanya bisa perpanjang jika status "in use"
     if booking.Status != "in use" {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Perpanjangan hanya bisa dilakukan saat status booking 'in use'"})
         return
     }
 
-    // Ambil durasi tambahan dari request body
+    // Baca request body (jumlah hari tambahan)
     var req struct {
         AdditionalDays int `json:"additional_days"`
     }
@@ -48,25 +54,31 @@ func RequestBookingExtension(c *gin.Context) {
     // Hitung end date baru
     newEndDate := booking.EndDate.AddDate(0, 0, req.AdditionalDays)
 
-    // Cek overlapping booking yang bentrok
+    // Atur newEndDate ke akhir hari (23:59:59) untuk mencegah bentrok halus
+    newEndDate = time.Date(
+        newEndDate.Year(), newEndDate.Month(), newEndDate.Day(),
+        23, 59, 59, 0, newEndDate.Location(),
+    )
+
+    // Cari apakah ada booking lain yang tumpang tindih
     var conflict int64
-    if err := config.DB.
-        Model(&models.Booking{}).
+    if err := config.DB.Model(&models.Booking{}).
         Where("motor_id = ?", booking.MotorID).
         Where("status IN ?", []string{"confirmed", "in transit", "in use"}).
-        // overlapping: start < newEndDate AND end > current end date
-        Where("start_date < ? AND end_date > ?", newEndDate, booking.EndDate).
-        Where("id != ?", booking.ID).
+        // Logika overlap: jika existing.start < newEnd AND existing.end > oldEnd
+        Where("? < end_date AND ? > start_date", booking.EndDate, newEndDate).
+        Where("id != ?", booking.ID). // Jangan bentrokkan dengan booking sendiri
         Count(&conflict).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memeriksa konflik booking"})
         return
     }
+
     if conflict > 0 {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Tidak bisa perpanjang, sudah ada booking lain di periode tersebut"})
         return
     }
 
-    // Ambil harga per hari motor
+    // Ambil harga motor
     var motor models.Motor
     if err := config.DB.First(&motor, booking.MotorID).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
@@ -74,18 +86,21 @@ func RequestBookingExtension(c *gin.Context) {
     }
     additionalPrice := float64(req.AdditionalDays) * motor.Price
 
-    // Simpan request perpanjangan termasuk harga tambahan
+    // Simpan permintaan perpanjangan
     extension := models.BookingExtension{
         BookingID:        booking.ID,
         RequestedEndDate: newEndDate,
         AdditionalPrice:  additionalPrice,
         Status:           "pending",
+        RequestedAt:      time.Now(),
     }
+
     if err := config.DB.Create(&extension).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan permintaan perpanjangan"})
         return
     }
 
+    // Respon sukses
     c.JSON(http.StatusOK, gin.H{
         "message": "Permintaan perpanjangan berhasil diajukan",
         "data":    extension,
@@ -93,107 +108,170 @@ func RequestBookingExtension(c *gin.Context) {
 }
 
 
-
+// ApproveBookingExtension menyetujui permintaan perpanjangan, update DB, 
+// lalu notifikasi customer via DB + WebSocket
 func ApproveBookingExtension(c *gin.Context) {
-	extensionID := c.Param("id")
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
-		return
-	}
+    extensionID := c.Param("id")
+    userID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+        return
+    }
 
-	// Ambil data extension
-	var extension models.BookingExtension
-	if err := config.DB.First(&extension, extensionID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Permintaan perpanjangan tidak ditemukan"})
-		return
-	}
+    // Ambil data extension
+    var extension models.BookingExtension
+    if err := config.DB.First(&extension, extensionID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Permintaan perpanjangan tidak ditemukan"})
+        return
+    }
 
-	// Ambil booking terkait
-	var booking models.Booking
-	if err := config.DB.First(&booking, extension.BookingID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
-		return
-	}
+    // Ambil booking terkait
+    var booking models.Booking
+    if err := config.DB.First(&booking, extension.BookingID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
+        return
+    }
 
-	// Validasi vendor pemilik booking
-	var vendor models.Vendor
-	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
-		return
-	}
-	if booking.VendorID != vendor.ID {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk menyetujui perpanjangan ini"})
-		return
-	}
+    // Validasi vendor pemilik booking
+    var vendor models.Vendor
+    if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+        return
+    }
+    if booking.VendorID != vendor.ID {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk menyetujui perpanjangan ini"})
+        return
+    }
 
-	// Validasi status masih pending
-	if extension.Status != "pending" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Permintaan perpanjangan sudah diproses"})
-		return
-	}
+    // Validasi status masih pending
+    if extension.Status != "pending" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Permintaan perpanjangan sudah diproses"})
+        return
+    }
 
-	// Update end_date di booking
-	if err := config.DB.Model(&booking).Update("end_date", extension.RequestedEndDate).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui end date booking"})
-		return
-	}
+    // Update end_date di booking
+    if err := config.DB.Model(&booking).
+        Update("end_date", extension.RequestedEndDate).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui end date booking"})
+        return
+    }
 
-	// Update status extension
-	now := time.Now()
-	if err := config.DB.Model(&extension).Updates(map[string]interface{}{
-		"status":      "approved",
-		"approved_at": now,
-	}).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui status perpanjangan"})
-		return
-	}
+    // Update status extension menjadi approved
+    now := time.Now()
+    if err := config.DB.Model(&extension).Updates(map[string]interface{}{
+        "status":      "approved",
+        "approved_at": now,
+    }).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memperbarui status perpanjangan"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"message": "Perpanjangan booking disetujui"})
+    // --- Buat notifikasi ke customer ---
+    notifMsg := fmt.Sprintf(
+        "Perpanjangan booking #%d disetujui. Tanggal selesai baru: %s",
+        booking.ID,
+        extension.RequestedEndDate.Format("02 Jan 2006"),
+    )
+    notification := models.Notification{
+        UserID:    *booking.CustomerID,
+        Message:   notifMsg,
+        Status:    "unread",
+        BookingID: booking.ID,
+        CreatedAt: time.Now(),
+    }
+    if err := config.DB.Create(&notification).Error; err != nil {
+        log.Printf("[WARN] Gagal menyimpan notifikasi extension approved: %v", err)
+    } else {
+        payload := map[string]interface{}{
+            "message":    notifMsg,
+            "booking_id": booking.ID,
+        }
+        if data, err := json.Marshal(payload); err == nil {
+            websocket.SendNotificationToUser(*booking.CustomerID, string(data))
+        } else {
+            log.Printf("[WARN] Gagal marshal payload WS approval: %v", err)
+        }
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Perpanjangan booking disetujui"})
 }
 
+// RejectBookingExtension menolak permintaan perpanjangan, update DB,
+// lalu notifikasi customer via DB + WebSocket
 func RejectBookingExtension(c *gin.Context) {
-	extensionID := c.Param("id")
-	userID, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
-		return
-	}
+    extensionID := c.Param("id")
+    userID, exists := c.Get("user_id")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Vendor tidak terautentikasi"})
+        return
+    }
 
-	var extension models.BookingExtension
-	if err := config.DB.First(&extension, extensionID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Permintaan perpanjangan tidak ditemukan"})
-		return
-	}
+    // Ambil data extension
+    var extension models.BookingExtension
+    if err := config.DB.First(&extension, extensionID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Permintaan perpanjangan tidak ditemukan"})
+        return
+    }
 
-	var booking models.Booking
-	if err := config.DB.First(&booking, extension.BookingID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
-		return
-	}
+    // Ambil booking terkait
+    var booking models.Booking
+    if err := config.DB.First(&booking, extension.BookingID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Booking tidak ditemukan"})
+        return
+    }
 
-	var vendor models.Vendor
-	if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
-		return
-	}
-	if booking.VendorID != vendor.ID {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk menolak perpanjangan ini"})
-		return
-	}
+    // Validasi vendor pemilik booking
+    var vendor models.Vendor
+    if err := config.DB.Where("user_id = ?", userID).First(&vendor).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+        return
+    }
+    if booking.VendorID != vendor.ID {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Anda tidak memiliki izin untuk menolak perpanjangan ini"})
+        return
+    }
 
-	if extension.Status != "pending" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Permintaan perpanjangan sudah diproses"})
-		return
-	}
+    // Validasi status masih pending
+    if extension.Status != "pending" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Permintaan perpanjangan sudah diproses"})
+        return
+    }
 
-	if err := config.DB.Model(&extension).Update("status", "rejected").Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menolak perpanjangan"})
-		return
-	}
+    // Update status extension menjadi rejected
+    if err := config.DB.Model(&extension).Update("status", "rejected").Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menolak perpanjangan"})
+        return
+    }
 
-	c.JSON(http.StatusOK, gin.H{"message": "Perpanjangan booking ditolak"})
+    // --- Buat notifikasi ke customer ---
+    notifMsg := fmt.Sprintf(
+        "Perpanjangan booking #%d ditolak oleh vendor.",
+        booking.ID,
+    )
+    notification := models.Notification{
+        UserID:    *booking.CustomerID,
+        Message:   notifMsg,
+        Status:    "unread",
+        BookingID: booking.ID,
+        CreatedAt: time.Now(),
+    }
+    if err := config.DB.Create(&notification).Error; err != nil {
+        log.Printf("[WARN] Gagal menyimpan notifikasi extension rejected: %v", err)
+    } else {
+        payload := map[string]interface{}{
+            "message":    notifMsg,
+            "booking_id": booking.ID,
+        }
+        if data, err := json.Marshal(payload); err == nil {
+            websocket.SendNotificationToUser(*booking.CustomerID, string(data))
+        } else {
+            log.Printf("[WARN] Gagal marshal payload WS rejection: %v", err)
+        }
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Perpanjangan booking ditolak"})
 }
+
 
 
 func GetPendingBookingExtensions(c *gin.Context) {

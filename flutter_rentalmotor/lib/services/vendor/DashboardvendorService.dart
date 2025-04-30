@@ -35,9 +35,9 @@ class DashboardService {
       'confirmed': 0,
       'canceled': 0,
       'rejected': 0,
-      'intransit': 0,
-      'in_use': 0,
-      'awaiting_return': 0,
+      'in transit': 0,
+      'in use': 0,
+      'awaiting return': 0,
       'completed': 0,
     };
 

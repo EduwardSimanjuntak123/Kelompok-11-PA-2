@@ -118,11 +118,11 @@ class BookingItem extends StatelessWidget {
         return Colors.red;
       case 'rejected':
         return Colors.grey;
-      case 'intransit':
+      case 'in transit':
         return Colors.blue;
-      case 'in_use':
+      case 'in use':
         return Colors.purple;
-      case 'awaiting_return':
+      case 'awaiting return':
         return Colors.orange;
       case 'completed':
         return Colors.teal;
@@ -141,11 +141,11 @@ class BookingItem extends StatelessWidget {
         return Icons.cancel_outlined;
       case 'rejected':
         return Icons.block;
-      case 'intransit':
+      case 'in transit':
         return Icons.local_shipping_outlined;
-      case 'in_use':
+      case 'in use':
         return Icons.motorcycle;
-      case 'awaiting_return':
+      case 'awaiting return':
         return Icons.access_time;
       case 'completed':
         return Icons.check_circle;
@@ -164,11 +164,11 @@ class BookingItem extends StatelessWidget {
         return 'Dibatalkan';
       case 'rejected':
         return 'Ditolak';
-      case 'intransit':
+      case 'in transit':
         return 'Dalam Pengiriman';
-      case 'in_use':
+      case 'in use':
         return 'Digunakan';
-      case 'awaiting_return':
+      case 'awaiting return':
         return 'Menunggu Kembali';
       case 'completed':
         return 'Selesai';

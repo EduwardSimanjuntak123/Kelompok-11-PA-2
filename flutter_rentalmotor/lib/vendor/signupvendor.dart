@@ -433,8 +433,7 @@ appBar: AppBar(
           fillColor: Colors.grey.shade50,
           contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Tidak boleh kosong' : null,
+        validator: (value) => value == null || value.isEmpty ? 'Tidak boleh kosong' : null,
       ),
     );
   }

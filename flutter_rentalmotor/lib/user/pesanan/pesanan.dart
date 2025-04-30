@@ -350,14 +350,17 @@ class _PesananPageState extends State<PesananPage> {
 
     // Memeriksa seluruh rentang tanggal yang sudah dibooking dan apakah ada bentrok
     for (DateTime date in unavailableDates) {
-      // Cek apakah ada pemesanan lain yang berbenturan dengan perpanjangan yang diminta
-      if (date.isAfter(bookingEndDate) && date.isBefore(requestedEndDate)) {
-        debugPrint("Cannot extend because booking exists on: $date");
-        cannotExtend = true;
-        break;
+      // Ambil semua tanggal dalam rentang permintaan perpanjangan
+      for (int i = 1; i <= additionalDays; i++) {
+        DateTime extendDate = bookingEndDate.add(Duration(days: i));
+        if (date == extendDate) {
+          debugPrint("Cannot extend because booking exists on: $date");
+          cannotExtend = true;
+          break;
+        }
       }
+      if (cannotExtend) break;
     }
-
     // Jika tidak ada bentrok, lanjutkan untuk menampilkan form perpanjangan
     await showDialog(
       context: context,
@@ -442,7 +445,6 @@ class _PesananPageState extends State<PesananPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLegendItem(Colors.green[100]!, "Tersedia"),
                     SizedBox(height: 6),
                     _buildLegendItem(Colors.orange[200]!, "Booking Anda"),
                     SizedBox(height: 6),
@@ -505,18 +507,42 @@ class _PesananPageState extends State<PesananPage> {
                       borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () async {
-                  Navigator.of(context).pop();
-                  bool success =
+                  final rootContext =
+                      context; // simpan context utama sebelum async
+                  Navigator.of(rootContext).pop(); // tutup dialog input
+
+                  final result =
                       await requestExtensionDays(bookingId, additionalDays);
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content:
-                            Text('Permintaan perpanjangan berhasil dikirim.'),
-                        backgroundColor: Colors.green,
+                  final success = result['success'];
+                  final message = result['message'];
+
+                  // gunakan rootContext yang masih valid
+                  await showDialog(
+                    context: rootContext,
+                    builder: (context) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      title: Row(
+                        children: [
+                          Icon(
+                            success
+                                ? Icons.check_circle_outline
+                                : Icons.error_outline,
+                            color: success ? Colors.green : Colors.red,
+                          ),
+                          SizedBox(width: 8),
+                          Text(success ? 'Berhasil' : 'Gagal'),
+                        ],
                       ),
-                    );
-                  }
+                      content: Text(message),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text('Tutup'),
+                        ),
+                      ],
+                    ),
+                  );
                 },
                 child: Text('Kirim', style: TextStyle(color: Colors.white)),
               ),
@@ -544,7 +570,8 @@ class _PesananPageState extends State<PesananPage> {
     );
   }
 
-  Future<bool> requestExtensionDays(int bookingId, int additionalDays) async {
+  Future<Map<String, dynamic>> requestExtensionDays(
+      int bookingId, int additionalDays) async {
     try {
       final token = await BatalkanPesananAPI.storage.read(key: "auth_token");
       final url =
@@ -556,10 +583,9 @@ class _PesananPageState extends State<PesananPage> {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'additional_days': additionalDays,
-        }),
+        body: jsonEncode({'additional_days': additionalDays}),
       );
+
       debugPrint("=== RESPONSE EXTEND BOOKING ===");
       debugPrint("Status Code: ${response.statusCode}");
       debugPrint("Body: ${response.body}");
@@ -567,21 +593,17 @@ class _PesananPageState extends State<PesananPage> {
 
       final responseData = jsonDecode(response.body);
 
-      if (response.statusCode == 200 && responseData['success'] == true) {
-        return true;
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(responseData['message'] ?? 'Gagal memperpanjang.'),
-              backgroundColor: Colors.red),
-        );
-        return false;
-      }
+      return {
+        'success': response.statusCode == 200,
+        'message': responseData['message'] ??
+            responseData['error'] ??
+            'Terjadi kesalahan',
+      };
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-      );
-      return false;
+      return {
+        'success': false,
+        'message': 'Error: $e',
+      };
     }
   }
 
