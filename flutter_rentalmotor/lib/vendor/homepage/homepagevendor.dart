@@ -53,6 +53,7 @@ class _DashboardState extends State<HomepageVendor> {
 
   // Vendor data
   int? vendorId;
+  int? vendorUserId;
   String? businessName;
   String? vendorAddress;
   String? vendorImagePath;
@@ -145,13 +146,13 @@ class _DashboardState extends State<HomepageVendor> {
       debugPrint("WebSocket error: $e");
       // Coba koneksi ulang setelah beberapa detik
       Future.delayed(const Duration(seconds: 5), () {
-        if (vendorId != null) _connectWebSocket(vendorId!);
+        if (vendorUserId != null) _connectWebSocket(vendorUserId!);
       });
     }, onDone: () {
       debugPrint("WebSocket connection closed");
       // Coba koneksi ulang setelah beberapa detik
       Future.delayed(const Duration(seconds: 5), () {
-        if (vendorId != null) _connectWebSocket(vendorId!);
+        if (vendorUserId != null) _connectWebSocket(vendorUserId!);
       });
     });
   }
@@ -252,6 +253,7 @@ class _DashboardState extends State<HomepageVendor> {
       setState(() {
         // Set data vendor dengan pengecekan null
         vendorId = vendorData['vendorId'];
+        vendorUserId = vendorData['vendorUserId'];
         businessName = vendorData['businessName'] ?? 'Nama Bisnis Tidak Ada';
         vendorAddress = vendorData['vendorAddress'] ?? 'Alamat Tidak Ada';
         vendorImagePath = vendorData['vendorImagePath'] ?? 'default_image_path';
@@ -259,8 +261,8 @@ class _DashboardState extends State<HomepageVendor> {
       });
 
       // Koneksi WebSocket setelah vendorId tersedia
-      if (vendorId != null) {
-        _connectWebSocket(vendorId!);
+      if (vendorUserId != null) {
+        _connectWebSocket(vendorUserId!);
       }
     } catch (e) {
       print("Error memuat data: $e");
@@ -468,8 +470,8 @@ class _DashboardState extends State<HomepageVendor> {
           // Overview cards
           OverviewCards(
             totalBookings: dashboardData.bookings.length,
-            activeBookings: dashboardData.statusCounts['in_use']! +
-                dashboardData.statusCounts['intransit']!,
+            activeBookings: dashboardData.statusCounts['in use']! +
+                dashboardData.statusCounts['in transit']!,
             pendingBookings: dashboardData.statusCounts['pending']!,
             currentMonthRevenue: dashboardData.currentMonthRevenue,
             currencyFormatter: currencyFormatter,

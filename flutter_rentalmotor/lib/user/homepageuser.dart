@@ -20,7 +20,7 @@ import 'package:badges/badges.dart' as badges;
 import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
 import 'package:http/http.dart' as http;
 
-const Color primaryBlue = Color(0xFF2196F3);
+const Color primaryBlue = Color(0xFF2C567E);
 
 class HomePageUser extends StatefulWidget {
   const HomePageUser({Key? key}) : super(key: key);
