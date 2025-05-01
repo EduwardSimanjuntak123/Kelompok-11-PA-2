@@ -30,7 +30,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   File? _photoId;
   File? _ktpId;
   bool _isLoading = false;
-
+  late final int selectedKecamatanId;
   OverlayEntry? _pickupOverlayEntry;
   OverlayEntry? _dropoffOverlayEntry;
   final LayerLink _pickupLayerLink = LayerLink();
@@ -42,6 +42,10 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🚀 motor param: ${widget.motor}');
+
+    selectedKecamatanId = widget.motor['vendor']['kecamatan']['id_kecamatan'];
+    debugPrint('🚀 selectedKecamatanId: $selectedKecamatanId');
     _fetchBookedDates();
     _fetchLocationRecommendations(); // Tambahkan ini
 
@@ -87,13 +91,12 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         List<Map<String, dynamic>> data =
             List<Map<String, dynamic>>.from(json.decode(response.body));
 
-        print('✅ Parsed ${data.length} recommendations:');
-        for (var loc in data) {
-          print('📍 ${loc['place']} - ${loc['address']}');
-        }
-
         setState(() {
-          _locationSuggestions = data;
+          _locationSuggestions = data
+              .cast<Map<String, dynamic>>()
+              .where((loc) =>
+                  loc['kecamatan']['id_kecamatan'] == selectedKecamatanId)
+              .toList();
         });
       } else {
         print("❌ Failed to load suggestions: ${response.body}");
@@ -853,43 +856,116 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.location_on,
-                                color: mediumBlue, size: 22),
-                            SizedBox(width: 10),
-                            Text(
-                              "Informasi Lokasi",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: mediumBlue,
+                        // --- Lokasi Pengambilan ---
+                        TypeAheadField<Map<String, dynamic>>(
+                          suggestionsCallback: (pattern) async {
+                            return _locationSuggestions
+                                // 1. Filter berdasarkan kecamatan
+                                .where((loc) =>
+                                    loc['kecamatan']['id_kecamatan'] ==
+                                        selectedKecamatanId &&
+                                    // 2. Filter berdasarkan teks input
+                                    loc['place']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(pattern.toLowerCase()))
+                                .toList();
+                          },
+                          itemBuilder: (context, suggestion) => ListTile(
+                            title: Text(suggestion['place'],
+                                style: TextStyle(fontSize: 13)),
+                            subtitle: Text(suggestion['address'],
+                                style: TextStyle(fontSize: 11)),
+                          ),
+                          onSelected: (suggestion) {
+                            _pickupLocationController.text =
+                                '${suggestion['place']}, ${suggestion['address']}';
+                          },
+                          builder: (context, controller, focusNode) {
+                            focusNode.addListener(() {
+                              if (!focusNode.hasFocus) {
+                                final input = controller.text.toLowerCase();
+                                final valid = _locationSuggestions.any((loc) =>
+                                    loc['place'].toString().toLowerCase() ==
+                                        input &&
+                                    loc['kecamatan']['id_kecamatan'] ==
+                                        selectedKecamatanId);
+                                if (!valid) controller.clear();
+                              }
+                            });
+                            return TextField(
+                              controller: _pickupLocationController,
+                              focusNode: focusNode,
+                              decoration: InputDecoration(
+                                labelText: "Lokasi Pengambilan *",
+                                hintText: "Masukkan lokasi",
+                                prefixIcon:
+                                    Icon(Icons.location_on, color: mediumBlue),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
                               ),
-                            ),
-                          ],
+                              style: TextStyle(fontSize: 14),
+                            );
+                          },
                         ),
-                        Divider(height: 25, thickness: 1),
-                        CompositedTransformTarget(
-                          link: _pickupLayerLink,
-                          child: _buildTextField(
-                            _pickupLocationController,
-                            "Lokasi Pengambilan *",
-                            "Masukkan lokasi",
-                            Icons.location_on,
-                            null,
-                            accentColor: mediumBlue,
+
+                        SizedBox(height: 10),
+
+                        // --- Lokasi Pengembalian ---
+                        TypeAheadField<Map<String, dynamic>>(
+                          suggestionsCallback: (pattern) async {
+                            return _locationSuggestions
+                                .where((loc) =>
+                                    loc['kecamatan']['id_kecamatan'] ==
+                                        selectedKecamatanId &&
+                                    loc['place']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(pattern.toLowerCase()))
+                                .toList();
+                          },
+                          itemBuilder: (context, suggestion) => ListTile(
+                            title: Text(suggestion['place'],
+                                style: TextStyle(fontSize: 13)),
+                            subtitle: Text(suggestion['address'],
+                                style: TextStyle(fontSize: 11)),
                           ),
-                        ),
-                        CompositedTransformTarget(
-                          link: _dropoffLayerLink,
-                          child: _buildTextField(
-                            _dropoffLocationController,
-                            "Lokasi Pengembalian",
-                            "Masukkan lokasi",
-                            Icons.location_off,
-                            null,
-                            accentColor: mediumBlue,
-                          ),
+                          onSelected: (suggestion) {
+                            _dropoffLocationController.text =
+                                '${suggestion['place']}, ${suggestion['address']}';
+                          },
+                          builder: (context, controller, focusNode) {
+                            focusNode.addListener(() {
+                              if (!focusNode.hasFocus) {
+                                final input = controller.text.toLowerCase();
+                                final valid = _locationSuggestions.any((loc) =>
+                                    loc['place'].toString().toLowerCase() ==
+                                        input &&
+                                    loc['kecamatan']['id_kecamatan'] ==
+                                        selectedKecamatanId);
+                                if (!valid) controller.clear();
+                              }
+                            });
+                            return TextField(
+                              controller: _dropoffLocationController,
+                              focusNode: focusNode,
+                              decoration: InputDecoration(
+                                labelText: "Lokasi Pengembalian",
+                                hintText: "Masukkan lokasi",
+                                prefixIcon:
+                                    Icon(Icons.location_off, color: mediumBlue),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                              ),
+                              style: TextStyle(fontSize: 14),
+                            );
+                          },
                         ),
                       ],
                     ),
