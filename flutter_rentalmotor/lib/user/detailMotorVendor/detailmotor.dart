@@ -7,7 +7,8 @@ import 'package:flutter_rentalmotor/user/profil/akun.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/datavendor.dart';
 import 'package:flutter_rentalmotor/services/customer/detail_motor_api.dart';
-
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -119,10 +120,9 @@ class _DetailMotorPageState extends State<DetailMotorPage>
       if (motor != null && motor!["id"] != null) {
         final motorId = motor!["id"];
         // Pastikan motorId adalah int
-        final int motorIdInt = motorId is int 
-            ? motorId 
-            : int.tryParse(motorId.toString()) ?? 0;
-            
+        final int motorIdInt =
+            motorId is int ? motorId : int.tryParse(motorId.toString()) ?? 0;
+
         if (motorIdInt > 0) {
           final reviews = await fetchReviewsForMotor(motorIdInt);
           if (mounted) {
@@ -217,8 +217,10 @@ class _DetailMotorPageState extends State<DetailMotorPage>
             children: [
               CircularProgressIndicator(color: primaryBlue),
               SizedBox(height: 16),
-              Text("Memuat detail motor...", 
-                style: TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
+              Text(
+                "Memuat detail motor...",
+                style:
+                    TextStyle(color: primaryBlue, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -412,8 +414,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                   ),
                                 ),
                                 SizedBox(width: 16),
-                                Icon(Icons.monetization_on,
-                                    color: Colors.green, size: 18),
+                                
                                 SizedBox(width: 4),
                                 Text(
                                   "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}/hari",
@@ -544,20 +545,20 @@ class _DetailMotorPageState extends State<DetailMotorPage>
             Row(
               children: [
                 CircleAvatar(
-                  backgroundImage: review['customer'] != null && 
-                                  review['customer']['profile_image'] != null
+                  backgroundImage: review['customer'] != null &&
+                          review['customer']['profile_image'] != null
                       ? NetworkImage(
                           '${ApiConfig.baseUrl}${review['customer']['profile_image']}')
                       : null,
-                  child: review['customer'] == null || 
-                         review['customer']['profile_image'] == null
+                  child: review['customer'] == null ||
+                          review['customer']['profile_image'] == null
                       ? Icon(Icons.person, size: 24, color: Colors.white)
                       : null,
                   radius: 20,
                 ),
                 SizedBox(width: 12),
                 Text(
-                  review['customer'] != null 
+                  review['customer'] != null
                       ? (review['customer']['name'] ?? "Nama Tidak Diketahui")
                       : "Nama Tidak Diketahui",
                   style: TextStyle(
@@ -671,10 +672,11 @@ class _DetailMotorPageState extends State<DetailMotorPage>
               "Rating",
               Colors.amber),
           _buildInfoBox(
-              Icons.attach_money,
-              "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}",
-              "Harga",
-              Colors.green),
+            FontAwesomeIcons.rupiahSign,
+            "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}",
+            "Harga",
+            Colors.green,
+          ),
           _buildInfoBox(
               Icons.motorcycle,
               motor != null
@@ -764,8 +766,8 @@ class _DetailMotorPageState extends State<DetailMotorPage>
       return Text("Informasi vendor tidak tersedia.");
     }
 
-    String namaKecamatan = vendor["kecamatan"] != null && 
-                          vendor["kecamatan"]["nama_kecamatan"] != null
+    String namaKecamatan = vendor["kecamatan"] != null &&
+            vendor["kecamatan"]["nama_kecamatan"] != null
         ? vendor["kecamatan"]["nama_kecamatan"]
             .toString()
             .replaceAll('\r', '')
@@ -778,10 +780,10 @@ class _DetailMotorPageState extends State<DetailMotorPage>
         // Redirect to vendor page when clicked
         if (vendor["id"] != null) {
           // Pastikan vendor id adalah int
-          final vendorId = vendor["id"] is int 
-              ? vendor["id"] 
+          final vendorId = vendor["id"] is int
+              ? vendor["id"]
               : int.tryParse(vendor["id"].toString()) ?? 0;
-              
+
           if (vendorId > 0) {
             Navigator.push(
               context,
@@ -822,9 +824,9 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage: (vendor["user"] != null && 
-                                  vendor["user"]["profile_image"] != null &&
-                                  vendor["user"]["profile_image"].toString().isNotEmpty)
+                  backgroundImage: (vendor["user"] != null &&
+                          vendor["user"]["profile_image"] != null &&
+                          vendor["user"]["profile_image"].toString().isNotEmpty)
                       ? NetworkImage(
                           "$baseUrl${vendor["user"]["profile_image"]}")
                       : AssetImage("assets/images/default_profile.png")
@@ -987,7 +989,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
 
 String _formatCurrency(dynamic amount) {
   if (amount == null) return "0";
-  
+
   // Pastikan amount adalah numeric
   int value;
   if (amount is String) {
@@ -1002,9 +1004,9 @@ String _formatCurrency(dynamic amount) {
 
   // Format dengan pemisah ribuan
   String result = value.toString().replaceAllMapped(
-    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-    (Match m) => "${m[1]}.",
-  );
-  
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+        (Match m) => "${m[1]}.",
+      );
+
   return result;
 }

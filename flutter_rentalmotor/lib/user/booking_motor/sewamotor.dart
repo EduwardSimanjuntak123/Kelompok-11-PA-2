@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
-
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'dart:convert';
 import 'package:flutter_rentalmotor/services/customer/create_booking_api.dart';
@@ -31,10 +31,27 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   File? _ktpId;
   bool _isLoading = false;
 
+  OverlayEntry? _pickupOverlayEntry;
+  OverlayEntry? _dropoffOverlayEntry;
+  final LayerLink _pickupLayerLink = LayerLink();
+  final LayerLink _dropoffLayerLink = LayerLink();
+
+  List<Map<String, dynamic>> _filteredPickupSuggestions = [];
+  List<Map<String, dynamic>> _filteredDropoffSuggestions = [];
+
   @override
   void initState() {
     super.initState();
-    _fetchBookedDates(); // Tambahkan ini
+    _fetchBookedDates();
+    _fetchLocationRecommendations(); // Tambahkan ini
+
+    _pickupLocationController.addListener(() {
+      _updateSuggestions(_pickupLocationController.text, true);
+    });
+
+    _dropoffLocationController.addListener(() {
+      _updateSuggestions(_dropoffLocationController.text, false);
+    });
   }
 
   // Theme colors - Only blue theme
@@ -52,6 +69,120 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     _pickupLocationController.dispose();
     _dropoffLocationController.dispose();
     super.dispose();
+  }
+
+  List<Map<String, dynamic>> _locationSuggestions = [];
+
+  Future<void> _fetchLocationRecommendations() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/location-recommendations'),
+      );
+
+      print('🔄 Fetching location recommendations...');
+      print('🌐 Status Code: ${response.statusCode}');
+      print('📦 Raw Response Body: ${response.body}'); // Debug: print mentahnya
+
+      if (response.statusCode == 200) {
+        List<Map<String, dynamic>> data =
+            List<Map<String, dynamic>>.from(json.decode(response.body));
+
+        print('✅ Parsed ${data.length} recommendations:');
+        for (var loc in data) {
+          print('📍 ${loc['place']} - ${loc['address']}');
+        }
+
+        setState(() {
+          _locationSuggestions = data;
+        });
+      } else {
+        print("❌ Failed to load suggestions: ${response.body}");
+      }
+    } catch (e) {
+      print("❗ Error fetching suggestions: $e");
+    }
+  }
+
+  void _updateSuggestions(String input, bool isPickup) {
+    if (input.isEmpty) {
+      _removeOverlay(isPickup);
+      return;
+    }
+
+    final filtered = _locationSuggestions
+        .where((loc) =>
+            loc['place'].toString().toLowerCase().contains(input.toLowerCase()))
+        .toList();
+
+    if (isPickup) {
+      _filteredPickupSuggestions = filtered;
+      _showOverlay(true);
+    } else {
+      _filteredDropoffSuggestions = filtered;
+      _showOverlay(false);
+    }
+  }
+
+  void _showOverlay(bool isPickup) {
+    _removeOverlay(isPickup);
+
+    final overlay = Overlay.of(context);
+    final renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+
+    final suggestions =
+        isPickup ? _filteredPickupSuggestions : _filteredDropoffSuggestions;
+    final controller =
+        isPickup ? _pickupLocationController : _dropoffLocationController;
+    final layerLink = isPickup ? _pickupLayerLink : _dropoffLayerLink;
+
+    final entry = OverlayEntry(
+      builder: (context) => Positioned(
+        width: size.width - 40,
+        child: CompositedTransformFollower(
+          link: layerLink,
+          showWhenUnlinked: false,
+          offset: Offset(0, 55),
+          child: Material(
+            elevation: 4,
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: suggestions.length,
+              itemBuilder: (context, index) {
+                final suggestion = suggestions[index];
+                return ListTile(
+                  title: Text(suggestion['place']),
+                  subtitle: Text(suggestion['address']),
+                  onTap: () {
+                    controller.text = suggestion['place'];
+                    _removeOverlay(isPickup);
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (isPickup) {
+      _pickupOverlayEntry = entry;
+    } else {
+      _dropoffOverlayEntry = entry;
+    }
+
+    overlay.insert(entry);
+  }
+
+  void _removeOverlay(bool isPickup) {
+    if (isPickup && _pickupOverlayEntry != null) {
+      _pickupOverlayEntry!.remove();
+      _pickupOverlayEntry = null;
+    } else if (!isPickup && _dropoffOverlayEntry != null) {
+      _dropoffOverlayEntry!.remove();
+      _dropoffOverlayEntry = null;
+    }
   }
 
   Future<void> _fetchBookedDates() async {
@@ -100,6 +231,46 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     }
     // Kalau semua tanggal ke-disable (tidak mungkin sih), fallback
     return today;
+  }
+
+  void _showLocationSuggestions(TextEditingController controller) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          height: 400,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Pilih Lokasi",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _locationSuggestions.length,
+                  itemBuilder: (context, index) {
+                    final loc = _locationSuggestions[index];
+                    return ListTile(
+                      leading: Icon(Icons.place, color: Colors.blue),
+                      title: Text(loc['place']),
+                      subtitle: Text(loc['address']),
+                      onTap: () {
+                        controller.text = loc['place'];
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _selectDate(BuildContext context) {
@@ -698,21 +869,27 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                           ],
                         ),
                         Divider(height: 25, thickness: 1),
-                        _buildTextField(
-                          _pickupLocationController,
-                          "Lokasi Pengambilan *",
-                          "Masukkan lokasi pengambilan",
-                          Icons.location_on,
-                          null,
-                          accentColor: mediumBlue,
+                        CompositedTransformTarget(
+                          link: _pickupLayerLink,
+                          child: _buildTextField(
+                            _pickupLocationController,
+                            "Lokasi Pengambilan *",
+                            "Masukkan lokasi",
+                            Icons.location_on,
+                            null,
+                            accentColor: mediumBlue,
+                          ),
                         ),
-                        _buildTextField(
-                          _dropoffLocationController,
-                          "Lokasi Pengembalian",
-                          "Masukkan lokasi pengembalian (opsional)",
-                          Icons.location_off,
-                          null,
-                          accentColor: mediumBlue,
+                        CompositedTransformTarget(
+                          link: _dropoffLayerLink,
+                          child: _buildTextField(
+                            _dropoffLocationController,
+                            "Lokasi Pengembalian",
+                            "Masukkan lokasi",
+                            Icons.location_off,
+                            null,
+                            accentColor: mediumBlue,
+                          ),
                         ),
                       ],
                     ),

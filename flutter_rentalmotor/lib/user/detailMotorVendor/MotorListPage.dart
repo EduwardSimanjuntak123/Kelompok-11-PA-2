@@ -173,6 +173,7 @@ class _MotorListPageState extends State<MotorListPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
@@ -180,157 +181,202 @@ class _MotorListPageState extends State<MotorListPage>
               expandedHeight: 220.0,
               floating: false,
               pinned: true,
-              elevation: 0,
+              elevation: 4,
               backgroundColor: const Color(0xFF1565C0),
+              iconTheme: IconThemeData(color: Colors.white),
               flexibleSpace: FlexibleSpaceBar(
-                titlePadding: EdgeInsets.only(left: 16, bottom: 16),
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.motorcycle,
-                      color: Colors.white,
-                      size: 20,
+                collapseMode: CollapseMode.pin,
+                titlePadding: EdgeInsets.only(
+                    left: 55, bottom: 12), // Ditambah dari 50 ke 60
+                centerTitle: false,
+                title: AnimatedOpacity(
+                  opacity: innerBoxIsScrolled ? 1.0 : 0.0,
+                  duration: Duration(milliseconds: 200),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Daftar Motor',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF1976D2),
-                        Color(0xFF1565C0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.motorcycle,
+                          color: Color(0xFF1565C0),
+                          size: 20,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Daftar Motor',
+                          style: TextStyle(
+                            color: Color(0xFF1565C0),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  child: Stack(
-                    children: [
-                      // Animation bubbles
-                      Positioned(
-                        right: -50,
-                        top: -20,
-                        child: Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
+                ),
+                background: Stack(
+                  children: [
+                    // Background dan decorative elements tetap sama
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0xFF1976D2),
+                            Color(0xFF0D47A1),
+                          ],
                         ),
                       ),
-                      Positioned(
-                        left: -30,
-                        bottom: -10,
-                        child: Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 50,
-                        bottom: 20,
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-
-                      // Title and subtitle
-                      Positioned(
-                        top: 80,
-                        left: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Temukan Motor',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 24,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: -30,
+                            top: -30,
+                            child: Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                shape: BoxShape.circle,
                               ),
                             ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Pilih motor terbaik untuk perjalanan Anda',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 14,
+                          ),
+                          Positioned(
+                            left: -20,
+                            bottom: -20,
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.1),
+                                shape: BoxShape.circle,
                               ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Positioned(
+                      left: 60,
+                      top: 40,
+                      child: Text(
+                        'Temukan Motor',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 28,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 4,
+                              color: Colors.black.withOpacity(0.2),
+                              offset: Offset(1, 1),
                             ),
                           ],
                         ),
                       ),
+                    ),
 
-                      // Search bar
-                      Positioned(
-                        bottom: 70,
-                        left: 16,
-                        right: 16,
-                        child: Container(
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(25),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(top: 95.0, left: 20, right: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pilih motor terbaik untuk perjalanan Anda',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: TextField(
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                                _filterMotors();
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Cari motor...',
+                                hintStyle:
+                                    TextStyle(color: Colors.grey.shade400),
+                                prefixIcon: Icon(Icons.search,
+                                    color: Color(0xFF1565C0)),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 15,
+                                  horizontal: 20,
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.motorcycle,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Daftar Motor',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
-                          child: TextField(
-                            onChanged: (value) {
-                              setState(() {
-                                _searchQuery = value;
-                              });
-                              _filterMotors();
-                            },
-                            decoration: InputDecoration(
-                              hintText: 'Cari motor...',
-                              prefixIcon:
-                                  Icon(Icons.search, color: Color(0xFF1565C0)),
-                              border: InputBorder.none,
-                              contentPadding:
-                                  EdgeInsets.symmetric(vertical: 15),
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               actions: [
-                Container(
-                  margin: EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
                   child: IconButton(
-                    icon: Icon(Icons.filter_list),
+                    icon: Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.filter_list, color: Colors.white),
+                    ),
                     onPressed: _showFilterDialog,
                     tooltip: 'Filter',
                   ),
@@ -342,76 +388,101 @@ class _MotorListPageState extends State<MotorListPage>
         body: Column(
           children: [
             // Active filters display
-            if (_selectedKecamatan != 'Semua' || _selectedStatus != 'Semua')
+            if (_selectedKecamatan != 'Semua' ||
+                _selectedStatus != 'Semua' ||
+                _selectedType != 'Semua')
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
-                      blurRadius: 5,
+                      blurRadius: 6,
                       offset: Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Row(
                   children: [
-                    Container(
-                      padding: EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Color(0xFF1565C0).withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.filter_alt,
-                        color: Color(0xFF1565C0),
-                        size: 16,
+                    Icon(Icons.filter_alt_outlined,
+                        color: Color(0xFF1565C0), size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            if (_selectedKecamatan != 'Semua')
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6.0),
+                                child: Chip(
+                                  label: Text(_selectedKecamatan),
+                                  deleteIcon: Icon(Icons.close, size: 16),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _selectedKecamatan = 'Semua';
+                                    });
+                                    _filterMotors();
+                                  },
+                                  backgroundColor:
+                                      Color(0xFF1565C0).withOpacity(0.1),
+                                  labelStyle: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF1565C0),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
+                            if (_selectedStatus != 'Semua')
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6.0),
+                                child: Chip(
+                                  label: Text(_selectedStatus),
+                                  deleteIcon: Icon(Icons.close, size: 16),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _selectedStatus = 'Semua';
+                                    });
+                                    _filterMotors();
+                                  },
+                                  backgroundColor:
+                                      Color(0xFF1565C0).withOpacity(0.1),
+                                  labelStyle: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF1565C0),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
+                            if (_selectedType != 'Semua')
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6.0),
+                                child: Chip(
+                                  label: Text(_selectedType),
+                                  deleteIcon: Icon(Icons.close, size: 16),
+                                  onDeleted: () {
+                                    setState(() {
+                                      _selectedType = 'Semua';
+                                    });
+                                    _filterMotors();
+                                  },
+                                  backgroundColor:
+                                      Color(0xFF1565C0).withOpacity(0.1),
+                                  labelStyle: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF1565C0),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Filter aktif:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Color(0xFF1565C0),
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    if (_selectedKecamatan != 'Semua')
-                      Chip(
-                        label: Text(_selectedKecamatan),
-                        deleteIcon: Icon(Icons.close, size: 16),
-                        onDeleted: () {
-                          setState(() {
-                            _selectedKecamatan = 'Semua';
-                          });
-                          _filterMotors();
-                        },
-                        backgroundColor: Colors.blue.shade100,
-                        labelStyle:
-                            TextStyle(fontSize: 12, color: Color(0xFF1565C0)),
-                        padding: EdgeInsets.zero,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    SizedBox(width: 4),
-                    if (_selectedStatus != 'Semua')
-                      Chip(
-                        label: Text(_selectedStatus),
-                        deleteIcon: Icon(Icons.close, size: 16),
-                        onDeleted: () {
-                          setState(() {
-                            _selectedStatus = 'Semua';
-                          });
-                          _filterMotors();
-                        },
-                        backgroundColor: Colors.blue.shade100,
-                        labelStyle:
-                            TextStyle(fontSize: 12, color: Color(0xFF1565C0)),
-                        padding: EdgeInsets.zero,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
                   ],
                 ),
               ),
@@ -488,6 +559,7 @@ class _MotorListPageState extends State<MotorListPage>
                                   setState(() {
                                     _selectedKecamatan = 'Semua';
                                     _selectedStatus = 'Semua';
+                                    _selectedType = 'Semua';
                                     _searchQuery = '';
                                   });
                                   _filterMotors();
@@ -715,22 +787,61 @@ class _MotorListPageState extends State<MotorListPage>
                     ],
                   ),
                   SizedBox(height: 12),
-                  // Tambah di bawah status filter
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20.0),
-                    child: Row(
-                      children: [
-                        Icon(Icons.category, color: Color(0xFF1565C0)),
-                        SizedBox(width: 8),
-                        Text(
-                          'Tipe Motor',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedStatus,
+                        isExpanded: true,
+                        icon: Icon(Icons.keyboard_arrow_down,
+                            color: Color(0xFF1565C0)),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedStatus = newValue;
+                            });
+                          }
+                        },
+                        items: _statusList
+                            .map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(
+                              value,
+                              style: TextStyle(
+                                color: value == _selectedStatus
+                                    ? Color(0xFF1565C0)
+                                    : Colors.black87,
+                                fontWeight: value == _selectedStatus
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+
+                  // Type filter
+                  Row(
+                    children: [
+                      Icon(Icons.category, color: Color(0xFF1565C0)),
+                      SizedBox(width: 8),
+                      Text(
+                        'Tipe Motor',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(height: 12),
                   Container(
@@ -773,47 +884,6 @@ class _MotorListPageState extends State<MotorListPage>
                       ),
                     ),
                   ),
-
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedStatus,
-                        isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down,
-                            color: Color(0xFF1565C0)),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _selectedStatus = newValue;
-                            });
-                          }
-                        },
-                        items: _statusList
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(
-                              value,
-                              style: TextStyle(
-                                color: value == _selectedStatus
-                                    ? Color(0xFF1565C0)
-                                    : Colors.black87,
-                                fontWeight: value == _selectedStatus
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
                   SizedBox(height: 30),
 
                   // Apply button
@@ -825,7 +895,7 @@ class _MotorListPageState extends State<MotorListPage>
                             setState(() {
                               _selectedKecamatan = 'Semua';
                               _selectedStatus = 'Semua';
-                              _selectedType = 'Semua'; // reset type juga
+                              _selectedType = 'Semua';
                             });
                           },
                           style: OutlinedButton.styleFrom(
@@ -865,12 +935,14 @@ class _MotorListPageState extends State<MotorListPage>
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
+                  SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
                 ],
               ),
             );
