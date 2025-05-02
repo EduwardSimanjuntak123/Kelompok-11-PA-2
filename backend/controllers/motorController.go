@@ -54,6 +54,8 @@ func CreateMotor(c *gin.Context) {
 	motor.Brand = c.PostForm("brand")
 	motor.Color = c.PostForm("color")
 	motor.Status = c.PostForm("status")
+	motor.PlatMotor = c.PostForm("plat_motor")
+
 	motor.Type = c.PostForm("type")             // Tambahan kolom Type
 	motor.Description = c.PostForm("description") // Tambahan kolom Description
 
@@ -124,6 +126,9 @@ func UpdateMotor(c *gin.Context) {
 	if brand := c.PostForm("brand"); brand != "" {
 		input["brand"] = brand
 	}
+	if brand := c.PostForm("plat_motor"); brand != "" {
+		input["plat_motor"] = brand
+	}
 
 	if color := c.PostForm("color"); color != "" {
 		input["color"] = color
@@ -188,7 +193,7 @@ func GetAllMotorByVendorID(c *gin.Context) {
 	// Ambil semua motor berdasarkan VendorID dengan informasi vendor terkait
 	if err := config.DB.
 		Where("vendor_id = ?", vendorID).
-		Select("id, vendor_id, name, brand,  year, rating, price, color,description,type, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand,  year, rating, price, platmotor,color,description,type, status, image, created_at, updated_at").
 		Find(&motors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
 		return
@@ -241,10 +246,11 @@ func GetMotorByID(c *gin.Context) {
 	var motor models.Motor
 
 	if err := config.DB.First(&motor, id).Error; err != nil {
+		fmt.Println("Error:", err)  // Menampilkan error lebih detail
 		c.JSON(http.StatusNotFound, gin.H{"error": "Motor tidak ditemukan"})
 		return
 	}
-
+	fmt.Printf("%+v\n", motor)
 	c.JSON(http.StatusOK, motor)
 }
 
@@ -268,7 +274,7 @@ func GetAllMotorbyVendor(c *gin.Context) {
 
 	// Ambil motor berdasarkan vendor_id dengan Preload Vendor
 	if err := config.DB.
-		Select("id, vendor_id, name, brand, year, price, color,rating,description,type, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand, year, price,platmotor, color,rating,description,type, status, image, created_at, updated_at").
 		Where("vendor_id = ?", vendor.ID).
 		Find(&motors).Error; err != nil {
 		fmt.Printf("❌ Gagal mengambil data motor: %v\n", err)
