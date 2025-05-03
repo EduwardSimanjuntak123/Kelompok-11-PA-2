@@ -4,19 +4,20 @@ import 'package:flutter_rentalmotor/signin.dart';
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
-  final bool isGuest; // Tambahkan ini
+  final bool isGuest;
 
   const CustomBottomNavBar({
     Key? key,
     required this.currentIndex,
     required this.onTap,
-    required this.isGuest, // Tambahkan ini
+    required this.isGuest,
   }) : super(key: key);
 
   void _showLoginAlert(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: const [
@@ -45,7 +46,10 @@ class CustomBottomNavBar extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => LoginScreen()),
               );
             },
-            child: const Text("Login"),
+            child: const Text(
+              "Login",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -55,6 +59,7 @@ class CustomBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
+      backgroundColor: Colors.white,
       currentIndex: currentIndex,
       selectedItemColor: const Color(0xFF2C567E),
       unselectedItemColor: Colors.grey,

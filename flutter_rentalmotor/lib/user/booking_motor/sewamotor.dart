@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
-
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'dart:convert';
 import 'package:flutter_rentalmotor/services/customer/create_booking_api.dart';
@@ -30,11 +30,32 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   File? _photoId;
   File? _ktpId;
   bool _isLoading = false;
+  late final int selectedKecamatanId;
+  OverlayEntry? _pickupOverlayEntry;
+  OverlayEntry? _dropoffOverlayEntry;
+  final LayerLink _pickupLayerLink = LayerLink();
+  final LayerLink _dropoffLayerLink = LayerLink();
+
+  List<Map<String, dynamic>> _filteredPickupSuggestions = [];
+  List<Map<String, dynamic>> _filteredDropoffSuggestions = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchBookedDates(); // Tambahkan ini
+    debugPrint('🚀 motor param: ${widget.motor}');
+
+    selectedKecamatanId = widget.motor['vendor']['kecamatan']['id_kecamatan'];
+    debugPrint('🚀 selectedKecamatanId: $selectedKecamatanId');
+    _fetchBookedDates();
+    _fetchLocationRecommendations(); // Tambahkan ini
+
+    _pickupLocationController.addListener(() {
+      _updateSuggestions(_pickupLocationController.text, true);
+    });
+
+    _dropoffLocationController.addListener(() {
+      _updateSuggestions(_dropoffLocationController.text, false);
+    });
   }
 
   // Theme colors - Only blue theme
@@ -52,6 +73,119 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     _pickupLocationController.dispose();
     _dropoffLocationController.dispose();
     super.dispose();
+  }
+
+  List<Map<String, dynamic>> _locationSuggestions = [];
+
+  Future<void> _fetchLocationRecommendations() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/location-recommendations'),
+      );
+
+      print('🔄 Fetching location recommendations...');
+      print('🌐 Status Code: ${response.statusCode}');
+      print('📦 Raw Response Body: ${response.body}'); // Debug: print mentahnya
+
+      if (response.statusCode == 200) {
+        List<Map<String, dynamic>> data =
+            List<Map<String, dynamic>>.from(json.decode(response.body));
+
+        setState(() {
+          _locationSuggestions = data
+              .cast<Map<String, dynamic>>()
+              .where((loc) =>
+                  loc['kecamatan']['id_kecamatan'] == selectedKecamatanId)
+              .toList();
+        });
+      } else {
+        print("❌ Failed to load suggestions: ${response.body}");
+      }
+    } catch (e) {
+      print("❗ Error fetching suggestions: $e");
+    }
+  }
+
+  void _updateSuggestions(String input, bool isPickup) {
+    if (input.isEmpty) {
+      _removeOverlay(isPickup);
+      return;
+    }
+
+    final filtered = _locationSuggestions
+        .where((loc) =>
+            loc['place'].toString().toLowerCase().contains(input.toLowerCase()))
+        .toList();
+
+    if (isPickup) {
+      _filteredPickupSuggestions = filtered;
+      _showOverlay(true);
+    } else {
+      _filteredDropoffSuggestions = filtered;
+      _showOverlay(false);
+    }
+  }
+
+  void _showOverlay(bool isPickup) {
+    _removeOverlay(isPickup);
+
+    final overlay = Overlay.of(context);
+    final renderBox = context.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+
+    final suggestions =
+        isPickup ? _filteredPickupSuggestions : _filteredDropoffSuggestions;
+    final controller =
+        isPickup ? _pickupLocationController : _dropoffLocationController;
+    final layerLink = isPickup ? _pickupLayerLink : _dropoffLayerLink;
+
+    final entry = OverlayEntry(
+      builder: (context) => Positioned(
+        width: size.width - 40,
+        child: CompositedTransformFollower(
+          link: layerLink,
+          showWhenUnlinked: false,
+          offset: Offset(0, 55),
+          child: Material(
+            elevation: 4,
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: suggestions.length,
+              itemBuilder: (context, index) {
+                final suggestion = suggestions[index];
+                return ListTile(
+                  title: Text(suggestion['place']),
+                  subtitle: Text(suggestion['address']),
+                  onTap: () {
+                    controller.text = suggestion['place'];
+                    _removeOverlay(isPickup);
+                  },
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (isPickup) {
+      _pickupOverlayEntry = entry;
+    } else {
+      _dropoffOverlayEntry = entry;
+    }
+
+    overlay.insert(entry);
+  }
+
+  void _removeOverlay(bool isPickup) {
+    if (isPickup && _pickupOverlayEntry != null) {
+      _pickupOverlayEntry!.remove();
+      _pickupOverlayEntry = null;
+    } else if (!isPickup && _dropoffOverlayEntry != null) {
+      _dropoffOverlayEntry!.remove();
+      _dropoffOverlayEntry = null;
+    }
   }
 
   Future<void> _fetchBookedDates() async {
@@ -100,6 +234,46 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     }
     // Kalau semua tanggal ke-disable (tidak mungkin sih), fallback
     return today;
+  }
+
+  void _showLocationSuggestions(TextEditingController controller) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16),
+          height: 400,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Pilih Lokasi",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _locationSuggestions.length,
+                  itemBuilder: (context, index) {
+                    final loc = _locationSuggestions[index];
+                    return ListTile(
+                      leading: Icon(Icons.place, color: Colors.blue),
+                      title: Text(loc['place']),
+                      subtitle: Text(loc['address']),
+                      onTap: () {
+                        controller.text = loc['place'];
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _selectDate(BuildContext context) {
@@ -682,37 +856,116 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.location_on,
-                                color: mediumBlue, size: 22),
-                            SizedBox(width: 10),
-                            Text(
-                              "Informasi Lokasi",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: mediumBlue,
+                        // --- Lokasi Pengambilan ---
+                        TypeAheadField<Map<String, dynamic>>(
+                          suggestionsCallback: (pattern) async {
+                            return _locationSuggestions
+                                // 1. Filter berdasarkan kecamatan
+                                .where((loc) =>
+                                    loc['kecamatan']['id_kecamatan'] ==
+                                        selectedKecamatanId &&
+                                    // 2. Filter berdasarkan teks input
+                                    loc['place']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(pattern.toLowerCase()))
+                                .toList();
+                          },
+                          itemBuilder: (context, suggestion) => ListTile(
+                            title: Text(suggestion['place'],
+                                style: TextStyle(fontSize: 13)),
+                            subtitle: Text(suggestion['address'],
+                                style: TextStyle(fontSize: 11)),
+                          ),
+                          onSelected: (suggestion) {
+                            _pickupLocationController.text =
+                                '${suggestion['place']}, ${suggestion['address']}';
+                          },
+                          builder: (context, controller, focusNode) {
+                            focusNode.addListener(() {
+                              if (!focusNode.hasFocus) {
+                                final input = controller.text.toLowerCase();
+                                final valid = _locationSuggestions.any((loc) =>
+                                    loc['place'].toString().toLowerCase() ==
+                                        input &&
+                                    loc['kecamatan']['id_kecamatan'] ==
+                                        selectedKecamatanId);
+                                if (!valid) controller.clear();
+                              }
+                            });
+                            return TextField(
+                              controller: _pickupLocationController,
+                              focusNode: focusNode,
+                              decoration: InputDecoration(
+                                labelText: "Lokasi Pengambilan *",
+                                hintText: "Masukkan lokasi",
+                                prefixIcon:
+                                    Icon(Icons.location_on, color: mediumBlue),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
                               ),
-                            ),
-                          ],
+                              style: TextStyle(fontSize: 14),
+                            );
+                          },
                         ),
-                        Divider(height: 25, thickness: 1),
-                        _buildTextField(
-                          _pickupLocationController,
-                          "Lokasi Pengambilan *",
-                          "Masukkan lokasi pengambilan",
-                          Icons.location_on,
-                          null,
-                          accentColor: mediumBlue,
-                        ),
-                        _buildTextField(
-                          _dropoffLocationController,
-                          "Lokasi Pengembalian",
-                          "Masukkan lokasi pengembalian (opsional)",
-                          Icons.location_off,
-                          null,
-                          accentColor: mediumBlue,
+
+                        SizedBox(height: 10),
+
+                        // --- Lokasi Pengembalian ---
+                        TypeAheadField<Map<String, dynamic>>(
+                          suggestionsCallback: (pattern) async {
+                            return _locationSuggestions
+                                .where((loc) =>
+                                    loc['kecamatan']['id_kecamatan'] ==
+                                        selectedKecamatanId &&
+                                    loc['place']
+                                        .toString()
+                                        .toLowerCase()
+                                        .contains(pattern.toLowerCase()))
+                                .toList();
+                          },
+                          itemBuilder: (context, suggestion) => ListTile(
+                            title: Text(suggestion['place'],
+                                style: TextStyle(fontSize: 13)),
+                            subtitle: Text(suggestion['address'],
+                                style: TextStyle(fontSize: 11)),
+                          ),
+                          onSelected: (suggestion) {
+                            _dropoffLocationController.text =
+                                '${suggestion['place']}, ${suggestion['address']}';
+                          },
+                          builder: (context, controller, focusNode) {
+                            focusNode.addListener(() {
+                              if (!focusNode.hasFocus) {
+                                final input = controller.text.toLowerCase();
+                                final valid = _locationSuggestions.any((loc) =>
+                                    loc['place'].toString().toLowerCase() ==
+                                        input &&
+                                    loc['kecamatan']['id_kecamatan'] ==
+                                        selectedKecamatanId);
+                                if (!valid) controller.clear();
+                              }
+                            });
+                            return TextField(
+                              controller: _dropoffLocationController,
+                              focusNode: focusNode,
+                              decoration: InputDecoration(
+                                labelText: "Lokasi Pengembalian",
+                                hintText: "Masukkan lokasi",
+                                prefixIcon:
+                                    Icon(Icons.location_off, color: mediumBlue),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                              ),
+                              style: TextStyle(fontSize: 14),
+                            );
+                          },
                         ),
                       ],
                     ),

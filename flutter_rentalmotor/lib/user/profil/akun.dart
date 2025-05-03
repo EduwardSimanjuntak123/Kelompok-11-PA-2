@@ -126,7 +126,7 @@ class _AkunState extends State<Akun> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red, // Tetap merah
+              backgroundColor: Colors.red,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -272,269 +272,303 @@ class _AkunState extends State<Akun> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text(
-          "Profil Saya",
-          style: TextStyle(color: Colors.white), // warna putih
-        ),
-        backgroundColor: primaryBlue,
-        iconTheme:
-            IconThemeData(color: Colors.white), // jika ada ikon back, dll
-      ),
-      body: RefreshIndicator(
-        onRefresh: _fetchProfile,
-        color: primaryBlue,
-        child: !_isLoading
-            ? CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  // Profile Header with Background
-                  SliverToBoxAdapter(
-                    child: Stack(
-                      children: [
-                        // Background Gradient
-                        Container(
-                          height: 220,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [primaryBlue, const Color(0xFF1A3A5A)],
-                            ),
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(30),
-                              bottomRight: Radius.circular(30),
-                            ),
+      body: NotificationListener<OverscrollIndicatorNotification>(
+        onNotification: (OverscrollIndicatorNotification overscroll) {
+          overscroll.disallowIndicator();
+          return true;
+        },
+        child: RefreshIndicator(
+          onRefresh: _fetchProfile,
+          color: primaryBlue,
+          displacement: 40.0,
+          edgeOffset: 20.0,
+          triggerMode: RefreshIndicatorTriggerMode.onEdge,
+          child: !_isLoading
+              ? CustomScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [primaryBlue, const Color(0xFF1976D2)],
+                            stops: [0.3, 1.0],
                           ),
-                        ),
-                        // Profile Content
-                        Column(
-                          children: [
-                            // App Bar Area (dalam SafeArea)
-                            SafeArea(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 20, vertical: 10),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'My Profile',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.refresh,
-                                          color: Colors.white),
-                                      onPressed: _fetchProfile,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(30),
+                            bottomRight: Radius.circular(30),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryBlue.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
                             ),
-                            // Profile Card with Circular Avatar
-                            Container(
-                              margin: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 10),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Profil Saya',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
                                   ),
-                                ],
+                                ),
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(Icons.refresh,
+                                        color: Colors.white, size: 24),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
+                                    onPressed: _fetchProfile,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 15),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(15),
                               ),
                               child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const SizedBox(height: 20),
-                                  CircleAvatar(
-                                    radius: 54,
-                                    backgroundColor: primaryBlue,
-                                    child: CircleAvatar(
-                                      radius: 50,
-                                      backgroundColor: Colors.grey[200],
-                                      backgroundImage: _profileImageUrl
-                                              .isNotEmpty
-                                          ? NetworkImage(_profileImageUrl)
-                                          : const AssetImage(
-                                                  "assets/default_avatar.png")
-                                              as ImageProvider,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.person_outline,
+                                          color: Colors.white.withOpacity(0.9),
+                                          size: 16),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "Kelola informasi profil Anda",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _userName,
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: primaryBlue,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _userEmail,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
                                 ],
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  // User Information Section
-                  SliverToBoxAdapter(
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: primaryBlue.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Icon(Icons.info_outline,
-                                    color: primaryBlue, size: 20),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Personal Information',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          _buildInfoTile(Icons.email, 'Email', _userEmail),
-                          _buildInfoTile(Icons.phone, 'No Telepon', _userPhone),
-                          _buildInfoTile(
-                              Icons.location_on, 'Alamat', _userAddress),
-                        ],
                       ),
                     ),
-                  ),
-                  // Settings Section
-                  SliverToBoxAdapter(
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(20, 10, 20, 100),
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
+                    SliverToBoxAdapter(
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            const SizedBox(height: 20),
+                            CircleAvatar(
+                              radius: 54,
+                              backgroundColor: primaryBlue,
+                              child: CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Colors.grey[200],
+                                backgroundImage: _profileImageUrl.isNotEmpty
+                                    ? NetworkImage(_profileImageUrl)
+                                    : const AssetImage(
+                                            "assets/default_avatar.png")
+                                        as ImageProvider,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _userName,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: primaryBlue,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _userEmail,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: primaryBlue.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: primaryBlue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(Icons.info_outline,
+                                      color: primaryBlue, size: 20),
                                 ),
-                                child: Icon(Icons.settings,
-                                    color: primaryBlue, size: 20),
-                              ),
-                              const SizedBox(width: 12),
-                              const Text(
-                                'Pengaturan',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          _buildSettingButton(
-                            Icons.edit,
-                            'Edit Profil',
-                            primaryBlue,
-                            () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => EditProfileuser(
-                                    name: _userName,
-                                    email: _userEmail,
-                                    phone: _userPhone,
-                                    address: _userAddress,
-                                    profileImage: _profileImageUrl,
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Informasi Pribadi',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _buildSettingButton(
-                            Icons.lock,
-                            'Lupa Kata Sandi',
-                            accentBlue,
-                            () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LupaKataSandiScreen(
-                                    email: _userEmail,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-                          _buildSettingButton(
-                            Icons.logout,
-                            'Keluar',
-                            Colors.red,
-                            () {
-                              _showLogoutDialog(context);
-                            },
-                          ),
-                        ],
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            _buildInfoTile(Icons.email, 'Email', _userEmail),
+                            _buildInfoTile(
+                                Icons.phone, 'No Telepon', _userPhone),
+                            _buildInfoTile(
+                                Icons.location_on, 'Alamat', _userAddress),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              )
-            : Center(child: CircularProgressIndicator(color: primaryBlue)),
+                    SliverToBoxAdapter(
+                      child: Container(
+                        margin: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: primaryBlue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Icon(Icons.settings,
+                                      color: primaryBlue, size: 20),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Pengaturan',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            _buildSettingButton(
+                              Icons.edit,
+                              'Edit Profil',
+                              primaryBlue,
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => EditProfileuser(
+                                      name: _userName,
+                                      email: _userEmail,
+                                      phone: _userPhone,
+                                      address: _userAddress,
+                                      profileImage: _profileImageUrl,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSettingButton(
+                              Icons.lock,
+                              'Lupa Kata Sandi',
+                              accentBlue,
+                              () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LupaKataSandiScreen(
+                                      email: _userEmail,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            _buildSettingButton(
+                              Icons.logout,
+                              'Keluar',
+                              Colors.red,
+                              () {
+                                _showLogoutDialog(context);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Center(child: CircularProgressIndicator(color: primaryBlue)),
+        ),
       ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _selectedIndex,

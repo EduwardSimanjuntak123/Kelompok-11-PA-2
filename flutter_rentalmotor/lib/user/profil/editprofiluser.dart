@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as p; // Aliasing import
+import 'package:path/path.dart' as p;
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
@@ -83,7 +83,7 @@ class _EditProfileuserState extends State<EditProfileuser> {
     setState(() {
       _isLoading = true;
     });
-    
+
     // Ambil token dari Flutter Secure Storage
     String? token = await storage.read(key: "auth_token");
 
@@ -129,7 +129,8 @@ class _EditProfileuserState extends State<EditProfileuser> {
             content: Text("Gagal memperbarui profil"),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         );
       }
@@ -171,7 +172,8 @@ class _EditProfileuserState extends State<EditProfileuser> {
       barrierDismissible: false,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           elevation: 5,
           backgroundColor: Colors.transparent,
           child: Container(
@@ -204,16 +206,16 @@ class _EditProfileuserState extends State<EditProfileuser> {
                 ),
                 SizedBox(height: 20),
                 Text(
-                  "Profile Updated Successfully",
+                  "Profil Berhasil Diperbarui",
                   style: TextStyle(
-                    fontWeight: FontWeight.bold, 
+                    fontWeight: FontWeight.bold,
                     fontSize: 18,
                     color: primaryBlue,
                   ),
                 ),
                 SizedBox(height: 10),
                 Text(
-                  "Your profile information has been updated successfully.",
+                  "Informasi profil Anda berhasil diperbarui.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -249,7 +251,7 @@ class _EditProfileuserState extends State<EditProfileuser> {
                       borderRadius: BorderRadius.circular(12),
                       child: Center(
                         child: Text(
-                          "Back to Profile",
+                          "Kembali ke Profil",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 15,
@@ -340,7 +342,7 @@ class _EditProfileuserState extends State<EditProfileuser> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: primaryBlue,
         elevation: 0,
@@ -376,7 +378,7 @@ class _EditProfileuserState extends State<EditProfileuser> {
             ],
           ),
           child: Text(
-            "Edit Profile",
+            "Edit Profil",
             style: TextStyle(
               color: primaryBlue,
               fontSize: 16,
@@ -432,211 +434,233 @@ class _EditProfileuserState extends State<EditProfileuser> {
                 ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Profile Header with Image - Fixed height to prevent overflow
-            Container(
-              height: 200, // Adjusted height to prevent overflow
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [primaryBlue, Color(0xFF3E8EDE)],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: ClampingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
               ),
-              child: SafeArea(
+              child: IntrinsicHeight(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: Stack(
-                        children: [
-                          // Reduced size of profile picture container
-                          Container(
-                            height: 100,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 4),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            child: ClipOval(
-                              child: _pickedImage != null
-                                  ? Image.file(
-                                      _pickedImage!,
-                                      fit: BoxFit.cover,
-                                      width: 100,
-                                      height: 100,
-                                    )
-                                  : (widget.profileImage.isNotEmpty
-                                      ? Image.network(
-                                          widget.profileImage,
-                                          fit: BoxFit.cover,
-                                          width: 100,
-                                          height: 100,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Image.asset(
-                                              "assets/default_avatar.png",
+                    // Profile Header with Image
+                    Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [primaryBlue, Color(0xFF3E8EDE)],
+                        ),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
+                        ),
+                      ),
+                      child: SafeArea(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: _pickImage,
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    height: 100,
+                                    width: 100,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: Colors.white, width: 4),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        ),
+                                      ],
+                                    ),
+                                    child: ClipOval(
+                                      child: _pickedImage != null
+                                          ? Image.file(
+                                              _pickedImage!,
                                               fit: BoxFit.cover,
                                               width: 100,
                                               height: 100,
-                                            );
-                                          },
-                                        )
-                                      : Image.asset(
-                                          "assets/default_avatar.png",
-                                          fit: BoxFit.cover,
-                                          width: 100,
-                                          height: 100,
-                                        )),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: primaryBlue, width: 2),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 5,
-                                    spreadRadius: 1,
+                                            )
+                                          : (widget.profileImage.isNotEmpty
+                                              ? Image.network(
+                                                  widget.profileImage,
+                                                  fit: BoxFit.cover,
+                                                  width: 100,
+                                                  height: 100,
+                                                  errorBuilder: (context, error,
+                                                      stackTrace) {
+                                                    return Image.asset(
+                                                      "assets/default_avatar.png",
+                                                      fit: BoxFit.cover,
+                                                      width: 100,
+                                                      height: 100,
+                                                    );
+                                                  },
+                                                )
+                                              : Image.asset(
+                                                  "assets/default_avatar.png",
+                                                  fit: BoxFit.cover,
+                                                  width: 100,
+                                                  height: 100,
+                                                )),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: primaryBlue, width: 2),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            blurRadius: 5,
+                                            spreadRadius: 1,
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        Icons.camera_alt,
+                                        color: primaryBlue,
+                                        size: 16,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-                              child: Icon(
-                                Icons.camera_alt,
-                                color: primaryBlue,
-                                size: 16,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              "Edit Profil Anda",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
-                          ),
-                        ],
+                            SizedBox(height: 4),
+                            Text(
+                              "Ketuk ikon kamera untuk mengganti foto Anda",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    SizedBox(height: 12),
-                    Text(
-                      "Edit Your Profile",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      "Tap on the camera icon to change your photo",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.9),
+
+                    // Form Fields
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.all(20),
+                        padding: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Informasi Pribadi",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: primaryBlue,
+                              ),
+                            ),
+                            SizedBox(height: 16),
+                            _buildProfileField("Nama", nameController,
+                                icon: Icons.person),
+                            _buildProfileField("Email", emailController,
+                                readOnly: true, icon: Icons.email),
+                            _buildProfileField("No. Telepon", phoneController,
+                                readOnly: true, icon: Icons.phone),
+                            _buildProfileField("Alamat", addressController,
+                                isMultiline: true, icon: Icons.location_on),
+                            SizedBox(height: 20),
+                            Container(
+                              width: double.infinity,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [Color(0xFF3E8EDE), primaryBlue],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryBlue.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: _isLoading ? null : _updateProfile,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.save,
+                                            color: Colors.white, size: 18),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          _isLoading
+                                              ? "Saving..."
+                                              : "Simpan Perubahan",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            
-            // Form Fields
-            Container(
-              margin: EdgeInsets.all(20),
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Personal Information",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: primaryBlue,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  _buildProfileField("Nama", nameController, icon: Icons.person),
-                  _buildProfileField("Email", emailController, readOnly: true, icon: Icons.email),
-                  _buildProfileField("No. Telepon", phoneController, readOnly: true, icon: Icons.phone),
-                  _buildProfileField("Alamat", addressController, isMultiline: true, icon: Icons.location_on),
-                  
-                  SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF3E8EDE), primaryBlue],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryBlue.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _isLoading ? null : _updateProfile,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.save, color: Colors.white, size: 18),
-                              SizedBox(width: 10),
-                              Text(
-                                _isLoading ? "Saving..." : "Save Changes",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Add padding at the bottom to prevent content from being hidden by the navigation bar
-            SizedBox(height: 80),
-          ],
-        ),
+          );
+        },
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(

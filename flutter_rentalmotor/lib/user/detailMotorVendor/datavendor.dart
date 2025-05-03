@@ -722,8 +722,6 @@ class _DataVendorState extends State<DataVendor>
                     SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.monetization_on,
-                            size: 16, color: Colors.green[700]),
                         SizedBox(width: 6),
                         Text(
                           "${formatRupiah(int.parse(motor["price"].toString()))}/hari",

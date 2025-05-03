@@ -305,14 +305,6 @@ func GetAllVendors(c *gin.Context) {
 			continue
 		}
 
-		// Siapkan URL lengkap untuk gambar (misal: tambahkan base URL)
-		baseURL := "http://localhost:8080"
-		profileImage := user.ProfileImage
-		if profileImage == "" {
-			profileImage = "https://via.placeholder.com/150"
-		} else {
-			profileImage = baseURL + profileImage
-		}
 
 		// Gabungkan data yang lengkap ke dalam response
 		result = append(result, gin.H{
@@ -321,7 +313,7 @@ func GetAllVendors(c *gin.Context) {
 			"email":             user.Email,
 			"phone":             user.Phone,
 			"address":           user.Address,
-			"profile_image":     profileImage,
+			"profile_image":     user.ProfileImage,
 			"role":              user.Role,
 			"status":            user.Status,
 			"created_at":        user.CreatedAt,

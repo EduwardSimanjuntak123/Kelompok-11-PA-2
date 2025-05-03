@@ -146,6 +146,7 @@ func GetVendorTransactions(c *gin.Context) {
 				"brand":         motor.Brand,
 				"year":          motor.Year,
 				"price_per_day": motor.Price,
+				"plat_motor": motor.PlatMotor,
 			},
 		}
 		response = append(response, resp)
