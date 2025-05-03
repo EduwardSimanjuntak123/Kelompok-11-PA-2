@@ -53,6 +53,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     @foreach ($motors as $motor)
+                    @dd($motors)
                         <tr class="hover:bg-gray-50">
                             {{-- Gambar --}}
                             <td class="px-4 py-2 whitespace-nowrap">

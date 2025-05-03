@@ -111,8 +111,21 @@ Route::middleware([CheckAuth::class])->group(function () {
         Route::view('/ulasan', 'ulasan')->name('ulasan');
         Route::view('/input', 'input')->name('input');
 
-        Route::get('/perpanjangansewa', [PerpanjanganSewaController::class, 'index'])->name('vendor.perpanjangansewa');
-        
+        // Index (parameter id bersifat optional)
+        Route::get('/perpanjangansewa/{id?}', [PerpanjanganSewaController::class, 'index'])
+            ->name('vendor.perpanjangansewa');
+
+        // Setujui perpanjangan
+        Route::post('/vendor/extensions/{extension_id}/approve', [PerpanjanganSewaController::class, 'approveExtension'])
+            ->name('vendor.approveExtension');
+
+        // Tolak perpanjangan
+        Route::post('/vendor/extensions/{extension_id}/reject', [PerpanjanganSewaController::class, 'rejectExtension'])
+            ->name('vendor.rejectExtension');
+
+
+
+
     });
 
 });
