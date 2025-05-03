@@ -54,9 +54,9 @@ func CreateMotor(c *gin.Context) {
 	motor.Brand = c.PostForm("brand")
 	motor.Color = c.PostForm("color")
 	motor.Status = c.PostForm("status")
-	motor.PlatMotor = c.PostForm("plat_motor")
+	motor.PlatMotor = c.PostForm("platmotor")
 
-	motor.Type = c.PostForm("type")             // Tambahan kolom Type
+	motor.Type = c.PostForm("type")               // Tambahan kolom Type
 	motor.Description = c.PostForm("description") // Tambahan kolom Description
 
 	// Konversi nilai numerik
@@ -85,7 +85,6 @@ func CreateMotor(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil ditambahkan", "data": motor})
 }
-
 
 // Fungsi untuk memperbarui motor
 func UpdateMotor(c *gin.Context) {
@@ -126,8 +125,8 @@ func UpdateMotor(c *gin.Context) {
 	if brand := c.PostForm("brand"); brand != "" {
 		input["brand"] = brand
 	}
-	if brand := c.PostForm("plat_motor"); brand != "" {
-		input["plat_motor"] = brand
+	if PlatMotor := c.PostForm("platmotor"); PlatMotor != "" {
+		input["platmotor"] = PlatMotor
 	}
 
 	if color := c.PostForm("color"); color != "" {
@@ -211,7 +210,6 @@ func GetAllMotorByVendorID(c *gin.Context) {
 	})
 }
 
-
 // Fungsi untuk mendapatkan semua motor dari vendor yang login
 // Fungsi untuk mendapatkan semua motor beserta informasi vendor
 func GetAllMotor(c *gin.Context) {
@@ -219,13 +217,13 @@ func GetAllMotor(c *gin.Context) {
 
 	// Ambil semua data motor dengan vendor terkait
 	if err := config.DB.
-	Preload("Vendor").
-	Preload("Vendor.Kecamatan").
-	Preload("Vendor.User").
-	Find(&motors).Error; err != nil {
-	c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
-	return
-}
+		Preload("Vendor").
+		Preload("Vendor.Kecamatan").
+		Preload("Vendor.User").
+		Find(&motors).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
+		return
+	}
 
 	// Periksa apakah data motor ditemukan
 	if len(motors) == 0 {
@@ -239,14 +237,13 @@ func GetAllMotor(c *gin.Context) {
 	})
 }
 
-
 // Fungsi untuk mendapatkan motor berdasarkan ID
 func GetMotorByID(c *gin.Context) {
 	id := c.Param("id")
 	var motor models.Motor
 
 	if err := config.DB.First(&motor, id).Error; err != nil {
-		fmt.Println("Error:", err)  // Menampilkan error lebih detail
+		fmt.Println("Error:", err) // Menampilkan error lebih detail
 		c.JSON(http.StatusNotFound, gin.H{"error": "Motor tidak ditemukan"})
 		return
 	}
@@ -335,7 +332,6 @@ func GetMotorByIDolehvendor(c *gin.Context) {
 	})
 }
 
-
 // Fungsi untuk menghapus motor
 // Fungsi untuk menghapus motor
 func DeleteMotor(c *gin.Context) {
@@ -389,4 +385,3 @@ func DeleteMotor(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil dihapus"})
 }
-

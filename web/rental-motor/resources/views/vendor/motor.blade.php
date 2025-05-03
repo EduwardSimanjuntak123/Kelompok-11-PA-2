@@ -53,7 +53,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     @foreach ($motors as $motor)
-                    @dd($motors)
+                    {{-- @dd($motors) --}}
                         <tr class="hover:bg-gray-50">
                             {{-- Gambar --}}
                             <td class="px-4 py-2 whitespace-nowrap">
@@ -72,6 +72,7 @@
                                     <span><strong>Merek Motor:</strong> {{ $motor['brand'] }}</span>
                                     <span><strong>Tahun:</strong> {{ $motor['year'] }}</span>
                                     <span><strong>Warna:</strong> {{ $motor['color'] }}</span>
+                                    <span><strong>Plat Motor:</strong> {{ $motor['platmotor'] }}</span>
                                     <span><strong>Deskripsi:</strong> {{ $motor['description'] }}</span>
                                 </div>
                             </td>
@@ -180,6 +181,7 @@
                 document.getElementById('editMotorYear').value = motor.year;
                 document.getElementById('editMotorColor').value = motor.color;
                 document.getElementById('editMotorPrice').value = motor.price;
+                document.getElementById('editMotorPlatMotor').value = motor.platmotor;
                 document.getElementById('editMotorStatus').value = motor.status;
                 document.getElementById('editMotortype').value = motor.type;
                 document.getElementById('editMotorDescription').value = motor.description;
@@ -228,6 +230,7 @@
                 const type = form.type.value;
                 const color = form.color.value.trim();
                 const price = parseFloat(form.price.value);
+                const platmotor = form.platmotor.value.trim();
                 const description = form.description.value.trim();
                 const image = form.image.files[0];
 
@@ -245,6 +248,7 @@
                 if (!['matic', 'manual', 'kopling', 'vespa'].includes(type)) setError('type', 'Tipe harus dipilih.');
                 if (!color) setError('color', 'Warna harus diisi.');
                 if (isNaN(price)) setError('price', 'Harga harus diisi.');
+                if (!platmotor) setError('platmotor', 'Plat Motor tidak boleh kosong.');
                 if (!description) setError('description', 'Deskripsi tidak boleh kosong.');
 
                 if (image) {

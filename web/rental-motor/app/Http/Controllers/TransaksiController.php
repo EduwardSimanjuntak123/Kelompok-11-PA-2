@@ -33,23 +33,19 @@ class TransaksiController extends Controller
 
             // Fetch transaksi
             $url = "{$this->apiBaseUrl}/transaction";
-            Log::info("Mengirim request ke: " . $url);
             $response = Http::withToken($token)
                 ->timeout(10)
                 ->get($url);
-            Log::info("Response body: " . $response->body());
             $jsonData = $response->successful()
                 ? $response->json()
                 : [];
-            $transactions = $jsonData['data'] ?? $jsonData;
+            $rawTransactions = $jsonData['data'] ?? $jsonData;
 
             // Fetch motor vendor
             $urlMotors = "{$this->apiBaseUrl}/motor/vendor";
-            Log::info("Mengirim request motor ke: " . $urlMotors);
             $responseMotors = Http::withToken($token)
                 ->timeout(10)
                 ->get($urlMotors);
-            Log::info("Response motor: " . $responseMotors->body());
             $jsonMotor = $responseMotors->successful()
                 ? $responseMotors->json()
                 : [];
@@ -57,16 +53,40 @@ class TransaksiController extends Controller
 
         } catch (\Exception $e) {
             Log::error("Kesalahan saat mengambil data: " . $e->getMessage());
-            $transactions = [];
+            $rawTransactions = [];
             $motors = [];
         }
 
+        // === Merge data motor ke setiap transaksi ===
+        $transactionsWithMotor = collect($rawTransactions)->map(function ($t) use ($motors) {
+            // cari motor berdasarkan motor_id
+            $motor = collect($motors)->firstWhere('id', $t['motor_id']) ?? [];
+
+            return [
+                'id'              => $t['id'],
+                'customer_name'   => $t['customer_name'] ?? '-',
+                'status'          => $t['status'] ?? '-',
+                'booking_date'    => $t['booking_date'] ?? null,
+                'start_date'      => $t['start_date'] ?? null,
+                'end_date'        => $t['end_date'] ?? null,
+                'pickup_location' => $t['pickup_location'] ?? '-',
+                'total_price'     => $t['total_price'] ?? 0,
+                'motor'           => [
+                    'id'            => $motor['id'] ?? null,
+                    'name'          => $motor['name'] ?? '-',
+                    'brand'         => $motor['brand'] ?? '-',
+                    'year'          => $motor['year'] ?? '-',
+                    'platmotor'    => $motor['platmotor'] ?? '-',     // pastikan key ini sesuai API
+                    'price_per_day' => $motor['price_per_day'] ?? 0,
+                ],
+            ];
+        })->toArray();
+
         // === START: manual paginasi ===
         $perPage = 5;
-        $currentPage = Paginator::resolveCurrentPage('page'); // ambil ?page=…
-        $collection = collect($transactions);
+        $currentPage = Paginator::resolveCurrentPage('page');
+        $collection = collect($transactionsWithMotor);
 
-        // slice dan re-index
         $currentItems = $collection->forPage($currentPage, $perPage)->values();
 
         $paginatedTransactions = new LengthAwarePaginator(
@@ -75,16 +95,14 @@ class TransaksiController extends Controller
             $perPage,
             $currentPage,
             [
-                'path' => Paginator::resolveCurrentPath(),
+                'path'     => Paginator::resolveCurrentPath(),
                 'pageName' => 'page',
             ]
         );
         // === END: manual paginasi ===
 
-        // Kirim view sekali saja, dengan paginator
         return view('vendor.transaksi', [
             'transactions' => $paginatedTransactions,
-            'motors' => $motors,
         ]);
     }
 

@@ -83,37 +83,19 @@
                     </thead>
                     <tbody class="text-gray-600 text-sm font-light">
                         @foreach ($bookings as $pesanan)
+                            {{-- @dd($bookings) --}}
                             <tr class="border-b border-gray-200 hover:bg-gray-100" data-status="{{ $pesanan['status'] }}">
                                 <td class="py-3 px-4 text-center align-top">{{ $loop->iteration }}</td>
 
                                 <td class="py-4 px-6 text-left align-top">
-                                    <div class="space-y-2 text-gray-700">
-                                        <div>
-                                            <span class="font-bold text-gray-900">Customer:</span>
-                                            <span
-                                                class="text-blue-600 ; font-semibold">{{ $pesanan['customer_name'] ?? '-' }}</span>
-                                        </div>
-
-                                        <div>
-                                            <span class="font-bold text-gray-900">Tanggal Booking:</span>
-                                            <span class="format-datetime ">{{ $pesanan['booking_date'] ?? '-' }}</span>
-                                        </div>
-
-                                        <div>
-                                            <span class="font-bold text-gray-900">Tanggal Mulai:</span>
-                                            <span class="format-datetime ">{{ $pesanan['start_date'] ?? '-' }}</span>
-                                        </div>
-
-                                        <div>
-                                            <span class="font-bold text-gray-900">Tanggal Selesai:</span>
-                                            <span class="format-datetime">{{ $pesanan['end_date'] ?? '-' }}</span>
-                                        </div>
-
-                                        <div>
-                                            <span class="font-bold text-gray-900">Lokasi Jemput:</span>
-                                            <span>{{ $pesanan['pickup_location'] ?? '-' }}</span>
-                                        </div>
-                                    </div>
+                                    <a href="javascript:void(0)"
+                                        class="text-blue-600 font-semibold hover:underline open-booking-modal"
+                                        data-booking='@json(array_merge($pesanan, [
+                                                'potoid' => $pesanan['potoid'] ? url("storage/{$pesanan['potoid']}") : null,
+                                            ]),
+                                            JSON_UNESCAPED_SLASHES)'>
+                                        {{ $pesanan['customer_name'] ?? '-' }}
+                                    </a>
                                 </td>
 
                                 <!-- Detail Motor -->
@@ -128,6 +110,8 @@
                                             {{ $pesanan['motor']['year'] ?? '-' }}</div>
                                         <div><strong class="font-bold">Warna:</strong>
                                             {{ $pesanan['motor']['color'] ?? '-' }}</div>
+                                        <div><strong class="font-bold">Plat Motor:</strong>
+                                            {{ $pesanan['motor']['plat_motor'] ?? '-' }}</div>
                                     @else
                                         <div>Data motor tidak tersedia.</div>
                                     @endif
@@ -202,6 +186,30 @@
             </div>
         @endif
 
+        <!-- Modal Detail Pemesanan -->
+        <div id="bookingDetailModal"
+            class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center px-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 overflow-y-auto max-h-[90vh] relative">
+                <button type="button" onclick="closeBookingModal()"
+                    class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">×</button>
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-1/3">
+                        <img id="modalCustomerPhoto" src="" alt="Foto Customer"
+                            class="w-full h-auto object-cover rounded-lg shadow-md" />
+                    </div>
+                    <div class="w-full md:w-2/3 text-gray-700 space-y-3">
+                        <h3 class="text-xl font-bold" id="modalCustomerName"></h3>
+                        <p><strong>Booking:</strong> <span id="modalBookingDate"></span></p>
+                        <p><strong>Mulai:</strong> <span id="modalStartDate"></span></p>
+                        <p><strong>Akhir:</strong> <span id="modalEndDate"></span></p>
+                        <p><strong>Jemput:</strong> <span id="modalPickup"></span></p>
+                        <p><strong>Status:</strong> <span id="modalStatus"></span></p>
+                        <div id="modalNoteContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="mt-8 flex items-center justify-between">
             {{-- Kiri: info rangkuman --}}
             <div class="text-sm text-gray-600">
@@ -225,8 +233,7 @@
                     class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
 
@@ -239,7 +246,7 @@
                         <div>
                             <label for="motor_id" class="block text-gray-700 font-semibold mb-1">Pilih Motor</label>
                             <select name="motor_id" id="motor_id"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400">
+                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500">
                                 <option value="">-- Pilih Motor --</option>
                                 @foreach ($motors as $motor)
                                     <option value="{{ $motor['id'] }}"
@@ -256,7 +263,8 @@
                             <label for="customer_name" class="block text-gray-700 font-semibold mb-1">Nama
                                 Pelanggan</label>
                             <input type="text" name="customer_name" id="customer_name"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                                placeholder="cth: Budi Santoso"
+                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500"
                                 value="{{ old('customer_name') }}">
                             <small class="error-message text-red-500" data-field="customer_name"></small>
                         </div>
@@ -266,7 +274,7 @@
                             <label for="start_date_date" class="block text-gray-700 font-semibold mb-1">Tanggal
                                 Mulai</label>
                             <input type="date" name="start_date_date" id="start_date_date"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500"
                                 value="{{ old('start_date_date') }}">
                             <small class="error-message text-red-500" data-field="start_date_date"></small>
                         </div>
@@ -275,7 +283,7 @@
                         <div>
                             <label for="start_date_time" class="block text-gray-700 font-semibold mb-1">Jam Mulai</label>
                             <input type="time" name="start_date_time" id="start_date_time"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500"
                                 value="{{ old('start_date_time') }}">
                             <small class="error-message text-red-500" data-field="start_date_time"></small>
                         </div>
@@ -283,8 +291,8 @@
                         <!-- Duration -->
                         <div>
                             <label for="duration" class="block text-gray-700 font-semibold mb-1">Durasi (hari)</label>
-                            <input type="number" name="duration" id="duration" min="1"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400"
+                            <input type="number" name="duration" id="duration" placeholder="cth: 3" min="1"
+                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500"
                                 value="{{ old('duration') }}">
                             <small class="error-message text-red-500" data-field="duration"></small>
                         </div>
@@ -312,8 +320,9 @@
                     <div class="mt-6">
                         <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Pickup
                             Location</label>
-                        <textarea name="pickup_location" id="pickup_location"
-                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400" rows="3">{{ old('pickup_location') }}</textarea>
+                        <textarea name="pickup_location" id="pickup_location" rows="3"
+                            placeholder="cth: Jalan Merdeka No. 12, Jakarta"
+                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500">{{ old('pickup_location') }}</textarea>
                         <small class="error-message text-red-500" data-field="pickup_location"></small>
                     </div>
 
@@ -321,21 +330,18 @@
                     <div class="mt-6">
                         <label for="dropoff_location" class="block text-gray-700 font-semibold mb-1">Dropoff Location
                             (Opsional)</label>
-                        <textarea name="dropoff_location" id="dropoff_location"
-                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400" rows="3">{{ old('dropoff_location') }}</textarea>
+                        <textarea name="dropoff_location" id="dropoff_location" rows="3"
+                            placeholder="cth: Jalan Sudirman No. 45, Bandung"
+                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500">{{ old('dropoff_location') }}</textarea>
                         <small class="error-message text-red-500" data-field="dropoff_location"></small>
                     </div>
 
                     <!-- Buttons -->
                     <div class="mt-8 flex flex-col sm:flex-row justify-end gap-4">
                         <button type="button" onclick="closeModal('addBookingModal')"
-                            class="px-5 py-2.5 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition">
-                            Batal
-                        </button>
+                            class="px-5 py-2.5 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition">Batal</button>
                         <button type="submit"
-                            class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition">
-                            Simpan
-                        </button>
+                            class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition">Simpan</button>
                     </div>
                 </form>
             </div>
@@ -363,7 +369,6 @@
                     confirmButtonColor: '#3085d6'
                 });
             @endif
-
             @if (session('error'))
                 Swal.fire({
                     icon: 'error',
@@ -373,257 +378,241 @@
                 });
             @endif
 
-
-            document.addEventListener("DOMContentLoaded", function() {
-                const dateInput = document.getElementById("start_date_date");
-                const today = new Date();
-                const todayString = today.toISOString().split('T')[0];
-                dateInput.setAttribute("min", todayString);
-
-
-                document.querySelectorAll('.format-datetime').forEach(el => {
-                    const originalText = el.textContent.trim();
-                    el.textContent = formatDateTime(originalText);
-                });
-            });
-
-
-            document.getElementById("start_date_date").addEventListener("change", function() {
-                const dateInput = this.value;
-                const today = new Date();
-                const todayString = today.toISOString().split('T')[0];
-                const timeInput = document.getElementById("start_date_time");
-
-                if (dateInput === todayString) {
-                    let hours = today.getHours();
-                    let minutes = today.getMinutes();
-                    hours = hours < 10 ? "0" + hours : hours;
-                    minutes = minutes < 10 ? "0" + minutes : minutes;
-                    timeInput.min = `${hours}:${minutes}`;
-                } else {
-                    timeInput.removeAttribute("min");
-                }
-            });
-
-            // SweetAlert Wrapper
-            function showConfirmation(title, text, confirmText, cancelText) {
-                return Swal.fire({
-                    title: title,
-                    text: text,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: confirmText,
-                    cancelButtonText: cancelText
-                });
-            }
-
-            function showSuccessAlert(message) {
-                Swal.fire({
-                    title: 'Berhasil!',
-                    text: message,
-                    icon: 'success',
-                    confirmButtonColor: '#3085d6'
-                });
-            }
-
-            function showErrorAlert(message) {
-                Swal.fire({
-                    title: 'Error!',
-                    text: message,
-                    icon: 'error',
-                    confirmButtonColor: '#d33'
-                });
-            }
-
-            function formatDateTime(dateTimeString) {
-                if (!dateTimeString || dateTimeString === "-") return "-";
-
-                const date = new Date(dateTimeString);
-                if (isNaN(date.getTime())) return dateTimeString;
-
-                const formattedDate = date.toLocaleDateString('id-ID', {
+            // Utility
+            function formatDateTime(dt) {
+                if (!dt) return '-';
+                const d = new Date(dt);
+                if (isNaN(d)) return dt;
+                const date = d.toLocaleDateString('id-ID', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                 });
-
-                let timeParts = date.toLocaleTimeString('id-ID', {
+                const time = d.toLocaleTimeString('id-ID', {
                     hour: '2-digit',
                     minute: '2-digit',
                     hour12: false
-                }).replace(':', '.'); // ganti ':' jadi '.'
-
-                const formattedTime = `${timeParts} WIB`;
-
-                return `${formattedDate} / ${formattedTime}`;
+                }).replace(':', '.');
+                return `${date} / ${time} WIB`;
             }
 
+            function showConfirmation(t, txt, ok, cancel) {
+                return Swal.fire({
+                    title: t,
+                    text: txt,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: ok,
+                    cancelButtonText: cancel
+                });
+            }
+
+            function showSuccessAlert(msg) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: msg,
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+
+            function showErrorAlert(msg) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: msg,
+                    confirmButtonColor: '#d33'
+                });
+            }
+
+            function openModal(id) {
+                const m = document.getElementById(id);
+                if (m) {
+                    m.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            function closeModal(id) {
+                const m = document.getElementById(id);
+                if (m) {
+                    m.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                    m.querySelectorAll('.error-message').forEach(e => e.textContent = '');
+                }
+            }
+
+            function closeBookingModal() {
+                closeModal('bookingDetailModal');
+            }
+
+            // Main
             document.addEventListener('DOMContentLoaded', () => {
+                // Format tanggal dalam .format-datetime
                 document.querySelectorAll('.format-datetime').forEach(el => {
-                    const originalText = el.textContent.trim();
-                    el.textContent = formatDateTime(originalText);
+                    el.textContent = formatDateTime(el.textContent.trim());
                 });
-            });
 
-            document.addEventListener('DOMContentLoaded', () => {
-                document.querySelectorAll('.format-datetime').forEach(el => {
-                    const originalText = el.textContent.trim();
-                    el.textContent = formatDateTime(originalText);
-                });
-            });
-
-            document.getElementById('statusFilter').addEventListener('change', function() {
-                const selected = this.value;
-                const rows = document.querySelectorAll('tbody tr');
-
-                rows.forEach(row => {
-                    const status = row.getAttribute('data-status');
-                    if (selected === 'all' || status === selected) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            });
-
-            // Update Status Booking
-            function handleUpdateBooking(bookingId, action) {
-                let actionText = '';
-                let endpoint = '';
-
-                switch (action) {
-                    case 'confirm':
-                        actionText = 'setujui';
-                        endpoint = `${BASE_API}/vendor/bookings/${bookingId}/confirm`;
-                        break;
-                    case 'reject':
-                        actionText = 'tolak';
-                        endpoint = `${BASE_API}/vendor/bookings/${bookingId}/reject`;
-                        break;
-                    case 'transit':
-                        actionText = 'ubah status menjadi in transit';
-                        endpoint = `${BASE_API}/vendor/bookings/transit/${bookingId}`;
-                        break;
-                    case 'inuse':
-                        actionText = 'ubah status menjadi in use';
-                        endpoint = `${BASE_API}/vendor/bookings/inuse/${bookingId}`;
-                        break;
-                    case 'complete':
-                        actionText = 'selesaikan';
-                        endpoint = `${BASE_API}/vendor/bookings/complete/${bookingId}`;
-                        break;
-                    default:
-                        actionText = action;
+                // Set min date untuk date picker
+                const dateInput = document.getElementById('start_date_date');
+                if (dateInput) {
+                    const today = new Date().toISOString().split('T')[0];
+                    dateInput.setAttribute('min', today);
+                    dateInput.addEventListener('change', function() {
+                        const ti = document.getElementById('start_date_time');
+                        if (this.value === new Date().toISOString().split('T')[0]) {
+                            const now = new Date();
+                            ti.min = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes()
+                                .toString().padStart(2, '0');
+                        } else ti.removeAttribute('min');
+                    });
                 }
 
-                showConfirmation('Konfirmasi', `Apakah Anda yakin ingin ${actionText} booking ini?`, `Ya, ${actionText}!`,
-                        'Batal')
-                    .then((result) => {
-                        if (result.isConfirmed) {
-                            fetch(endpoint, {
-                                    method: "PUT",
-                                    headers: {
-                                        "Authorization": "Bearer {{ session('token') }}",
-                                        "Content-Type": "application/json"
-                                    }
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    showSuccessAlert(data.message);
-                                    setTimeout(() => location.reload(), 1500);
-                                })
-                                .catch(error => {
-                                    showErrorAlert("Terjadi kesalahan: " + error.message);
-                                });
+                // Filter status
+                document.getElementById('statusFilter')?.addEventListener('change', function() {
+                    document.querySelectorAll('tbody tr').forEach(r => {
+                        r.style.display = (this.value === 'all' || r.dataset.status === this.value) ?
+                            '' : 'none';
+                    });
+                });
+
+                // Open booking-detail modal
+                document.querySelectorAll('.open-booking-modal').forEach(link => {
+                    link.addEventListener('click', e => {
+                        e.preventDefault();
+                        let data;
+                        try {
+                            data = JSON.parse(link.getAttribute('data-booking'));
+                        } catch (err) {
+                            console.error('JSON parse error:', err);
+                            return;
+                        }
+
+                        // Debugging
+                        console.log('RAW potoid:', data.potoid);
+
+                        // Isi field modal
+                        document.getElementById('modalCustomerName').textContent = data.customer_name ||
+                            '-';
+                        document.getElementById('modalBookingDate').textContent = formatDateTime(data
+                            .booking_date);
+                        document.getElementById('modalStartDate').textContent = formatDateTime(data
+                            .start_date);
+                        document.getElementById('modalEndDate').textContent = formatDateTime(data
+                            .end_date);
+                        document.getElementById('modalPickup').textContent = data.pickup_location ||
+                        '-';
+                        document.getElementById('modalStatus').textContent = data.status || '-';
+
+                        // Gambar dengan handler onerror sekali saja
+                        const imgEl = document.getElementById('modalCustomerPhoto');
+                        imgEl.onerror = function() {
+                            console.warn('Image load failed, fallback to default');
+                            imgEl.onerror = null;
+                            imgEl.src = '/images/default-user.png';
+                        };
+                        if (data.potoid) {
+                            imgEl.src = data.potoid;
+                        } else {
+                            console.log('potoid kosong, langsung fallback');
+                            imgEl.onerror();
+                        }
+                        console.log('SET img.src =', imgEl.src);
+
+                        // Catatan
+                        const noteEl = document.getElementById('modalNoteContainer');
+                        noteEl.innerHTML = data.note ? `<p><strong>Catatan:</strong> ${data.note}</p>` :
+                            '';
+
+                        openModal('bookingDetailModal');
+                    });
+                });
+
+                // Validasi manual booking
+                document.getElementById('manualBookingForm')?.addEventListener('submit', e => {
+                    const f = e.target;
+                    f.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+                    let hasError = false;
+                    const setError = (field, msg) => {
+                        const el = f.querySelector(`.error-message[data-field="${field}"]`);
+                        if (el) el.textContent = msg;
+                        hasError = true;
+                    };
+
+                    const cn = f.customer_name.value.trim();
+                    if (!cn) setError('customer_name', 'Nama pelanggan harus diisi.');
+                    else if (cn.length < 3) setError('customer_name', 'Nama minimal 3 karakter.');
+                    if (!f.motor_id.value) setError('motor_id', 'Pilih motor terlebih dahulu.');
+                    if (!f.start_date_date.value) setError('start_date_date', 'Tanggal mulai harus diisi.');
+                    if (!f.start_date_time.value) setError('start_date_time', 'Waktu mulai harus diisi.');
+                    const dur = parseInt(f.duration.value);
+                    if (!dur || dur <= 0) setError('duration', 'Durasi harus lebih dari 0.');
+                    if (!f.pickup_location.value.trim()) setError('pickup_location',
+                        'Lokasi penjemputan harus diisi.');
+
+                    [
+                        ['ktp_file', 'KTP'],
+                        ['photo_file', 'Foto']
+                    ].forEach(([fld, label]) => {
+                        const file = f[fld]?.files[0];
+                        if (file) {
+                            if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type))
+                                setError(fld, `File ${label} harus JPG atau PNG.`);
+                            if (file.size > 2 * 1024 * 1024)
+                                setError(fld, `Ukuran ${label} maksimal 2MB.`);
                         }
                     });
-            }
 
-            // Modal Control
-            function openModal(modalId) {
-                const modal = document.getElementById(modalId);
-
-                // Hapus pesan error sebelum membuka modal
-                const errorMessages = modal.querySelectorAll('.error-message');
-                errorMessages.forEach(el => el.textContent = ''); // Clear error messages
-
-                modal.classList.remove("hidden");
-                document.body.style.overflow = "hidden";
-            }
-
-            function closeModal(modalId) {
-                const modal = document.getElementById(modalId);
-                modal.classList.add("hidden");
-                document.body.style.overflow = "auto";
-
-                const form = modal.querySelector("form");
-                if (form) {
-                    form.reset();
-                }
-
-                const errorMessages = modal.querySelectorAll(".error-message");
-                errorMessages.forEach(el => el.textContent = '');
-
-                const timeInput = modal.querySelector("#start_date_time");
-                if (timeInput) {
-                    timeInput.removeAttribute("min");
-                }
-            }
-
-
-            // ========== VALIDASI & SUBMIT: MANUAL BOOKING ===========
-            document.getElementById('manualBookingForm')?.addEventListener('submit', function(event) {
-                const form = event.target;
-                const errorMessages = form.querySelectorAll('.error-message');
-                errorMessages.forEach(el => el.textContent = '');
-
-                const customerName = form.customer_name.value.trim();
-                const motorId = form.motor_id.value;
-                const startDate = form.start_date_date.value;
-                const startTime = form.start_date_time.value;
-                const duration = parseInt(form.duration.value);
-                const pickup = form.pickup_location.value.trim();
-                const fileKTP = form.ktp_file?.files[0]; // optional
-                const fileFoto = form.photo_file?.files[0]; // optional
-
-                let hasError = false;
-
-                function setError(field, message) {
-                    const el = form.querySelector(`.error-message[data-field="${field}"]`);
-                    if (el) el.textContent = message;
-                    hasError = true;
-                }
-
-                if (!customerName) setError('customer_name', 'Nama pelanggan harus diisi.');
-                else if (customerName.length < 3) setError('customer_name', 'Nama minimal 3 karakter.');
-
-                if (!motorId) setError('motor_id', 'Pilih motor terlebih dahulu.');
-
-                if (!startDate) setError('start_date_date', 'Tanggal mulai harus diisi.');
-                if (!startTime) setError('start_date_time', 'Waktu mulai harus diisi.');
-
-                if (!duration || duration <= 0) setError('duration', 'Durasi harus lebih dari 0.');
-
-                if (!pickup) setError('pickup_location', 'Lokasi penjemputan harus diisi.');
-
-                // Optional: Validasi file KTP dan Foto
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-                if (fileKTP) {
-                    if (!allowedTypes.includes(fileKTP.type)) setError('ktp_file', 'File KTP harus JPG atau PNG.');
-                    if (fileKTP.size > 2 * 1024 * 1024) setError('ktp_file', 'Ukuran KTP maksimal 2MB.');
-                }
-
-                if (fileFoto) {
-                    if (!allowedTypes.includes(fileFoto.type)) setError('photo_file', 'File Foto harus JPG atau PNG.');
-                    if (fileFoto.size > 2 * 1024 * 1024) setError('photo_file', 'Ukuran Foto maksimal 2MB.');
-                }
-
-                if (hasError) {
-                    event.preventDefault();
-                    return;
-                }
+                    if (hasError) e.preventDefault();
+                });
             });
+
+            // Update booking status
+            function handleUpdateBooking(id, action) {
+                let txt, url;
+                switch (action) {
+                    case 'confirm':
+                        txt = 'setujui';
+                        url = `${BASE_API}/vendor/bookings/${id}/confirm`;
+                        break;
+                    case 'reject':
+                        txt = 'tolak';
+                        url = `${BASE_API}/vendor/bookings/${id}/reject`;
+                        break;
+                    case 'transit':
+                        txt = 'in transit';
+                        url = `${BASE_API}/vendor/bookings/transit/${id}`;
+                        break;
+                    case 'inuse':
+                        txt = 'in use';
+                        url = `${BASE_API}/vendor/bookings/inuse/${id}`;
+                        break;
+                    case 'complete':
+                        txt = 'selesaikan';
+                        url = `${BASE_API}/vendor/bookings/complete/${id}`;
+                        break;
+                    default:
+                        return showErrorAlert('Aksi tidak valid.');
+                }
+                showConfirmation('Konfirmasi', `Apakah Anda yakin ingin ${txt} booking ini?`, `Ya, ${txt}!`, 'Batal')
+                    .then(res => {
+                        if (!res.isConfirmed) return;
+                        fetch(url, {
+                                method: 'PUT',
+                                headers: {
+                                    "Authorization": `Bearer {{ session('token') }}`,
+                                    "Content-Type": "application/json"
+                                }
+                            })
+                            .then(r => r.json()).then(d => {
+                                showSuccessAlert(d.message);
+                                setTimeout(() => location.reload(), 1500);
+                            })
+                            .catch(err => showErrorAlert('Terjadi kesalahan: ' + err.message));
+                    });
+            }
         </script>
+
     @endsection

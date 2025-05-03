@@ -35,7 +35,8 @@
                     @foreach ($extens as $extension)
                         @php
                             $booking = collect($bookings)->firstWhere('id', $extension['booking_id']);
-        // @dd($bookings);
+       
+                            $platmotor = $booking['motor']['plat_motor'] ?? '-';
 
                             // URL foto pelanggan (KTP/potoid)
                             $customerPhotoPath = $booking['ktpid'] ?? ($booking['potoid'] ?? null);
@@ -59,7 +60,7 @@
                             </td>
 
                             {{-- MOTOR --}}
-                            <td class="py-3 px-4">{{ $extension['motor_name'] }}</td>
+                            <td class="py-3 px-4">{{ $extension['motor_name'] }} & {{ $platmotor }}</td>
 
                             {{-- TANGGAL DIMINTA --}}
                             <td class="py-3 px-4 text-sm text-gray-700">

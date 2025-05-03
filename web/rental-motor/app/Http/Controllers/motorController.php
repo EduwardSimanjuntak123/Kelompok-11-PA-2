@@ -20,8 +20,8 @@ class MotorController extends Controller
         try {
             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
             $response = Http::withToken($token)
-                            ->timeout(10)
-                            ->get("{$this->apiBaseUrl}/motor/vendor");
+                ->timeout(10)
+                ->get("{$this->apiBaseUrl}/motor/vendor");
 
             if ($response->successful()) {
                 $motors = $response->json()['data'] ?? [];
@@ -49,14 +49,15 @@ class MotorController extends Controller
 
             // Tambahkan 'type' & 'description' di validasi
             $validated = $request->validate([
-                'name'        => 'required|string|max:255',
-                'brand'       => 'required|string|max:255',
-                'year'        => 'required|integer|min:1900|max:' . date('Y'),
-                'color'       => 'required|string|max:255',
-                'type'        => 'required|in:matic,manual,kopling,vespa',
+                'name' => 'required|string|max:255',
+                'brand' => 'required|string|max:255',
+                'year' => 'required|integer|min:1900|max:' . date('Y'),
+                'color' => 'required|string|max:255',
+                'type' => 'required|in:matic,manual,kopling,vespa',
                 'description' => 'required|string',
-                'price'       => 'required|numeric|min:1000',
-                'image'       => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'platmotor' => 'required|string',
+                'price' => 'required|numeric|min:1000',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             ]);
 
             // Semua field kecuali file image sudah ada di $validated
@@ -69,15 +70,15 @@ class MotorController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $multipart[] = [
-                    'name'     => 'image',
+                    'name' => 'image',
                     'contents' => fopen($image->getPathname(), 'r'),
                     'filename' => $image->getClientOriginalName(),
                 ];
             }
 
             $response = Http::withToken($token)
-                            ->asMultipart()
-                            ->post("{$this->apiBaseUrl}/motor/vendor", $multipart);
+                ->asMultipart()
+                ->post("{$this->apiBaseUrl}/motor/vendor", $multipart);
 
             session()->flash('message', $response->successful() ? 'Motor berhasil ditambahkan!' : 'Gagal menambahkan motor.');
             session()->flash('type', $response->successful() ? 'success' : 'error');
@@ -98,15 +99,16 @@ class MotorController extends Controller
 
             // Tambahkan 'type' & 'description' di validasi, perbaiki typo max image
             $validated = $request->validate([
-                'name'        => 'required|string|max:255',
-                'brand'       => 'required|string|max:255',
-                'year'        => 'required|integer|min:1900|max:' . date('Y'),
-                'color'       => 'required|string|max:255',
-                'type'        => 'required|in:matic,manual,kopling,vespa',
+                'name' => 'required|string|max:255',
+                'brand' => 'required|string|max:255',
+                'year' => 'required|integer|min:1900|max:' . date('Y'),
+                'color' => 'required|string|max:255',
+                'type' => 'required|in:matic,manual,kopling,vespa',
                 'description' => 'required|string',
-                'price'       => 'required|numeric|min:1000',
-                'status'      => 'required|in:available,booked,unavailable',
-                'image'       => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+                'platmotor' => 'required|string',
+                'price' => 'required|numeric|min:1000',
+                'status' => 'required|in:available,booked,unavailable',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             ]);
 
             $multipart = [];
@@ -120,16 +122,16 @@ class MotorController extends Controller
             if ($request->hasFile('image')) {
                 $image = $request->file('image');
                 $multipart[] = [
-                    'name'     => 'image',
+                    'name' => 'image',
                     'contents' => fopen($image->getPathname(), 'r'),
                     'filename' => $image->getClientOriginalName(),
                 ];
             }
 
             $response = Http::withToken($token)
-                            ->asMultipart()
-                            ->put("{$this->apiBaseUrl}/motor/vendor/{$id}", $multipart);
-
+                ->asMultipart()
+                ->put("{$this->apiBaseUrl}/motor/vendor/{$id}", $multipart);
+                
             session()->flash('message', $response->successful() ? 'Motor berhasil diperbarui!' : 'Gagal memperbarui motor.');
             session()->flash('type', $response->successful() ? 'success' : 'error');
 
@@ -149,16 +151,16 @@ class MotorController extends Controller
             $response = Http::withToken($token)
                 ->delete("{$this->apiBaseUrl}/motor/vendor/{$id}");
 
-if ($response->successful()) {
-    session()->flash('message', 'Motor berhasil dihapus.');
-    session()->flash('type', 'success');
-} else {
-    $error = $response->json('error') ?? 'Gagal menghapus motor.';
-    session()->flash('message', $error);
-    session()->flash('type', 'error');
-}
+            if ($response->successful()) {
+                session()->flash('message', 'Motor berhasil dihapus.');
+                session()->flash('type', 'success');
+            } else {
+                $error = $response->json('error') ?? 'Gagal menghapus motor.';
+                session()->flash('message', $error);
+                session()->flash('type', 'error');
+            }
 
-return redirect()->back();
+            return redirect()->back();
         } catch (\Exception $e) {
             Log::error('Kesalahan saat menghapus motor: ' . $e->getMessage());
             session()->flash('message', 'Terjadi kesalahan saat menghapus motor.');
