@@ -85,21 +85,23 @@
                         @foreach ($bookings as $pesanan)
                             {{-- @dd($bookings) --}}
                             <tr class="border-b border-gray-200 hover:bg-gray-100" data-status="{{ $pesanan['status'] }}">
-                                <td class="py-3 px-4 text-center align-top">{{ $loop->iteration }}</td>
+                                <td class="py-3 px-4 text-center align-middle">{{ $loop->iteration }}</td>
 
-                                <td class="py-4 px-6 text-left align-top">
+
+                                <td class="py-4 px-6 text-left align-middle">
                                     <a href="javascript:void(0)"
-                                        class="text-blue-600 font-semibold hover:underline open-booking-modal"
+                                        class="open-booking-modal text-blue-600 font-semibold underline hover:underline cursor-pointer"
                                         data-booking='@json(array_merge($pesanan, [
-                                                'potoid' => $pesanan['potoid'] ? url("storage/{$pesanan['potoid']}") : null,
+                                                'potoid' => $pesanan['potoid'] ? config('api.base_url') . $pesanan['potoid'] : null,
                                             ]),
                                             JSON_UNESCAPED_SLASHES)'>
-                                        {{ $pesanan['customer_name'] ?? '-' }}
+                                        {{ $pesanan['customer_name'] }}
                                     </a>
                                 </td>
 
+
                                 <!-- Detail Motor -->
-                                <td class="py-3 px-4 text-left align-top">
+                                <td class="py-3 px-4 text-left align-middle">
                                     @if (isset($pesanan['motor']))
                                         <div><strong class="font-bold">Nama Motor:</strong>
                                             {{ $pesanan['motor']['name'] ?? '-' }}
@@ -191,24 +193,73 @@
             class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center px-4">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 overflow-y-auto max-h-[90vh] relative">
                 <button type="button" onclick="closeBookingModal()"
-                    class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">×</button>
-                <div class="flex flex-col md:flex-row gap-6">
-                    <div class="w-full md:w-1/3">
+                    class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-2xl leading-none">×</button>
+
+                <div class="flex flex-row gap-6">
+                    {{-- Kolom Foto di Kiri --}}
+                    <div class="w-1/3 flex justify-center items-start">
                         <img id="modalCustomerPhoto" src="" alt="Foto Customer"
-                            class="w-full h-auto object-cover rounded-lg shadow-md" />
+                            class="w-60 h-60 object-cover rounded-lg shadow-md"
+                            onerror="this.onerror=null; this.src='{{ asset('images/default-user.png') }}'">
                     </div>
-                    <div class="w-full md:w-2/3 text-gray-700 space-y-3">
-                        <h3 class="text-xl font-bold" id="modalCustomerName"></h3>
-                        <p><strong>Booking:</strong> <span id="modalBookingDate"></span></p>
-                        <p><strong>Mulai:</strong> <span id="modalStartDate"></span></p>
-                        <p><strong>Akhir:</strong> <span id="modalEndDate"></span></p>
-                        <p><strong>Jemput:</strong> <span id="modalPickup"></span></p>
-                        <p><strong>Status:</strong> <span id="modalStatus"></span></p>
-                        <div id="modalNoteContainer"></div>
+
+                    {{-- Kolom Data di Kanan --}}
+                    <div class="w-2/3 flex flex-col space-y-4 text-gray-700">
+                        {{-- Nama Customer --}}
+                        <div>
+                            <span class="font-semibold">Nama:</span>
+                            <span id="modalCustomerName">–</span>
+                        </div>
+
+                        {{-- Booking Date (highlight) --}}
+                        <div>
+                            <span class="font-semibold">Tanggal Booking:</span>
+                            <span id="modalBookingDate"
+                                class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 font-medium rounded">
+                                –
+                            </span>
+                        </div>
+
+                        {{-- Start Date (highlight) --}}
+                        <div>
+                            <span class="font-semibold">Tanggal Mulai:</span>
+                            <span id="modalStartDate"
+                                class="ml-2 px-2 py-1 bg-green-100 text-green-800 font-medium rounded">
+                                –
+                            </span>
+                        </div>
+
+                        {{-- End Date (highlight) --}}
+                        <div>
+                            <span class="font-semibold">Tanggal Berakhir:</span>
+                            <span id="modalEndDate" class="ml-2 px-2 py-1 bg-red-100 text-red-800 font-medium rounded">
+                                –
+                            </span>
+                        </div>
+
+                        {{-- Pickup Location --}}
+                        <div>
+                            <span class="font-semibold">Jemput di:</span>
+                            <span id="modalPickup">–</span>
+                        </div>
+
+                        {{-- Status --}}
+                        <div>
+                            <span class="font-semibold">Status:</span>
+                            <span id="modalStatus" class="capitalize">–</span>
+                        </div>
+
+                        {{-- Catatan --}}
+                        <div class="flex">
+                            <span class="font-semibold mr-2">Catatan:</span>
+                            <span id="modalNoteContainer" class="text-gray-600">–</span>
+                        </div>
+                        
                     </div>
                 </div>
             </div>
         </div>
+
 
         <div class="mt-8 flex items-center justify-between">
             {{-- Kiri: info rangkuman --}}
@@ -378,7 +429,7 @@
                 });
             @endif
 
-            // Utility
+            // Utility untuk format tanggal & waktu
             function formatDateTime(dt) {
                 if (!dt) return '-';
                 const d = new Date(dt);
@@ -394,37 +445,6 @@
                     hour12: false
                 }).replace(':', '.');
                 return `${date} / ${time} WIB`;
-            }
-
-            function showConfirmation(t, txt, ok, cancel) {
-                return Swal.fire({
-                    title: t,
-                    text: txt,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: ok,
-                    cancelButtonText: cancel
-                });
-            }
-
-            function showSuccessAlert(msg) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: msg,
-                    confirmButtonColor: '#3085d6'
-                });
-            }
-
-            function showErrorAlert(msg) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: msg,
-                    confirmButtonColor: '#d33'
-                });
             }
 
             function openModal(id) {
@@ -448,34 +468,10 @@
                 closeModal('bookingDetailModal');
             }
 
-            // Main
             document.addEventListener('DOMContentLoaded', () => {
-                // Format tanggal dalam .format-datetime
+                // Format ulang elemen .format-datetime jika ada
                 document.querySelectorAll('.format-datetime').forEach(el => {
                     el.textContent = formatDateTime(el.textContent.trim());
-                });
-
-                // Set min date untuk date picker
-                const dateInput = document.getElementById('start_date_date');
-                if (dateInput) {
-                    const today = new Date().toISOString().split('T')[0];
-                    dateInput.setAttribute('min', today);
-                    dateInput.addEventListener('change', function() {
-                        const ti = document.getElementById('start_date_time');
-                        if (this.value === new Date().toISOString().split('T')[0]) {
-                            const now = new Date();
-                            ti.min = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes()
-                                .toString().padStart(2, '0');
-                        } else ti.removeAttribute('min');
-                    });
-                }
-
-                // Filter status
-                document.getElementById('statusFilter')?.addEventListener('change', function() {
-                    document.querySelectorAll('tbody tr').forEach(r => {
-                        r.style.display = (this.value === 'all' || r.dataset.status === this.value) ?
-                            '' : 'none';
-                    });
                 });
 
                 // Open booking-detail modal
@@ -490,10 +486,10 @@
                             return;
                         }
 
-                        // Debugging
+                        // Debug: cek nilai potoid
                         console.log('RAW potoid:', data.potoid);
 
-                        // Isi field modal
+                        // Set teks pada modal
                         document.getElementById('modalCustomerName').textContent = data.customer_name ||
                             '-';
                         document.getElementById('modalBookingDate').textContent = formatDateTime(data
@@ -503,28 +499,29 @@
                         document.getElementById('modalEndDate').textContent = formatDateTime(data
                             .end_date);
                         document.getElementById('modalPickup').textContent = data.pickup_location ||
-                        '-';
+                            '-';
                         document.getElementById('modalStatus').textContent = data.status || '-';
 
-                        // Gambar dengan handler onerror sekali saja
+                        // Siapkan foto dengan BASE_API jika perlu
                         const imgEl = document.getElementById('modalCustomerPhoto');
-                        imgEl.onerror = function() {
-                            console.warn('Image load failed, fallback to default');
+                        imgEl.onerror = () => {
                             imgEl.onerror = null;
                             imgEl.src = '/images/default-user.png';
                         };
-                        if (data.potoid) {
-                            imgEl.src = data.potoid;
-                        } else {
-                            console.log('potoid kosong, langsung fallback');
-                            imgEl.onerror();
-                        }
-                        console.log('SET img.src =', imgEl.src);
 
-                        // Catatan
+                        if (data.potoid) {
+                            // Jika potoid sudah URL lengkap (http/https) pakai langsung,
+                            // kalau path relatif, prepend BASE_API
+                            const isAbsolute = /^https?:\/\//i.test(data.potoid);
+                            imgEl.src = isAbsolute ? data.potoid : `${BASE_API}${data.potoid}`;
+                        } else {
+                            imgEl.src = '/images/default-user.png';
+                        }
+
+                        // Catatan / message
                         const noteEl = document.getElementById('modalNoteContainer');
-                        noteEl.innerHTML = data.note ? `<p><strong>Catatan:</strong> ${data.note}</p>` :
-                            '';
+                        noteEl.textContent = data.message ? data.message : '-';
+
 
                         openModal('bookingDetailModal');
                     });
