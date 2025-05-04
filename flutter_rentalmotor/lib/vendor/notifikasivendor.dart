@@ -55,7 +55,7 @@ class _NotifikasiPagevState extends State<NotifikasiPagev>
   List<Map<String, dynamic>> _bookings = [];
   int _vendorId = 0;
   final storage = FlutterSecureStorage();
-  final String baseUrl = 'http://192.168.151.159:8080';
+  final String baseUrl = 'http://192.168.34.159:8080';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -86,6 +86,21 @@ class _NotifikasiPagevState extends State<NotifikasiPagev>
     );
     debugPrint('NotifikasiPagev initialized with userId: ${widget.userId}');
     _loadInitialData();
+    printAllSharedPrefs();
+  }
+
+  void printAllSharedPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+
+    if (keys.isEmpty) {
+      print('Tidak ada data di SharedPreferences.');
+    } else {
+      for (String key in keys) {
+        final value = prefs.get(key);
+        print('$key: $value');
+      }
+    }
   }
 
   @override
@@ -443,7 +458,7 @@ class _NotifikasiPagevState extends State<NotifikasiPagev>
                               child: Icon(
                                 Icons.notifications_off_outlined,
                                 size: 80,
-                                color: Colors.white,
+                                color: Colors.blueGrey,
                               ),
                             ),
                             const SizedBox(height: 24),
@@ -452,7 +467,7 @@ class _NotifikasiPagevState extends State<NotifikasiPagev>
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: Colors.blueGrey,
                               ),
                             ),
                             const SizedBox(height: 16),

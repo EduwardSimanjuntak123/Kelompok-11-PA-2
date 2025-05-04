@@ -388,86 +388,79 @@ func GetUserChatRooms(c *gin.Context) {
 	}
 	userID := uint(userIDInt)
 
+	// Ambil chat rooms dan preload relasi
 	var chatRooms []models.ChatRoom
 	if err := config.DB.
-		Preload("Customer").
-		Preload("Vendor").
-		Preload("Messages", func(db *gorm.DB) *gorm.DB {
-			return db.Order("sent_at desc").Limit(1)
-		}).
-		Preload("Messages.Sender").
+		Preload("Customer.Vendor").
+		Preload("Vendor.Vendor").
 		Where("customer_id = ? OR vendor_id = ?", userID, userID).
-		Order("updated_at DESC").
 		Find(&chatRooms).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil chat rooms"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil chat room"})
 		return
 	}
 
-	// Hitung jumlah pesan yang belum dibaca untuk setiap chat room
-	type ChatRoomWithUnread struct {
-		ChatRoom      models.ChatRoom `json:"chat_room"`
-		UnreadCount   int64           `json:"unread_count"`
-		LastMessage   *models.Message `json:"last_message,omitempty"`
-		OtherUserInfo gin.H           `json:"other_user_info"`
+	// Ambil LastMessage dan LastSentAt untuk setiap chat room
+	for i := range chatRooms {
+		var lastMessage models.Message
+		config.DB.Where("chat_room_id = ?", chatRooms[i].ID).
+			Order("sent_at desc").
+			Limit(1).
+			Find(&lastMessage)
+
+		chatRooms[i].LastMessage = lastMessage.Message
+		chatRooms[i].LastSentAt = lastMessage.SentAt
+		chatRooms[i].LastMessageIsRead = lastMessage.IsRead
+		chatRooms[i].LastMessageSenderID = lastMessage.SenderID
+
 	}
 
-	var result []ChatRoomWithUnread
-
+	var result []map[string]interface{}
 	for _, room := range chatRooms {
+		// Hitung unread messages
 		var unreadCount int64
 		config.DB.Model(&models.Message{}).
-			Where("chat_room_id = ? AND is_read = false AND sender_id != ?", room.ID, userID).
+			Where("chat_room_id = ? AND sender_id != ? AND is_read = false", room.ID, userID).
 			Count(&unreadCount)
 
-		// Ambil pesan terakhir
-		var lastMessage models.Message
-		hasLastMessage := false
-		if err := config.DB.
-			Preload("Sender").
-			Where("chat_room_id = ?", room.ID).
-			Order("sent_at desc").
-			First(&lastMessage).Error; err == nil {
-			hasLastMessage = true
-		}
+		var otherUser models.User
+		var shopName string
 
-		// Tentukan info lawan bicara
-		var otherUserInfo gin.H
 		if room.CustomerID == userID {
-	otherUserInfo = gin.H{
-		"id":            room.VendorID,
-		"name":          room.Vendor.Name,
-		"role":          room.Vendor.Role,
-		"profile_image": room.Vendor.ProfileImage,
-	}
-	if room.Vendor.Vendor != nil {
-		otherUserInfo["shop_name"] = room.Vendor.Vendor.ShopName
-	}
-} else {
-	otherUserInfo = gin.H{
-		"id":            room.CustomerID,
-		"name":          room.Customer.Name,
-		"role":          room.Customer.Role,
-		"profile_image": room.Customer.ProfileImage,
-	}
-}
-
-
-		roomWithUnread := ChatRoomWithUnread{
-			ChatRoom:      room,
-			UnreadCount:   unreadCount,
-			OtherUserInfo: otherUserInfo,
+			otherUser = room.Vendor
+			if room.Vendor.Vendor != nil {
+				shopName = room.Vendor.Vendor.ShopName
+			}
+		} else {
+			otherUser = room.Customer
+			if room.Customer.Vendor != nil {
+				shopName = room.Customer.Vendor.ShopName
+			}
 		}
 
-		if hasLastMessage {
-			roomWithUnread.LastMessage = &lastMessage
-		}
-
-		result = append(result, roomWithUnread)
+		result = append(result, map[string]interface{}{
+			"chat_room": map[string]interface{}{
+				"id":           room.ID,
+				"customer_id":  room.CustomerID,
+				"vendor_id":    room.VendorID,
+				"last_message": room.LastMessage,
+				"last_sent_at": room.LastSentAt,
+				"last_message_is_read": room.LastMessageIsRead,
+				"last_message_sender_id":   room.LastMessageSenderID,
+			},
+			"unread_count": unreadCount,
+			"other_user_info": map[string]interface{}{
+				"id":            otherUser.ID,
+				"name":          otherUser.Name,
+				"profile_image": otherUser.ProfileImage,
+				"role":          otherUser.Role,
+				"shop_name":     shopName,
+			},
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id":    userID,
 		"chat_rooms": result,
+		"user_id":    userID,
 	})
 }
 

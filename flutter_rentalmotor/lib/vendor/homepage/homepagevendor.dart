@@ -5,6 +5,8 @@ import 'package:flutter_rentalmotor/vendor/notifikasivendor.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_rentalmotor/user/chat/chat_room_list_page.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 import 'package:web_socket_channel/io.dart';
@@ -37,7 +39,7 @@ class _DashboardState extends State<HomepageVendor> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final currencyFormatter =
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
-
+  int? _userId;
   // Services
   final VendorApiService _apiService = VendorApiService();
   final DashboardService _dashboardService = DashboardService();
@@ -102,6 +104,28 @@ class _DashboardState extends State<HomepageVendor> {
       body,
       notificationDetails,
     );
+  }
+
+  List<Map<String, dynamic>> _chatRooms = [];
+
+  Future<void> _fetchChatRooms() async {
+    if (_userId == null) return;
+
+    try {
+      final url = Uri.parse("${ApiConfig.baseUrl}/chat/rooms?user_id=$_userId");
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _chatRooms = List<Map<String, dynamic>>.from(data['chat_rooms']);
+        });
+      } else {
+        print('Gagal mengambil chat rooms: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching chat rooms: $e');
+    }
   }
 
   void _connectWebSocket(int userId) {
@@ -198,7 +222,7 @@ class _DashboardState extends State<HomepageVendor> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => NotifikasiPagev(userId: vendorId!),
+                builder: (_) => NotifikasiPagev(userId: vendorUserId!),
               ),
             );
           },
@@ -395,16 +419,27 @@ class _DashboardState extends State<HomepageVendor> {
                         children: [
                           _buildNotifikasiButton(),
                           const SizedBox(width: 8),
-                          _buildHeaderButton(
-                            icon: Icons.chat_bubble_outline,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => ChatScreen()),
+                          IconButton(
+                            icon: Image.asset(
+                              "assets/images/chat.png",
+                              width: 24,
+                              height: 24,
                             ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              Navigator.of(context)
+                                  .push(MaterialPageRoute(
+                                      builder: (context) =>
+                                          const ChatRoomListPage()))
+                                  .then((_) {
+                                // Refresh chat rooms setelah kembali dari halaman chat
+                                _fetchChatRooms();
+                              });
+                            },
                           ),
                         ],
-                      ),
+                      )
                     ],
                   ),
                 ),

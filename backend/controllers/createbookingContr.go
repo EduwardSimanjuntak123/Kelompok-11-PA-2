@@ -237,7 +237,7 @@ func CreateBooking(c *gin.Context) {
             "booking_id": booking.ID,
         }
         if data, err := json.Marshal(payload); err == nil {
-            websocket.SendNotificationToVendor(vendor.UserID, string(data))
+            websocket.SendNotificationToUser(vendor.UserID, string(data))
             log.Printf("[DEBUG] WS notification sent to vendor user_id=%d", vendor.UserID)
         } else {
             log.Printf("[WARN] Gagal marshal WS payload: %v", err)

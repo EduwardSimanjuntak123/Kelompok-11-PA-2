@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_rentalmotor/user/chat/chat_page.dart';
+import 'package:flutter_rentalmotor/vendor/chat_page.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -386,7 +386,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
 
                       // Display shop name for vendors
                       final displayName =
-                          otherUserInfo['name'] ?? otherUserInfo['name'];
+                          otherUserInfo['shop_name'] ?? otherUserInfo['name'];
 
                       return InkWell(
                         onTap: () {
@@ -403,7 +403,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                               builder: (context) => ChatPage(
                                 chatRoomId: chatRoom['id'],
                                 receiverId: otherUserInfo['id'],
-                                receiverName: otherUserInfo['name'] ??
+                                receiverName: otherUserInfo['shop_name'] ??
                                     otherUserInfo['name'],
                               ),
                             ),
