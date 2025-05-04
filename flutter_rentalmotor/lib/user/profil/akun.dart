@@ -533,7 +533,7 @@ class _AkunState extends State<Akun> {
                                       profileImage: _profileImageUrl,
                                     ),
                                   ),
-                                );
+                                ).then((_) => _fetchProfile());
                               },
                             ),
                             const SizedBox(height: 12),
