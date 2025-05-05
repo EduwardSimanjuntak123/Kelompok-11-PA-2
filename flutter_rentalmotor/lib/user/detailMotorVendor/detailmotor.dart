@@ -263,32 +263,6 @@ class _DetailMotorPageState extends State<DetailMotorPage>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: IconButton(
-              icon: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                    _isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: Colors.red,
-                    size: 20),
-              ),
-              onPressed: _toggleFavorite,
-            ),
-          ),
-        ],
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -300,7 +274,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
               children: [
                 // Gambar motor
                 Container(
-                  height: 350, // Increased from 300 to 350
+                  height: 350, 
                   width: double.infinity,
                   child: Stack(
                     children: [
@@ -471,20 +445,22 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                       SizedBox(height: 16),
                       _buildVendorInfo(),
                       SizedBox(height: 30),
-                      _buildBookButton(),
 
-                      // Ulasan Motor
+                      // Ulasan Motor - Dipindahkan sebelum tombol Book Now
                       _buildSectionTitle("Ulasan"),
                       SizedBox(height: 16),
                       _isLoadingReviews
                           ? Center(child: CircularProgressIndicator())
                           : _reviewList.isEmpty
-                              ? Center(child: Text("No reviews available"))
+                              ? Center(child: Text("Belum ada ulasan"))
                               : Column(
                                   children: _reviewList.map((review) {
                                     return _buildReviewCard(review);
                                   }).toList(),
                                 ),
+                      SizedBox(height: 20), 
+
+                      _buildBookButton(),
                     ],
                   ),
                 ),
@@ -536,6 +512,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
         borderRadius: BorderRadius.circular(12),
       ),
       elevation: 5,
+      color: Colors.white,
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -658,57 +635,80 @@ class _DetailMotorPageState extends State<DetailMotorPage>
     );
   }
 
-  Widget _buildInfoRow() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Wrap(
-        spacing: 12, // jarak horizontal antar box
-        runSpacing: 12, // jarak vertikal antar baris box
-        alignment: WrapAlignment.spaceBetween, // rata kanan-kiri
-        children: [
-          _buildInfoBox(
-              Icons.star,
-              "${motor != null ? (motor!["rating"] != null ? motor!["rating"].toString() : "0") : "0"}",
-              "Rating",
-              Colors.amber),
-          _buildInfoBox(
-            FontAwesomeIcons.rupiahSign,
-            "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}",
-            "Harga",
-            Colors.green,
-          ),
-          _buildInfoBox(
-              Icons.motorcycle,
-              motor != null
-                  ? (motor!["type"]?.toString() ?? "Tidak Diketahui")
-                  : "Tidak Diketahui",
-              "Tipe",
-              Colors.blue),
-          _buildInfoBox(
-              Icons.color_lens,
-              motor != null
-                  ? (motor!["color"]?.toString() ?? "Tidak Diketahui")
-                  : "Tidak Diketahui",
-              "Warna",
-              Colors.purple),
-          _buildInfoBox(
-              Icons.branding_watermark,
-              motor != null
-                  ? (motor!["brand"]?.toString() ?? "Tidak Diketahui")
-                  : "Tidak Diketahui",
-              "Brand",
-              Colors.teal),
-          _buildInfoBox(
-              Icons.confirmation_number,
-              motor != null
-                  ? (motor!["year"]?.toString() ?? "Tidak Diketahui")
-                  : "Tidak Diketahui",
-              "Tahun",
-              Colors.orange),
-        ],
-      ),
-    );
+  Color getMotorColor(String colorName) {
+  switch (colorName.toLowerCase()) {
+    case "putih":
+      return Colors.black;
+    case "hitam":
+      return Colors.white;
+    case "merah":
+      return Colors.red;
+    case "biru":
+      return Colors.blue;
+    case "kuning":
+      return Colors.amber;
+    case "abu":
+    case "abu-abu":
+      return Colors.grey;
+    default:
+      return Colors.purple; // fallback jika warna tidak dikenali
   }
+}
+
+Widget _buildInfoRow() {
+  final String motorColor = motor != null
+      ? (motor!["color"]?.toString() ?? "Tidak Diketahui")
+      : "Tidak Diketahui";
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    child: Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      alignment: WrapAlignment.spaceBetween,
+      children: [
+        _buildInfoBox(
+            Icons.star,
+            "${motor != null ? (motor!["rating"] != null ? motor!["rating"].toString() : "0") : "0"}",
+            "Rating",
+            Colors.amber),
+        _buildInfoBox(
+          FontAwesomeIcons.rupiahSign,
+          "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}",
+          "Harga",
+          Colors.green,
+        ),
+        _buildInfoBox(
+            Icons.motorcycle,
+            motor != null
+                ? (motor!["type"]?.toString() ?? "Tidak Diketahui")
+                : "Tidak Diketahui",
+            "Tipe",
+            Colors.blue),
+        _buildInfoBox(
+            Icons.color_lens,
+            motorColor,
+            "Warna",
+            getMotorColor(motorColor)),
+        _buildInfoBox(
+            Icons.branding_watermark,
+            motor != null
+                ? (motor!["brand"]?.toString() ?? "Tidak Diketahui")
+                : "Tidak Diketahui",
+            "Brand",
+            Colors.teal),
+        _buildInfoBox(
+            Icons.confirmation_number,
+            motor != null
+                ? (motor!["year"]?.toString() ?? "Tidak Diketahui")
+                : "Tidak Diketahui",
+            "Tahun",
+            Colors.orange),
+      ],
+    ),
+  );
+}
+
 
   Widget _buildInfoBox(IconData icon, String value, String label, Color color) {
     return Container(
