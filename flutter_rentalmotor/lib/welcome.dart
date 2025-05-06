@@ -9,247 +9,199 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ukuran layar untuk responsif
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       body: Container(
-        color: Colors.white,
+        decoration: const BoxDecoration(
+          // Gradient dengan warna tema utama 0xFF1A5276
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF1A5276),
+              Color(0xFF154360),
+            ],
+          ),
+        ),
         child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF225378),
-                        Color(0xFF2D698F),
+          child: Center(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: size.height * 0.38,
+                    child: Lottie.asset(
+                      'assets/images/animations/welcome.json',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  DefaultTextStyle(
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontFamily: 'Montserrat',
+                      letterSpacing: 1.5,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 12,
+                          color: Colors.black45,
+                          offset: Offset(2, 2),
+                        ),
                       ],
                     ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(40),
-                      bottomRight: Radius.circular(40),
+                    child: AnimatedTextKit(
+                      repeatForever: true,
+                      pause: const Duration(milliseconds: 1500),
+                      animatedTexts: [
+                        FadeAnimatedText("Selamat Datang di MotoRent"),
+                        FadeAnimatedText("Sewa Kendaraan Impian Anda"),
+                        FadeAnimatedText("Mulai Perjalanan Anda"),
+                      ],
                     ),
                   ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: ClipPath(
-                          clipper: WaveClipper(),
-                          child: Container(
-                            height: 100,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      Center(
-                        child: Lottie.asset(
-                          'assets/images/animations/welcome.json',
-                          width: 200,
-                          height: 200,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 14),
+
+                  const Text(
+                    "Platform sewa motor terbaik, mudah dan terpercaya untuk semua kebutuhanmu.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                      height: 1.4,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 6,
+                          color: Colors.black38,
+                          offset: Offset(1, 1),
+                        )
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Spacer(),
-                      DefaultTextStyle(
-                        style: const TextStyle(
-                          fontSize: 24.0,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF225378),
+                  const SizedBox(height: 44),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SignUpCustomer()),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
                         ),
-                        child: AnimatedTextKit(
-                          repeatForever: true,
-                          animatedTexts: [
-                            FadeAnimatedText("Welcome to MotoRent"),
-                            FadeAnimatedText("Rent Your Dream Vehicle"),
-                            FadeAnimatedText("Start Your Journey"),
+                        elevation: 12,
+                        shadowColor: const Color(0xFF154360).withOpacity(0.7),
+                        backgroundColor: Colors.transparent,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        textStyle: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(40),
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color(0xFF1A5276),
+                              Color(0xFF154360),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black45.withOpacity(0.2),
+                              offset: const Offset(0, 6),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                            ),
                           ],
                         ),
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SignUpCustomer(),
-                            ),
-                          );
-                        },
-                        child: const MyButtonItems(
-                          color: Color(0xFF225378),
-                          child: Text(
+                        child: Container(
+                          alignment: Alignment.center,
+                          constraints: const BoxConstraints(minHeight: 55),
+                          child: const Text(
                             "CUSTOMER",
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
                               color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.7,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SignUpScreen(),
-                            ),
-                          );
-                        },
-                        child: const MyButtonItems(
-                          color: Colors.white,
-                          isOutlined: true,
-                          child: Text(
-                            "VENDOR",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Color(0xFF225378),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 22),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => SignUpScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.storefront_rounded, color: Colors.white70, size: 24),
+                      label: const Text(
+                        "VENDOR",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white70,
+                          letterSpacing: 1.4,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                        side: BorderSide(
+                          width: 2,
+                          color: Colors.white70.withOpacity(0.8),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 36),
+
+                  const Opacity(
+                    opacity: 0.6,
+                    child: Text(
+                      "© 2024 MotoRent. All rights reserved.",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 13,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-class MyButtonItems extends StatefulWidget {
-  final Widget child;
-  final Color color;
-  final bool isOutlined;
-
-  const MyButtonItems({
-    super.key,
-    required this.child,
-    required this.color,
-    this.isOutlined = false,
-  });
-
-  @override
-  State<MyButtonItems> createState() => _MyButtonItemsState();
-}
-
-class _MyButtonItemsState extends State<MyButtonItems>
-    with SingleTickerProviderStateMixin {
-  late AnimationController controller;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1800),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed) {
-          controller.reverse();
-        } else if (status == AnimationStatus.dismissed) {
-          controller.forward(from: 0.0);
-        }
-      });
-    controller.forward();
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, index) {
-        return Container(
-          alignment: Alignment.center,
-          padding: const EdgeInsets.all(15),
-          width: 200,
-          decoration: widget.isOutlined
-              ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  color: Colors.white,
-                  border: Border.all(
-                    color: const Color(0xFF225378),
-                    width: 2,
-                  ),
-                )
-              : BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  gradient: LinearGradient(colors: [
-                    const Color(0xFF225378),
-                    widget.color,
-                    const Color(0xFF3A86A8),
-                  ], stops: [
-                    0.0,
-                    controller.value,
-                    1.0,
-                  ]),
-                ),
-          child: widget.child,
-        );
-      },
-    );
-  }
-}
-
-class WaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    var path = Path();
-    path.lineTo(0, size.height);
-    path.lineTo(size.width, size.height);
-    path.lineTo(size.width, 0);
-
-    final firstControlPoint = Offset(size.width * 0.7, size.height * 0.3);
-    final firstEndPoint = Offset(size.width * 0.5, size.height * 0.5);
-    path.quadraticBezierTo(
-      firstControlPoint.dx,
-      firstControlPoint.dy,
-      firstEndPoint.dx,
-      firstEndPoint.dy,
-    );
-
-    final secondControlPoint = Offset(size.width * 0.3, size.height * 0.7);
-    final secondEndPoint = Offset(0, 0);
-    path.quadraticBezierTo(
-      secondControlPoint.dx,
-      secondControlPoint.dy,
-      secondEndPoint.dx,
-      secondEndPoint.dy,
-    );
-
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }

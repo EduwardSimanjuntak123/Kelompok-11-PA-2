@@ -1,3 +1,5 @@
+// home-page-user.tsx - Updated to fix filter error and improve UI
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
@@ -94,8 +96,8 @@ class _HomePageUserState extends State<HomePageUser> {
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
     // Initialize iOS settings (if you're supporting iOS)
-    // const IOSInitializationSettings initializationSettingsIOS =
-    //     IOSInitializationSettings(
+    // const IOSInitializationSettingsIOS initializationSettingsIOS =
+    //     IOSInitializationSettingsIOS(
     //   requestAlertPermission: true,
     //   requestBadgePermission: true,
     //   requestSoundPermission: true,
@@ -618,6 +620,14 @@ class _HomePageUserState extends State<HomePageUser> {
   }
 
   Widget _buildVendorSection(List<Map<String, dynamic>> vendorList) {
+    // Apply the filter here
+    List<Map<String, dynamic>> filteredVendorList = _selectedKecamatan == "Semua"
+        ? vendorList
+        : vendorList.where((vendor) {
+            String vendorKecamatan = vendor["kecamatan"]?["nama_kecamatan"]?.toString().trim() ?? "";
+            return vendorKecamatan == _selectedKecamatan;
+          }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -695,7 +705,7 @@ class _HomePageUserState extends State<HomePageUser> {
             ],
           ),
         ),
-        vendorList.isEmpty
+        filteredVendorList.isEmpty
             ? Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -730,9 +740,9 @@ class _HomePageUserState extends State<HomePageUser> {
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: vendorList.length,
+                  itemCount: filteredVendorList.length,
                   itemBuilder: (context, index) {
-                    final vendor = vendorList[index];
+                    final vendor = filteredVendorList[index];
                     String path =
                         vendor["user"]["profile_image"]?.toString().trim() ??
                             "";

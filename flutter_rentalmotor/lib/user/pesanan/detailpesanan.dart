@@ -1,3 +1,5 @@
+// detail-pesanan.tsx - Updated to sort bookings by latest order
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
@@ -96,7 +98,12 @@ class _DetailPesananState extends State<DetailPesanan>
       if (response.statusCode == 200) {
         setState(() {
           bookings = json.decode(response.body);
-          // Sort bookings...
+          // Sort bookings by created_at date in descending order (newest first)
+          bookings.sort((a, b) {
+            DateTime dateA = DateTime.parse(a['created_at'] ?? DateTime.now().toString());
+            DateTime dateB = DateTime.parse(b['created_at'] ?? DateTime.now().toString());
+            return dateB.compareTo(dateA); // Descending order (newest first)
+          });
           isLoading = false;
         });
       } else {

@@ -48,7 +48,8 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   int _selectedIndex = 0;
   final Color primaryBlue = Color(0xFF2C567E);
   final Color accentColor = Color(0xFFFF9800);
-  bool _isFavorite = false;
+  
+  // Removed _isFavorite variable
 
   // Animation controller
   late AnimationController _animationController;
@@ -177,25 +178,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
     }
   }
 
-  void _toggleFavorite() {
-    setState(() {
-      _isFavorite = !_isFavorite;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content:
-            Text(_isFavorite ? "Added to favorites" : "Removed from favorites"),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: _isFavorite ? Colors.green : Colors.grey[700],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: EdgeInsets.all(10),
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
+  // Removed _toggleFavorite function
 
   @override
   Widget build(BuildContext context) {
@@ -263,6 +246,10 @@ class _DetailMotorPageState extends State<DetailMotorPage>
           ),
           onPressed: () => Navigator.pop(context),
         ),
+<<<<<<< HEAD
+        // Removed favorite button from actions
+=======
+>>>>>>> 8e7df6ab8f86bcd16a78884eec6413fae465dcbd
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
