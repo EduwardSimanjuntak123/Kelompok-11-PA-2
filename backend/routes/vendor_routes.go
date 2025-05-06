@@ -15,6 +15,7 @@ func VendorRoutes(router *gin.Engine) {
 		vendor.GET("/:id", controllers.GetVendorByID)
 		vendor.GET("/", controllers.GetAllVendor)
 		vendor.POST("/register", controllers.RegisterVendor) // Vendor Register
+		vendor.POST("/cancel-registration", controllers.CancelRegistration)
 		vendor.Use(middleware.AuthMiddleware("vendor"))
 		{
 			vendor.GET("/profile", controllers.GetVendorProfile)

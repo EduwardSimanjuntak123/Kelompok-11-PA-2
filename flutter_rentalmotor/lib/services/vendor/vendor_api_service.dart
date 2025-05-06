@@ -73,18 +73,22 @@ class VendorApiService {
         },
       );
 
-      // Debug: print status code dan response body
       debugPrint('getBookings() status: ${response.statusCode}');
       debugPrint('getBookings() body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> bookingsData = json.decode(response.body);
-        debugPrint('Decoded bookingsData length: ${bookingsData.length}');
-        if (bookingsData.isEmpty) {
-          debugPrint('Warning: bookingsData is empty!');
+        if (response.body.isEmpty || response.body == 'null') {
+          debugPrint('Warning: response is null or empty');
           return [];
         }
-        return bookingsData;
+
+        final decoded = json.decode(response.body);
+        if (decoded is List) {
+          return decoded;
+        } else {
+          debugPrint('Warning: response is not a list');
+          return [];
+        }
       } else {
         debugPrint('Error: status ${response.statusCode}');
         throw Exception("Gagal memuat data pesanan");

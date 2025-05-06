@@ -127,6 +127,7 @@ class _DashboardState extends State<HomepageVendor> {
       print('Error fetching chat rooms: $e');
     }
   }
+  
 
   void _connectWebSocket(int userId) {
     // Tutup koneksi yang ada jika ada

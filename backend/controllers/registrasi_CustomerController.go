@@ -158,3 +158,5 @@ func VerifyOTP(c *gin.Context) {
 		"message": "Verifikasi berhasil, akun telah diaktifkan",
 	})
 }
+
+

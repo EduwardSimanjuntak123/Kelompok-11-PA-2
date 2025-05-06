@@ -61,6 +61,25 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> cancelRegistration(
+      {required String email}) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/customer/cancel-registration'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({"email": email}),
+    );
+
+    if (response.statusCode == 200) {
+      return {"success": true};
+    } else {
+      final body = jsonDecode(response.body);
+      return {
+        "success": false,
+        "message": body["error"] ?? "Terjadi kesalahan saat membatalkan."
+      };
+    }
+  }
+
   /// **📌 Verify OTP**
   Future<Map<String, dynamic>> verifyOTP({
     required String email,

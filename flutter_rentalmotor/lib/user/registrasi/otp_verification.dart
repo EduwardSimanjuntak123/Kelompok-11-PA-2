@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_rentalmotor/services/autentifikasi/auth_service.dart';
 import 'package:flutter_rentalmotor/signin.dart';
@@ -43,6 +44,51 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       node.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _cancelRegistration() async {
+    final shouldCancel = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Batalkan Registrasi?"),
+        content: const Text(
+            "Apakah Anda yakin ingin membatalkan registrasi? Data yang belum diverifikasi akan dihapus."),
+        actions: [
+          TextButton(
+            child: const Text("Tidak"),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          TextButton(
+            child: const Text("Ya"),
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldCancel == true) {
+      setState(() => _isLoading = true);
+
+      AuthService authService = AuthService();
+      final response =
+          await authService.cancelRegistration(email: widget.email);
+
+      setState(() => _isLoading = false);
+
+      if (response["success"]) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Registrasi dibatalkan.")),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => LoginScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response["message"] ?? "Gagal membatalkan.")),
+        );
+      }
+    }
   }
 
   Future<void> _verifyOTP() async {
@@ -96,9 +142,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: _cancelRegistration,
         ),
         title: const Text(
           "Verifikasi OTP",
@@ -180,6 +224,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text("Verifikasi Kode",
                         style: TextStyle(fontSize: 16)),
+              ),
+            ),
+            TextButton(
+              onPressed: _isLoading ? null : _cancelRegistration,
+              child: const Text(
+                "Batalkan Registrasi",
+                style: TextStyle(color: Colors.red),
               ),
             ),
           ],

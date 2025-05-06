@@ -12,6 +12,7 @@ func CustomerRoutes(router *gin.Engine) {
 	customer := router.Group("/customer")
 	{
 		customer.POST("/register", controllers.RegisterCustomer)
+		customer.POST("/cancel-registration", controllers.CancelRegistration)
 
 		customer.GET("/motors", controllers.GetAllMotors)
 		

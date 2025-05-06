@@ -43,6 +43,54 @@ func GetVendorByID(c *gin.Context) {
 	})
 }
 
+
+type cancelInput struct {
+    Email string `json:"email" binding:"required,email"`
+}
+
+// CancelRegistration menghapus OTP + akun inactive untuk customer/vendor
+func CancelRegistration(c *gin.Context) {
+    var in cancelInput
+    if err := c.ShouldBindJSON(&in); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"status":"error","message":err.Error()})
+        return
+    }
+
+    // Hapus OTP
+    if err := config.DB.
+        Where("email = ?", in.Email).
+        Delete(&models.OtpRequest{}).
+        Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"status":"error","message":"Gagal menghapus OTP"})
+        return
+    }
+
+    // Cari tahu apakah ini request di group /vendor atau /customer
+    path := c.FullPath() // misal "/vendor/cancel-registration"
+    var res *gorm.DB
+    if strings.HasPrefix(path, "/vendor") {
+        res = config.DB.
+            Where("email = ? AND status = ?", in.Email, "inactive").
+            Delete(&models.Vendor{})
+    } else {
+        res = config.DB.
+            Where("email = ? AND status = ?", in.Email, "inactive").
+            Delete(&models.User{})
+    }
+
+    if res.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"status":"error","message":"Gagal menghapus akun"})
+        return
+    }
+    if res.RowsAffected == 0 {
+        c.JSON(http.StatusNotFound, gin.H{"status":"error","message":"Akun tidak ditemukan atau sudah aktif"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"status":"success","message":"Pendaftaran dibatalkan, data dihapus"})
+}
+
+
 // RegisterVendor mendaftarkan vendor baru
 func RegisterVendor(c *gin.Context) {
 	var input struct {
@@ -54,6 +102,7 @@ func RegisterVendor(c *gin.Context) {
 		ShopAddress     string `form:"shop_address" binding:"required"`
 		ShopDescription string `form:"shop_description"`
 		IDKecamatan     *uint  `form:"id_kecamatan"`
+		BirthDate       *time.Time `form:"birth_date" time_format:"2006-01-02"` 
 	}
 
 	// Ambil form-data (bukan JSON)
@@ -118,7 +167,9 @@ func RegisterVendor(c *gin.Context) {
 		Address:      input.ShopAddress,
 		Status:       "inactive",
 		ProfileImage: profileImage,
+		BirthDate:    input.BirthDate, // 👈 tambahkan ini
 	}
+	
 	if err := config.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data user"})
 		return
