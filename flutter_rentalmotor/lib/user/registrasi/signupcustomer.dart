@@ -155,7 +155,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          "Create Account",
+                          "Buat Akun",
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -170,7 +170,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                     Padding(
                       padding: const EdgeInsets.only(left: 12),
                       child: Text(
-                        "Join our community and start renting motorcycles",
+                        "Bergabunglah dengan komunitas kami dan mulai menyewa motor",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade700,
@@ -218,7 +218,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                                           ),
                                           const SizedBox(height: 5),
                                           Text(
-                                            "Add Photo",
+                                            "Tambah Foto",
                                             style: TextStyle(
                                               color:
                                                   Colors.white.withOpacity(0.9),
@@ -307,7 +307,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                "Personal Information",
+                                "Informasi Personal",
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -317,19 +317,19 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                             ],
                           ),
                           const SizedBox(height: 20),
-                          _buildEnhancedTextField('Full Name',
+                          _buildEnhancedTextField('Nama Lengkap',
                               _fullNameController, Icons.person_outline),
-                          _buildEnhancedTextField('Address', _addressController,
+                          _buildEnhancedTextField('Alamat', _addressController,
                               Icons.home_outlined),
                           _buildEnhancedTextField(
-                              'Phone Number',
+                              'Nomor Telepon',
                               _phoneController,
                               Icons.phone_outlined,
                               TextInputType.phone),
                           _buildEnhancedTextField('Email', _emailController,
                               Icons.email_outlined, TextInputType.emailAddress),
                           _buildEnhancedDateField(
-                              'Date of Birth', _dateOfBirthController),
+                              'Tanggal Lahir', _dateOfBirthController),
                           _buildEnhancedPasswordField(
                               'Password', _passwordController, _obscurePassword,
                               () {
@@ -338,7 +338,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                             });
                           }),
                           _buildEnhancedPasswordField(
-                              'Confirm Password',
+                              'Konfirmasi Password',
                               _confirmPasswordController,
                               _obscureConfirmPassword, () {
                             setState(() {
@@ -372,7 +372,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                             ? const SpinKitFadingCircle(
                                 color: Colors.white, size: 30.0)
                             : const Text(
-                                "CREATE ACCOUNT",
+                                "BUAT AKUN",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -389,7 +389,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            "Already have an account? ",
+                            "Sudah punya akun? ",
                             style: TextStyle(
                               color: Colors.grey.shade700,
                               fontSize: 14,
@@ -401,7 +401,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
                                 MaterialPageRoute(
                                     builder: (context) => LoginScreen())),
                             child: Text(
-                              "Sign in",
+                              "Masuk",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -450,7 +450,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
         ),
         keyboardType: keyboardType,
         validator: (value) =>
-            (value == null || value.isEmpty) ? 'Enter your $label' : null,
+            (value == null || value.isEmpty) ? 'Masukkan $label' : null,
         onChanged: (value) => _checkFormValidity(),
       ),
     );
@@ -523,7 +523,7 @@ class _SignUpCustomerState extends State<SignUpCustomer> {
           fillColor: Colors.grey.shade50,
         ),
         validator: (value) =>
-            (value == null || value.isEmpty) ? 'Enter your $label' : null,
+            (value == null || value.isEmpty) ? 'Masukkan $label' : null,
         onChanged: (value) => _checkFormValidity(),
       ),
     );

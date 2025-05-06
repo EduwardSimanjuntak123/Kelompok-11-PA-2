@@ -1,3 +1,5 @@
+// sewa-motor-page.tsx - Updated with form guidance
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -38,6 +40,9 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
 
   List<Map<String, dynamic>> _filteredPickupSuggestions = [];
   List<Map<String, dynamic>> _filteredDropoffSuggestions = [];
+
+  // Tambahkan variabel untuk menampilkan panduan
+  bool _showGuidance = true;
 
   @override
   void initState() {
@@ -741,6 +746,60 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Panduan pengisian form
+                  if (_showGuidance)
+                    Container(
+                      padding: EdgeInsets.all(15),
+                      margin: EdgeInsets.only(bottom: 15),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.info_outline, color: Colors.amber[700], size: 24),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    "Panduan Pengisian Form",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.amber[800],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              IconButton(
+                                icon: Icon(Icons.close, color: Colors.amber[700], size: 20),
+                                padding: EdgeInsets.zero,
+                                constraints: BoxConstraints(),
+                                onPressed: () {
+                                  setState(() {
+                                    _showGuidance = false;
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 10),
+                          _buildGuidanceItem("Tanggal", "Pilih tanggal mulai sewa motor"),
+                          _buildGuidanceItem("Jam", "Pilih jam pengambilan motor"),
+                          _buildGuidanceItem("Durasi", "Masukkan lama sewa dalam hari (angka)"),
+                          _buildGuidanceItem("Lokasi Pengambilan", "Pilih lokasi pengambilan motor"),
+                          _buildGuidanceItem("Lokasi Pengembalian", "Opsional, kosongkan jika sama dengan lokasi pengambilan"),
+                          _buildGuidanceItem("Foto Diri", "Unggah foto diri Anda yang jelas"),
+                          _buildGuidanceItem("Foto KTP", "Unggah foto KTP yang jelas dan tidak buram"),
+                        ],
+                      ),
+                    ),
+
                   Container(
                     padding: EdgeInsets.all(15),
                     decoration: BoxDecoration(
@@ -1040,7 +1099,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                           ),
 
                         // KTP Section
-                        // KTP Section
                         Text(
                           "Foto KTP *",
                           style: TextStyle(
@@ -1147,6 +1205,41 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildGuidanceItem(String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 16),
+          SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

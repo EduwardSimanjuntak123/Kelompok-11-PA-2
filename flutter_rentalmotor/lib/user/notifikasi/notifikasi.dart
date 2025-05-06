@@ -83,11 +83,16 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
       (item) => item['id'] == bookingId,
       orElse: () => {},
     );
-    final imagePath = booking['motor']?['image']?.toString();
+    
+    if (booking.isEmpty || booking['motor'] == null) {
+      return null;
+    }
+    
+    final imagePath = booking['motor']['image']?.toString();
     if (imagePath != null && imagePath.isNotEmpty) {
       return imagePath.startsWith('http')
           ? imagePath
-          : 'http:// 192.168.87.159:8080$imagePath';
+          : '${ApiConfig.baseUrl}$imagePath';
     }
     return null;
   }
@@ -243,6 +248,13 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                 final String timestamp = notification['created_at'] ??
                     DateTime.now().toIso8601String();
                 final String type = notification['type'] ?? 'system';
+                
+                // Get motor image for booking notifications
+                String? motorImageUrl;
+                if (notification.containsKey('booking_id')) {
+                  int bookingId = notification['booking_id'];
+                  motorImageUrl = _getMotorImageByBookingId(bookingId);
+                }
 
                 return Dismissible(
                   key: Key('notification_${notification['id']}'),
@@ -294,11 +306,9 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                           horizontal: 16, vertical: 8),
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: notification.containsKey('booking_id')
+                        child: motorImageUrl != null
                             ? Image.network(
-                                _getMotorImageByBookingId(
-                                        notification['booking_id']) ??
-                                    '',
+                                motorImageUrl,
                                 width: 50,
                                 height: 50,
                                 fit: BoxFit.cover,

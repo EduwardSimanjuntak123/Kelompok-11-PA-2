@@ -10,30 +10,37 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   bool showLoading = false;
+  bool showLogo = false;
   final FlutterSecureStorage storage = FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
 
-    // Tampilkan logo dulu selama 3 detik
+    // Animasi logo muncul
+    Future.delayed(Duration(milliseconds: 500), () {
+      setState(() {
+        showLogo = true;
+      });
+    });
+
+    // Tampilkan loading setelah 3 detik
     Future.delayed(Duration(seconds: 3), () {
       setState(() {
-        showLoading = true; // Setelah 3 detik, tampilkan loading
+        showLoading = true;
       });
 
-      // Setelah loading 2 detik, cek status login
+      // Lanjutkan cek login setelah 2 detik loading
       Future.delayed(Duration(seconds: 2), () {
-        _checkLoginStatus();
+        _cekStatusLogin();
       });
     });
   }
 
-  Future<void> _checkLoginStatus() async {
-    // Ambil token dan role dari secure storage
+  Future<void> _cekStatusLogin() async {
     String? token = await storage.read(key: "auth_token");
     String? role = await storage.read(key: "role");
-    print("Token: $token, Role: $role");
+    print("Token: $token, Peran: $role");
 
     if (token != null && role != null) {
       if (role == "vendor") {
@@ -47,14 +54,12 @@ class _SplashScreenState extends State<SplashScreen> {
           MaterialPageRoute(builder: (context) => HomePageUser()),
         );
       } else {
-        // Jika role tidak dikenali, arahkan ke HomePageUser sebagai default
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePageUser()),
         );
       }
     } else {
-      // Jika tidak ada token atau role, arahkan ke HomePageUser (atau halaman login jika perlu)
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomePageUser()),
@@ -66,16 +71,58 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: showLoading ? const Color(0xFF2D88C3) : const Color(0xFF174D78),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF174D78), Color(0xFF2D88C3)],
+          ),
+        ),
         child: Center(
-          child: showLoading
-              ? const CircularProgressIndicator(
-                  color: Color(0xFF174D78),
-                )
-              : Image.asset(
-                  'assets/images/logo1.png',
-                  width: 150,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedOpacity(
+                opacity: showLogo ? 1.0 : 0.0,
+                duration: Duration(seconds: 1),
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 15,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo1.png',
+                    width: 160,
+                  ),
                 ),
+              ),
+              SizedBox(height: 30),
+              showLoading
+                  ? Column(
+                      children: [
+                        CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                        SizedBox(height: 15),
+                        Text(
+                          "Sedang memuat...",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontFamily: 'Poppins', // pastikan font diimport
+                          ),
+                        ),
+                      ],
+                    )
+                  : SizedBox.shrink(),
+            ],
+          ),
         ),
       ),
     );

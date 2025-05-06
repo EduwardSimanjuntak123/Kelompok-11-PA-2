@@ -48,7 +48,8 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   int _selectedIndex = 0;
   final Color primaryBlue = Color(0xFF2C567E);
   final Color accentColor = Color(0xFFFF9800);
-  bool _isFavorite = false;
+  
+  // Removed _isFavorite variable
 
   // Animation controller
   late AnimationController _animationController;
@@ -177,25 +178,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
     }
   }
 
-  void _toggleFavorite() {
-    setState(() {
-      _isFavorite = !_isFavorite;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content:
-            Text(_isFavorite ? "Added to favorites" : "Removed from favorites"),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: _isFavorite ? Colors.green : Colors.grey[700],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: EdgeInsets.all(10),
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
+  // Removed _toggleFavorite function
 
   @override
   Widget build(BuildContext context) {
@@ -263,32 +246,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: IconButton(
-              icon: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                    _isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: Colors.red,
-                    size: 20),
-              ),
-              onPressed: _toggleFavorite,
-            ),
-          ),
-        ],
+        // Removed favorite button from actions
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
