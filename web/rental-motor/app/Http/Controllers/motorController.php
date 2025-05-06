@@ -23,20 +23,27 @@ class MotorController extends Controller
                 ->timeout(10)
                 ->get("{$this->apiBaseUrl}/motor/vendor");
 
+            $motors = [];
+
             if ($response->successful()) {
                 $motors = $response->json()['data'] ?? [];
+
                 foreach ($motors as &$motor) {
                     $motor['image_url'] = !empty($motor['image']) && !str_starts_with($motor['image'], 'http')
                         ? $this->apiBaseUrl . ltrim($motor['image'])
                         : $motor['image'];
                 }
+
+                // Filter berdasarkan status jika ada
+                $statusFilter = request('status');
+                if ($statusFilter && $statusFilter !== 'all') {
+                    $motors = array_filter($motors, fn($motor) => $motor['status'] === $statusFilter);
+                }
             } else {
                 Log::error("Gagal mengambil data motor. Status: " . $response->status());
-                $motors = [];
             }
         } catch (\Exception $e) {
             Log::error('Kesalahan saat mengambil data motor: ' . $e->getMessage());
-            $motors = [];
         }
 
         return view('vendor.motor', compact('motors'));
@@ -97,7 +104,7 @@ class MotorController extends Controller
         try {
             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
 
-            // Tambahkan 'type' & 'description' di validasi, perbaiki typo max image
+            // Tambahkan 'type' & 'des  cription' di validasi, perbaiki typo max image
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'brand' => 'required|string|max:255',
@@ -131,7 +138,7 @@ class MotorController extends Controller
             $response = Http::withToken($token)
                 ->asMultipart()
                 ->put("{$this->apiBaseUrl}/motor/vendor/{$id}", $multipart);
-                
+
             session()->flash('message', $response->successful() ? 'Motor berhasil diperbarui!' : 'Gagal memperbarui motor.');
             session()->flash('type', $response->successful() ? 'success' : 'error');
 

@@ -60,11 +60,11 @@ class KelolaBookingController extends Controller
         // END: FILTER
 
         // START: URUTKAN status 'menunggu_konfirmasi' di atas, lalu berdasarkan start_date terbaru
-        $collection = $collection->sortBy(function ($item) {
-            $priority = $item['status'] === 'menunggu_konfirmasi' ? 0 : 1;
-            $startDate = isset($item['start_date']) ? Carbon::parse($item['start_date']) : Carbon::now();
-            return [$priority, -$startDate->timestamp]; // timestamp negatif untuk sort desc
+        // START: URUTKAN berdasarkan created_at desc (terbaru di atas)
+        $collection = $collection->sortByDesc(function ($item) {
+            return isset($item['created_at']) ? Carbon::parse($item['created_at']) : Carbon::now();
         })->values();
+
         // END: URUTKAN
 
         // START: MANUAL PAGINATION
@@ -190,89 +190,107 @@ class KelolaBookingController extends Controller
 
 
     public function addManualBooking(Request $request)
-    {
-        try {
-            $token = session()->get('token');
-            if (!$token) {
-                return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
-            }
+{
+    
+    try {
+        $token = session()->get('token');
+        if (!$token) {
+            return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
+        }
 
-            // Validasi input (tanpa end_date, pakai duration)
-            $validated = $request->validate([
-                'motor_id' => 'required|integer',
-                'customer_name' => 'required|string',
-                'start_date_date' => 'required|date_format:Y-m-d',
-                'start_date_time' => 'required|date_format:H:i',
-                'duration' => 'required|integer|min:1',
-                'pickup_location' => 'required|string',
-                'photo_id' => 'nullable|file|mimes:jpg,jpeg,png',
-                'ktp_id' => 'nullable|file|mimes:jpg,jpeg,png',
-            ]);
+        // Validasi input (tanpa end_date, pakai duration)
+        $validated = $request->validate([
+            'motor_id' => 'required|integer',
+            'customer_name' => 'required|string',
+            'start_date_date' => 'required|date_format:Y-m-d',
+            'start_date_time' => 'required|date_format:H:i',
+            'duration' => 'required|integer|min:1',
+            'pickup_location' => 'required|string',
+            'photo_id' => 'nullable|file|mimes:jpg,jpeg,png',
+            'ktp_id' => 'nullable|file|mimes:jpg,jpeg,png',
+        ]);
 
-            // Gabungkan input tanggal dan waktu; tambahkan ":00" untuk detik
-            $startDateInput = $validated['start_date_date'] . 'T' . $validated['start_date_time'] . ':00';
+        // Gabungkan input tanggal dan waktu
+        $startDateInput = $validated['start_date_date'] . 'T' . $validated['start_date_time'] . ':00';
 
-            // Buat objek Carbon dari input
-            $carbonStartDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $startDateInput, 'Asia/Jakarta');
+        // Buat Carbon date dan validasi tidak di masa lalu
+        $carbonStartDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $startDateInput, 'Asia/Jakarta');
+        if ($carbonStartDate->lt(\Carbon\Carbon::now('Asia/Jakarta'))) {
+            return redirect()->back()->with('error', 'Tanggal dan jam mulai tidak boleh kurang dari waktu saat ini.');
+        }
 
-            // Cek apakah tanggal mulai yang dimasukkan sudah lewat waktu saat ini
-            if ($carbonStartDate->lt(\Carbon\Carbon::now('Asia/Jakarta'))) {
-                return redirect()->back()->with('error', 'Tanggal dan jam mulai tidak boleh kurang dari waktu saat ini.');
-            }
+        // Format ISO8601
+        $startDate = $carbonStartDate->format('Y-m-d\TH:i:sP');
 
-            // Setelah validasi, format objek Carbon menjadi string ISO8601
-            $startDate = $carbonStartDate->format('Y-m-d\TH:i:sP');
+        // Multipart data
+        $multipart = [
+            ['name' => 'motor_id', 'contents' => $validated['motor_id']],
+            ['name' => 'customer_name', 'contents' => trim($validated['customer_name'])],
+            ['name' => 'start_date', 'contents' => $startDate],
+            ['name' => 'duration', 'contents' => $validated['duration']],
+            ['name' => 'pickup_location', 'contents' => $validated['pickup_location']],
+            ['name' => 'type', 'contents' => 'manual'],
+            ['name' => 'status', 'contents' => 'confirmed'],
+        ];
 
-            // Bangun data multipart untuk dikirim ke API backend
-            $multipart = [
-                ['name' => 'motor_id', 'contents' => $validated['motor_id']],
-                ['name' => 'customer_name', 'contents' => trim($validated['customer_name'])],
-                ['name' => 'start_date', 'contents' => $startDate],
-                ['name' => 'duration', 'contents' => $validated['duration']],
-                ['name' => 'pickup_location', 'contents' => $validated['pickup_location']],
-                ['name' => 'type', 'contents' => 'manual'],
-                ['name' => 'status', 'contents' => 'confirmed'],
+        // File upload opsional
+        if ($request->hasFile('photo_id')) {
+            $photo = $request->file('photo_id');
+            $multipart[] = [
+                'name' => 'photo_id',
+                'contents' => fopen($photo->getPathname(), 'r'),
+                'filename' => $photo->getClientOriginalName()
             ];
+        }
+        if ($request->hasFile('ktp_id')) {
+            $ktp = $request->file('ktp_id');
+            $multipart[] = [
+                'name' => 'ktp_id',
+                'contents' => fopen($ktp->getPathname(), 'r'),
+                'filename' => $ktp->getClientOriginalName()
+            ];
+        }
 
-            // Optional file upload (foto ID dan KTP)
-            if ($request->hasFile('photo_id')) {
-                $photo = $request->file('photo_id');
-                $multipart[] = [
-                    'name' => 'photo_id',
-                    'contents' => fopen($photo->getPathname(), 'r'),
-                    'filename' => $photo->getClientOriginalName()
-                ];
-            }
-            if ($request->hasFile('ktp_id')) {
-                $ktp = $request->file('ktp_id');
-                $multipart[] = [
-                    'name' => 'ktp_id',
-                    'contents' => fopen($ktp->getPathname(), 'r'),
-                    'filename' => $ktp->getClientOriginalName()
-                ];
-            }
+        Log::info("Manual Booking (pakai duration):", [
+            'start_date' => $startDate,
+            'duration' => $validated['duration'],
+            'validated' => $validated
+        ]);
 
-            Log::info("Manual Booking (pakai duration):", [
-                'start_date' => $startDate,
-                'duration' => $validated['duration'],
-                'validated' => $validated
-            ]);
-
-            $response = Http::withToken($token)
-                ->asMultipart()
-                ->post(config('api.base_url') . '/vendor/manual/bookings', $multipart);
+        // Kirim request
+        $response = Http::withToken($token)
+            ->asMultipart()
+            ->post(config('api.base_url') . '/vendor/manual/bookings', $multipart);
 
             if ($response->successful()) {
-                return redirect()->back()
-                    ->with('message', 'Booking manual berhasil dibuat');
+                return redirect()->back()->with('message', 'Booking manual berhasil dibuat');
             } else {
-                return redirect()->back()
-                    ->with('error', 'Gagal menambahkan booking manual: ' . $response->body());
+                // Debugging tambahan untuk response API
+                Log::error("Error API Response:", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'json' => $response->json(),
+                ]);
+            
+                // Ambil pesan error yang bersih jika tersedia
+                $errorMessage = 'Gagal menambahkan booking manual.';
+            
+                if ($response->header('Content-Type') === 'application/json') {
+                    $json = $response->json();
+                    if (isset($json['error'])) {
+                        $errorMessage = $json['error']; // Pesan error yang lebih spesifik dari API
+                    }
+                }
+            
+                return redirect()->back()->with('error', $errorMessage); // Mengirim pesan error ke session
             }
+            
 
-        } catch (\Exception $e) {
-            Log::error("Error saat booking manual (duration): " . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
+    } catch (\Exception $e) {
+        Log::error("Error saat booking manual (duration): " . $e->getMessage());
+        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
+}
+
+
 }

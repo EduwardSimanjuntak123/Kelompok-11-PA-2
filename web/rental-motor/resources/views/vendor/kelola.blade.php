@@ -16,39 +16,44 @@
         <!-- Filter dan Booking Manual dalam satu baris -->
         <div class="mb-6 flex items-center justify-between">
             <!-- Form Filter Status -->
-            <form method="GET" class="flex items-center gap-2">
-                <label for="status" class="text-sm font-medium">Filter Status:</label>
+            <form method="GET" class="flex items-center gap-4">
+                <label for="status" class="text-sm font-medium text-gray-700">Filter Status:</label>
                 <div class="relative w-60">
+                    <!-- Icon di kiri -->
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 12h18M3 20h18" />
+                        </svg>
+                    </div>
 
                     <select id="status" name="status" onchange="this.form.submit()"
-                        class="block w-full pl-10 pr-4 py-2 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <option value="all" {{ request('status', 'all') == 'all' ? 'selected' : '' }}>
-                            Semua Status
+                        class="block w-full pl-10 pr-8 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none">
+                        <option value="all" {{ request('status', 'all') == 'all' ? 'selected' : '' }}>Semua Status</option>
+                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu Konfirmasi
                         </option>
-                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>
-                            Menunggu Konfirmasi
+                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Dikonfirmasi</option>
+                        <option value="in transit" {{ request('status') == 'in transit' ? 'selected' : '' }}>Motor Sedang Diantar
                         </option>
-                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>
-                            Dikonfirmasi
+                        <option value="in use" {{ request('status') == 'in use' ? 'selected' : '' }}>Sedang Digunakan</option>
+                        <option value="awaiting return" {{ request('status') == 'awaiting return' ? 'selected' : '' }}>Menunggu
+                            Pengembalian</option>
+                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Pesanan Selesai
                         </option>
-                        <option value="in transit" {{ request('status') == 'in transit' ? 'selected' : '' }}>
-                            Motor Sedang Diantar
-                        </option>
-                        <option value="in use" {{ request('status') == 'in use' ? 'selected' : '' }}>
-                            Sedang Digunakan
-                        </option>
-                        <option value="awaiting return" {{ request('status') == 'awaiting return' ? 'selected' : '' }}>
-                            Menunggu Pengembalian
-                        </option>
-                        <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>
-                            Pesanan Selesai
-                        </option>
-                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>
-                            Booking Ditolak
-                        </option>
+                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Booking Ditolak</option>
                     </select>
+
+                    <!-- Arrow dropdown -->
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </div>
                 </div>
             </form>
+
 
             <!-- Tombol Booking Manual -->
             <button onclick="openModal('addBookingModal')"
@@ -72,7 +77,7 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full bg-white shadow-md rounded-lg table-fixed">
                     <thead>
-                        <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <tr class="bg-gray-200 text-gray-600 text-sm leading-normal">
                             <th class="py-3 px-4 text-center w-[5%]">No</th>
                             <th class="py-3 px-4 text-left align-top w-[28%]">Detail Pemesanan</th>
                             <th class="py-3 px-4 text-left align-top w-[20%]">Detail Motor</th>
@@ -87,18 +92,16 @@
                             <tr class="border-b border-gray-200 hover:bg-gray-100" data-status="{{ $pesanan['status'] }}">
                                 <td class="py-3 px-4 text-center align-middle">{{ $loop->iteration }}</td>
 
-
                                 <td class="py-4 px-6 text-left align-middle">
                                     <a href="javascript:void(0)"
-                                        class="open-booking-modal text-blue-600 font-semibold underline hover:underline cursor-pointer"
-                                        data-booking='@json(array_merge($pesanan, [
-                                                'potoid' => $pesanan['potoid'] ? config('api.base_url') . $pesanan['potoid'] : null,
-                                            ]),
-                                            JSON_UNESCAPED_SLASHES)'>
-                                        {{ $pesanan['customer_name'] }}
+                                        class="open-booking-modal group text-blue-600 font-semibold underline hover:underline cursor-pointer flex items-center"
+                                        data-booking='@json(array_merge($pesanan, ['potoid' => $pesanan['potoid'] ? config('api.base_url') . $pesanan['potoid'] : null]),
+                                            JSON_UNESCAPED_SLASHES)'
+                                        title="Klik untuk melihat detail pemesanan">
+                                        <i class="fas fa-info-circle mr-1 text-gray-500 group-hover:text-blue-500"></i>
+                                        <span>{{ $pesanan['customer_name'] }}</span>
                                     </a>
                                 </td>
-
 
                                 <!-- Detail Motor -->
                                 <td class="py-3 px-4 text-left align-middle">
@@ -162,23 +165,33 @@
                                     </strong>
                                 </td>
 
-                                <!-- Aksi -->
                                 <td class="py-3 px-4 text-center">
                                     @if ($s == 'pending')
-                                        <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'confirm')"
-                                            class="bg-green-600 text-white px-3 py-1 rounded-lg">Setujui</button>
-                                        <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'reject')"
-                                            class="bg-red-600 text-white px-3 py-1 rounded-lg">Tolak</button>
+                                        <div class="flex justify-center gap-2">
+                                            <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'confirm')"
+                                                class="px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                                <i class="fas fa-check mr-1"></i> Setujui
+                                            </button>
+                                            <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'reject')"
+                                                class="px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                                <i class="fas fa-times mr-1"></i> Tolak
+                                            </button>
+                                        </div>
                                     @elseif ($s == 'confirmed')
                                         <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'transit')"
-                                            class="bg-blue-600 text-white px-3 py-1 rounded-lg">Antar Motor</button>
+                                            class="px-4 py-2 bg-blue-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                            <i class="fas fa-motorcycle mr-1"></i> Antar Motor
+                                        </button>
                                     @elseif ($s == 'in transit')
                                         <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'inuse')"
-                                            class="bg-indigo-600 text-white px-3 py-1 rounded-lg">Sedang
-                                            Berlangsung</button>
-                                    @elseif (in_array($s, ['in use', 'awaiting return']))
+                                            class="px-4 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                            <i class="fas fa-play mr-1"></i> Sedang Berlangsung
+                                        </button>
+                                    @elseif ($s == 'awaiting return')
                                         <button onclick="handleUpdateBooking({{ $pesanan['id'] }}, 'complete')"
-                                            class="bg-green-600 text-white px-3 py-1 rounded-lg">Motor Kembali</button>
+                                            class="px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                            <i class="fas fa-undo mr-1"></i> Motor Kembali
+                                        </button>
                                     @endif
                                 </td>
                             </tr>
@@ -190,10 +203,12 @@
 
         <!-- Modal Detail Pemesanan -->
         <div id="bookingDetailModal"
-            class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center px-4">
+            class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center px-4">
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 overflow-y-auto max-h-[90vh] relative">
                 <button type="button" onclick="closeBookingModal()"
-                    class="absolute top-4 right-4 text-gray-600 hover:text-gray-800 text-2xl leading-none">×</button>
+                    class="close-modal absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-3xl leading-none">
+                    &times;
+                </button>
 
                 <div class="flex flex-row gap-6">
                     {{-- Kolom Foto di Kiri --}}
@@ -254,7 +269,7 @@
                             <span class="font-semibold mr-2">Catatan:</span>
                             <span id="modalNoteContainer" class="text-gray-600">–</span>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -420,6 +435,7 @@
                     confirmButtonColor: '#3085d6'
                 });
             @endif
+
             @if (session('error'))
                 Swal.fire({
                     icon: 'error',
@@ -468,13 +484,99 @@
                 closeModal('bookingDetailModal');
             }
 
+            // Tambahan fungsi notifikasi SweetAlert
+            function showConfirmation(title, text, confirmText = 'Ya', cancelText = 'Batal') {
+                return Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: confirmText,
+                    cancelButtonText: cancelText
+                });
+            }
+
+            function showSuccessAlert(message) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: message,
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+
+            function showErrorAlert(message) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: message,
+                    confirmButtonColor: '#d33'
+                });
+            }
+
+            // Update booking status
+            function handleUpdateBooking(id, action) {
+                let txt, url;
+                switch (action) {
+                    case 'confirm':
+                        txt = 'setujui';
+                        url = `${BASE_API}/vendor/bookings/${id}/confirm`;
+                        break;
+                    case 'reject':
+                        txt = 'tolak';
+                        url = `${BASE_API}/vendor/bookings/${id}/reject`;
+                        break;
+                    case 'transit':
+                        txt = 'in transit';
+                        url = `${BASE_API}/vendor/bookings/transit/${id}`;
+                        break;
+                    case 'inuse':
+                        txt = 'in use';
+                        url = `${BASE_API}/vendor/bookings/inuse/${id}`;
+                        break;
+                    case 'complete':
+                        txt = 'selesaikan';
+                        url = `${BASE_API}/vendor/bookings/complete/${id}`;
+                        break;
+                    default:
+                        return showErrorAlert('Aksi tidak valid.');
+                }
+
+                showConfirmation('Konfirmasi', `Apakah Anda yakin ingin ${txt} booking ini?`, `Ya, ${txt}!`, 'Batal')
+                    .then(res => {
+                        if (!res.isConfirmed) return;
+                        fetch(url, {
+                                method: 'PUT',
+                                headers: {
+                                    "Authorization": "Bearer {{ session('token') }}",
+                                    "Content-Type": "application/json"
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.message) {
+                                    showSuccessAlert(data.message);
+                                } else {
+                                    showSuccessAlert('Berhasil memperbarui status.');
+                                }
+                                setTimeout(() => location.reload(), 1500);
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                showErrorAlert('Terjadi kesalahan: ' + err.message);
+                            });
+                    });
+            }
+
+            // Saat halaman siap
             document.addEventListener('DOMContentLoaded', () => {
-                // Format ulang elemen .format-datetime jika ada
                 document.querySelectorAll('.format-datetime').forEach(el => {
                     el.textContent = formatDateTime(el.textContent.trim());
                 });
 
-                // Open booking-detail modal
+                // Modal detail booking
                 document.querySelectorAll('.open-booking-modal').forEach(link => {
                     link.addEventListener('click', e => {
                         e.preventDefault();
@@ -486,10 +588,6 @@
                             return;
                         }
 
-                        // Debug: cek nilai potoid
-                        console.log('RAW potoid:', data.potoid);
-
-                        // Set teks pada modal
                         document.getElementById('modalCustomerName').textContent = data.customer_name ||
                             '-';
                         document.getElementById('modalBookingDate').textContent = formatDateTime(data
@@ -502,32 +600,26 @@
                             '-';
                         document.getElementById('modalStatus').textContent = data.status || '-';
 
-                        // Siapkan foto dengan BASE_API jika perlu
                         const imgEl = document.getElementById('modalCustomerPhoto');
                         imgEl.onerror = () => {
                             imgEl.onerror = null;
                             imgEl.src = '/images/default-user.png';
                         };
-
                         if (data.potoid) {
-                            // Jika potoid sudah URL lengkap (http/https) pakai langsung,
-                            // kalau path relatif, prepend BASE_API
                             const isAbsolute = /^https?:\/\//i.test(data.potoid);
                             imgEl.src = isAbsolute ? data.potoid : `${BASE_API}${data.potoid}`;
                         } else {
                             imgEl.src = '/images/default-user.png';
                         }
 
-                        // Catatan / message
                         const noteEl = document.getElementById('modalNoteContainer');
                         noteEl.textContent = data.message ? data.message : '-';
-
 
                         openModal('bookingDetailModal');
                     });
                 });
 
-                // Validasi manual booking
+                // Validasi form manual booking
                 document.getElementById('manualBookingForm')?.addEventListener('submit', e => {
                     const f = e.target;
                     f.querySelectorAll('.error-message').forEach(el => el.textContent = '');
@@ -565,51 +657,7 @@
                     if (hasError) e.preventDefault();
                 });
             });
-
-            // Update booking status
-            function handleUpdateBooking(id, action) {
-                let txt, url;
-                switch (action) {
-                    case 'confirm':
-                        txt = 'setujui';
-                        url = `${BASE_API}/vendor/bookings/${id}/confirm`;
-                        break;
-                    case 'reject':
-                        txt = 'tolak';
-                        url = `${BASE_API}/vendor/bookings/${id}/reject`;
-                        break;
-                    case 'transit':
-                        txt = 'in transit';
-                        url = `${BASE_API}/vendor/bookings/transit/${id}`;
-                        break;
-                    case 'inuse':
-                        txt = 'in use';
-                        url = `${BASE_API}/vendor/bookings/inuse/${id}`;
-                        break;
-                    case 'complete':
-                        txt = 'selesaikan';
-                        url = `${BASE_API}/vendor/bookings/complete/${id}`;
-                        break;
-                    default:
-                        return showErrorAlert('Aksi tidak valid.');
-                }
-                showConfirmation('Konfirmasi', `Apakah Anda yakin ingin ${txt} booking ini?`, `Ya, ${txt}!`, 'Batal')
-                    .then(res => {
-                        if (!res.isConfirmed) return;
-                        fetch(url, {
-                                method: 'PUT',
-                                headers: {
-                                    "Authorization": `Bearer {{ session('token') }}`,
-                                    "Content-Type": "application/json"
-                                }
-                            })
-                            .then(r => r.json()).then(d => {
-                                showSuccessAlert(d.message);
-                                setTimeout(() => location.reload(), 1500);
-                            })
-                            .catch(err => showErrorAlert('Terjadi kesalahan: ' + err.message));
-                    });
-            }
         </script>
+
 
     @endsection

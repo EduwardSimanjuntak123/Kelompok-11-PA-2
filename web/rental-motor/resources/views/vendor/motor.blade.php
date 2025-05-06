@@ -29,14 +29,60 @@
                 <p class="text-sm text-gray-500">Kelola semua motor yang tersedia</p>
             </div>
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
-                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Cari motor..."
-                    class="w-full sm:w-64 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div class="relative w-full sm:w-64">
+                    <!-- Icon kaca pembesar -->
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+
+                    <!-- Input dengan padding-left untuk ikon -->
+                    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari motor..."
+                        class="w-full border rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
                 <button id="openAddModalBtn"
                     class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
                     Tambah Motor
                 </button>
             </div>
         </div>
+
+        <form method="GET" class="flex items-center gap-4 mb-4">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L15 13.414V19a1 1 0 01-1.447.894l-4-2A1 1 0 019 17v-3.586L3.293 6.707A1 1 0 013 6V4z" />
+                </svg>
+                <span class="text-sm text-gray-700 font-medium hidden sm:inline">Status</span>
+            </div>
+
+            <div class="relative w-60">
+                <select id="status" name="status" onchange="this.form.submit()"
+                    class="block w-full pl-3 pr-8 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none">
+                    <option value="all" {{ request('status', 'all') === 'all' ? 'selected' : '' }}>🔄 Semua</option>
+                    <option value="available" {{ request('status') === 'available' ? 'selected' : '' }}>✅ Motor Tersedia
+                    </option>
+                    <option value="booked" {{ request('status') === 'booked' ? 'selected' : '' }}>📦 Motor Sedang Dibooking
+                    </option>
+                    <option value="unavailable" {{ request('status') === 'unavailable' ? 'selected' : '' }}>🛑 Motor Rusak
+                    </option>
+                </select>
+
+                <!-- Ikon panah bawah -->
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+        </form>
+
 
         {{-- Tabel --}}
         <div class="overflow-x-auto w-full">
@@ -53,7 +99,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     @foreach ($motors as $motor)
-                    {{-- @dd($motors) --}}
+                        {{-- @dd($motors) --}}
                         <tr class="hover:bg-gray-50">
                             {{-- Gambar --}}
                             <td class="px-4 py-2 whitespace-nowrap">
@@ -73,6 +119,36 @@
                                     <span><strong>Tahun:</strong> {{ $motor['year'] }}</span>
                                     <span><strong>Warna:</strong> {{ $motor['color'] }}</span>
                                     <span><strong>Plat Motor:</strong> {{ $motor['platmotor'] }}</span>
+                                    <span><strong>Status Motor:</strong>
+                                        @switch($motor['status'])
+                                            @case('unavailable')
+                                                <span
+                                                    class="inline-block px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
+                                                    Motor Rusak
+                                                </span>
+                                            @break
+
+                                            @case('available')
+                                                <span
+                                                    class="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
+                                                    Motor Tersedia
+                                                </span>
+                                            @break
+
+                                            @case('booked')
+                                                <span
+                                                    class="inline-block px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-700 rounded-full">
+                                                    Motor Sedang Dibooking
+                                                </span>
+                                            @break
+
+                                            @default
+                                                <span
+                                                    class="inline-block px-2 py-1 text-xs font-semibold bg-gray-100 text-gray-700 rounded-full">
+                                                    Status Tidak Diketahui
+                                                </span>
+                                        @endswitch
+                                    </span>
                                     <span><strong>Deskripsi:</strong> {{ $motor['description'] }}</span>
                                 </div>
                             </td>
@@ -91,21 +167,21 @@
                                     @for ($i = 0; $i < $motor['rating']; $i++)
                                         <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162
-                                             c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
-                                             3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
-                                             0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
-                                             00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
-                                             0 00.95-.69l1.286-3.96z" />
+                                                                                     c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
+                                                                                     3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
+                                                                                     0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
+                                                                                     00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
+                                                                                     0 00.95-.69l1.286-3.96z" />
                                         </svg>
                                     @endfor
                                     @for ($i = $motor['rating']; $i < 5; $i++)
                                         <svg class="h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162
-                                             c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
-                                             3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
-                                             0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
-                                             00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
-                                             0 00.95-.69l1.286-3.96z" />
+                                                                                     c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.286
+                                                                                     3.96c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.176
+                                                                                     0l-3.37 2.448c-.784.57-1.84-.197-1.54-1.118l1.286-3.96a1 1 0
+                                                                                     00-.364-1.118L2.063 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1
+                                                                                     0 00.95-.69l1.286-3.96z" />
                                         </svg>
                                     @endfor
                                 </div>
@@ -131,8 +207,8 @@
                                     <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0
-                                               01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
-                                               1 0 00-1-1m-4 0h4" />
+                                                                                       01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
+                                                                                       1 0 00-1-1m-4 0h4" />
                                     </svg>
                                 </button>
                             </td>
@@ -183,10 +259,34 @@
                 document.getElementById('editMotorPrice').value = motor.price;
                 document.getElementById('editMotorPlatMotor').value = motor.platmotor;
                 document.getElementById('editMotorStatus').value = motor.status;
-                document.getElementById('editMotortype').value = motor.type;
+                document.getElementById('editMotortype').value = motor.type.toLowerCase();
                 document.getElementById('editMotorDescription').value = motor.description;
                 setEditFormAction(motor.id);
+
+                const statusSelect = document.getElementById('editMotorStatus');
+                // Reset all options before modifying
+                statusSelect.querySelector('option[value="booked"]').disabled = false;
+                statusSelect.querySelector('option[value="unavailable"]').disabled = false;
+                statusSelect.querySelector('option[value="available"]').disabled = false;
+
+                // Disable options based on motor status
+                if (motor.status === 'available') {
+                    // If the motor is available, only allow "Bermasalah" as the new status
+                    statusSelect.querySelector('option[value="booked"]').style.display = 'none';
+                    statusSelect.querySelector('option[value="unavailable"]').disabled = false;
+                    statusSelect.querySelector('option[value="available"]').disabled = true;
+                } else if (motor.status === 'booked') {
+                    // If the motor is booked, disable all options but keep the status displayed
+                    statusSelect.querySelector('option[value="available"]').disabled = true;
+                    statusSelect.querySelector('option[value="unavailable"]').disabled = true;
+                } else if (motor.status === 'unavailable') {
+                    // If the motor is unavailable, only allow "Tersedia" as the new status
+                    statusSelect.querySelector('option[value="booked"]').style.display = 'none';
+                    statusSelect.querySelector('option[value="available"]').disabled = false;
+                    statusSelect.querySelector('option[value="unavailable"]').disabled = true;
+                }
             }
+
 
             function closeEditModal() {
                 document.getElementById('editModal').style.display = 'none';

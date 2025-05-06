@@ -110,12 +110,6 @@
                         </a>
                     </li>
                     <li>
-                        <a href="{{ route('vendor.ulasan', ['id' => $userId]) }}"
-                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.ulasan') ? 'bg-white text-blue-600' : '' }}">
-                            Ulasan Pelanggan
-                        </a>
-                    </li>
-                    <li>
                         <a href="{{ route('vendor.kelola', ['id' => $userId]) }}"
                             class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.kelola') ? 'bg-white text-blue-600' : '' }}">
                             Setujui/Tolak Pesanan
@@ -131,6 +125,12 @@
                         <a href="{{ route('vendor.transaksi', ['id' => $userId]) }}"
                             class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.transaksi') ? 'bg-white text-blue-600' : '' }}">
                             Data Transaksi
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('vendor.ulasan', ['id' => $userId]) }}"
+                            class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('vendor.ulasan') ? 'bg-white text-blue-600' : '' }}">
+                            Ulasan Pelanggan
                         </a>
                     </li>
                 @endif

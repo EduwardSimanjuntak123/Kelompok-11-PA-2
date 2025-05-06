@@ -63,7 +63,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
-        <h2 class="text-xl font-bold mb-4 flex items-center gap-2 justify-center">
+        <h2 class="text-xl font-bold mb-4 flex items-center gap-2 justify-start">
             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
                  viewBox="0 0 24 24">
                 <path d="M5 13l4 4L19 7"/>
@@ -74,8 +74,37 @@
             <!-- akan diisi oleh JS -->
         </div>
     </div>
+    
 </div>
-
+<div id="printModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/3 p-6">
+        <h2 class="text-2xl font-bold mb-4">🖨️ Cetak Laporan Transaksi Bulanan</h2>
+        <form action="{{ route('vendor.transactions.export') }}" method="GET">
+            <div class="mb-4">
+                <label for="month" class="block text-gray-700 font-semibold mb-2">
+                    Pilih Bulan & Tahun
+                </label>
+                <div class="flex space-x-4">
+                    <select name="month" id="month" class="border rounded px-2 py-1 w-1/2" required>
+                        @for ($m = 1; $m <= 12; $m++)
+                            <option value="{{ $m }}">
+                                {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                            </option>
+                        @endfor
+                    </select>
+                    <select name="year" id="year" class="border rounded px-2 py-1 w-1/2" required>
+                        @for ($y = now()->year; $y >= now()->year - 5; $y--)
+                            <option value="{{ $y }}">{{ $y }}</option>
+                        @endfor
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 mt-6">
+                <button type="button" onclick="closeModal('printModal')" class="px-4 py-2 bg-gray-500 text-white rounded">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Export Excel</button>
+            </div>
+        </form>
+        
 <!-- Modal Cetak Laporan (tidak berubah) -->
 {{-- ... --}}
 
@@ -107,27 +136,27 @@
         const statusClass = statusColor[transaction.status?.toLowerCase()] || "bg-gray-100 text-gray-700";
 
         const detailTransaksi = `
-            <div class="w-full sm:w-1/2 px-4">
-                <h3 class="text-md font-semibold mb-3 text-blue-600 flex items-center gap-2">
-                    <!-- icon -->
-                    Detail Transaksi
-                </h3>
-                <div class="flex flex-col gap-3">
-                    ${renderItem("Nama Customer", transaction.customer_name)}
-                    ${renderItem("Tanggal Booking", new Date(transaction.booking_date).toLocaleString())}
-                    ${renderItem("Tanggal Mulai", new Date(transaction.start_date).toLocaleDateString())}
-                    ${renderItem("Tanggal Selesai", new Date(transaction.end_date).toLocaleDateString())}
-                    ${renderItem("Lokasi Jemput", transaction.pickup_location)}
-                    <div class="flex flex-col">
-                        <span class="text-gray-500 text-sm">Status</span>
-                        <span class="inline-block mt-1 px-3 py-1 text-xs rounded-full font-semibold ${statusClass}">
-                            ${transaction.status}
-                        </span>
-                    </div>
-                    ${renderItem("Total Harga", `Rp ${transaction.total_price.toLocaleString()}`)}
-                </div>
-            </div>`;
-
+             <div class="w-full sm:w-1/2 px-4">
+                 <h3 class="text-md font-semibold mb-3 text-blue-600 flex items-center gap-2">
+                     <!-- icon -->
+                     Detail Transaksi
+                 </h3>
+                 <div class="flex flex-col gap-3">
+                     ${renderItem("Nama Customer", transaction.customer_name)}
+                     ${renderItem("Tanggal Booking", new Date(transaction.booking_date).toLocaleString())}
+                     ${renderItem("Tanggal Mulai", new Date(transaction.start_date).toLocaleDateString())}
+                     ${renderItem("Tanggal Selesai", new Date(transaction.end_date).toLocaleDateString())}
+                     ${renderItem("Lokasi Jemput", transaction.pickup_location)}
+                     <div class="flex flex-col">
+                         <span class="text-gray-500 text-sm">Status</span>
+                         <span class="inline-block mt-1 px-3 py-1 text-xs rounded-full font-semibold ${statusClass}">
+                             ${transaction.status}
+                         </span>
+                     </div>
+                     ${renderItem("Total Harga", `Rp ${transaction.total_price.toLocaleString()}`)}
+                 </div>
+ 
+             </div>`;
         const detailMotor = transaction.motor ? `
             <div class="w-full sm:w-1/2 px-4 mt-8 sm:mt-0">
                 <h3 class="text-md font-semibold mb-3 text-indigo-600 flex items-center gap-2">

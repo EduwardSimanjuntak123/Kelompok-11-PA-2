@@ -35,7 +35,7 @@
                     @foreach ($extens as $extension)
                         @php
                             $booking = collect($bookings)->firstWhere('id', $extension['booking_id']);
-       
+
                             $platmotor = $booking['motor']['plat_motor'] ?? '-';
 
                             // URL foto pelanggan (KTP/potoid)
@@ -53,8 +53,10 @@
                         <tr class="border-t hover:bg-gray-50 transition">
                             {{-- CUSTOMER --}}
                             <td class="py-3 px-4">
-                                <a href="#" class="text-blue-600 font-medium hover:underline open-modal"
-                                    data-modal-id="modal-{{ $booking['id'] }}">
+                                <a href="#"
+                                    class="open-modal group text-blue-600 font-medium underline hover:underline cursor-pointer flex items-center"
+                                    data-modal-id="modal-{{ $booking['id'] }}" title="Klik untuk melihat detail pemesanan">
+                                    <i class="fas fa-info-circle mr-1 text-gray-500 group-hover:text-blue-500"></i>
                                     {{ $extension['customer_name'] }}
                                 </a>
                             </td>
@@ -102,74 +104,101 @@
                             </td>
 
                             <td class="py-3 px-4">
-                                @if (in_array($extension['status'], ['pending','requested']))
-                                  <div class="flex gap-2">
-                                    {{-- APPROVE --}}
-                                    <form action="{{ route('vendor.approveExtension', ['extension_id' => $extension['extension_id']]) }}"
-                                          method="POST" class="flex-1">
-                                      @csrf
-                                      <button type="submit"
-                                              class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 text-base rounded">
-                                        Setujui
-                                      </button>
-                                    </form>
-                              
-                                    {{-- REJECT --}}
-                                    <form action="{{ route('vendor.rejectExtension', ['extension_id' => $extension['extension_id']]) }}"
-                                          method="POST" class="flex-1">
-                                      @csrf
-                                      <button type="submit"
-                                              class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 text-base rounded">
-                                        Tolak
-                                      </button>
-                                    </form>
-                                  </div>
+                                @if (in_array($extension['status'], ['pending', 'requested']))
+                                    <div class="flex gap-2">
+                                        {{-- APPROVE --}}
+                                        <form
+                                            action="{{ route('vendor.approveExtension', ['extension_id' => $extension['extension_id']]) }}"
+                                            method="POST" class="flex-1">
+                                            @csrf
+                                            <button type="submit"
+                                            class="px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                            <i class="fas fa-check mr-1"></i> Setujui
+                                            </button>
+                                        </form>
+
+                                        {{-- REJECT --}}
+                                        <form
+                                            action="{{ route('vendor.rejectExtension', ['extension_id' => $extension['extension_id']]) }}"
+                                            method="POST" class="flex-1">
+                                            @csrf
+                                            <button type="submit"
+                                            class="px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                            <i class="fas fa-times mr-1"></i> Tolak
+                                            </button>
+                                        </form>
+                                    </div>
                                 @else
-                                  <span class="text-gray-400 text-sm">—</span>
+                                    <span class="text-gray-400 text-sm">—</span>
                                 @endif
-                              </td>                              
+                            </td>
                         </tr>
 
                         {{-- MODAL DETAIL BOOKING --}}
                         <div id="modal-{{ $booking['id'] }}"
-                            class="modal hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-200">
+                            class="modal hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-200"
+                            onclick="closeModal('modal-{{ $booking['id'] }}')">
                             <div class="modal-content bg-white rounded-2xl shadow-2xl max-w-2xl w-11/12 p-6 transform scale-95 transition-transform duration-200"
                                 onclick="event.stopPropagation()">
-                                <div class="flex justify-between items-center mb-4">
-                                    <h2 class="text-2xl font-semibold text-gray-800">Detail Booking</h2>
-                                    <button class="close-modal text-gray-500 hover:text-gray-700 text-3xl leading-none">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h2 class="text-3xl font-bold text-gray-800">Detail Booking</h2>
+                                    <button onclick="closeModal('modal-{{ $booking['id'] }}')"
+                                        class="close-modal text-gray-500 hover:text-gray-700 text-3xl leading-none">
                                         &times;
                                     </button>
                                 </div>
-                                <div class="flex gap-6">
-                                    <div class="flex-shrink-0 w-2/5">
+                                <div class="flex flex-col md:flex-row gap-6">
+                                    <div class="flex-shrink-0 w-full md:w-2/5">
                                         <img src="{{ $customerPhotoUrl }}"
                                             alt="Foto KTP {{ $extension['customer_name'] }}"
                                             class="w-full h-64 object-cover rounded-lg shadow-md border">
                                     </div>
-                                    <div class="w-3/5 max-h-72 overflow-y-auto">
-                                        <ul class="space-y-2 text-gray-700 text-lg">
+                                    <div class="w-full md:w-3/5">
+                                        <ul class="space-y-3 text-gray-700 text-base">
                                             <li><strong>Nama:</strong> {{ $extension['customer_name'] }}</li>
-                                            <li><strong>Booking:</strong>
+                                            <li>
+                                                <strong>Booking:</strong>
                                                 {{ \Carbon\Carbon::parse($booking['booking_date'])->format('d-m-Y H:i') }}
                                             </li>
-                                            <li><strong>Mulai:</strong>
-                                                {{ \Carbon\Carbon::parse($booking['start_date'])->format('d-m-Y') }}</li>
-                                            <li><strong>Akhir:</strong>
-                                                {{ \Carbon\Carbon::parse($booking['end_date'])->format('d-m-Y') }}</li>
+                                            <li>
+                                                <strong>Mulai:</strong>
+                                                {{ \Carbon\Carbon::parse($booking['start_date'])->format('d-m-Y') }}
+                                            </li>
+                                            <li>
+                                                <strong>Akhir:</strong>
+                                                {{ \Carbon\Carbon::parse($booking['end_date'])->format('d-m-Y') }}
+                                            </li>
                                             <li><strong>Jemput:</strong> {{ $booking['pickup_location'] }}</li>
-                                            <li><strong>Status:</strong> {{ ucfirst($booking['status']) }}</li>
-                                            @if (!empty($booking['message']))
-                                                <li><strong>Catatan:</strong> {{ $booking['message'] }}</li>
-                                            @endif
+                                            <li class="flex items-center">
+                                                <strong class="mr-2">Status:</strong>
+                                                @php
+                                                    $status = $booking['status'];
+                                                    $classes = [
+                                                        'pending' => 'bg-yellow-100 text-yellow-800',
+                                                        'confirmed' => 'bg-blue-100 text-blue-800',
+                                                        'in transit' => 'bg-indigo-100 text-indigo-800',
+                                                        'in use' => 'bg-purple-100 text-purple-800',
+                                                        'awaiting return' => 'bg-orange-100 text-orange-800',
+                                                        'completed' => 'bg-green-100 text-green-800',
+                                                        'rejected' => 'bg-red-100 text-red-800',
+                                                    ];
+                                                    $label = [
+                                                        'pending' => 'Menunggu Konfirmasi',
+                                                        'confirmed' => 'Dikonfirmasi',
+                                                        'in transit' => 'Motor Diantar',
+                                                        'in use' => 'Sedang Digunakan',
+                                                        'awaiting return' => 'Menunggu Pengembalian',
+                                                        'completed' => 'Selesai',
+                                                        'rejected' => 'Ditolak',
+                                                    ];
+                                                @endphp
+                                                <span
+                                                    class="inline-block px-3 py-1 text-sm font-semibold rounded-full {{ $classes[$status] ?? 'bg-gray-100 text-gray-800' }}">
+                                                    {{ $label[$status] ?? ucfirst($status) }}
+                                                </span>
+                                            </li>
                                         </ul>
                                     </div>
-                                </div>
-                                <div class="mt-6 text-right">
-                                    <button
-                                        class="close-modal bg-blue-500 hover:bg-blue-600 text-white py-2 px-5 rounded-lg text-lg transition-colors duration-200">
-                                        Tutup
-                                    </button>
                                 </div>
                             </div>
                         </div>
