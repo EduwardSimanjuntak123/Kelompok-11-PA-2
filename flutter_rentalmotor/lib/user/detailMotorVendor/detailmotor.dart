@@ -246,10 +246,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
           ),
           onPressed: () => Navigator.pop(context),
         ),
-<<<<<<< HEAD
         // Removed favorite button from actions
-=======
->>>>>>> 8e7df6ab8f86bcd16a78884eec6413fae465dcbd
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
