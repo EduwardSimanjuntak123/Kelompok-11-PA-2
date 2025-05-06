@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_rentalmotor/user/splash_screen.dart';
+import 'package:flutter_rentalmotor/view/user/splash_screen.dart';
 
 // Inisialisasi plugin notifikasi lokal
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =

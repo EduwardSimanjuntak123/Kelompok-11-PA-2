@@ -5,9 +5,7 @@ import 'dart:convert';
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_rentalmotor/signin.dart';
-import 'package:flutter_rentalmotor/user/detailMotorVendor/detailmotor.dart';
+
 
 class BookingService {
   static Future<Map<String, dynamic>> createBooking({

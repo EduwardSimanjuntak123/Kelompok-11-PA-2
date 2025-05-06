@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_rentalmotor/services/customer/change_password_api.dart';
-import 'package:flutter_rentalmotor/user/profil/akun.dart';
+import 'package:flutter_rentalmotor/view/user/profil/akun.dart';
 
 class KataSandiBaruScreen extends StatefulWidget {
   final String email;
