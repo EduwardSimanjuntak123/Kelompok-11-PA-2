@@ -54,7 +54,7 @@ class MotorController extends Controller
         try {
             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
 
-            // Tambahkan 'type' & 'description' di validasi
+            // Validasi input
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'brand' => 'required|string|max:255',
@@ -90,12 +90,13 @@ class MotorController extends Controller
             session()->flash('message', $response->successful() ? 'Motor berhasil ditambahkan!' : 'Gagal menambahkan motor.');
             session()->flash('type', $response->successful() ? 'success' : 'error');
 
-            return redirect()->route('vendor.motor');
+            // Redirect kembali dengan status filter yang aktif
+            return redirect()->route('vendor.motor', ['status' => request('status')]);
         } catch (\Exception $e) {
             Log::error('Gagal menyimpan motor: ' . $e->getMessage());
             session()->flash('message', 'Terjadi kesalahan server.');
             session()->flash('type', 'error');
-            return redirect()->route('vendor.motor');
+            return redirect()->route('vendor.motor', ['status' => request('status')]);
         }
     }
 
@@ -104,7 +105,7 @@ class MotorController extends Controller
         try {
             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
 
-            // Tambahkan 'type' & 'des  cription' di validasi, perbaiki typo max image
+            // Validasi input
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'brand' => 'required|string|max:255',
@@ -142,12 +143,13 @@ class MotorController extends Controller
             session()->flash('message', $response->successful() ? 'Motor berhasil diperbarui!' : 'Gagal memperbarui motor.');
             session()->flash('type', $response->successful() ? 'success' : 'error');
 
-            return redirect()->route('vendor.motor');
+            // Redirect kembali dengan status filter yang aktif
+            return redirect()->route('vendor.motor', ['status' => request('status')]);
         } catch (\Exception $e) {
             Log::error('Gagal update motor: ' . $e->getMessage());
-            session()->flash('message', value: 'Terjadi kesalahan saat memperbarui motor.');
+            session()->flash('message', 'Terjadi kesalahan saat memperbarui motor.');
             session()->flash('type', 'error');
-            return redirect()->route('vendor.motor');
+            return redirect()->route('vendor.motor', ['status' => request('status')]);
         }
     }
 
@@ -167,12 +169,13 @@ class MotorController extends Controller
                 session()->flash('type', 'error');
             }
 
-            return redirect()->back();
+            // Redirect kembali dengan status filter yang aktif
+            return redirect()->route('vendor.motor', ['status' => request('status')]);
         } catch (\Exception $e) {
             Log::error('Kesalahan saat menghapus motor: ' . $e->getMessage());
             session()->flash('message', 'Terjadi kesalahan saat menghapus motor.');
             session()->flash('type', 'error');
-            return redirect()->back();
+            return redirect()->route('vendor.motor', ['status' => request('status')]);
         }
     }
 }
