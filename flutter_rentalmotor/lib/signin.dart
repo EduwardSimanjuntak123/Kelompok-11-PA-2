@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/view/user/homepageuser.dart';
-import 'package:flutter_rentalmotor/services/autentifikasi/api_service.dart';
 import 'package:flutter_rentalmotor/view/vendor/homepage/homepagevendor.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_rentalmotor/services/autentifikasi/api_service.dart';
 import 'package:flutter_rentalmotor/welcome.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -10,7 +10,8 @@ class LoginScreen extends StatefulWidget {
   _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   bool _obscureText = true;
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
@@ -19,11 +20,50 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String _errorMessage = "";
 
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
   @override
   void initState() {
     super.initState();
     emailController.addListener(_updateButtonState);
     passwordController.addListener(_updateButtonState);
+
+    // Initialize animation controller
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 1000),
+    );
+
+    // Configure slide animation
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, -0.5),
+      end: Offset(0, 0),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.fastOutSlowIn,
+    ));
+
+    // Configure fade animation
+    _fadeAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    ));
+
+    // Start animation when screen is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _animationController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   void _updateButtonState() {
@@ -99,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
           title: Text(
             "Login Berhasil",
             style: TextStyle(
-              color: Colors.blue, // Warna teks judul diperindah
+              color: Colors.blue,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -110,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Warna tombol diperindah
+                backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
               ),
               onPressed: () {
@@ -130,27 +170,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF2C567E), Color(0xFF1A5276)],
-            stops: [0.0, 0.5],
+    return WillPopScope(
+      onWillPop: () async {
+        // Navigate to HomePageUser when back button is pressed
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePageUser()),
+        );
+        return false; // Prevent default back button behavior
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF2C567E), Color(0xFF1A5276)],
+              stops: [0.0, 0.5],
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: MediaQuery.of(context).size.height,
-              ),
-              child: IntrinsicHeight(
-                child: Column(
-                  children: [
-                    // Header with logo and welcome text
-                    Container(
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Header with logo and welcome text - Animated
+                SlideTransition(
+                  position: _slideAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Container(
                       height: MediaQuery.of(context).size.height * 0.35,
                       padding: EdgeInsets.symmetric(horizontal: 30),
                       child: Column(
@@ -200,9 +247,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
+                  ),
+                ),
 
-                    // Login form card
-                    Expanded(
+                // Login form card - Animated
+                Expanded(
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
                       child: Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -221,167 +274,170 @@ class _LoginScreenState extends State<LoginScreen> {
                           ],
                         ),
                         padding: EdgeInsets.all(30),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Login",
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2C567E),
-                              ),
-                            ),
-                            SizedBox(height: 30),
-
-                            // Email field
-                            _buildTextField(
-                              controller: emailController,
-                              label: "Email",
-                              icon: Icons.email_outlined,
-                              keyboardType: TextInputType.emailAddress,
-                              isFilled: _isEmailFilled,
-                            ),
-                            SizedBox(height: 20),
-
-                            // Password field
-                            _buildTextField(
-                              controller: passwordController,
-                              label: "Password",
-                              icon: Icons.lock_outline,
-                              isPassword: true,
-                              obscureText: _obscureText,
-                              onToggleVisibility: () {
-                                setState(() {
-                                  _obscureText = !_obscureText;
-                                });
-                              },
-                              isFilled: _isPasswordFilled,
-                            ),
-                            SizedBox(height: 30),
-
-                            // Login button
-                            SizedBox(
-                              width: double.infinity,
-                              height: 55,
-                              child: ElevatedButton(
-                                onPressed: (_isEmailFilled &&
-                                        _isPasswordFilled &&
-                                        !_isLoading)
-                                    ? _handleLogin
-                                    : null,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF2C567E),
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor: Colors.grey.shade300,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                  elevation: 5,
-                                  shadowColor:
-                                      Color(0xFF2C567E).withOpacity(0.5),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Login",
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2C567E),
                                 ),
-                                child: _isLoading
-                                    ? Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
+                              ),
+                              SizedBox(height: 30),
+
+                              // Email field
+                              _buildTextField(
+                                controller: emailController,
+                                label: "Email",
+                                icon: Icons.email_outlined,
+                                keyboardType: TextInputType.emailAddress,
+                                isFilled: _isEmailFilled,
+                              ),
+                              SizedBox(height: 20),
+
+                              // Password field
+                              _buildTextField(
+                                controller: passwordController,
+                                label: "Password",
+                                icon: Icons.lock_outline,
+                                isPassword: true,
+                                obscureText: _obscureText,
+                                onToggleVisibility: () {
+                                  setState(() {
+                                    _obscureText = !_obscureText;
+                                  });
+                                },
+                                isFilled: _isPasswordFilled,
+                              ),
+                              SizedBox(height: 30),
+
+                              // Login button
+                              SizedBox(
+                                width: double.infinity,
+                                height: 55,
+                                child: ElevatedButton(
+                                  onPressed: (_isEmailFilled &&
+                                          _isPasswordFilled &&
+                                          !_isLoading)
+                                      ? _handleLogin
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Color(0xFF2C567E),
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor:
+                                        Colors.grey.shade300,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    elevation: 5,
+                                    shadowColor:
+                                        Color(0xFF2C567E).withOpacity(0.5),
+                                  ),
+                                  child: _isLoading
+                                      ? Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2,
+                                              ),
                                             ),
-                                          ),
-                                          SizedBox(width: 12),
-                                          Text(
-                                            "Signing in...",
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
+                                            SizedBox(width: 12),
+                                            Text(
+                                              "Signing in...",
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
+                                          ],
+                                        )
+                                      : Text(
+                                          "SIGN IN",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1,
                                           ),
-                                        ],
-                                      )
-                                    : Text(
-                                        "SIGN IN",
+                                        ),
+                                ),
+                              ),
+                              SizedBox(height: 20),
+
+                              // Sign up option
+                              Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Don't have an account? ",
+                                      style: TextStyle(
+                                        color: Colors.grey.shade700,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (context) => WelcomePage(),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        "Sign up",
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
-                                          letterSpacing: 1,
+                                          color: Color(0xFF2C567E),
                                         ),
-                                      ),
-                              ),
-                            ),
-                            SizedBox(height: 20),
-
-                            // Sign up option
-                            Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "Don't have an account? ",
-                                    style: TextStyle(
-                                      color: Colors.grey.shade700,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => WelcomePage(),
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      "Sign up",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF2C567E),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 20),
-
-                            // Error message
-                            if (_errorMessage.isNotEmpty)
-                              Container(
-                                padding: EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade50,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border:
-                                      Border.all(color: Colors.red.shade200),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.error_outline,
-                                        color: Colors.red),
-                                    SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        _errorMessage,
-                                        style: TextStyle(
-                                            color: Colors.red.shade800),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                          ],
+                              SizedBox(height: 20),
+
+                              // Error message
+                              if (_errorMessage.isNotEmpty)
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade50,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border:
+                                        Border.all(color: Colors.red.shade200),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.error_outline,
+                                          color: Colors.red),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _errorMessage,
+                                          style: TextStyle(
+                                              color: Colors.red.shade800),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -389,7 +445,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // Add this helper method for text fields
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
