@@ -206,7 +206,7 @@
                                             <i class="fas fa-search-minus"></i>
                                         </div>
                                         <h2 class="text-2xl font-semibold text-gray-700">Tidak Ada Motor Ditemukan</h2>
-                                        <p class="text-gray-600 mt-2">Sepertinya tidak ada motor yang sesuai dengan filter yang
+                                        <p class="text-gray-600 mt-2">Sepertinya tidak ada motor yang sesuai dengan Status yang
                                             dipilih.</p>
                                     </div>
                                 </td>

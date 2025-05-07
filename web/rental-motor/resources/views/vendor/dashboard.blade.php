@@ -64,10 +64,11 @@
                 {{ count($motorData['data'] ?? []) }}
             </h3>
         </div>
-        <a href="{{ route('vendor.kelola', ['id' => $userId]) }}">
-            <div class="bg-white shadow rounded-xl p-4 text-center">
-                <p class="text-sm text-gray-500">Pesanan Masuk (Pending)</p>
-                <h3 class="text-2xl font-bold text-green-600">
+        <a href="{{ route('vendor.kelola', ['id' => $userId, 'status' => 'pending']) }}" class="group">
+            <div
+                class="bg-white shadow rounded-xl p-4 text-center transition duration-300 ease-in-out transform group-hover:scale-105 group-hover:shadow-lg cursor-pointer">
+                <p class="text-sm text-gray-500 group-hover:text-indigo-600">Pesanan Masuk (Pending)</p>
+                <h3 class="text-2xl font-bold text-green-600 group-hover:text-indigo-700">
                     {{ $pesananPending }}
                 </h3>
             </div>
