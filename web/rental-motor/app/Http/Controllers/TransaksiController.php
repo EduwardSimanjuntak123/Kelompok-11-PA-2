@@ -210,7 +210,7 @@ class TransaksiController extends Controller
                 return Excel::download(
                     new TransactionExport($transactions, $monthName, $year, $totalPendapatan),
                     "laporan_transaksi_{$month}_{$year}.xlsx"
-                );
+                );                               
             } else {
                 return redirect()->back()->with('error', 'Gagal mengambil data transaksi.');
             }

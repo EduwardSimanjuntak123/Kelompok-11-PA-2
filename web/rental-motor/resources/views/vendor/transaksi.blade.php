@@ -3,139 +3,159 @@
 @section('title', 'Transaksi Vendor Rental')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-4xl font-extrabold text-gray-800">Data Transaksi Vendor</h1>
-        <button onclick="openModal('printModal')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Cetak Laporan
-        </button>
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-4xl font-extrabold text-gray-800">Data Transaksi Vendor</h1>
+            <button onclick="openModal('printModal')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Cetak Laporan
+            </button>
+        </div>
+
+        @if (session('error'))
+            <div class="mb-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if ($transactions->count())
+            <div class="space-y-4">
+                @foreach ($transactions as $t)
+                    <div class="p-4 bg-white shadow rounded cursor-pointer hover:bg-gray-100 transition flex justify-between items-center"
+                        onclick='showTransactionDetails(@json($t))'>
+                        <div>
+                            <h3 class="text-lg font-semibold">
+                                {{ $t['customer_name'] }} – {{ ucfirst($t['status']) }}
+                            </h3>
+                            <p class="text-sm text-gray-500">
+                                📅 Booking: {{ \Carbon\Carbon::parse($t['booking_date'])->format('Y-m-d H:i:s') }}
+                            </p>
+                        </div>
+                        <div class="text-green-700 font-bold">
+                            Rp {{ number_format($t['total_price'], 0, ',', '.') }}
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="mt-8 flex justify-between items-center text-sm text-gray-600">
+                <div>
+                    Menampilkan {{ $transactions->firstItem() }}–{{ $transactions->lastItem() }}
+                    dari {{ $transactions->total() }} data
+                </div>
+                <div>{!! $transactions->links('layouts.pagination') !!}</div>
+            </div>
+        @else
+            <div
+                class="flex flex-col items-center justify-center text-center p-6 bg-yellow-100 text-yellow-800 rounded shadow">
+                <i class="fas fa-file-invoice-dollar fa-3x mb-4"></i>
+                <h2 class="text-xl font-semibold">Belum Ada Transaksi</h2>
+                <p class="mt-2">Tidak ada data transaksi yang tersedia.</p>
+            </div>
+        @endif
     </div>
 
-    @if (session('error'))
-        <div class="mb-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    @if ($transactions->count())
-        <div class="space-y-4">
-            @foreach ($transactions as $t)
-                <div class="p-4 bg-white shadow rounded cursor-pointer hover:bg-gray-100 transition flex justify-between items-center"
-                     onclick='showTransactionDetails(@json($t))'>
-                    <div>
-                        <h3 class="text-lg font-semibold">
-                            {{ $t['customer_name'] }} – {{ ucfirst($t['status']) }}
-                        </h3>
-                        <p class="text-sm text-gray-500">
-                            📅 Booking: {{ \Carbon\Carbon::parse($t['booking_date'])->format('Y-m-d H:i:s') }}
-                        </p>
-                    </div>
-                    <div class="text-green-700 font-bold">
-                        Rp {{ number_format($t['total_price'], 0, ',', '.') }}
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <div class="mt-8 flex justify-between items-center text-sm text-gray-600">
-            <div>
-                Menampilkan {{ $transactions->firstItem() }}–{{ $transactions->lastItem() }}
-                dari {{ $transactions->total() }} data
-            </div>
-            <div>{!! $transactions->links('layouts.pagination') !!}</div>
-        </div>
-    @else
-        <div class="flex flex-col items-center justify-center text-center p-6 bg-yellow-100 text-yellow-800 rounded shadow">
-            <i class="fas fa-file-invoice-dollar fa-3x mb-4"></i>
-            <h2 class="text-xl font-semibold">Belum Ada Transaksi</h2>
-            <p class="mt-2">Tidak ada data transaksi yang tersedia.</p>
-        </div>
-    @endif
-</div>
-
-<!-- Modal Detail Transaksi -->
-<div id="transactionDetailModal" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-6 relative flex flex-col">
-        <button onclick="closeModal('transactionDetailModal')"
+    <!-- Modal Detail Transaksi -->
+    <div id="transactionDetailModal"
+        class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-6 relative flex flex-col">
+            <button onclick="closeModal('transactionDetailModal')"
                 class="absolute top-4 right-4 text-gray-500 hover:text-red-500">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </button>
-        <h2 class="text-xl font-bold mb-4 flex items-center gap-2 justify-start">
-            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
-                 viewBox="0 0 24 24">
-                <path d="M5 13l4 4L19 7"/>
-            </svg>
-            Transaction Details
-        </h2>
-        <div id="transactionDetailContent" class="flex flex-col sm:flex-row justify-center gap-4 text-sm text-gray-700">
-            <!-- akan diisi oleh JS -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 justify-start">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
+                    viewBox="0 0 24 24">
+                    <path d="M5 13l4 4L19 7" />
+                </svg>
+                Transaction Details
+            </h2>
+            <div id="transactionDetailContent" class="flex flex-col sm:flex-row justify-center gap-4 text-sm text-gray-700">
+                <!-- akan diisi oleh JS -->
+            </div>
         </div>
+
     </div>
-    
-</div>
-<div id="printModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/3 p-6">
-        <h2 class="text-2xl font-bold mb-4">🖨️ Cetak Laporan Transaksi Bulanan</h2>
-        <form action="{{ route('vendor.transactions.export') }}" method="GET">
-            <div class="mb-4">
-                <label for="month" class="block text-gray-700 font-semibold mb-2">
-                    Pilih Bulan & Tahun
-                </label>
-                <div class="flex space-x-4">
-                    <select name="month" id="month" class="border rounded px-2 py-1 w-1/2" required>
-                        @for ($m = 1; $m <= 12; $m++)
-                            <option value="{{ $m }}">
-                                {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
-                            </option>
-                        @endfor
-                    </select>
-                    <select name="year" id="year" class="border rounded px-2 py-1 w-1/2" required>
-                        @for ($y = now()->year; $y >= now()->year - 5; $y--)
-                            <option value="{{ $y }}">{{ $y }}</option>
-                        @endfor
-                    </select>
+    <div id="printModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/3 p-6">
+            <h2 class="text-2xl font-bold mb-4">🖨️ Cetak Laporan Transaksi Bulanan</h2>
+            <form action="{{ route('vendor.transactions.export') }}" method="GET" target="_blank">
+                <div class="mb-4">
+                    <label for="month" class="block text-gray-700 font-semibold mb-2">
+                        Pilih Bulan & Tahun
+                    </label>
+                    <div class="flex space-x-4">
+                        <select name="month" id="month" class="border rounded px-2 py-1 w-1/2" required>
+                            @for ($m = 1; $m <= 12; $m++)
+                                <option value="{{ $m }}">
+                                    {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                                </option>
+                            @endfor
+                        </select>
+                        <select name="year" id="year" class="border rounded px-2 py-1 w-1/2" required>
+                            @for ($y = now()->year; $y >= now()->year - 5; $y--)
+                                <option value="{{ $y }}">{{ $y }}</option>
+                            @endfor
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <div class="flex justify-end space-x-2 mt-6">
-                <button type="button" onclick="closeModal('printModal')" class="px-4 py-2 bg-gray-500 text-white rounded">Batal</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Export Excel</button>
-            </div>
-        </form>
-        
-<!-- Modal Cetak Laporan (tidak berubah) -->
-{{-- ... --}}
+                <div class="flex justify-end space-x-2 mt-6">
+                    <button type="button" onclick="closeModal('printModal')"
+                        class="px-4 py-2 bg-gray-500 text-white rounded">Batal</button>
+                    <button type="submit" onclick="exportAlert()"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Export Excel
+                    </button>
+                </div>
+            </form>
 
-<script>
-    function openModal(id) {
-        document.getElementById(id).classList.remove('hidden');
-        document.body.style.overflow = 'hidden';
-    }
-    function closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
-        document.body.style.overflow = '';
-    }
+            <!-- Modal Cetak Laporan (tidak berubah) -->
+            {{-- ... --}}
 
-    function renderItem(label, value) {
-        return `
+            <script>
+                function exportAlert() {
+                    setTimeout(() => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Laporan transaksi berhasil diunduh.',
+                            confirmButtonText: 'OK',
+                            // showConfirmButton default-nya true, jadi bisa dihilangkan jika ingin
+                        });
+                    }, 1000); // delay agar download sempat dipicu
+                }
+
+
+                function openModal(id) {
+                    document.getElementById(id).classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+
+                function closeModal(id) {
+                    document.getElementById(id).classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+
+                function renderItem(label, value) {
+                    return `
             <div class="flex flex-col">
                 <span class="text-gray-500 text-sm">${label}</span>
                 <span class="text-base font-semibold text-gray-900">${value}</span>
             </div>`;
-    }
+                }
 
-    function showTransactionDetails(transaction) {
-        const statusColor = {
-            completed: "bg-green-100 text-green-700",
-            pending:   "bg-yellow-100 text-yellow-700",
-            cancelled: "bg-red-100 text-red-700",
-            ongoing:   "bg-blue-100 text-blue-700"
-        };
-        const statusClass = statusColor[transaction.status?.toLowerCase()] || "bg-gray-100 text-gray-700";
+                function showTransactionDetails(transaction) {
+                    const statusColor = {
+                        completed: "bg-green-100 text-green-700",
+                        pending: "bg-yellow-100 text-yellow-700",
+                        cancelled: "bg-red-100 text-red-700",
+                        ongoing: "bg-blue-100 text-blue-700"
+                    };
+                    const statusClass = statusColor[transaction.status?.toLowerCase()] || "bg-gray-100 text-gray-700";
 
-        const detailTransaksi = `
+                    const detailTransaksi = `
              <div class="w-full sm:w-1/2 px-4">
                  <h3 class="text-md font-semibold mb-3 text-blue-600 flex items-center gap-2">
                      <!-- icon -->
@@ -157,7 +177,7 @@
                  </div>
  
              </div>`;
-        const detailMotor = transaction.motor ? `
+                    const detailMotor = transaction.motor ? `
             <div class="w-full sm:w-1/2 px-4 mt-8 sm:mt-0">
                 <h3 class="text-md font-semibold mb-3 text-indigo-600 flex items-center gap-2">
                     <!-- icon -->
@@ -172,13 +192,13 @@
                 </div>
             </div>` : "";
 
-        document.getElementById('transactionDetailContent').innerHTML =
-            `<div class="flex flex-col sm:flex-row bg-white rounded-xl p-6 max-w-4xl shadow-xl w-full">
+                    document.getElementById('transactionDetailContent').innerHTML =
+                        `<div class="flex flex-col sm:flex-row bg-white rounded-xl p-6 max-w-4xl shadow-xl w-full">
                 ${detailTransaksi}
                 ${detailMotor}
             </div>`;
 
-        openModal('transactionDetailModal');
-    }
-</script>
-@endsection
+                    openModal('transactionDetailModal');
+                }
+            </script>
+        @endsection
