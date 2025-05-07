@@ -191,8 +191,9 @@
                                     class="inline-flex items-center px-3 py-2 border border-red-500 rounded hover:bg-red-50">
                                     <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24"
                                         stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
-                                                                    1 0 00-1-1m-4 0h4" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
+                                                                                                                                                                                                            1 0 00-1-1m-4 0h4" />
                                     </svg>
                                 </button>
                             </td>
@@ -232,14 +233,8 @@
             // ========== MODAL: ADD ==========
             document.getElementById('openAddModalBtn').addEventListener('click', function() {
                 const form = document.getElementById('addMotorForm');
-
-                // Reset form input
                 form.reset();
-
-                // Hapus semua pesan error
                 form.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-
-                // Tampilkan modal
                 document.getElementById('addModal').style.display = 'flex';
             });
 
@@ -250,41 +245,40 @@
             // ========== MODAL: EDIT ==========
             function openEditModal(motor) {
                 document.getElementById('editModal').style.display = 'flex';
+
+                // Isi semua field
                 document.getElementById('editMotorName').value = motor.name;
                 document.getElementById('editMotorBrand').value = motor.brand;
                 document.getElementById('editMotorYear').value = motor.year;
                 document.getElementById('editMotorColor').value = motor.color;
                 document.getElementById('editMotorPrice').value = motor.price;
                 document.getElementById('editMotorPlatMotor').value = motor.platmotor;
-                document.getElementById('editMotorStatus').value = motor.status;
                 document.getElementById('editMotortype').value = motor.type.toLowerCase();
                 document.getElementById('editMotorDescription').value = motor.description;
+                document.getElementById('editMotorStatus').value = motor.status;
                 setEditFormAction(motor.id);
 
-                const statusSelect = document.getElementById('editMotorStatus');
-
-                // Reset semua opsi status
-                statusSelect.querySelectorAll('option').forEach(option => {
-                    option.disabled = false;
-                    option.style.display = '';
+                // Reset semua opsi status → pastikan tidak ada yang ter-disabled/ter-hide
+                const sel = document.getElementById('editMotorStatus');
+                sel.querySelectorAll('option').forEach(opt => {
+                    opt.disabled = false;
+                    opt.style.display = '';
                 });
 
-
+                // Hanya sembunyikan/disable opsi yang **tidak valid** untuk transisi
+                // tetapi biarkan opsi yang dipilih tetap ada dan aktif
                 if (motor.status === 'available') {
-
-                    statusSelect.querySelector('option[value="booked"]').style.display = 'none';
-                    statusSelect.querySelector('option[value="unavailable"]').disabled = false;
-                    statusSelect.querySelector('option[value="available"]').disabled = true;
+                    // dari available hanya boleh remain available atau ke unavailable
+                    sel.querySelector('option[value="booked"]').style.display = 'none';
                 } else if (motor.status === 'booked') {
-                    statusSelect.querySelector('option[value="available"]').disabled = true;
-                    statusSelect.querySelector('option[value="unavailable"]').disabled = true;
+                    // dari booked tidak boleh ke available atau unavailable
+                    sel.querySelector('option[value="available"]').disabled = true;
+                    sel.querySelector('option[value="unavailable"]').disabled = true;
                 } else if (motor.status === 'unavailable') {
-                    statusSelect.querySelector('option[value="booked"]').style.display = 'none';
-                    statusSelect.querySelector('option[value="available"]').disabled = false;
-                    statusSelect.querySelector('option[value="unavailable"]').disabled = true;
+                    // dari unavailable hanya boleh remain unavailable atau ke available
+                    sel.querySelector('option[value="booked"]').style.display = 'none';
                 }
             }
-
 
             function closeEditModal() {
                 document.getElementById('editModal').style.display = 'none';
@@ -319,39 +313,41 @@
             // ========== VALIDASI & SUBMIT: ADD MOTOR ==========
             document.getElementById('addMotorForm')?.addEventListener('submit', function(event) {
                 const form = event.target;
-                const errorMessages = form.querySelectorAll('.error-message');
-                errorMessages.forEach(el => el.textContent = '');
-
-                const name = form.name.value.trim();
-                const brand = form.brand.value.trim();
-                const year = parseInt(form.year.value);
-                const type = form.type.value;
-                const color = form.color.value.trim();
-                const price = parseFloat(form.price.value);
-                const platmotor = form.platmotor.value.trim();
-                const description = form.description.value.trim();
-                const image = form.image.files[0];
+                form.querySelectorAll('.error-message').forEach(el => el.textContent = '');
 
                 let hasError = false;
+                const data = {
+                    name: form.name.value.trim(),
+                    brand: form.brand.value.trim(),
+                    year: parseInt(form.year.value, 10),
+                    type: form.type.value,
+                    color: form.color.value.trim(),
+                    price: parseFloat(form.price.value),
+                    platmotor: form.platmotor.value.trim(),
+                    description: form.description.value.trim(),
+                };
+                const image = form.image.files[0];
 
-                function setError(field, message) {
+                function setError(field, msg) {
                     const el = form.querySelector(`.error-message[data-field="${field}"]`);
-                    if (el) el.textContent = message;
+                    if (el) el.textContent = msg;
                     hasError = true;
                 }
 
-                if (!name) setError('name', 'Nama harus diisi.');
-                if (!brand) setError('brand', 'Merek harus diisi.');
-                if (!year || year < 1900 || year > new Date().getFullYear()) setError('year', 'Tahun tidak valid.');
-                if (!['matic', 'manual', 'kopling', 'vespa'].includes(type)) setError('type', 'Tipe harus dipilih.');
-                if (!color) setError('color', 'Warna harus diisi.');
-                if (isNaN(price)) setError('price', 'Harga harus diisi.');
-                if (!platmotor) setError('platmotor', 'Plat Motor tidak boleh kosong.');
-                if (!description) setError('description', 'Deskripsi tidak boleh kosong.');
+                if (!data.name) setError('name', 'Nama harus diisi.');
+                if (!data.brand) setError('brand', 'Merek harus diisi.');
+                if (!data.year || data.year < 1900 || data.year > new Date().getFullYear())
+                    setError('year', 'Tahun tidak valid.');
+                if (!['matic', 'manual', 'kopling', 'vespa'].includes(data.type))
+                    setError('type', 'Tipe harus dipilih.');
+                if (!data.color) setError('color', 'Warna harus diisi.');
+                if (isNaN(data.price)) setError('price', 'Harga harus diisi.');
+                if (!data.platmotor) setError('platmotor', 'Plat Motor tidak boleh kosong.');
+                if (!data.description) setError('description', 'Deskripsi tidak boleh kosong.');
 
                 if (image) {
-                    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-                    if (!allowedTypes.includes(image.type)) setError('image', 'File harus JPG/PNG.');
+                    const allowed = ['image/jpeg', 'image/png', 'image/jpg'];
+                    if (!allowed.includes(image.type)) setError('image', 'File harus JPG/PNG.');
                     if (image.size > 2 * 1024 * 1024) setError('image', 'Ukuran maksimal 2MB.');
                 }
 
@@ -360,7 +356,7 @@
                     return;
                 }
 
-                event.preventDefault(); // mencegah submit default
+                event.preventDefault();
                 Swal.fire({
                     title: 'Tambah Motor',
                     text: 'Apakah Anda yakin ingin menyimpan motor baru ini?',
@@ -369,10 +365,8 @@
                     confirmButtonText: 'Ya, simpan!',
                     cancelButtonText: 'Batal',
                     reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        form.submit();
-                    }
+                }).then((res) => {
+                    if (res.isConfirmed) form.submit();
                 });
             });
 
@@ -387,10 +381,8 @@
                     confirmButtonText: 'Ya, simpan!',
                     cancelButtonText: 'Batal',
                     reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        this.submit();
-                    }
+                }).then((res) => {
+                    if (res.isConfirmed) this.submit();
                 });
             });
         </script>
