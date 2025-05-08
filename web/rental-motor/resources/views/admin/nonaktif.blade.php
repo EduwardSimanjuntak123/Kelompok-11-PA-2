@@ -10,8 +10,7 @@
                 icon: 'success',
                 title: 'Berhasil!',
                 text: '{{ session('message') }}',
-                showConfirmButton: false,
-                timer: 2000
+                confirmButtonText: 'OK'
             });
         </script>
     @endif

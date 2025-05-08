@@ -168,6 +168,22 @@ class TransaksiController extends Controller
     // Fungsi untuk mencetak laporan transaksi berdasarkan rentang (week atau month)
     public function exportExcel(Request $request)
     {
+        // Array nama bulan Indonesia
+        $bulan = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember',
+        ];
+
         try {
             $token = session()->get('token');
             if (!$token) {
@@ -180,7 +196,8 @@ class TransaksiController extends Controller
 
             $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
             $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
-            $monthName = $startDate->translatedFormat('F');
+            // Ambil nama bulan dari array
+            $monthName = $bulan[$month] ?? $startDate->translatedFormat('F');
 
             // Ambil transaksi dari API
             $url = "{$this->apiBaseUrl}/transaction";
@@ -229,4 +246,5 @@ class TransaksiController extends Controller
                 ->with('error', 'Terjadi kesalahan saat mengekspor data.');
         }
     }
+
 }

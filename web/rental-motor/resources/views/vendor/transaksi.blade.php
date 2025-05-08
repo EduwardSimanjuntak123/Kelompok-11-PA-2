@@ -3,7 +3,7 @@
 @section('title', 'Transaksi Vendor Rental')
 
 @section('content')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @if (session('message'))
         <script>
             Swal.fire({
@@ -104,6 +104,22 @@
     <div id="printModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/3 p-6">
             <h2 class="text-2xl font-bold mb-4">🖨️ Cetak Laporan Transaksi Bulanan</h2>
+            @php
+                $bulan = [
+                    1 => 'Januari',
+                    2 => 'Februari',
+                    3 => 'Maret',
+                    4 => 'April',
+                    5 => 'Mei',
+                    6 => 'Juni',
+                    7 => 'Juli',
+                    8 => 'Agustus',
+                    9 => 'September',
+                    10 => 'Oktober',
+                    11 => 'November',
+                    12 => 'Desember',
+                ];
+            @endphp
             <form action="{{ route('vendor.transactions.export') }}" method="GET">
                 <div class="mb-4">
                     <label for="month" class="block text-gray-700 font-semibold mb-2">
@@ -113,7 +129,7 @@
                         <select name="month" id="month" class="border rounded px-2 py-1 w-1/2" required>
                             @for ($m = 1; $m <= 12; $m++)
                                 <option value="{{ $m }}">
-                                    {{ \Carbon\Carbon::create()->month($m)->translatedFormat('F') }}
+                                    {{ $bulan[$m] }}
                                 </option>
                             @endfor
                         </select>
