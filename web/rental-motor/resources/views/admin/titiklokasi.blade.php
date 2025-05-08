@@ -6,6 +6,29 @@
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    @if (session('message'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: '{{ session('message') }}',
+                confirmButtonText: 'OK'
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: '{{ session('error') }}',
+                confirmButtonText: 'OK'
+            });
+        </script>
+    @endif
+
+
     <div x-data="titikLokasiApp({{ Js::from($kecamatans) }}, {{ Js::from($titiklokasis) }})" class="flex min-h-screen">
         <!-- Sidebar Kecamatan -->
         <aside class="w-64 bg-white border-r">
@@ -166,19 +189,18 @@
             return {
                 kecamatans,
                 titiklokasis,
-                activeKecamatan: Number.isInteger(hash) && kecamatans.some(k => k.id_kecamatan === hash)
-                    ? hash
-                    : (kecamatans.length ? kecamatans[0].id_kecamatan : null),
-    
+                activeKecamatan: Number.isInteger(hash) && kecamatans.some(k => k.id_kecamatan === hash) ?
+                    hash : (kecamatans.length ? kecamatans[0].id_kecamatan : null),
+
                 setActive(id) {
                     this.activeKecamatan = id;
                     window.location.hash = id;
                 },
-    
+
                 get filteredLokasi() {
                     return this.titiklokasis.filter(l => l.district_id === this.activeKecamatan);
                 },
-    
+
                 openAddModal(districtId) {
                     this.setActive(districtId);
                     document.getElementById('district_id_add').value = districtId;
@@ -186,7 +208,7 @@
                         window.routeStoreLokasi.replace('__ID__', districtId);
                     document.getElementById('modal-add-lokasi').classList.remove('hidden');
                 },
-    
+
                 closeAddModal() {
                     document.getElementById('modal-add-lokasi').classList.add('hidden');
                     ['place', 'address'].forEach(f => {
@@ -194,7 +216,7 @@
                         document.getElementById(`${f}_add`).value = '';
                     });
                 },
-    
+
                 validateAdd() {
                     let valid = true;
                     ['place', 'address'].forEach(f => {
@@ -208,95 +230,90 @@
                         }
                     });
                     if (!valid) return;
-    
+
                     const form = document.getElementById('form-add-lokasi');
                     const data = new FormData(form);
                     fetch(form.action, {
-                        method: 'POST',
-                        body: data,
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        }
-                    })
-                    .then(res => res.ok ? res.json() : Promise.reject(res))
-                    .then(res => {
-                        if (res.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Sukses!',
-                                text: 'Lokasi berhasil ditambahkan.',
-                                showConfirmButton: false,
-                                timer: 1800,
-                                timerProgressBar: true,
-                                background: '#f0fdf4',
-                                color: '#14532d',
-                                iconColor: '#16a34a',
-                                didOpen: () => Swal.showLoading(),
-                                willClose: () => {
-                                    window.location.hash = this.activeKecamatan;
+                            method: 'POST',
+                            body: data,
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content')
+                            }
+                        })
+                        .then(res => res.ok ? res.json() : Promise.reject(res))
+                        .then(res => {
+                            if (res.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: 'Lokasi berhasil ditambahkan.',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
                                     window.location.reload();
-                                }
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: 'Gagal menambah lokasi',
+                                confirmButtonText: 'OK'
                             });
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        Swal.fire('Error', 'Gagal menambah lokasi', 'error');
-                    });
+                        });
                 },
-    
+
                 openEditModal(loc) {
                     document.getElementById('place_edit').value = loc.place;
                     document.getElementById('address_edit').value = loc.address;
                     document.getElementById('form-edit-lokasi').action = `/admin/titiklokasi/${loc.id}`;
                     document.getElementById('modal-edit-lokasi').classList.remove('hidden');
                 },
-    
+
                 closeEditModal() {
                     document.getElementById('modal-edit-lokasi').classList.add('hidden');
                 },
-    
+
                 validateEdit() {
                     const form = document.getElementById('form-edit-lokasi');
                     const data = new FormData(form);
                     data.append('_method', 'PUT');
-    
+
                     fetch(form.action, {
-                        method: 'POST',
-                        body: data,
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        }
-                    })
-                    .then(res => res.ok ? res.json() : Promise.reject(res))
-                    .then(res => {
-                        if (res.success) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Sukses!',
-                                text: 'Lokasi berhasil diperbarui.',
-                                showConfirmButton: false,
-                                timer: 1800,
-                                timerProgressBar: true,
-                                background: '#ecfdf5',
-                                color: '#064e3b',
-                                iconColor: '#10b981',
-                                didOpen: () => Swal.showLoading(),
-                                willClose: () => {
-                                    window.location.hash = this.activeKecamatan;
+                            method: 'POST',
+                            body: data,
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                    'content')
+                            }
+                        })
+                        .then(res => res.ok ? res.json() : Promise.reject(res))
+                        .then(res => {
+                            if (res.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: 'Lokasi berhasil perbaharui.',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
                                     window.location.reload();
-                                }
+                                });
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Gagal menambah lokasi',
                             });
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        Swal.fire('Error', 'Gagal update lokasi', 'error');
-                    });
+                        });
                 },
-    
+
                 confirmDelete(id) {
                     Swal.fire({
                         title: 'Yakin ingin menghapus?',
@@ -309,49 +326,46 @@
                         cancelButtonText: 'Batal'
                     }).then(result => {
                         if (!result.isConfirmed) return;
-    
+
                         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-    
+
                         fetch(`/admin/titiklokasi/${id}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': token
-                            }
-                        })
-                        .then(async res => {
-                            const json = await res.json().catch(() => ({}));
-                            if (res.ok && json.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Dihapus!',
-                                    text: 'Lokasi berhasil dihapus.',
-                                    showConfirmButton: false,
-                                    timer: 1800,
-                                    timerProgressBar: true,
-                                    background: '#fef2f2',
-                                    color: '#7f1d1d',
-                                    iconColor: '#ef4444',
-                                    didOpen: () => Swal.showLoading(),
-                                    willClose: () => {
-                                        window.location.hash = this.activeKecamatan;
+                                method: 'DELETE',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': token
+                                }
+                            })
+                            .then(async res => {
+                                const json = await res.json().catch(() => ({}));
+                                if (res.ok && json.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil!',
+                                        text: 'Lokasi berhasil dihapus.',
+                                        confirmButtonText: 'OK'
+                                    }).then(() => {
                                         window.location.reload();
-                                    }
+                                    });
+                                } else {
+                                    const msg = json.message || 'Gagal hapus lokasi';
+                                    return Promise.reject(msg);
+                                }
+                            })
+                            .catch(err => {
+                                console.error('Delete error:', err);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal',
+                                    text: 'Gagal menambah lokasi',
+                                    confirmButtonText: 'OK'
                                 });
-                            } else {
-                                const msg = json.message || 'Gagal hapus lokasi';
-                                return Promise.reject(msg);
-                            }
-                        })
-                        .catch(err => {
-                            console.error('Delete error:', err);
-                            Swal.fire('Error', err, 'error');
-                        });
+                            });
                     });
                 }
             };
         }
-    
+
         window.routeStoreLokasi = "{{ route('titiklokasi.store', ['id_kecamatan' => '__ID__']) }}";
-    </script>    
+    </script>
 @endsection

@@ -30,18 +30,24 @@
 
                     <select id="status" name="status" onchange="this.form.submit()"
                         class="block w-full pl-10 pr-8 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none">
-                        <option value="all" {{ request('status', 'all') == 'all' ? 'selected' : '' }}>Semua Status</option>
+                        <option value="all" {{ request('status', 'all') == 'all' ? 'selected' : '' }}>Semua Status
+                        </option>
                         <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu Konfirmasi
                         </option>
-                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Dikonfirmasi</option>
-                        <option value="in transit" {{ request('status') == 'in transit' ? 'selected' : '' }}>Motor Sedang Diantar
+                        <option value="confirmed" {{ request('status') == 'confirmed' ? 'selected' : '' }}>Dikonfirmasi
                         </option>
-                        <option value="in use" {{ request('status') == 'in use' ? 'selected' : '' }}>Sedang Digunakan</option>
-                        <option value="awaiting return" {{ request('status') == 'awaiting return' ? 'selected' : '' }}>Menunggu
+                        <option value="in transit" {{ request('status') == 'in transit' ? 'selected' : '' }}>Motor Sedang
+                            Diantar
+                        </option>
+                        <option value="in use" {{ request('status') == 'in use' ? 'selected' : '' }}>Sedang Digunakan
+                        </option>
+                        <option value="awaiting return" {{ request('status') == 'awaiting return' ? 'selected' : '' }}>
+                            Menunggu
                             Pengembalian</option>
                         <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Pesanan Selesai
                         </option>
-                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Booking Ditolak</option>
+                        <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Booking Ditolak
+                        </option>
                     </select>
 
                     <!-- Arrow dropdown -->
@@ -53,7 +59,7 @@
                     </div>
                 </div>
             </form>
-            
+
 
             <!-- Tombol Booking Manual -->
             <button onclick="openModal('addBookingModal')"
@@ -572,92 +578,95 @@
 
             // Saat halaman siap
             document.addEventListener('DOMContentLoaded', () => {
-                document.querySelectorAll('.format-datetime').forEach(el => {
-                    el.textContent = formatDateTime(el.textContent.trim());
-                });
+                        document.querySelectorAll('.format-datetime').forEach(el => {
+                            el.textContent = formatDateTime(el.textContent.trim());
+                        });
 
-                // Modal detail booking
-                document.querySelectorAll('.open-booking-modal').forEach(link => {
-                    link.addEventListener('click', e => {
-                        e.preventDefault();
-                        let data;
-                        try {
-                            data = JSON.parse(link.getAttribute('data-booking'));
-                        } catch (err) {
-                            console.error('JSON parse error:', err);
-                            return;
-                        }
+                        // Modal detail booking
+                        document.querySelectorAll('.open-booking-modal').forEach(link => {
+                            link.addEventListener('click', e => {
+                                e.preventDefault();
+                                let data;
+                                try {
+                                    data = JSON.parse(link.getAttribute('data-booking'));
+                                } catch (err) {
+                                    console.error('JSON parse error:', err);
+                                    return;
+                                }
 
-                        document.getElementById('modalCustomerName').textContent = data.customer_name ||
-                            '-';
-                        document.getElementById('modalBookingDate').textContent = formatDateTime(data
-                            .booking_date);
-                        document.getElementById('modalStartDate').textContent = formatDateTime(data
-                            .start_date);
-                        document.getElementById('modalEndDate').textContent = formatDateTime(data
-                            .end_date);
-                        document.getElementById('modalPickup').textContent = data.pickup_location ||
-                            '-';
-                        document.getElementById('modalStatus').textContent = data.status || '-';
+                                document.getElementById('modalCustomerName').textContent = data.customer_name ||
+                                    '-';
+                                document.getElementById('modalBookingDate').textContent = formatDateTime(data
+                                    .booking_date);
+                                document.getElementById('modalStartDate').textContent = formatDateTime(data
+                                    .start_date);
+                                document.getElementById('modalEndDate').textContent = formatDateTime(data
+                                    .end_date);
+                                document.getElementById('modalPickup').textContent = data.pickup_location ||
+                                    '-';
+                                document.getElementById('modalStatus').textContent = data.status || '-';
 
-                        const imgEl = document.getElementById('modalCustomerPhoto');
-                        imgEl.onerror = () => {
-                            imgEl.onerror = null;
-                            imgEl.src = '/images/default-user.png';
-                        };
-                        if (data.potoid) {
-                            const isAbsolute = /^https?:\/\//i.test(data.potoid);
-                            imgEl.src = isAbsolute ? data.potoid : `${BASE_API}${data.potoid}`;
-                        } else {
-                            imgEl.src = '/images/default-user.png';
-                        }
+                                const imgEl = document.getElementById('modalCustomerPhoto');
+                                imgEl.onerror = () => {
+                                    imgEl.onerror = null;
+                                    imgEl.src = '/images/default-user.png';
+                                };
+                                if (data.potoid) {
+                                    const isAbsolute = /^https?:\/\//i.test(data.potoid);
+                                    imgEl.src = isAbsolute ? data.potoid : `${BASE_API}${data.potoid}`;
+                                } else {
+                                    imgEl.src = '/images/default-user.png';
+                                }
 
-                        const noteEl = document.getElementById('modalNoteContainer');
-                        noteEl.textContent = data.message ? data.message : '-';
+                                const noteEl = document.getElementById('modalNoteContainer');
+                                noteEl.textContent = data.message ? data.message : '-';
 
-                        openModal('bookingDetailModal');
-                    });
-                });
+                                openModal('bookingDetailModal');
+                            });
+                        });
 
-                // Validasi form manual booking
-                document.getElementById('manualBookingForm')?.addEventListener('submit', e => {
-                    const f = e.target;
-                    f.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-                    let hasError = false;
-                    const setError = (field, msg) => {
-                        const el = f.querySelector(`.error-message[data-field="${field}"]`);
-                        if (el) el.textContent = msg;
-                        hasError = true;
-                    };
+                        // Validasi form manual booking
+                        document.getElementById('manualBookingForm')?.addEventListener('submit', e => {
+                            const f = e.target;
+                            f.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+                            let hasError = false;
+                            const setError = (field, msg) => {
+                                const el = f.querySelector(`.error-message[data-field="${field}"]`);
+                                if (el) el.textContent = msg;
+                                hasError = true;
+                            };
 
-                    const cn = f.customer_name.value.trim();
-                    if (!cn) setError('customer_name', 'Nama pelanggan harus diisi.');
-                    else if (cn.length < 3) setError('customer_name', 'Nama minimal 3 karakter.');
-                    if (!f.motor_id.value) setError('motor_id', 'Pilih motor terlebih dahulu.');
-                    if (!f.start_date_date.value) setError('start_date_date', 'Tanggal mulai harus diisi.');
-                    if (!f.start_date_time.value) setError('start_date_time', 'Waktu mulai harus diisi.');
-                    const dur = parseInt(f.duration.value);
-                    if (!dur || dur <= 0) setError('duration', 'Durasi harus lebih dari 0.');
-                    if (!f.pickup_location.value.trim()) setError('pickup_location',
-                        'Lokasi penjemputan harus diisi.');
+                            const cn = f.customer_name.value.trim();
+                            if (!cn) setError('customer_name', 'Nama pelanggan harus diisi.');
+                            else if (cn.length < 3) setError('customer_name', 'Nama minimal 3 karakter.');
+                            else if (!/^[a-zA-Z\s]+$/.test(cn)) setError('customer_name',
+                                'Nama hanya boleh huruf dan spasi.');
 
-                    [
-                        ['ktp_file', 'KTP'],
-                        ['photo_file', 'Foto']
-                    ].forEach(([fld, label]) => {
-                        const file = f[fld]?.files[0];
-                        if (file) {
-                            if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type))
-                                setError(fld, `File ${label} harus JPG atau PNG.`);
-                            if (file.size > 2 * 1024 * 1024)
-                                setError(fld, `Ukuran ${label} maksimal 2MB.`);
-                        }
-                    });
+                            if (!f.motor_id.value) setError('motor_id', 'Pilih motor terlebih dahulu.');
+                            if (!f.start_date_date.value) setError('start_date_date', 'Tanggal mulai harus diisi.');
+                            if (!f.start_date_time.value) setError('start_date_time', 'Waktu mulai harus diisi.');
 
-                    if (hasError) e.preventDefault();
-                });
+                            const dur = parseInt(f.duration.value);
+                            if (!dur || dur <= 0) setError('duration', 'Durasi harus lebih dari 0.');
+
+                            if (!f.pickup_location.value.trim())
+                                setError('pickup_location', 'Lokasi penjemputan harus diisi.');
+
+                            [
+                                ['ktp_file', 'KTP'],
+                                ['photo_file', 'Foto']
+                            ].forEach(([fld, label]) => {
+                                const file = f[fld]?.files[0];
+                                if (file) {
+                                    if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type))
+                                        setError(fld, `File ${label} harus JPG atau PNG.`);
+                                    if (file.size > 2 * 1024 * 1024)
+                                        setError(fld, `Ukuran ${label} maksimal 2MB.`);
+                                }
+                            });
+
+                            if (hasError) e.preventDefault();
+                        });
             });
         </script>
-
-
     @endsection

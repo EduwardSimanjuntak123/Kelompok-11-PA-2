@@ -3,6 +3,7 @@
 @section('title', 'Data Perpanjangan Sewa')
 
 @section('content')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <div class="container mx-auto px-4 py-6">
         <h1 class="text-3xl font-bold text-gray-800 mb-6">Permintaan Perpanjangan Sewa</h1>
 
@@ -32,7 +33,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($extens as $extension)
+                    @foreach (collect($extens)->sortByDesc('requested_at') as $extension)
                         @php
                             $booking = collect($bookings)->firstWhere('id', $extension['booking_id']);
 
@@ -106,26 +107,32 @@
                             <td class="py-3 px-4">
                                 @if (in_array($extension['status'], ['pending', 'requested']))
                                     <div class="flex gap-2">
-                                        {{-- APPROVE --}}
-                                        <form
-                                            action="{{ route('vendor.approveExtension', ['extension_id' => $extension['extension_id']]) }}"
-                                            method="POST" class="flex-1">
-                                            @csrf
-                                            <button type="submit"
-                                            class="px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                        {{-- APPROVE BUTTON --}}
+                                        <button type="button"
+                                            class="btn-approve px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150"
+                                            data-form-id="approve-form-{{ $extension['extension_id'] }}">
                                             <i class="fas fa-check mr-1"></i> Setujui
-                                            </button>
+                                        </button>
+
+                                        {{-- APPROVE FORM --}}
+                                        <form id="approve-form-{{ $extension['extension_id'] }}"
+                                            action="{{ route('vendor.approveExtension', ['extension_id' => $extension['extension_id']]) }}"
+                                            method="POST" class="hidden">
+                                            @csrf
                                         </form>
 
-                                        {{-- REJECT --}}
-                                        <form
-                                            action="{{ route('vendor.rejectExtension', ['extension_id' => $extension['extension_id']]) }}"
-                                            method="POST" class="flex-1">
-                                            @csrf
-                                            <button type="submit"
-                                            class="px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150">
+                                        {{-- REJECT BUTTON --}}
+                                        <button type="button"
+                                            class="btn-reject px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150"
+                                            data-form-id="reject-form-{{ $extension['extension_id'] }}">
                                             <i class="fas fa-times mr-1"></i> Tolak
-                                            </button>
+                                        </button>
+
+                                        {{-- REJECT FORM --}}
+                                        <form id="reject-form-{{ $extension['extension_id'] }}"
+                                            action="{{ route('vendor.rejectExtension', ['extension_id' => $extension['extension_id']]) }}"
+                                            method="POST" class="hidden">
+                                            @csrf
                                         </form>
                                     </div>
                                 @else
@@ -211,6 +218,45 @@
 
 
     <script>
+        // Konfirmasi Approve
+        document.querySelectorAll('.btn-approve').forEach(btn => {
+            btn.addEventListener('click', () => {
+                Swal.fire({
+                    title: 'Setujui perpanjangan?',
+                    text: 'Tindakan ini tidak bisa dibatalkan!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#16a34a',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, Setujui!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById(btn.dataset.formId).submit();
+                    }
+                });
+            });
+        });
+
+        // Konfirmasi Reject
+        document.querySelectorAll('.btn-reject').forEach(btn => {
+            btn.addEventListener('click', () => {
+                Swal.fire({
+                    title: 'Tolak perpanjangan?',
+                    text: 'Pastikan alasan penolakan sudah jelas!',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc2626',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Ya, Tolak!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        document.getElementById(btn.dataset.formId).submit();
+                    }
+                });
+            });
+        });
         // Buka modal
         document.querySelectorAll('.open-modal').forEach(btn => {
             btn.addEventListener('click', e => {

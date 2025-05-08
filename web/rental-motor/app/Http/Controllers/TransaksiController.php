@@ -63,20 +63,20 @@ class TransaksiController extends Controller
             $motor = collect($motors)->firstWhere('id', $t['motor_id']) ?? [];
 
             return [
-                'id'              => $t['id'],
-                'customer_name'   => $t['customer_name'] ?? '-',
-                'status'          => $t['status'] ?? '-',
-                'booking_date'    => $t['booking_date'] ?? null,
-                'start_date'      => $t['start_date'] ?? null,
-                'end_date'        => $t['end_date'] ?? null,
+                'id' => $t['id'],
+                'customer_name' => $t['customer_name'] ?? '-',
+                'status' => $t['status'] ?? '-',
+                'booking_date' => $t['booking_date'] ?? null,
+                'start_date' => $t['start_date'] ?? null,
+                'end_date' => $t['end_date'] ?? null,
                 'pickup_location' => $t['pickup_location'] ?? '-',
-                'total_price'     => $t['total_price'] ?? 0,
-                'motor'           => [
-                    'id'            => $motor['id'] ?? null,
-                    'name'          => $motor['name'] ?? '-',
-                    'brand'         => $motor['brand'] ?? '-',
-                    'year'          => $motor['year'] ?? '-',
-                    'platmotor'    => $motor['platmotor'] ?? '-',     // pastikan key ini sesuai API
+                'total_price' => $t['total_price'] ?? 0,
+                'motor' => [
+                    'id' => $motor['id'] ?? null,
+                    'name' => $motor['name'] ?? '-',
+                    'brand' => $motor['brand'] ?? '-',
+                    'year' => $motor['year'] ?? '-',
+                    'platmotor' => $motor['platmotor'] ?? '-',     // pastikan key ini sesuai API
                     'price_per_day' => $motor['price_per_day'] ?? 0,
                 ],
             ];
@@ -95,7 +95,7 @@ class TransaksiController extends Controller
             $perPage,
             $currentPage,
             [
-                'path'     => Paginator::resolveCurrentPath(),
+                'path' => Paginator::resolveCurrentPath(),
                 'pageName' => 'page',
             ]
         );
@@ -171,7 +171,8 @@ class TransaksiController extends Controller
         try {
             $token = session()->get('token');
             if (!$token) {
-                return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
+                return redirect()->route('login')
+                    ->with('error', 'Anda harus login terlebih dahulu.');
             }
 
             $month = (int) $request->query('month');
@@ -181,42 +182,51 @@ class TransaksiController extends Controller
             $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth();
             $monthName = $startDate->translatedFormat('F');
 
-            $queryParams = [
-                'start_date' => $startDate->toDateString(),
-                'end_date' => $endDate->toDateString(),
-            ];
-
+            // Ambil transaksi dari API
             $url = "{$this->apiBaseUrl}/transaction";
-            $response = Http::withToken($token)->timeout(10)->get($url, $queryParams);
+            $response = Http::withToken($token)
+                ->timeout(10)
+                ->get($url, [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                ]);
 
-            if ($response->successful()) {
-                $jsonData = $response->json();
-                $transactions = isset($jsonData['data']) ? $jsonData['data'] : $jsonData;
-
-                $transactions = collect($transactions)->filter(function ($item) use ($month, $year) {
-                    $bookingDate = Carbon::parse($item['booking_date']);
-                    return $bookingDate->year === $year && $bookingDate->month === $month;
-                })->values()->toArray();
-
-                if (empty($transactions)) {
-                    return redirect()->back()->with('error', 'Maaf, tidak ditemukan data transaksi untuk bulan dan tahun yang Anda pilih.');
-                }
-
-                // Hitung total pendapatan
-                $totalPendapatan = collect($transactions)->sum(function ($item) {
-                    return $item['total_price'] ?? 0;
-                });
-
-                return Excel::download(
-                    new TransactionExport($transactions, $monthName, $year, $totalPendapatan),
-                    "laporan_transaksi_{$month}_{$year}.xlsx"
-                );                               
-            } else {
-                return redirect()->back()->with('error', 'Gagal mengambil data transaksi.');
+            if (!$response->successful()) {
+                return redirect()->back()
+                    ->with('error', 'Gagal mengambil data transaksi.');
             }
+
+            $jsonData = $response->json();
+            $transactions = $jsonData['data'] ?? $jsonData;
+
+            // Filter manual untuk jaga‐jaga
+            $transactions = collect($transactions)
+                ->filter(fn($item) => Carbon::parse($item['booking_date'])->year === $year
+                    && Carbon::parse($item['booking_date'])->month === $month)
+                ->values()
+                ->toArray();
+
+            if (empty($transactions)) {
+                return redirect()->back()
+                    ->with('error', 'Maaf, tidak ditemukan data transaksi untuk bulan dan tahun yang Anda pilih.');
+            }
+
+            // Hitung total pendapatan
+            $totalPendapatan = collect($transactions)
+                ->sum(fn($item) => $item['total_price'] ?? 0);
+
+            // Flash sukses sebelum download
+            session()->flash('message', "Laporan transaksi {$monthName} {$year} berhasil diunduh.");
+
+            // Download Excel
+            return Excel::download(
+                new TransactionExport($transactions, $monthName, $year, $totalPendapatan),
+                "laporan_transaksi_{$month}_{$year}.xlsx"
+            );
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengekspor data.');
+            Log::error("Export gagal: " . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat mengekspor data.');
         }
     }
-
 }

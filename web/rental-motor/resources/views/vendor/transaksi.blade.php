@@ -3,6 +3,29 @@
 @section('title', 'Transaksi Vendor Rental')
 
 @section('content')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if (session('message'))
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: '{{ session('message') }}',
+                confirmButtonText: 'OK'
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: '{{ session('error') }}',
+                confirmButtonText: 'OK'
+            });
+        </script>
+    @endif
+
     <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-4xl font-extrabold text-gray-800">Data Transaksi Vendor</h1>
@@ -81,7 +104,7 @@
     <div id="printModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/3 p-6">
             <h2 class="text-2xl font-bold mb-4">🖨️ Cetak Laporan Transaksi Bulanan</h2>
-            <form action="{{ route('vendor.transactions.export') }}" method="GET" target="_blank">
+            <form action="{{ route('vendor.transactions.export') }}" method="GET">
                 <div class="mb-4">
                     <label for="month" class="block text-gray-700 font-semibold mb-2">
                         Pilih Bulan & Tahun

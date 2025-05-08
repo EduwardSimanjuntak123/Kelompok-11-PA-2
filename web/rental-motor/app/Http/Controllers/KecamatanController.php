@@ -90,17 +90,27 @@ class KecamatanController extends Controller
     {
         try {
             $token = session('token', 'TOKEN_KAMU_DI_SINI');
-            $response = Http::withToken($token)->delete("{$this->apiBaseUrl}/kecamatan/{$id}");
+            $response = Http::withToken($token)
+                ->delete("{$this->apiBaseUrl}/kecamatan/{$id}");
 
-            $this->flashAlert($response->successful(), 'dihapus');
+            if ($response->successful()) {
+                session()->flash('success', 'Kecamatan berhasil dihapus.');
+            }
+            // Jika API mengembalikan 409 = constraint violation
+            elseif ($response->status() === 409) {
+                session()->flash('error', 'Kecamatan gagal dihapus: sedang digunakan oleh vendor lain.');
+            } else {
+                session()->flash('error', 'Kecamatan gagal dihapus: sedang digunakan oleh vendor lain.');
+            }
 
             return redirect()->back();
         } catch (\Exception $e) {
             Log::error("Kesalahan saat menghapus kecamatan: " . $e->getMessage());
-            $this->flashAlert(false, 'dihapus');
+            session()->flash('error', 'Kecamatan gagal dihapus: sedang digunakan oleh vendor lain.');
             return redirect()->back();
         }
     }
+
 
     public function create()
     {
