@@ -41,7 +41,6 @@ class WelcomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-
                   DefaultTextStyle(
                     style: const TextStyle(
                       fontSize: 28,
@@ -68,7 +67,6 @@ class WelcomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 14),
-
                   const Text(
                     "Platform sewa motor terbaik, mudah dan terpercaya untuk semua kebutuhanmu.",
                     textAlign: TextAlign.center,
@@ -88,14 +86,14 @@ class WelcomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 44),
-
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SignUpCustomer()),
+                          MaterialPageRoute(
+                              builder: (context) => SignUpCustomer()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -137,7 +135,7 @@ class WelcomePage extends StatelessWidget {
                           alignment: Alignment.center,
                           constraints: const BoxConstraints(minHeight: 55),
                           child: const Text(
-                            "CUSTOMER",
+                            "PELANGGAN",
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w900,
@@ -149,17 +147,18 @@ class WelcomePage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 22),
-
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SignUpScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => SignUpScreen()),
                         );
                       },
-                      icon: const Icon(Icons.storefront_rounded, color: Colors.white70, size: 24),
+                      icon: const Icon(Icons.storefront_rounded,
+                          color: Colors.white70, size: 24),
                       label: const Text(
                         "VENDOR",
                         style: TextStyle(
@@ -181,9 +180,7 @@ class WelcomePage extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 36),
-
                   const Opacity(
                     opacity: 0.6,
                     child: Text(
