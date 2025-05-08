@@ -273,6 +273,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
           "Tambah Motor",
@@ -307,6 +308,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                   // Image Picker Card
                   Card(
                     elevation: 4,
+                    color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -395,6 +397,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                   // Basic Info Card
                   Card(
                     elevation: 4,
+                    color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -469,6 +472,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                   // Details Card
                   Card(
                     elevation: 4,
+                    color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -488,8 +492,23 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _priceController,
-                            decoration: _buildInputDecoration(
-                                'Harga / hari (Rp)', Icons.monetization_on),
+                            decoration: InputDecoration(
+                              labelText: 'Harga / hari',
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: Text(
+                                  'Rp',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2C567E),
+                                  ),
+                                ),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                             keyboardType: TextInputType.number,
                             validator: (val) {
                               if (val!.isEmpty) {
@@ -533,14 +552,13 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
 
                   // Submit Button
                   SizedBox(
                     height: 50,
                     child: ElevatedButton.icon(
-                      icon: const Icon(Icons.save),
+                      icon: Icon(Icons.save, color: Colors.white),
                       label: const Text('Simpan Motor',
                           style: TextStyle(fontSize: 16)),
                       style: ElevatedButton.styleFrom(
