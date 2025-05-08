@@ -30,13 +30,13 @@ class _LoginScreenState extends State<LoginScreen>
     emailController.addListener(_updateButtonState);
     passwordController.addListener(_updateButtonState);
 
-    // Initialize animation controller
+    // Inisialisasi controller animasi
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 1000),
     );
 
-    // Configure slide animation
+    // Konfigurasi animasi slide
     _slideAnimation = Tween<Offset>(
       begin: Offset(0, -0.5),
       end: Offset(0, 0),
@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen>
       curve: Curves.fastOutSlowIn,
     ));
 
-    // Configure fade animation
+    // Konfigurasi animasi fade
     _fadeAnimation = Tween<double>(
       begin: 0,
       end: 1,
@@ -54,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen>
       curve: Curves.easeIn,
     ));
 
-    // Start animation when screen is built
+    // Mulai animasi ketika layar dibangun
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animationController.forward();
     });
@@ -117,16 +117,17 @@ class _LoginScreenState extends State<LoginScreen>
         );
       } else {
         setState(() {
-          _errorMessage = "Akses ditolak! Role tidak dikenali.";
+          _errorMessage = "Akses ditolak! Peran tidak dikenali.";
           _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = "Terjadi kesalahan saat login. Coba lagi nanti.";
+        _errorMessage =
+            "Terjadi kesalahan saat login. Silakan coba lagi nanti.";
         _isLoading = false;
       });
-      print("Error during login: $e");
+      print("Error selama login: $e");
     }
   }
 
@@ -172,12 +173,12 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        // Navigate to HomePageUser when back button is pressed
+        // Navigasi ke HomePageUser ketika tombol kembali ditekan
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => HomePageUser()),
         );
-        return false; // Prevent default back button behavior
+        return false; // Mencegah perilaku default tombol kembali
       },
       child: Scaffold(
         body: Container(
@@ -192,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen>
           child: SafeArea(
             child: Column(
               children: [
-                // Header with logo and welcome text - Animated
+                // Header dengan logo dan teks selamat datang - Animasi
                 SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
@@ -202,47 +203,50 @@ class _LoginScreenState extends State<LoginScreen>
                       padding: EdgeInsets.symmetric(horizontal: 30),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Center(
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.motorcycle,
-                                size: 50,
-                                color: Color(0xFF2C567E),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 30),
-                          Text(
-                            "Welcome Back!",
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
                               color: Colors.white,
-                              letterSpacing: 1,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.motorcycle,
+                              size: 50,
+                              color: Color(0xFF2C567E),
                             ),
                           ),
-                          SizedBox(height: 10),
-                          Text(
-                            "Sign in to continue to Rental Motor",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white.withOpacity(0.8),
-                            ),
+                          SizedBox(height: 20),
+                          Column(
+                            children: [
+                              Text(
+                                "Selamat Datang Kembali!",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                "Masuk untuk melanjutkan ke Rental Motor",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white.withOpacity(0.8),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -250,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
 
-                // Login form card - Animated
+                // Form login card - Animasi
                 Expanded(
                   child: SlideTransition(
                     position: _slideAnimation,
@@ -279,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Login",
+                                "Masuk",
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -288,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               SizedBox(height: 30),
 
-                              // Email field
+                              // Field email
                               _buildTextField(
                                 controller: emailController,
                                 label: "Email",
@@ -298,10 +302,10 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               SizedBox(height: 20),
 
-                              // Password field
+                              // Field password
                               _buildTextField(
                                 controller: passwordController,
-                                label: "Password",
+                                label: "Kata Sandi",
                                 icon: Icons.lock_outline,
                                 isPassword: true,
                                 obscureText: _obscureText,
@@ -314,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               SizedBox(height: 30),
 
-                              // Login button
+                              // Tombol masuk
                               SizedBox(
                                 width: double.infinity,
                                 height: 55,
@@ -351,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen>
                                             ),
                                             SizedBox(width: 12),
                                             Text(
-                                              "Signing in...",
+                                              "Sedang masuk...",
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -360,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen>
                                           ],
                                         )
                                       : Text(
-                                          "SIGN IN",
+                                          "MASUK",
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -371,13 +375,13 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               SizedBox(height: 20),
 
-                              // Sign up option
+                              // Opsi daftar
                               Center(
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
-                                      "Don't have an account? ",
+                                      "Belum punya akun? ",
                                       style: TextStyle(
                                         color: Colors.grey.shade700,
                                         fontSize: 14,
@@ -392,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         );
                                       },
                                       child: Text(
-                                        "Sign up",
+                                        "Daftar",
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
@@ -405,7 +409,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               SizedBox(height: 20),
 
-                              // Error message
+                              // Pesan error
                               if (_errorMessage.isNotEmpty)
                                 Container(
                                   padding: EdgeInsets.all(12),
