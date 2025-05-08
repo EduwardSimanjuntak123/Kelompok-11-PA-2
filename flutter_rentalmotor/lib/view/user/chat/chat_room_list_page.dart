@@ -202,6 +202,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
       appBar: AppBar(
         backgroundColor: _themeColor,
         elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(20),
