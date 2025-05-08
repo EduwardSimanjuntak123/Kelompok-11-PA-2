@@ -5,7 +5,7 @@ import 'package:flutter_rentalmotor/view/vendor/lupakatasandiv.dart';
 import 'package:flutter_rentalmotor/view/vendor/editprofilvendor.dart';
 import 'package:flutter_rentalmotor/view/vendor/edittokovendor.dart';
 
-import 'package:flutter_rentalmotor/view/vendor/chatvendor.dart';
+import 'package:flutter_rentalmotor/view/user/chat/chat_room_list_page.dart';
 import 'package:flutter_rentalmotor/view/vendor/kelolaMotor.dart';
 import 'package:flutter_rentalmotor/view/vendor/data_transaksi.dart';
 import 'package:flutter_rentalmotor/view/vendor/notifikasivendor.dart';
@@ -37,6 +37,7 @@ class VendorDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: Colors.white,
       child: Column(
         children: [
           Container(
@@ -222,7 +223,8 @@ class VendorDrawer extends StatelessWidget {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ChatScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => ChatRoomListPage()),
                     );
                   },
                 ),
