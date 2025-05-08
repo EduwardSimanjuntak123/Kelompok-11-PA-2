@@ -169,7 +169,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
   void _prepareChartData() {
     // Get the last 7 days
     final now = DateTime.now();
-    final dates = List.generate(7, (index) => now.subtract(Duration(days: index)));
+    final dates =
+        List.generate(7, (index) => now.subtract(Duration(days: index)));
 
     // Initialize data for each day
     Map<String, Map<String, dynamic>> dailyData = {};
@@ -215,13 +216,13 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
     revenueSpots = [];
     transactionSpots = [];
     maxY = 0;
-    
+
     // Find max count for better scaling
     double maxCount = 0;
     dailyData.values.forEach((data) {
       if (data['count'] > maxCount) maxCount = data['count'].toDouble();
     });
-    
+
     // Scale factor for count to make it visible alongside revenue
     double countScaleFactor = maxCount > 0 ? 100000 / maxCount : 100000;
 
@@ -230,7 +231,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
       String dateKey = sortedDates[i];
       double x = i.toDouble();
       double revenueY = dailyData[dateKey]!['revenue'].toDouble();
-      double countY = dailyData[dateKey]!['count'].toDouble() * countScaleFactor;
+      double countY =
+          dailyData[dateKey]!['count'].toDouble() * countScaleFactor;
 
       revenueSpots.add(FlSpot(x, revenueY));
       transactionSpots.add(FlSpot(x, countY));
@@ -506,7 +508,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                     height: 200,
                                     width: double.infinity,
                                     child: Padding(
-                                      padding: const EdgeInsets.only(right: 16.0, top: 16.0),
+                                      padding: const EdgeInsets.only(
+                                          right: 16.0, top: 16.0),
                                       child: LineChart(
                                         LineChartData(
                                           gridData: FlGridData(
@@ -516,13 +519,15 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                             verticalInterval: 1,
                                             getDrawingHorizontalLine: (value) {
                                               return FlLine(
-                                                color: Colors.grey.withOpacity(0.2),
+                                                color: Colors.grey
+                                                    .withOpacity(0.2),
                                                 strokeWidth: 1,
                                               );
                                             },
                                             getDrawingVerticalLine: (value) {
                                               return FlLine(
-                                                color: Colors.grey.withOpacity(0.2),
+                                                color: Colors.grey
+                                                    .withOpacity(0.2),
                                                 strokeWidth: 1,
                                               );
                                             },
@@ -530,10 +535,12 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                           titlesData: FlTitlesData(
                                             show: true,
                                             rightTitles: AxisTitles(
-                                              sideTitles: SideTitles(showTitles: false),
+                                              sideTitles:
+                                                  SideTitles(showTitles: false),
                                             ),
                                             topTitles: AxisTitles(
-                                              sideTitles: SideTitles(showTitles: false),
+                                              sideTitles:
+                                                  SideTitles(showTitles: false),
                                             ),
                                             bottomTitles: AxisTitles(
                                               sideTitles: SideTitles(
@@ -541,16 +548,26 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                                 reservedSize: 30,
                                                 interval: 1,
                                                 getTitlesWidget: (value, meta) {
-                                                  if (value % 1 != 0) return const SizedBox.shrink();
+                                                  if (value % 1 != 0)
+                                                    return const SizedBox
+                                                        .shrink();
                                                   final now = DateTime.now();
-                                                  final date = now.subtract(Duration(days: (maxX - value).toInt()));
+                                                  final date = now.subtract(
+                                                      Duration(
+                                                          days: (maxX - value)
+                                                              .toInt()));
                                                   return Padding(
-                                                    padding: const EdgeInsets.only(top: 8.0),
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 8.0),
                                                     child: Text(
-                                                      DateFormat('dd/MM').format(date),
+                                                      DateFormat('dd/MM')
+                                                          .format(date),
                                                       style: TextStyle(
-                                                        color: textSecondaryColor,
-                                                        fontWeight: FontWeight.bold,
+                                                        color:
+                                                            textSecondaryColor,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                         fontSize: 10,
                                                       ),
                                                     ),
@@ -566,19 +583,26 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                                 getTitlesWidget: (value, meta) {
                                                   String formattedValue = '';
                                                   if (value >= 1000000) {
-                                                    formattedValue = '${(value / 1000000).toStringAsFixed(1)}M';
+                                                    formattedValue =
+                                                        '${(value / 1000000).toStringAsFixed(1)}M';
                                                   } else if (value >= 1000) {
-                                                    formattedValue = '${(value / 1000).toStringAsFixed(0)}K';
+                                                    formattedValue =
+                                                        '${(value / 1000).toStringAsFixed(0)}K';
                                                   } else {
-                                                    formattedValue = value.toStringAsFixed(0);
+                                                    formattedValue = value
+                                                        .toStringAsFixed(0);
                                                   }
                                                   return Padding(
-                                                    padding: const EdgeInsets.only(right: 8.0),
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            right: 8.0),
                                                     child: Text(
                                                       formattedValue,
                                                       style: TextStyle(
-                                                        color: textSecondaryColor,
-                                                        fontWeight: FontWeight.bold,
+                                                        color:
+                                                            textSecondaryColor,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                         fontSize: 10,
                                                       ),
                                                     ),
@@ -603,7 +627,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                               isStrokeCapRound: true,
                                               dotData: FlDotData(
                                                 show: true,
-                                                getDotPainter: (spot, percent, barData, index) {
+                                                getDotPainter: (spot, percent,
+                                                    barData, index) {
                                                   return FlDotCirclePainter(
                                                     radius: 4,
                                                     color: primaryColor,
@@ -614,7 +639,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                               ),
                                               belowBarData: BarAreaData(
                                                 show: true,
-                                                color: primaryColor.withOpacity(0.2),
+                                                color: primaryColor
+                                                    .withOpacity(0.2),
                                               ),
                                             ),
                                             LineChartBarData(
@@ -625,7 +651,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                               isStrokeCapRound: true,
                                               dotData: FlDotData(
                                                 show: true,
-                                                getDotPainter: (spot, percent, barData, index) {
+                                                getDotPainter: (spot, percent,
+                                                    barData, index) {
                                                   return FlDotCirclePainter(
                                                     radius: 4,
                                                     color: accentColor,
@@ -636,7 +663,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                               ),
                                               belowBarData: BarAreaData(
                                                 show: true,
-                                                color: accentColor.withOpacity(0.2),
+                                                color: accentColor
+                                                    .withOpacity(0.2),
                                               ),
                                             ),
                                           ],
