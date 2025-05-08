@@ -4,7 +4,7 @@ import 'package:flutter_rentalmotor/services/vendor/vendor_api_service.dart';
 import 'package:flutter_rentalmotor/view/vendor/lupakatasandiv.dart';
 import 'package:flutter_rentalmotor/view/vendor/editprofilvendor.dart';
 import 'package:flutter_rentalmotor/view/vendor/edittokovendor.dart';
-import 'package:flutter_rentalmotor/view/vendor/chatvendor.dart';
+import 'package:flutter_rentalmotor/view/user/chat/chat_room_list_page.dart';
 import 'package:flutter_rentalmotor/view/vendor/kelolaMotor.dart';
 import 'package:flutter_rentalmotor/view/vendor/data_transaksi.dart';
 import 'package:flutter_rentalmotor/view/vendor/notifikasivendor.dart';
@@ -405,7 +405,8 @@ class _VendorDrawerState extends State<VendorDrawer>
                       Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ChatScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => ChatRoomListPage()),
                       );
                     },
                   ),
