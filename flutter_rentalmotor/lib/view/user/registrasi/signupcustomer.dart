@@ -239,7 +239,8 @@ class _SignUpCustomerState extends State<SignUpCustomer>
       if (_passwordController.text != _confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text("Password dan Confirm Password tidak sama"),
+            content:
+                const Text("Kata Sandi dan Konfirmasi Kata Sandi tidak sama"),
             backgroundColor: Colors.red.shade700,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -571,14 +572,14 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                                 TextInputType.emailAddress),
                             _buildEnhancedDateField(
                                 'Tanggal Lahir', _dateOfBirthController),
-                            _buildEnhancedPasswordField('Password',
+                            _buildEnhancedPasswordField('Kata Sandi',
                                 _passwordController, _obscurePassword, () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
                               });
                             }),
                             _buildEnhancedPasswordField(
-                                'Konfirmasi Password',
+                                'Konfirmasi Kata Sandi',
                                 _confirmPasswordController,
                                 _obscureConfirmPassword, () {
                               setState(() {
