@@ -34,6 +34,18 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
     'rejected',
   ];
 
+  // Status priority order (lower index = higher priority)
+  final List<String> statusPriority = [
+    'pending',
+    'confirmed',
+    'in transit',
+    'in use',
+    'awaiting return',
+    'completed',
+    'canceled',
+    'rejected',
+  ];
+
   final Map<String, Color> statusColors = {
     'pending': Colors.orange,
     'confirmed': Colors.blue,
@@ -106,8 +118,49 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
   }
 
   List<dynamic> get filteredBookings {
-    if (selectedStatus == 'Semua') return bookings;
-    return bookings.where((b) => b['status'] == selectedStatus).toList();
+    if (selectedStatus == 'Semua') {
+      // Sort bookings by status priority
+      final sortedBookings = List<dynamic>.from(bookings);
+      sortedBookings.sort((a, b) {
+        // First sort by status priority
+        final statusA = a['status'] ?? '';
+        final statusB = b['status'] ?? '';
+
+        final priorityA = statusPriority.indexOf(statusA);
+        final priorityB = statusPriority.indexOf(statusB);
+
+        if (priorityA != priorityB) {
+          return priorityA - priorityB;
+        }
+
+        // If same status, sort by newest booking date
+        final dateA = a['booking_date'] != null
+            ? DateTime.parse(a['booking_date'])
+            : DateTime(1900);
+        final dateB = b['booking_date'] != null
+            ? DateTime.parse(b['booking_date'])
+            : DateTime(1900);
+
+        return dateB.compareTo(dateA); // Newest first
+      });
+
+      return sortedBookings;
+    }
+
+    // If filtering by specific status, still sort by date (newest first)
+    final filtered =
+        bookings.where((b) => b['status'] == selectedStatus).toList();
+    filtered.sort((a, b) {
+      final dateA = a['booking_date'] != null
+          ? DateTime.parse(a['booking_date'])
+          : DateTime(1900);
+      final dateB = b['booking_date'] != null
+          ? DateTime.parse(b['booking_date'])
+          : DateTime(1900);
+      return dateB.compareTo(dateA);
+    });
+
+    return filtered;
   }
 
   Widget buildStatusFilter() {
@@ -181,6 +234,7 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
         );
       },
       child: Card(
+        color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
           side: BorderSide(color: Colors.grey.shade200),
@@ -201,7 +255,7 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Booking #${booking['id'] ?? '-'}',
+                    'Booking',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -317,10 +371,15 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
           'Daftar Pesanan',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         backgroundColor: const Color(0xFF1A567D),
         elevation: 0,

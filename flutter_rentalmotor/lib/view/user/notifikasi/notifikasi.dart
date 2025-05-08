@@ -111,6 +111,14 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         _notifications = List<Map<String, dynamic>>.from(
           data.map((item) => item as Map<String, dynamic>),
         );
+        // Sort notifications by created_at in descending order (newest first)
+        _notifications.sort((a, b) {
+          final DateTime dateTimeA = DateTime.parse(
+              a['created_at'] ?? DateTime.now().toIso8601String());
+          final DateTime dateTimeB = DateTime.parse(
+              b['created_at'] ?? DateTime.now().toIso8601String());
+          return dateTimeB.compareTo(dateTimeA); // Reverse order (newest first)
+        });
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -177,6 +185,9 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
         centerTitle: true,
         backgroundColor: _themeColor,
         elevation: 0,
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(20),

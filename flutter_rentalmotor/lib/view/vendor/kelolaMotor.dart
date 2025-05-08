@@ -21,16 +21,16 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
   List<MotorModel> _filteredMotorList = [];
 
   // Theme colors
-  final Color primaryColor = const Color(0xFF1A567D); // Modern indigo
-  final Color secondaryColor = const Color(0xFF00BFA5); // Modern teal
-  final Color accentColor = const Color(0xFFFF6D00); // Modern orange
-  final Color backgroundColor = const Color(0xFFF5F7FA); // Light gray
+  final Color primaryColor = const Color(0xFF1A567D);
+  final Color secondaryColor = const Color(0xFF00BFA5);
+  final Color accentColor = const Color(0xFFFF6D00);
+  final Color backgroundColor = const Color(0xFFF5F7FA);
   final Color cardColor = Colors.white;
-  final Color textPrimaryColor = const Color(0xFF263238); // Dark gray
-  final Color textSecondaryColor = const Color(0xFF607D8B); // Blue gray
-  final Color successColor = const Color(0xFF4CAF50); // Success green
-  final Color warningColor = const Color(0xFFFFC107); // Warning amber
-  final Color dangerColor = const Color(0xFFF44336); // Danger red
+  final Color textPrimaryColor = const Color(0xFF263238);
+  final Color textSecondaryColor = const Color(0xFF607D8B);
+  final Color successColor = const Color(0xFF4CAF50);
+  final Color warningColor = const Color(0xFFFFC107);
+  final Color dangerColor = const Color(0xFFF44336);
 
   @override
   void initState() {
@@ -54,7 +54,6 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
     super.dispose();
   }
 
-  // Fetching motor data from the API
   Future<void> fetchMotorData() async {
     setState(() {
       isLoading = true;
@@ -91,7 +90,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
           action: SnackBarAction(
             label: 'Retry',
             onPressed: () {
-              fetchMotorData(); // Retry fetching motor data
+              fetchMotorData();
             },
             textColor: Colors.white,
           ),
@@ -116,7 +115,6 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
     }
   }
 
-  // Handling the refresh action triggered by swipe-down
   Future<void> _handleRefresh() async {
     await fetchMotorData();
   }
@@ -144,7 +142,8 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 22,
+            fontSize: 24,
+            letterSpacing: 1.2,
           ),
         ),
         backgroundColor: primaryColor,
@@ -153,21 +152,30 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [primaryColor, primaryColor.withOpacity(0.8)],
+              colors: [
+                primaryColor,
+                Color(0xFF0D47A1),
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                spreadRadius: 2,
+              ),
+            ],
           ),
         ),
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(20),
-            bottomRight: Radius.circular(20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(25),
           ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, size: 26),
             onPressed: fetchMotorData,
             tooltip: 'Refresh',
           ),
@@ -177,16 +185,16 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
         children: [
           // Search Bar
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
             child: Container(
               decoration: BoxDecoration(
                 color: cardColor,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(15),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
                     blurRadius: 10,
-                    offset: const Offset(0, 5),
+                    offset: Offset(0, 5),
                   ),
                 ],
               ),
@@ -199,9 +207,12 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                 },
                 decoration: InputDecoration(
                   hintText: 'Cari motor...',
-                  prefixIcon: Icon(Icons.search, color: primaryColor),
+                  hintStyle:
+                      TextStyle(color: textSecondaryColor.withOpacity(0.6)),
+                  prefixIcon: Icon(Icons.search, color: primaryColor, size: 24),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 15),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 ),
               ),
             ),
@@ -210,7 +221,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
           // Stats Summary
           if (!isLoading && motorList.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Row(
                 children: [
                   _buildStatCard(
@@ -219,7 +230,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                     Icons.motorcycle,
                     primaryColor,
                   ),
-                  SizedBox(width: 10),
+                  SizedBox(width: 12),
                   _buildStatCard(
                     'Tersedia',
                     motorList
@@ -229,7 +240,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                     Icons.check_circle,
                     successColor,
                   ),
-                  SizedBox(width: 10),
+                  SizedBox(width: 12),
                   _buildStatCard(
                     'Disewa',
                     motorList
@@ -247,27 +258,29 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
           Expanded(
             child: RefreshIndicator(
               onRefresh: _handleRefresh,
+              backgroundColor: cardColor,
+              color: primaryColor,
               child: isLoading
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SizedBox(
-                            width: 60,
-                            height: 60,
+                            width: 70,
+                            height: 70,
                             child: CircularProgressIndicator(
                               valueColor:
                                   AlwaysStoppedAnimation<Color>(primaryColor),
-                              strokeWidth: 3,
+                              strokeWidth: 4,
                             ),
                           ),
                           const SizedBox(height: 24),
                           Text(
                             'Memuat data motor...',
                             style: TextStyle(
-                              color: textSecondaryColor,
+                              color: textPrimaryColor,
                               fontWeight: FontWeight.w500,
-                              fontSize: 16,
+                              fontSize: 18,
                             ),
                           ),
                         ],
@@ -279,7 +292,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(20),
+                                padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
                                   color: Colors.grey.withOpacity(0.1),
                                   shape: BoxShape.circle,
@@ -298,7 +311,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: textSecondaryColor,
+                                  color: textPrimaryColor,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -308,7 +321,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                                     : 'Coba kata kunci pencarian yang lain',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: textSecondaryColor.withOpacity(0.7),
+                                  color: textSecondaryColor,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -318,11 +331,15 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                       : FadeTransition(
                           opacity: _fadeAnimation,
                           child: ListView.builder(
-                            padding: EdgeInsets.all(16),
+                            padding: EdgeInsets.fromLTRB(16, 8, 16, 100),
+                            physics: BouncingScrollPhysics(),
                             itemCount: _filteredMotorList.length,
                             itemBuilder: (context, index) {
                               MotorModel motor = _filteredMotorList[index];
-                              return _buildMotorCard(motor);
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: _buildMotorCard(motor, index),
+                              );
                             },
                           ),
                         ),
@@ -335,13 +352,26 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => CreateMotorScreen()),
-          ).then((_) => fetchMotorData()); // Refresh after adding a motor
+          ).then((_) => fetchMotorData());
         },
-        icon: Icon(Icons.add),
-        label: Text('Tambah Motor'),
-        backgroundColor: primaryColor,
-        tooltip: 'Tambah Motor',
+        icon: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 25,
+        ),
+        label: const Text(
+          'Tambah Motor',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+        backgroundColor: const Color(0xFF1976D2),
         elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50),
+        ),
       ),
     );
   }
@@ -350,42 +380,42 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
       String title, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: const Offset(0, 5),
+              offset: Offset(0, 5),
             ),
           ],
         ),
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(8),
+              padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: color, size: 22),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 10),
             Text(
               value,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: textPrimaryColor,
               ),
             ),
-            SizedBox(height: 4),
+            SizedBox(height: 6),
             Text(
               title,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 13,
                 color: textSecondaryColor,
               ),
               textAlign: TextAlign.center,
@@ -396,71 +426,109 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
     );
   }
 
-  Widget _buildMotorCard(MotorModel motor) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MotorDetailScreen(motorId: motor.id),
-            ),
-          ).then((_) => fetchMotorData()); // Refresh after returning
-        },
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Motor Image
-            ClipRRect(
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+  Widget _buildMotorCard(MotorModel motor, int index) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 500 + (index * 100)),
+      curve: Curves.easeOutQuint,
+      child: Card(
+        margin: EdgeInsets.zero,
+        elevation: 4,
+        color: cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        shadowColor: Colors.black.withOpacity(0.1),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MotorDetailScreen(motorId: motor.id),
               ),
-              child: Stack(
+            ).then((_) => fetchMotorData());
+          },
+          borderRadius: BorderRadius.circular(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Motor Image
+              Stack(
                 children: [
-                  motor.image != null
-                      ? Image.network(
-                          '$baseUrl${motor.image}',
-                          height: 180,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                            height: 180,
-                            width: double.infinity,
-                            color: Colors.grey[300],
-                            child: Icon(Icons.image_not_supported,
-                                size: 50, color: Colors.grey[600]),
+                  Container(
+                    height: 200,
+                    width: double.infinity,
+                    child: motor.image != null
+                        ? Hero(
+                            tag: 'motor-image-${motor.id}',
+                            child: Image.network(
+                              '$baseUrl${motor.image}',
+                              fit: BoxFit.cover,
+                              loadingBuilder: (BuildContext context,
+                                  Widget child,
+                                  ImageChunkEvent? loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                    color: primaryColor,
+                                  ),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                color: Colors.grey[200],
+                                child: Center(
+                                  child: Icon(Icons.image_not_supported,
+                                      size: 50, color: Colors.grey[500]),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            color: Colors.grey[200],
+                            child: Center(
+                              child: Icon(Icons.image_not_supported,
+                                  size: 50, color: Colors.grey[500]),
+                            ),
                           ),
-                        )
-                      : Container(
-                          height: 180,
-                          width: double.infinity,
-                          color: Colors.grey[300],
-                          child: Icon(Icons.image_not_supported,
-                              size: 50, color: Colors.grey[600]),
+                  ),
+
+                  // Gradient overlay
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.4),
+                            Colors.transparent,
+                          ],
                         ),
+                      ),
+                    ),
+                  ),
+
                   // Status Badge
                   Positioned(
-                    top: 12,
-                    right: 12,
+                    top: 16,
+                    right: 16,
                     child: Container(
                       padding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _getStatusColor(motor.status).withOpacity(0.9),
+                        color: _getStatusColor(motor.status).withOpacity(0.95),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.2),
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
                           ),
                         ],
                       ),
@@ -470,33 +538,34 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          fontSize: 13,
                         ),
                       ),
                     ),
                   ),
+
                   // Price Badge
                   Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
+                    bottom: 16,
+                    left: 16,
                     child: Container(
                       padding:
                           EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            Colors.black.withOpacity(0.8),
-                            Colors.transparent,
-                          ],
-                        ),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Text(
                         'Rp ${motor.price.toStringAsFixed(0)}/hari',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: primaryColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -505,94 +574,137 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                   ),
                 ],
               ),
-            ),
-            // Motor Details
-            Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          motor.name,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimaryColor,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Icon(Icons.star, color: Colors.amber, size: 18),
-                          SizedBox(width: 4),
-                          Text(
-                            '${motor.rating}',
+
+              // Motor Details
+              Padding(
+                padding: EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            motor.name,
                             style: TextStyle(
+                              fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: textPrimaryColor,
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildInfoChip(Icons.branding_watermark, motor.brand),
-                      SizedBox(width: 8),
-                      _buildInfoChip(
-                          Icons.calendar_today, motor.year.toString()),
-                      SizedBox(width: 8),
-                      _buildInfoChip(Icons.category, motor.type),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    motor.description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: textSecondaryColor,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  MotorDetailScreen(motorId: motor.id),
-                            ),
-                          ).then((_) => fetchMotorData());
-                        },
-                        icon: Icon(Icons.edit, size: 18),
-                        label: Text('Edit'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: primaryColor,
-                          side: BorderSide(color: primaryColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        Row(
+                          children: [
+                            Icon(Icons.star, color: Colors.amber, size: 20),
+                            SizedBox(width: 6),
+                            Text(
+                              '${motor.rating}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: textPrimaryColor,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+
+                    // Motor specs chips
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildInfoChip(Icons.branding_watermark, motor.brand),
+                        _buildInfoChip(
+                            Icons.calendar_today, motor.year.toString()),
+                        _buildInfoChip(Icons.category, motor.type),
+                      ],
+                    ),
+
+                    SizedBox(height: 16),
+                    Text(
+                      motor.description,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: textSecondaryColor,
+                        height: 1.4,
                       ),
-                    ],
-                  ),
-                ],
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 18),
+
+                    // Enhanced Kelola Button
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Color(0xFF1A567D),
+                                Color(0xFF0D3A5F),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 6,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                            border: Border.all(
+                              color: Color(0xFF2D6896),
+                              width: 1,
+                            ),
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      MotorDetailScreen(motorId: motor.id),
+                                ),
+                              ).then((_) => fetchMotorData());
+                            },
+                            icon: Icon(Icons.settings,
+                                size: 20, color: Colors.white),
+                            label: Text(
+                              'Kelola',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              shadowColor: Colors.transparent,
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -600,22 +712,23 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
 
   Widget _buildInfoChip(IconData icon, String text) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: primaryColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: primaryColor.withOpacity(0.2), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: primaryColor),
-          SizedBox(width: 4),
+          Icon(icon, size: 16, color: primaryColor),
+          SizedBox(width: 6),
           Text(
             text,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 13,
               color: primaryColor,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

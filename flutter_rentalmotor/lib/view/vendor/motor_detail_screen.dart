@@ -278,7 +278,7 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.edit, size: 18),
+                  Icon(Icons.edit, color: Colors.white, size: 18),
                   const SizedBox(width: 8),
                   const Text('Edit'),
                 ],
@@ -347,7 +347,7 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.delete, size: 18),
+                  Icon(Icons.delete, color: Colors.white, size: 18),
                   const SizedBox(width: 8),
                   const Text('Hapus'),
                 ],
@@ -750,7 +750,8 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
                                         Expanded(
                                           child: ElevatedButton.icon(
                                             onPressed: _navigateToEditScreen,
-                                            icon: Icon(Icons.edit),
+                                            icon: Icon(Icons.edit,
+                                                color: Colors.white),
                                             label: Text('Edit'),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: primaryColor,
@@ -769,7 +770,8 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
                                         Expanded(
                                           child: ElevatedButton.icon(
                                             onPressed: _confirmDelete,
-                                            icon: Icon(Icons.delete),
+                                            icon: Icon(Icons.delete,
+                                                color: Colors.white),
                                             label: Text('Hapus'),
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor: dangerColor,
