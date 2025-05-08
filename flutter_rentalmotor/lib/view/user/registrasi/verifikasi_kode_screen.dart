@@ -98,7 +98,8 @@ class _VerifikasiKodeScreenState extends State<VerifikasiKodeScreen> {
   Future<void> _confirmCode() async {
     if (_remainingSeconds == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OTP telah kedaluwarsa. Silakan kirim ulang.')),
+        const SnackBar(
+            content: Text('OTP telah kedaluwarsa. Silakan kirim ulang.')),
       );
       return;
     }
@@ -173,9 +174,11 @@ class _VerifikasiKodeScreenState extends State<VerifikasiKodeScreen> {
                         counterText: '',
                         border: InputBorder.none,
                       ),
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      textInputAction: TextInputAction.next, // Add this to support "next" action
+                      textInputAction: TextInputAction
+                          .next, // Add this to support "next" action
                     ),
                   ),
                 );
@@ -195,7 +198,9 @@ class _VerifikasiKodeScreenState extends State<VerifikasiKodeScreen> {
                   child: Text(
                     'Kirim ulang kode',
                     style: TextStyle(
-                      color: _remainingSeconds == 0 ? const Color(0xFF1A5276) : Colors.grey,
+                      color: _remainingSeconds == 0
+                          ? const Color(0xFF1A5276)
+                          : Colors.grey,
                     ),
                   ),
                 ),
@@ -209,7 +214,8 @@ class _VerifikasiKodeScreenState extends State<VerifikasiKodeScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A5276),
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: const Text(
                   'Konfirmasi Kode',
