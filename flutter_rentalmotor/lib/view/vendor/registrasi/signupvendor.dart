@@ -1,15 +1,18 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_rentalmotor/view/user/registrasi/otp_verification.dart';
+import 'package:flutter_rentalmotor/services/autentifikasi/auth_service.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({Key? key}) : super(key: key);
+class SignUpVendorScreen extends StatefulWidget {
+  const SignUpVendorScreen({Key? key}) : super(key: key);
 
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  _SignUpVendorScreenState createState() => _SignUpVendorScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -19,7 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _shopAddressController = TextEditingController();
   final _shopDescriptionController = TextEditingController();
 
-  XFile? _profileImage;
+  File? _profileImage;
   bool _isLoading = false;
   int? _selectedKecamatanId;
 
@@ -30,48 +33,77 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final Color darkTextColor = const Color(0xFF0A0A0A);
 
   final List<Map<String, dynamic>> _kecamatanList = [
-    {'id': 1, 'name': 'Baiturrahman'},
-    {'id': 2, 'name': 'Banda Raya'},
-    {'id': 3, 'name': 'Jaya Baru'},
-    {'id': 4, 'name': 'Kuta Alam'},
-    {'id': 5, 'name': 'Meuraxa'},
-    {'id': 6, 'name': 'Syiah Kuala'},
-    {'id': 7, 'name': 'Ulee Kareng'},
-    {'id': 8, 'name': 'Lueng Bata'},
-    {'id': 9, 'name': 'Kuta Raja'},
+    {'id': 1, 'name': 'Ajibata'},
+    {'id': 2, 'name': 'Balige'},
+    {'id': 3, 'name': 'Borbor'},
+    {'id': 4, 'name': 'Laguboti'},
+    {'id': 5, 'name': 'Lumbanjulu'},
+    {'id': 6, 'name': 'Sigumpar'},
+    {'id': 7, 'name': 'Silaen'},
+    {'id': 8, 'name': 'Tampahan'},
+    {'id': 9, 'name': 'Uluan'},
   ];
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    setState(() {
-      _profileImage = image;
-    });
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
   }
 
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedKecamatanId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Pilih kecamatan terlebih dahulu'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       setState(() {
         _isLoading = true;
       });
 
-      await Future.delayed(const Duration(seconds: 3));
+      AuthService authService = AuthService();
+      final response = await authService.registerVendor(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        phone: _phoneController.text.trim(),
+        shopName: _shopNameController.text.trim(),
+        shopAddress: _shopAddressController.text.trim(),
+        shopDescription: _shopDescriptionController.text.trim(),
+        kecamatanId: _selectedKecamatanId!,
+        profileImage: _profileImage,
+      );
 
       setState(() {
         _isLoading = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Pendaftaran Berhasil!'),
-          backgroundColor: accentColor,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+      if (response["success"]) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OTPVerificationScreen(
+              email: _emailController.text.trim(),
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response["message"] ?? "Pendaftaran gagal"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -81,7 +113,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       appBar: AppBar(
         title: const Text(
           'Daftar Vendor',
-          style: TextStyle(color: Colors.white), // Ubah warna teks jadi putih
+          style: TextStyle(color: Colors.white),
         ),
         backgroundColor: primaryColor,
         elevation: 0,
@@ -168,7 +200,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             radius: 65,
                             backgroundColor: lightColor,
                             backgroundImage: _profileImage != null
-                                ? FileImage(File(_profileImage!.path))
+                                ? FileImage(_profileImage!)
                                 : null,
                             child: _profileImage == null
                                 ? Column(
