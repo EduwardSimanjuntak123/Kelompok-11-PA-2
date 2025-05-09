@@ -562,7 +562,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                       label: const Text('Simpan Motor',
                           style: TextStyle(fontSize: 16)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2C567E),
+                        backgroundColor: const Color(0xFF1976D2),
                         foregroundColor: Colors.white,
                         elevation: 2,
                         shape: RoundedRectangleBorder(
