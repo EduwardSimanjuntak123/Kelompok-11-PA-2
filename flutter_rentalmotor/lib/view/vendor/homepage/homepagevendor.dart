@@ -27,6 +27,7 @@ import 'package:flutter_rentalmotor/view/vendor/homepage/components/revenue_char
 import 'package:flutter_rentalmotor/view/vendor/homepage/components/booking_list.dart';
 import 'package:flutter_rentalmotor/view/vendor/homepage/components/transaction_list.dart';
 import 'package:flutter_rentalmotor/view/vendor/homepage/components/vendor_drawer.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HomepageVendor extends StatefulWidget {
   const HomepageVendor({super.key});
@@ -127,7 +128,6 @@ class _DashboardState extends State<HomepageVendor> {
       print('Error fetching chat rooms: $e');
     }
   }
-  
 
   void _connectWebSocket(int userId) {
     // Tutup koneksi yang ada jika ada
