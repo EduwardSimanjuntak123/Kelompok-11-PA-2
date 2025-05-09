@@ -1,3 +1,4 @@
+// auth_service.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_rentalmotor/config/api_config.dart';
@@ -6,6 +7,63 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final String baseUrl = ApiConfig.baseUrl;
+
+  /// **📌 Register Vendor**
+  Future<Map<String, dynamic>> registerVendor({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    required String shopName,
+    required String shopAddress,
+    required String shopDescription,
+    required int kecamatanId,
+    File? profileImage,
+  }) async {
+    try {
+      var uri = Uri.parse('$baseUrl/vendor/register');
+      var request = http.MultipartRequest('POST', uri);
+
+      request.fields['name'] = name;
+      request.fields['email'] = email;
+      request.fields['password'] = password;
+      request.fields['phone'] = phone;
+      request.fields['shop_name'] = shopName;
+      request.fields['shop_address'] = shopAddress;
+      request.fields['shop_description'] = shopDescription;
+      request.fields['kecamatan_id'] = kecamatanId.toString();
+
+      if (profileImage != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'profile_image',
+          profileImage.path,
+        ));
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData["data"] != null) {
+          await _saveUserData(responseData["data"]);
+        }
+        return {
+          "success": true,
+          "message": "Vendor registration successful",
+          "data": responseData
+        };
+      } else {
+        final responseBody = jsonDecode(response.body);
+        return {
+          "success": false,
+          "message": responseBody["error"] ?? "Vendor registration failed"
+        };
+      }
+    } catch (e) {
+      return {"success": false, "message": "Error: $e"};
+    }
+  }
 
   /// **📌 Register Customer**
   Future<Map<String, dynamic>> registerCustomer({
