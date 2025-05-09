@@ -326,7 +326,7 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: MediaQuery.of(context).size.width < 360 ? 16 : 20,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -401,35 +401,78 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                     onRefresh: fetchTransactionData,
                     child: SingleChildScrollView(
                       physics: AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).padding.bottom,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Summary Cards
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                            child: Row(
-                              children: [
-                                _buildSummaryCard(
-                                  'Total Pendapatan',
-                                  'Rp ${formatCurrency(totalIncome)}',
-                                  Icons.monetization_on,
-                                  primaryColor,
-                                ),
-                                SizedBox(width: 10),
-                                _buildSummaryCard(
-                                  'Transaksi Selesai',
-                                  completedCount.toString(),
-                                  Icons.check_circle,
-                                  successColor,
-                                ),
-                                SizedBox(width: 10),
-                                _buildSummaryCard(
-                                  'Transaksi Pending',
-                                  pendingCount.toString(),
-                                  Icons.pending_actions,
-                                  warningColor,
-                                ),
-                              ],
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                if (constraints.maxWidth < 400) {
+                                  return SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: [
+                                        _buildSummaryCard(
+                                          'Total Pendapatan',
+                                          'Rp ${formatCurrency(totalIncome)}',
+                                          Icons.monetization_on,
+                                          primaryColor,
+                                        ),
+                                        SizedBox(width: 10),
+                                        _buildSummaryCard(
+                                          'Transaksi Selesai',
+                                          completedCount.toString(),
+                                          Icons.check_circle,
+                                          successColor,
+                                        ),
+                                        SizedBox(width: 10),
+                                        _buildSummaryCard(
+                                          'Transaksi Pending',
+                                          pendingCount.toString(),
+                                          Icons.pending_actions,
+                                          warningColor,
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                } else {
+                                  return Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildSummaryCard(
+                                          'Total Pendapatan',
+                                          'Rp ${formatCurrency(totalIncome)}',
+                                          Icons.monetization_on,
+                                          primaryColor,
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: _buildSummaryCard(
+                                          'Transaksi Selesai',
+                                          completedCount.toString(),
+                                          Icons.check_circle,
+                                          successColor,
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Expanded(
+                                        child: _buildSummaryCard(
+                                          'Transaksi Pending',
+                                          pendingCount.toString(),
+                                          Icons.pending_actions,
+                                          warningColor,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                              },
                             ),
                           ),
 
@@ -456,57 +499,80 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'Pendapatan 7 Hari Terakhir',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: textPrimaryColor,
+                                      Flexible(
+                                        child: Text(
+                                          'Pendapatan 7 Hari Terakhir',
+                                          style: TextStyle(
+                                            fontSize: MediaQuery.of(context)
+                                                        .size
+                                                        .width <
+                                                    360
+                                                ? 14
+                                                : 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: textPrimaryColor,
+                                          ),
+                                          maxLines: 2,
                                         ),
                                       ),
-                                      Row(
-                                        children: [
-                                          Container(
-                                            width: 12,
-                                            height: 12,
-                                            decoration: BoxDecoration(
-                                              color: primaryColor,
-                                              shape: BoxShape.circle,
+                                      Flexible(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.end,
+                                          children: [
+                                            Container(
+                                              width: 12,
+                                              height: 12,
+                                              decoration: BoxDecoration(
+                                                color: primaryColor,
+                                                shape: BoxShape.circle,
+                                              ),
                                             ),
-                                          ),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            'Pendapatan',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: textSecondaryColor,
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Pendapatan',
+                                              style: TextStyle(
+                                                fontSize: MediaQuery.of(context)
+                                                            .size
+                                                            .width <
+                                                        360
+                                                    ? 10
+                                                    : 12,
+                                                color: textSecondaryColor,
+                                              ),
                                             ),
-                                          ),
-                                          SizedBox(width: 8),
-                                          Container(
-                                            width: 12,
-                                            height: 12,
-                                            decoration: BoxDecoration(
-                                              color: accentColor,
-                                              shape: BoxShape.circle,
+                                            SizedBox(width: 8),
+                                            Container(
+                                              width: 12,
+                                              height: 12,
+                                              decoration: BoxDecoration(
+                                                color: accentColor,
+                                                shape: BoxShape.circle,
+                                              ),
                                             ),
-                                          ),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            'Jumlah',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: textSecondaryColor,
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Jumlah',
+                                              style: TextStyle(
+                                                fontSize: MediaQuery.of(context)
+                                                            .size
+                                                            .width <
+                                                        360
+                                                    ? 10
+                                                    : 12,
+                                                color: textSecondaryColor,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
                                   SizedBox(height: 20),
                                   Container(
                                     height: 200,
-                                    width: double.infinity,
+                                    width:
+                                        MediaQuery.of(context).size.width - 32,
                                     child: Padding(
                                       padding: const EdgeInsets.only(
                                           right: 16.0, top: 16.0),
@@ -754,50 +820,57 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
 
   Widget _buildSummaryCard(
       String title, String value, IconData icon, Color color) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+    return Container(
+      constraints: BoxConstraints(
+        minWidth: 110,
+        maxWidth: 200,
+      ),
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      margin: EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: textPrimaryColor,
             ),
-            SizedBox(height: 12),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: textPrimaryColor,
-              ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 10,
+              color: textSecondaryColor,
             ),
-            SizedBox(height: 4),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12,
-                color: textSecondaryColor,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+          ),
+        ],
       ),
     );
   }
@@ -866,6 +939,9 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width - 64,
+        ),
         padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           border: Border(
@@ -917,36 +993,43 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                 ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  'Rp ${formatCurrency(parsedPrice)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: status.toLowerCase() == 'completed'
-                        ? successColor
-                        : textPrimaryColor,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    status.substring(0, 1).toUpperCase() + status.substring(1),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Rp ${formatCurrency(parsedPrice)}',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: statusColor,
+                      color: status.toLowerCase() == 'completed'
+                          ? successColor
+                          : textPrimaryColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 4),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      status.substring(0, 1).toUpperCase() +
+                          status.substring(1),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
