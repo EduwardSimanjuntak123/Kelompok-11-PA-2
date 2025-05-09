@@ -201,13 +201,13 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             onPressed: () {
-              Navigator.of(ctx).pop(); // tutup dialog
-              _submitForm(); // lanjutkan update
+              Navigator.of(ctx).pop();
+              _submitForm();
             },
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check, size: 18),
+                Icon(Icons.check, size: 18, color: Colors.white),
                 const SizedBox(width: 8),
                 const Text('Ya, Update'),
               ],
@@ -220,15 +220,19 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenWidth < 360;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Edit Motor',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 20,
+            fontSize: isSmallScreen ? 18 : 20,
           ),
         ),
         backgroundColor: primaryColor,
@@ -269,14 +273,14 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                     style: TextStyle(
                       color: textSecondaryColor,
                       fontWeight: FontWeight.w500,
-                      fontSize: 16,
+                      fontSize: isSmallScreen ? 14 : 16,
                     ),
                   ),
                 ],
               ),
             )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -288,7 +292,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                         children: [
                           Container(
                             width: double.infinity,
-                            height: 200,
+                            height: screenHeight * 0.25,
                             margin: const EdgeInsets.only(bottom: 20),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(16),
@@ -367,7 +371,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
 
                     // Form Fields
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
                       decoration: BoxDecoration(
                         color: cardColor,
                         borderRadius: BorderRadius.circular(16),
@@ -385,7 +389,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                           Text(
                             'Informasi Motor',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: isSmallScreen ? 16 : 18,
                               fontWeight: FontWeight.bold,
                               color: primaryColor,
                             ),
@@ -404,12 +408,51 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                             keyboardType: TextInputType.number,
                             onSaved: (val) => motorYear = int.parse(val!),
                           ),
-                          _buildTextField(
-                            label: 'Harga (Rp)',
-                            initialValue: motorPrice.toString(),
-                            icon: Icons.attach_money,
-                            keyboardType: TextInputType.number,
-                            onSaved: (val) => motorPrice = double.parse(val!),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: TextFormField(
+                              initialValue: motorPrice.toString(),
+                              decoration: InputDecoration(
+                                labelText: 'Harga (Rp)',
+                                prefixIcon: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Text(
+                                    'Rp',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2C567E),
+                                    ),
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey[300]!),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey[300]!),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: primaryColor),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 16, horizontal: 16),
+                              ),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Mohon masukkan harga';
+                                }
+                                return null;
+                              },
+                              onSaved: (val) => motorPrice = double.parse(val!),
+                            ),
                           ),
                           _buildTextField(
                             label: 'Warna',
@@ -440,7 +483,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                           Text(
                             'Deskripsi',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: isSmallScreen ? 14 : 16,
                               fontWeight: FontWeight.bold,
                               color: textPrimaryColor,
                             ),
@@ -478,52 +521,45 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                     const SizedBox(height: 30),
 
                     // Update Button
-                    Container(
+                    SizedBox(
                       width: double.infinity,
-                      height: 55,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [successColor, successColor.withOpacity(0.8)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                      height: isSmallScreen ? 50 : 55,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: successColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          elevation: 5,
+                          shadowColor: successColor.withOpacity(0.4),
+                          padding: EdgeInsets.symmetric(
+                              vertical: isSmallScreen ? 12 : 16),
                         ),
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: successColor.withOpacity(0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: _confirmUpdate,
-                          borderRadius: BorderRadius.circular(15),
-                          child: Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.save, color: Colors.white, size: 24),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Simpan Perubahan',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
+                        onPressed: _confirmUpdate,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.save,
+                                color: Colors.white,
+                                size: isSmallScreen ? 20 : 24),
+                            SizedBox(width: isSmallScreen ? 8 : 12),
+                            Text(
+                              'Simpan Perubahan',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isSmallScreen ? 16 : 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 30),
+                    SizedBox(
+                        height: MediaQuery.of(context).padding.bottom + 20),
                   ],
                 ),
               ),
@@ -538,6 +574,8 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
     TextInputType keyboardType = TextInputType.text,
     required FormFieldSetter<String> onSaved,
   }) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: TextFormField(
@@ -559,8 +597,8 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: primaryColor),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          contentPadding: EdgeInsets.symmetric(
+              vertical: isSmallScreen ? 14 : 16, horizontal: 16),
         ),
         keyboardType: keyboardType,
         validator: (value) {
@@ -581,6 +619,8 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
     required List<String> items,
     required Function(String?) onChanged,
   }) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: DropdownButtonFormField<String>(
@@ -602,15 +642,16 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: primaryColor),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          contentPadding: EdgeInsets.symmetric(
+              vertical: isSmallScreen ? 14 : 16, horizontal: 16),
         ),
         items: items.map((String value) {
           return DropdownMenuItem<String>(
             value: value,
             child: Text(
               value.substring(0, 1).toUpperCase() + value.substring(1),
-              style: TextStyle(color: textPrimaryColor),
+              style: TextStyle(
+                  color: textPrimaryColor, fontSize: isSmallScreen ? 14 : 16),
             ),
           );
         }).toList(),
