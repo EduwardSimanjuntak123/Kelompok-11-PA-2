@@ -154,7 +154,7 @@ class WelcomePage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => SignUpScreen()),
+                              builder: (context) => SignUpVendorScreen()),
                         );
                       },
                       icon: const Icon(Icons.storefront_rounded,
