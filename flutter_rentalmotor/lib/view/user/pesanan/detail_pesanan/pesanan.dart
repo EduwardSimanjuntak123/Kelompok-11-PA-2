@@ -29,7 +29,7 @@ class _PesananPageState extends State<PesananPage> {
   bool _hasReviewed = false;
   List<dynamic> _extensions = [];
   bool _loadingExt = true;
-  
+
   // Blue theme colors
   final Color primaryBlue = Color(0xFF2C567E);
 
@@ -61,7 +61,8 @@ class _PesananPageState extends State<PesananPage> {
   Future<void> _fetchExtensions() async {
     try {
       final bookingId = widget.booking['id'];
-      final extensions = await PesananExtensionService.fetchExtensions(bookingId);
+      final extensions =
+          await PesananExtensionService.fetchExtensions(bookingId);
       setState(() {
         _extensions = extensions;
         _loadingExt = false;
@@ -87,13 +88,14 @@ class _PesananPageState extends State<PesananPage> {
     final motor = widget.booking['motor'];
     final int motorId = motor['id'];
     final bookingEndDate = DateTime.parse(widget.booking['end_date']);
-    
+
     // Fetch unavailable dates
-    final unavailableDates = await PesananExtensionService.getUnavailableDates(motorId);
-    
+    final unavailableDates =
+        await PesananExtensionService.getUnavailableDates(motorId);
+
     // Default additional days
     int additionalDays = 3;
-    
+
     // Check if extension is possible
     bool cannotExtend = false;
     for (DateTime date in unavailableDates) {
@@ -107,7 +109,7 @@ class _PesananPageState extends State<PesananPage> {
       }
       if (cannotExtend) break;
     }
-    
+
     // Show dialog
     await showDialog(
       context: context,
@@ -119,7 +121,7 @@ class _PesananPageState extends State<PesananPage> {
           final result = await requestExtensionDays(bookingId, additionalDays);
           final success = result['success'];
           final message = result['message'];
-          
+
           await showDialog(
             context: context,
             builder: (context) => AlertDialog(
@@ -151,7 +153,8 @@ class _PesananPageState extends State<PesananPage> {
 
   Future<Map<String, dynamic>> requestExtensionDays(
       int bookingId, int additionalDays) async {
-    return await PesananExtensionService.requestExtensionDays(bookingId, additionalDays);
+    return await PesananExtensionService.requestExtensionDays(
+        bookingId, additionalDays);
   }
 
   Future<void> cancelBooking(int bookingId) async {
