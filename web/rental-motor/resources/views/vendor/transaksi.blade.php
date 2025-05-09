@@ -46,9 +46,22 @@
                     <div class="p-4 bg-white shadow rounded cursor-pointer hover:bg-gray-100 transition flex justify-between items-center"
                         onclick='showTransactionDetails(@json($t))'>
                         <div>
+                            @php
+                                // Mapping status ke Bahasa Indonesia
+                                $statusMap = [
+                                    'completed' => 'Pesanan Selesai',
+                                ];
+                                $raw = strtolower($t['status']);
+                                $statusText = $statusMap[$raw] ?? ucfirst($raw);
+                            @endphp
+
                             <h3 class="text-lg font-semibold">
-                                {{ $t['customer_name'] }} – {{ ucfirst($t['status']) }}
+                                {{ $t['customer_name'] }} –
+                                <span class="text-blue-700 font-bold">
+                                    {{ $statusText }}
+                                </span>
                             </h3>
+
                             <p class="text-sm text-gray-500">
                                 📅 Booking: {{ \Carbon\Carbon::parse($t['booking_date'])->format('Y-m-d H:i:s') }}
                             </p>
@@ -150,9 +163,6 @@
                 </div>
             </form>
 
-            <!-- Modal Cetak Laporan (tidak berubah) -->
-            {{-- ... --}}
-
             <script>
                 function exportAlert() {
                     setTimeout(() => {
@@ -160,12 +170,10 @@
                             icon: 'success',
                             title: 'Berhasil!',
                             text: 'Laporan transaksi berhasil diunduh.',
-                            confirmButtonText: 'OK',
-                            // showConfirmButton default-nya true, jadi bisa dihilangkan jika ingin
+                            confirmButtonText: 'OK'
                         });
-                    }, 1000); // delay agar download sempat dipicu
+                    }, 1000);
                 }
-
 
                 function openModal(id) {
                     document.getElementById(id).classList.remove('hidden');
@@ -179,63 +187,72 @@
 
                 function renderItem(label, value) {
                     return `
-            <div class="flex flex-col">
-                <span class="text-gray-500 text-sm">${label}</span>
-                <span class="text-base font-semibold text-gray-900">${value}</span>
-            </div>`;
+                        <div class="flex flex-col">
+                            <span class="text-gray-500 text-sm">${label}</span>
+                            <span class="text-base font-semibold text-gray-900">${value}</span>
+                        </div>`;
+                }
+
+                // Fungsi translate status ke Bahasa Indonesia
+                function translateStatus(status) {
+                    if (!status) return '-';
+                    const map = {
+                        completed: 'Pesanan Selesai'
+                    };
+                    return map[status.toLowerCase()] || status;
                 }
 
                 function showTransactionDetails(transaction) {
+                    // Hanya completed yang punya warna khusus
                     const statusColor = {
-                        completed: "bg-green-100 text-green-700",
-                        pending: "bg-yellow-100 text-yellow-700",
-                        cancelled: "bg-red-100 text-red-700",
-                        ongoing: "bg-blue-100 text-blue-700"
+                        completed: "bg-green-100 text-green-700"
                     };
-                    const statusClass = statusColor[transaction.status?.toLowerCase()] || "bg-gray-100 text-gray-700";
+                    const raw = (transaction.status || '').toLowerCase();
+                    const statusClass = statusColor[raw] || "bg-gray-100 text-gray-700";
+                    const statusText = translateStatus(raw);
 
                     const detailTransaksi = `
-             <div class="w-full sm:w-1/2 px-4">
-                 <h3 class="text-md font-semibold mb-3 text-blue-600 flex items-center gap-2">
-                     <!-- icon -->
-                     Detail Transaksi
-                 </h3>
-                 <div class="flex flex-col gap-3">
-                     ${renderItem("Nama Customer", transaction.customer_name)}
-                     ${renderItem("Tanggal Booking", new Date(transaction.booking_date).toLocaleString())}
-                     ${renderItem("Tanggal Mulai", new Date(transaction.start_date).toLocaleDateString())}
-                     ${renderItem("Tanggal Selesai", new Date(transaction.end_date).toLocaleDateString())}
-                     ${renderItem("Lokasi Jemput", transaction.pickup_location)}
-                     <div class="flex flex-col">
-                         <span class="text-gray-500 text-sm">Status</span>
-                         <span class="inline-block mt-1 px-3 py-1 text-xs rounded-full font-semibold ${statusClass}">
-                             ${transaction.status}
-                         </span>
-                     </div>
-                     ${renderItem("Total Harga", `Rp ${transaction.total_price.toLocaleString()}`)}
-                 </div>
- 
-             </div>`;
+                        <div class="w-full sm:w-1/2 px-4">
+                            <h3 class="text-md font-semibold mb-3 text-blue-600 flex items-center gap-2">
+                                <!-- icon -->
+                                Detail Transaksi
+                            </h3>
+                            <div class="flex flex-col gap-3">
+                                ${renderItem("Nama Customer", transaction.customer_name)}
+                                ${renderItem("Tanggal Booking", new Date(transaction.booking_date).toLocaleString('id-ID'))}
+                                ${renderItem("Tanggal Mulai", new Date(transaction.start_date).toLocaleDateString('id-ID'))}
+                                ${renderItem("Tanggal Selesai", new Date(transaction.end_date).toLocaleDateString('id-ID'))}
+                                ${renderItem("Lokasi Jemput", transaction.pickup_location)}
+                                <div class="flex flex-col">
+                                    <span class="text-gray-500 text-sm">Status</span>
+                                    <span class="inline-block mt-1 px-3 py-1 text-xs rounded-full font-semibold ${statusClass}">
+                                        ${statusText}
+                                    </span>
+                                </div>
+                                ${renderItem("Total Harga", `Rp ${transaction.total_price.toLocaleString('id-ID')}`)}
+                            </div>
+                        </div>`;
+
                     const detailMotor = transaction.motor ? `
-            <div class="w-full sm:w-1/2 px-4 mt-8 sm:mt-0">
-                <h3 class="text-md font-semibold mb-3 text-indigo-600 flex items-center gap-2">
-                    <!-- icon -->
-                    Informasi Motor
-                </h3>
-                <div class="flex flex-col gap-3">
-                    ${renderItem("Nama", transaction.motor.name)}
-                    ${renderItem("Merek", transaction.motor.brand)}
-                    ${renderItem("Tahun", transaction.motor.year)}
-                    ${renderItem("Plat Motor", transaction.motor.platmotor)}
-                    ${renderItem("Harga / Hari", `Rp ${transaction.motor.price_per_day.toLocaleString()}`)}
-                </div>
-            </div>` : "";
+                        <div class="w-full sm:w-1/2 px-4 mt-8 sm:mt-0">
+                            <h3 class="text-md font-semibold mb-3 text-indigo-600 flex items-center gap-2">
+                                <!-- icon -->
+                                Informasi Motor
+                            </h3>
+                            <div class="flex flex-col gap-3">
+                                ${renderItem("Nama", transaction.motor.name)}
+                                ${renderItem("Merek", transaction.motor.brand)}
+                                ${renderItem("Tahun", transaction.motor.year)}
+                                ${renderItem("Plat Motor", transaction.motor.platmotor)}
+                                ${renderItem("Harga / Hari", `Rp ${transaction.motor.price_per_day.toLocaleString('id-ID')}`)}
+                            </div>
+                        </div>` : "";
 
                     document.getElementById('transactionDetailContent').innerHTML =
                         `<div class="flex flex-col sm:flex-row bg-white rounded-xl p-6 max-w-4xl shadow-xl w-full">
-                ${detailTransaksi}
-                ${detailMotor}
-            </div>`;
+                            ${detailTransaksi}
+                            ${detailMotor}
+                        </div>`;
 
                     openModal('transactionDetailModal');
                 }

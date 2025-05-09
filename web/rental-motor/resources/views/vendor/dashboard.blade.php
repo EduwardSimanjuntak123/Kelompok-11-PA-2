@@ -56,36 +56,26 @@
     @endphp
 
     <!-- Summary Cards -->
-
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white shadow rounded-xl p-4 text-center">
+        <div class="bg-white shadow rounded-xl p-4 h-32 flex flex-col justify-center text-center">
             <p class="text-sm text-gray-500">Motor Aktif</p>
-            <h3 class="text-2xl font-bold text-indigo-600">
-                {{ count($motorData['data'] ?? []) }}
-            </h3>
+            <h3 class="text-2xl font-bold text-indigo-600">{{ count($motorData['data'] ?? []) }}</h3>
         </div>
         <a href="{{ route('vendor.kelola', ['id' => $userId, 'status' => 'pending']) }}" class="group">
             <div
-                class="bg-white shadow rounded-xl p-4 text-center transition duration-300 ease-in-out transform group-hover:scale-105 group-hover:shadow-lg cursor-pointer">
+                class="bg-white shadow rounded-xl p-4 h-32 flex flex-col justify-center text-center transition-transform hover:scale-105">
                 <p class="text-sm text-gray-500 group-hover:text-indigo-600">Pesanan Masuk (Pending)</p>
-                <h3 class="text-2xl font-bold text-green-600 group-hover:text-indigo-700">
-                    {{ $pesananPending }}
-                </h3>
+                <h3 class="text-2xl font-bold text-green-600 group-hover:text-indigo-700">{{ $pesananPending }}</h3>
             </div>
         </a>
-
-        <div class="bg-white shadow rounded-xl p-4 text-center border-l-4 border-green-500">
+        <div
+            class="bg-white shadow rounded-xl p-4 h-32 flex flex-col justify-center text-center border-l-4 border-green-500">
             <p class="text-sm text-gray-500">Pendapatan Bulan {{ $bulanSekarangFormatted }}</p>
-            <h3 class="text-2xl font-bold text-green-600">
-                Rp {{ number_format($pendapatanBulan, 0, ',', '.') }}
-            </h3>
+            <h3 class="text-2xl font-bold text-green-600">Rp {{ number_format($pendapatanBulan, 0, ',', '.') }}</h3>
         </div>
-
-        <div class="bg-white shadow rounded-xl p-4 text-center">
+        <div class="bg-white shadow rounded-xl p-4 h-32 flex flex-col justify-center text-center">
             <p class="text-sm text-gray-500">Rating Rata-Rata</p>
-            <h3 class="text-2xl font-bold text-purple-600">
-                {{ $ratingData['user']['vendor']['rating'] ?? '0' }}/5
-            </h3>
+            <h3 class="text-2xl font-bold text-purple-600">{{ $ratingData['user']['vendor']['rating'] ?? '0' }}/5</h3>
         </div>
     </div>
 
@@ -94,6 +84,7 @@
         <h3 class="text-lg font-bold text-gray-800 mb-4">Grafik Pendapatan Per Bulan</h3>
         <canvas id="pendapatanChart"></canvas>
     </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>

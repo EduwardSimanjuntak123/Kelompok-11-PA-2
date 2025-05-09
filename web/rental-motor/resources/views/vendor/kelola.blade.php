@@ -269,13 +269,6 @@
                             <span class="font-semibold">Status:</span>
                             <span id="modalStatus" class="capitalize">–</span>
                         </div>
-
-                        {{-- Catatan --}}
-                        <div class="flex">
-                            <span class="font-semibold mr-2">Catatan:</span>
-                            <span id="modalNoteContainer" class="text-gray-600">–</span>
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -371,7 +364,7 @@
 
                         <!-- Foto ID -->
                         <div>
-                            <label for="photo_id" class="block text-gray-700 font-semibold mb-1">Foto ID
+                            <label for="photo_id" class="block text-gray-700 font-semibold mb-1">Foto Pelanggan
                                 (Opsional)</label>
                             <input type="file" name="photo_id" id="photo_id"
                                 class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400">
@@ -390,8 +383,7 @@
 
                     <!-- Pickup Location -->
                     <div class="mt-6">
-                        <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Pickup
-                            Location</label>
+                        <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Lokasi Pengambilan</label>
                         <textarea name="pickup_location" id="pickup_location" rows="3"
                             placeholder="cth: Jalan Merdeka No. 12, Jakarta"
                             class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500">{{ old('pickup_location') }}</textarea>
@@ -400,7 +392,7 @@
 
                     <!-- Dropoff Location -->
                     <div class="mt-6">
-                        <label for="dropoff_location" class="block text-gray-700 font-semibold mb-1">Dropoff Location
+                        <label for="dropoff_location" class="block text-gray-700 font-semibold mb-1">Lokasi Penjemputan
                             (Opsional)</label>
                         <textarea name="dropoff_location" id="dropoff_location" rows="3"
                             placeholder="cth: Jalan Sudirman No. 45, Bandung"
@@ -431,6 +423,28 @@
 
         <script>
             const BASE_API = "{{ config('api.base_url') }}";
+
+            // Menerjemahkan status ke Bahasa Indonesia
+            function translateStatus(status) {
+                switch (status) {
+                    case 'pending':
+                        return 'Menunggu Konfirmasi';
+                    case 'confirmed':
+                        return 'Dikonfirmasi';
+                    case 'in transit':
+                        return 'Motor Sedang Diantar';
+                    case 'in use':
+                        return 'Sedang Digunakan';
+                    case 'awaiting return':
+                        return 'Menunggu Pengembalian';
+                    case 'completed':
+                        return 'Pesanan Selesai';
+                    case 'rejected':
+                        return 'Booking Ditolak';
+                    default:
+                        return status.charAt(0).toUpperCase() + status.slice(1);
+                }
+            }
 
             // SweetAlert dari session
             @if (session('message'))
@@ -578,95 +592,96 @@
 
             // Saat halaman siap
             document.addEventListener('DOMContentLoaded', () => {
-                        document.querySelectorAll('.format-datetime').forEach(el => {
-                            el.textContent = formatDateTime(el.textContent.trim());
-                        });
+                // Format semua elemen dengan class .format-datetime
+                document.querySelectorAll('.format-datetime').forEach(el => {
+                    el.textContent = formatDateTime(el.textContent.trim());
+                });
 
-                        // Modal detail booking
-                        document.querySelectorAll('.open-booking-modal').forEach(link => {
-                            link.addEventListener('click', e => {
-                                e.preventDefault();
-                                let data;
-                                try {
-                                    data = JSON.parse(link.getAttribute('data-booking'));
-                                } catch (err) {
-                                    console.error('JSON parse error:', err);
-                                    return;
-                                }
+                // Modal detail booking
+                document.querySelectorAll('.open-booking-modal').forEach(link => {
+                    link.addEventListener('click', e => {
+                        e.preventDefault();
+                        let data;
+                        try {
+                            data = JSON.parse(link.getAttribute('data-booking'));
+                        } catch (err) {
+                            console.error('JSON parse error:', err);
+                            return;
+                        }
 
-                                document.getElementById('modalCustomerName').textContent = data.customer_name ||
-                                    '-';
-                                document.getElementById('modalBookingDate').textContent = formatDateTime(data
-                                    .booking_date);
-                                document.getElementById('modalStartDate').textContent = formatDateTime(data
-                                    .start_date);
-                                document.getElementById('modalEndDate').textContent = formatDateTime(data
-                                    .end_date);
-                                document.getElementById('modalPickup').textContent = data.pickup_location ||
-                                    '-';
-                                document.getElementById('modalStatus').textContent = data.status || '-';
+                        document.getElementById('modalCustomerName').textContent = data.customer_name ||
+                            '-';
+                        document.getElementById('modalBookingDate').textContent = formatDateTime(data
+                            .booking_date);
+                        document.getElementById('modalStartDate').textContent = formatDateTime(data
+                            .start_date);
+                        document.getElementById('modalEndDate').textContent = formatDateTime(data
+                            .end_date);
+                        document.getElementById('modalPickup').textContent = data.pickup_location ||
+                        '-';
+                        // Gunakan translateStatus di sini
+                        document.getElementById('modalStatus').textContent = translateStatus(data
+                            .status || '-');
 
-                                const imgEl = document.getElementById('modalCustomerPhoto');
-                                imgEl.onerror = () => {
-                                    imgEl.onerror = null;
-                                    imgEl.src = '/images/default-user.png';
-                                };
-                                if (data.potoid) {
-                                    const isAbsolute = /^https?:\/\//i.test(data.potoid);
-                                    imgEl.src = isAbsolute ? data.potoid : `${BASE_API}${data.potoid}`;
-                                } else {
-                                    imgEl.src = '/images/default-user.png';
-                                }
+                        const imgEl = document.getElementById('modalCustomerPhoto');
+                        imgEl.onerror = () => {
+                            imgEl.onerror = null;
+                            imgEl.src = '/images/default-user.png';
+                        };
+                        if (data.potoid) {
+                            const isAbsolute = /^https?:\/\//i.test(data.potoid);
+                            imgEl.src = isAbsolute ? data.potoid : `${BASE_API}${data.potoid}`;
+                        } else {
+                            imgEl.src = '/images/default-user.png';
+                        }
 
-                                const noteEl = document.getElementById('modalNoteContainer');
-                                noteEl.textContent = data.message ? data.message : '-';
+                        openModal('bookingDetailModal');
+                    });
+                });
 
-                                openModal('bookingDetailModal');
-                            });
-                        });
+                // Validasi form manual booking
+                document.getElementById('manualBookingForm')?.addEventListener('submit', e => {
+                    const f = e.target;
+                    f.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+                    let hasError = false;
+                    const setError = (field, msg) => {
+                        const el = f.querySelector(`.error-message[data-field="${field}"]`);
+                        if (el) el.textContent = msg;
+                        hasError = true;
+                    };
 
-                        // Validasi form manual booking
-                        document.getElementById('manualBookingForm')?.addEventListener('submit', e => {
-                            const f = e.target;
-                            f.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-                            let hasError = false;
-                            const setError = (field, msg) => {
-                                const el = f.querySelector(`.error-message[data-field="${field}"]`);
-                                if (el) el.textContent = msg;
-                                hasError = true;
-                            };
+                    const cn = f.customer_name.value.trim();
+                    if (!cn) setError('customer_name', 'Nama pelanggan harus diisi.');
+                    else if (cn.length < 3) setError('customer_name', 'Nama minimal 3 karakter.');
+                    else if (!/^[a-zA-Z\s]+$/.test(cn)) setError('customer_name',
+                        'Nama hanya boleh huruf dan spasi.');
 
-                            const cn = f.customer_name.value.trim();
-                            if (!cn) setError('customer_name', 'Nama pelanggan harus diisi.');
-                            else if (cn.length < 3) setError('customer_name', 'Nama minimal 3 karakter.');
-                            else if (!/^[a-zA-Z\s]+$/.test(cn)) setError('customer_name',
-                                'Nama hanya boleh huruf dan spasi.');
+                    if (!f.motor_id.value) setError('motor_id', 'Pilih motor terlebih dahulu.');
+                    if (!f.start_date_date.value) setError('start_date_date', 'Tanggal mulai harus diisi.');
+                    if (!f.start_date_time.value) setError('start_date_time', 'Waktu mulai harus diisi.');
 
-                            if (!f.motor_id.value) setError('motor_id', 'Pilih motor terlebih dahulu.');
-                            if (!f.start_date_date.value) setError('start_date_date', 'Tanggal mulai harus diisi.');
-                            if (!f.start_date_time.value) setError('start_date_time', 'Waktu mulai harus diisi.');
+                    const dur = parseInt(f.duration.value);
+                    if (!dur || dur <= 0) setError('duration', 'Durasi harus lebih dari 0.');
 
-                            const dur = parseInt(f.duration.value);
-                            if (!dur || dur <= 0) setError('duration', 'Durasi harus lebih dari 0.');
+                    if (!f.pickup_location.value.trim())
+                        setError('pickup_location', 'Lokasi penjemputan harus diisi.');
 
-                            if (!f.pickup_location.value.trim())
-                                setError('pickup_location', 'Lokasi penjemputan harus diisi.');
+                    [
+                        ['ktp_file', 'KTP'],
+                        ['photo_file', 'Foto']
+                    ].forEach(([fld, label]) => {
+                        const file = f[fld]?.files[0];
+                        if (file) {
+                            if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type))
+                                setError(fld, `File ${label} harus JPG atau PNG.`);
+                            if (file.size > 2 * 1024 * 1024)
+                                setError(fld, `Ukuran ${label} maksimal 2MB.`);
+                        }
+                    });
 
-                            [
-                                ['ktp_file', 'KTP'],
-                                ['photo_file', 'Foto']
-                            ].forEach(([fld, label]) => {
-                                const file = f[fld]?.files[0];
-                                if (file) {
-                                    if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type))
-                                        setError(fld, `File ${label} harus JPG atau PNG.`);
-                                    if (file.size > 2 * 1024 * 1024)
-                                        setError(fld, `Ukuran ${label} maksimal 2MB.`);
-                                }
-                            });
-
-                            if (hasError) e.preventDefault();
-                        });
+                    if (hasError) e.preventDefault();
+                });
             });
         </script>
+
     @endsection

@@ -47,6 +47,11 @@ class KecamatanController extends Controller
 
             $this->flashAlert($response->successful(), 'ditambahkan');
 
+            // Setelah berhasil menambah data
+            session()->flash('success', true);
+            session()->flash('message', '');
+            session()->flash('action', 'tambah'); // Untuk tambah, gunakan 'tambah'
+
             return redirect()->route('admin.kecamatan');
         } catch (\Exception $e) {
             Log::error("Gagal menyimpan kecamatan: " . $e->getMessage());
@@ -67,6 +72,11 @@ class KecamatanController extends Controller
 
             // Mengirimkan flash message ke session
             $this->flashAlert($response->successful(), 'diperbarui');
+
+            // Setelah berhasil menambah data
+            session()->flash('success', true);
+            session()->flash('message', '');
+            session()->flash('action', 'edit'); // Untuk tambah, gunakan 'tambah'
 
             return redirect()->route('admin.kecamatan');
         } catch (\Exception $e) {
@@ -92,6 +102,11 @@ class KecamatanController extends Controller
             $token = session('token', 'TOKEN_KAMU_DI_SINI');
             $response = Http::withToken($token)
                 ->delete("{$this->apiBaseUrl}/kecamatan/{$id}");
+
+            // Setelah berhasil menambah data
+            session()->flash('success', true);
+            session()->flash('message', '');
+            session()->flash('action', 'hapus'); // Untuk tambah, gunakan 'tambah'
 
             if ($response->successful()) {
                 session()->flash('success', 'Kecamatan berhasil dihapus.');

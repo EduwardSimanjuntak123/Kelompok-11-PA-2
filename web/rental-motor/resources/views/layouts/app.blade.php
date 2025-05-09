@@ -38,7 +38,7 @@
     <!-- Sidebar -->
     <aside class="w-64 bg-blue-600 text-white min-h-screen p-6 space-y-6">
         {{-- Logo --}}
-        <a href="{{ url('/') }}" class="block">
+        <a href="{{ route('vendor.dashboard') }}"  class="block">
             <img src="{{ asset('logo1.png') }}" alt="Logo Rental Motor" class="h-12 w-auto mx-auto" />
         </a>
         <nav>

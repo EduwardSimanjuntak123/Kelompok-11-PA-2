@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MOTORENT - Rental Motor</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
@@ -45,8 +46,13 @@
         </nav>
         <div class="flex items-center">
             <a href="{{ url('/login') }}"
-                class="bg-orange-400 text-white px-4 py-2 rounded-lg mr-2 hover:bg-orange-300 transition">Login</a>
+                class="bg-orange-400 text-white px-4 py-2 rounded-lg mr-2 hover:bg-orange-300 transition flex items-center">
+                <!-- Icon Login -->
+                <i class="fas fa-sign-in-alt mr-2"></i>
+                Login
+            </a>
         </div>
+        
     </header>
 
     <!-- Halaman 1: Hero Section -->

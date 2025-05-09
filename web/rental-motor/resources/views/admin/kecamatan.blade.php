@@ -6,14 +6,27 @@
     {{-- SweetAlert for success or error --}}
     @if (session('success'))
         <script>
+            let message = '{{ session('message') }}';
+            let action = '{{ session('action') }}'; // Asumsi 'action' menyimpan jenis aksi (tambah, edit, hapus)
+
+            let alertMessage = '';
+            if (action === 'tambah') {
+                alertMessage = `Data kecamatan berhasil ditambahkan. ${message}`;
+            } else if (action === 'edit') {
+                alertMessage = `Data kecamatan berhasil diperbaharui. ${message}`;
+            } else if (action === 'hapus') {
+                alertMessage = `Data kecamatan berhasil dihapus. ${message}`;
+            }
+
             Swal.fire({
                 icon: 'success',
                 title: 'Berhasil!',
-                text: '{{ session('message') }}',
+                text: alertMessage,
                 confirmButtonText: 'OK'
             });
         </script>
     @endif
+
     <div class="container mx-auto py-6">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-gray-800">Daftar Kecamatan</h1>

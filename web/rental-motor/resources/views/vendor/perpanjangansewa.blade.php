@@ -87,14 +87,29 @@
 
                             {{-- STATUS --}}
                             <td class="py-3 px-4">
+                                @php
+                                    $status = $extension['status'];
+
+                                    // Mapping teks dan kelas Tailwind per status
+                                    if ($status === 'approved') {
+                                        $statusText = 'Disetujui';
+                                        $badgeClasses = 'bg-green-100 text-green-700';
+                                    } elseif ($status === 'rejected') {
+                                        $statusText = 'Ditolak';
+                                        $badgeClasses = 'bg-red-100 text-red-700';
+                                    } elseif ($status === 'pending') {
+                                        $statusText = 'Menunggu Konfirmasi';
+                                        $badgeClasses = 'bg-yellow-100 text-yellow-700';
+                                    } else {
+                                        // fallback untuk status lain
+                                        $statusText = ucfirst($status);
+                                        $badgeClasses = 'bg-gray-100 text-gray-700';
+                                    }
+                                @endphp
+
                                 <span
-                                    class="px-2 py-1 rounded text-xs font-medium
-                                {{ $extension['status'] == 'pending'
-                                    ? 'bg-yellow-100 text-yellow-700'
-                                    : ($extension['status'] == 'approved'
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-red-100 text-red-700') }}">
-                                    {{ ucfirst($extension['status']) }}
+                                    class="inline-flex justify-center items-center px-2 py-1 rounded text-xs font-medium {{ $badgeClasses }}">
+                                    {{ $statusText }}
                                 </span>
                             </td>
 
@@ -143,68 +158,74 @@
 
                         {{-- MODAL DETAIL BOOKING --}}
                         <div id="modal-{{ $booking['id'] }}"
-                            class="modal hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-200"
-                            onclick="closeModal('modal-{{ $booking['id'] }}')">
-                            <div class="modal-content bg-white rounded-2xl shadow-2xl max-w-2xl w-11/12 p-6 transform scale-95 transition-transform duration-200"
-                                onclick="event.stopPropagation()">
-                                <div class="flex justify-between items-center mb-6">
-                                    <h2 class="text-3xl font-bold text-gray-800">Detail Booking</h2>
-                                    <button onclick="closeModal('modal-{{ $booking['id'] }}')"
-                                        class="close-modal text-gray-500 hover:text-gray-700 text-3xl leading-none">
+                            class="modal hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300"
+                            data-modal-id="modal-{{ $booking['id'] }}">
+                            <div
+                                class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 md:p-8 relative scale-95 transition-transform duration-200">
+                                <!-- Header -->
+                                <div class="flex justify-between items-center border-b pb-4 mb-6">
+                                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
+                                        <!-- ikon kalender -->
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor"
+                                            stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M8 7V3m8 4V3m-9 8h10m-9 4h10m-3 4h3a2 2 0 002-2v-5a2 2 0 00-2-2h-3M5 21h3a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2z" />
+                                        </svg>
+                                        Detail Booking
+                                    </h2>
+                                    <button
+                                        class="close-modal close-btn text-gray-500 hover:text-red-600 text-3xl leading-none font-light transition-all duration-200">
                                         &times;
                                     </button>
                                 </div>
+
+                                <!-- Content -->
                                 <div class="flex flex-col md:flex-row gap-6">
-                                    <div class="flex-shrink-0 w-full md:w-2/5">
+                                    <!-- Image -->
+                                    <div class="w-full md:w-1/2">
                                         <img src="{{ $customerPhotoUrl }}"
                                             alt="Foto KTP {{ $extension['customer_name'] }}"
-                                            class="w-full h-64 object-cover rounded-lg shadow-md border">
+                                            class="w-full h-64 object-cover rounded-xl border shadow">
                                     </div>
-                                    <div class="w-full md:w-3/5">
-                                        <ul class="space-y-3 text-gray-700 text-base">
-                                            <li><strong>Nama:</strong> {{ $extension['customer_name'] }}</li>
-                                            <li>
-                                                <strong>Booking:</strong>
-                                                {{ \Carbon\Carbon::parse($booking['booking_date'])->format('d-m-Y H:i') }}
-                                            </li>
-                                            <li>
-                                                <strong>Mulai:</strong>
-                                                {{ \Carbon\Carbon::parse($booking['start_date'])->format('d-m-Y') }}
-                                            </li>
-                                            <li>
-                                                <strong>Akhir:</strong>
-                                                {{ \Carbon\Carbon::parse($booking['end_date'])->format('d-m-Y') }}
-                                            </li>
-                                            <li><strong>Jemput:</strong> {{ $booking['pickup_location'] }}</li>
-                                            <li class="flex items-center">
-                                                <strong class="mr-2">Status:</strong>
-                                                @php
-                                                    $status = $booking['status'];
-                                                    $classes = [
-                                                        'pending' => 'bg-yellow-100 text-yellow-800',
-                                                        'confirmed' => 'bg-blue-100 text-blue-800',
-                                                        'in transit' => 'bg-indigo-100 text-indigo-800',
-                                                        'in use' => 'bg-purple-100 text-purple-800',
-                                                        'awaiting return' => 'bg-orange-100 text-orange-800',
-                                                        'completed' => 'bg-green-100 text-green-800',
-                                                        'rejected' => 'bg-red-100 text-red-800',
-                                                    ];
-                                                    $label = [
-                                                        'pending' => 'Menunggu Konfirmasi',
-                                                        'confirmed' => 'Dikonfirmasi',
-                                                        'in transit' => 'Motor Diantar',
-                                                        'in use' => 'Sedang Digunakan',
-                                                        'awaiting return' => 'Menunggu Pengembalian',
-                                                        'completed' => 'Selesai',
-                                                        'rejected' => 'Ditolak',
-                                                    ];
-                                                @endphp
-                                                <span
-                                                    class="inline-block px-3 py-1 text-sm font-semibold rounded-full {{ $classes[$status] ?? 'bg-gray-100 text-gray-800' }}">
-                                                    {{ $label[$status] ?? ucfirst($status) }}
-                                                </span>
-                                            </li>
-                                        </ul>
+                                    <!-- Info -->
+                                    <div class="w-full md:w-1/2 space-y-3 text-sm sm:text-base text-gray-700">
+                                        <p><span class="font-semibold">Nama:</span> {{ $extension['customer_name'] }}</p>
+                                        <p><span class="font-semibold">Tanggal Booking:</span>
+                                            {{ \Carbon\Carbon::parse($booking['booking_date'])->format('d-m-Y H:i') }}</p>
+                                        <p><span class="font-semibold">Mulai Sewa:</span>
+                                            {{ \Carbon\Carbon::parse($booking['start_date'])->format('d-m-Y') }}</p>
+                                        <p><span class="font-semibold">Akhir Sewa:</span>
+                                            {{ \Carbon\Carbon::parse($booking['end_date'])->format('d-m-Y') }}</p>
+                                        <p><span class="font-semibold">Lokasi Jemput:</span>
+                                            {{ $booking['pickup_location'] }}</p>
+                                        <p>
+                                            <span class="font-semibold">Status:</span>
+                                            @php
+                                                $status = $booking['status'];
+                                                $classes = [
+                                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                                    'confirmed' => 'bg-blue-100 text-blue-800',
+                                                    'in transit' => 'bg-indigo-100 text-indigo-800',
+                                                    'in use' => 'bg-purple-100 text-purple-800',
+                                                    'awaiting return' => 'bg-orange-100 text-orange-800',
+                                                    'completed' => 'bg-green-100 text-green-800',
+                                                    'rejected' => 'bg-red-100 text-red-800',
+                                                ];
+                                                $label = [
+                                                    'pending' => 'Menunggu Konfirmasi',
+                                                    'confirmed' => 'Dikonfirmasi',
+                                                    'in transit' => 'Motor Diantar',
+                                                    'in use' => 'Sedang Digunakan',
+                                                    'awaiting return' => 'Menunggu Pengembalian',
+                                                    'completed' => 'Selesai',
+                                                    'rejected' => 'Ditolak',
+                                                ];
+                                            @endphp
+                                            <span
+                                                class="inline-block px-3 py-1 text-sm font-semibold rounded-full {{ $classes[$status] ?? 'bg-gray-100 text-gray-800' }}">
+                                                {{ $label[$status] ?? ucfirst($status) }}
+                                            </span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -218,7 +239,41 @@
 
 
     <script>
-        // Konfirmasi Approve
+        // Fungsi utility untuk menutup modal
+        function closeModal(modal) {
+            modal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 200);
+        }
+
+        // Buka modal
+        document.querySelectorAll('.open-modal').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                const modal = document.getElementById(btn.dataset.modalId);
+                modal.classList.remove('hidden');
+                // animasi zoom-in
+                setTimeout(() => modal.querySelector('.modal-content').classList.remove('scale-95'), 10);
+            });
+        });
+
+        // Tutup modal via backdrop atau tombol close
+        document.querySelectorAll('.modal').forEach(modal => {
+            // Klik backdrop
+            modal.addEventListener('click', e => {
+                if (e.target === modal) {
+                    closeModal(modal);
+                }
+            });
+            // Klik tombol close
+            modal.querySelectorAll('.close-btn').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    closeModal(modal);
+                });
+            });
+        });
+
+        // SweetAlert untuk Approve & Reject (tidak berubah)
         document.querySelectorAll('.btn-approve').forEach(btn => {
             btn.addEventListener('click', () => {
                 Swal.fire({
@@ -230,7 +285,7 @@
                     cancelButtonColor: '#d33',
                     confirmButtonText: 'Ya, Setujui!',
                     cancelButtonText: 'Batal'
-                }).then((result) => {
+                }).then(result => {
                     if (result.isConfirmed) {
                         document.getElementById(btn.dataset.formId).submit();
                     }
@@ -238,7 +293,6 @@
             });
         });
 
-        // Konfirmasi Reject
         document.querySelectorAll('.btn-reject').forEach(btn => {
             btn.addEventListener('click', () => {
                 Swal.fire({
@@ -250,35 +304,10 @@
                     cancelButtonColor: '#6b7280',
                     confirmButtonText: 'Ya, Tolak!',
                     cancelButtonText: 'Batal'
-                }).then((result) => {
+                }).then(result => {
                     if (result.isConfirmed) {
                         document.getElementById(btn.dataset.formId).submit();
                     }
-                });
-            });
-        });
-        // Buka modal
-        document.querySelectorAll('.open-modal').forEach(btn => {
-            btn.addEventListener('click', e => {
-                e.preventDefault();
-                const modal = document.getElementById(btn.dataset.modalId);
-                modal.classList.remove('hidden');
-                // play zoom-in
-                setTimeout(() => modal.querySelector('.modal-content').classList.remove('scale-95'), 10);
-            });
-        });
-
-        // Tutup modal: klik backdrop atau tombol
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', () => {
-                modal.querySelector('.modal-content').classList.add('scale-95');
-                modal.classList.add('hidden');
-            });
-            modal.querySelectorAll('.close-modal').forEach(btn => {
-                btn.addEventListener('click', e => {
-                    e.stopPropagation();
-                    modal.querySelector('.modal-content').classList.add('scale-95');
-                    modal.classList.add('hidden');
                 });
             });
         });
