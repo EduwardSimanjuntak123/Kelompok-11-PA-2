@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class OverviewCard extends StatelessWidget {
   final String title;
@@ -69,6 +70,7 @@ class OverviewCards extends StatelessWidget {
   final int pendingBookings;
   final int currentMonthRevenue;
   final NumberFormat currencyFormatter;
+  final Map<String, dynamic>? motor;
 
   const OverviewCards({
     Key? key,
@@ -77,7 +79,69 @@ class OverviewCards extends StatelessWidget {
     required this.pendingBookings,
     required this.currentMonthRevenue,
     required this.currencyFormatter,
+    this.motor,
   }) : super(key: key);
+
+  String _formatCurrency(int value) {
+    return NumberFormat.currency(
+      locale: 'id',
+      symbol: '',
+      decimalDigits: 0,
+    ).format(value);
+  }
+
+  Widget _buildInfoBox(
+    dynamic icon,
+    String value,
+    String title,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: icon is IconData
+                ? Icon(icon, color: color, size: 20)
+                : FaIcon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,11 +159,11 @@ class OverviewCards extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: OverviewCard(
-                title: "Pendapatan Bulan Ini",
-                value: currencyFormatter.format(currentMonthRevenue),
-                icon: Icons.attach_money,
-                color: Colors.green,
+              child: _buildInfoBox(
+                FontAwesomeIcons.moneyBillWave,
+                "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}",
+                "Pendapatan Bulan Ini",
+                Colors.green,
               ),
             ),
             const SizedBox(width: 12),
