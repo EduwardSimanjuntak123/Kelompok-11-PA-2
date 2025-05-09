@@ -19,6 +19,17 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isPasswordFilled = false;
   bool _isLoading = false;
   String _errorMessage = "";
+  
+  // Add validation error messages
+  String? _emailError;
+  String? _passwordError;
+  
+  // Add validation status
+  bool _isEmailValid = false;
+  bool _isPasswordValid = false;
+  
+  // Add form key for validation
+  final _formKey = GlobalKey<FormState>();
 
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
@@ -63,6 +74,8 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
     super.dispose();
   }
 
@@ -70,10 +83,80 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() {
       _isEmailFilled = emailController.text.isNotEmpty;
       _isPasswordFilled = passwordController.text.isNotEmpty;
+      
+      // Validate email and password as user types
+      if (_isEmailFilled) {
+        _validateEmail(emailController.text);
+      } else {
+        _emailError = null;
+        _isEmailValid = false;
+      }
+      
+      if (_isPasswordFilled) {
+        _validatePassword(passwordController.text);
+      } else {
+        _passwordError = null;
+        _isPasswordValid = false;
+      }
     });
+  }
+  
+  // Validate email with visual feedback
+  void _validateEmail(String email) {
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    
+    if (email.isEmpty) {
+      setState(() {
+        _emailError = "Email tidak boleh kosong";
+        _isEmailValid = false;
+      });
+    } else if (!emailRegExp.hasMatch(email)) {
+      setState(() {
+        _emailError = "Format email tidak valid";
+        _isEmailValid = false;
+      });
+    } else {
+      setState(() {
+        _emailError = null;
+        _isEmailValid = true;
+      });
+    }
+  }
+  
+  // Validate password with visual feedback
+  void _validatePassword(String password) {
+    if (password.isEmpty) {
+      setState(() {
+        _passwordError = "Password tidak boleh kosong";
+        _isPasswordValid = false;
+      });
+    } else if (password.length < 6) {
+      setState(() {
+        _passwordError = "Password minimal 6 karakter";
+        _isPasswordValid = false;
+      });
+    } else {
+      setState(() {
+        _passwordError = null;
+        _isPasswordValid = true;
+      });
+    }
+  }
+  
+  // Validate form before submission
+  bool _validateForm() {
+    _validateEmail(emailController.text);
+    _validatePassword(passwordController.text);
+    
+    return _isEmailValid && _isPasswordValid;
   }
 
   Future<void> _handleLogin() async {
+    // Validate form first
+    if (!_validateForm()) {
+      return;
+    }
+    
     setState(() {
       _isLoading = true;
       _errorMessage = "";
@@ -136,34 +219,89 @@ class _LoginScreenState extends State<LoginScreen>
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            "Login Berhasil",
-            style: TextStyle(
-              color: Colors.blue,
-              fontWeight: FontWeight.bold,
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10.0,
+                  offset: Offset(0.0, 10.0),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Success icon
+                Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 60,
+                  ),
+                ),
+                SizedBox(height: 15),
+                Text(
+                  "Login Berhasil",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C567E),
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Selamat datang di aplikasi rental motor.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF2C567E),
+                    foregroundColor: Colors.white,
+                    minimumSize: Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePageUser()),
+                    );
+                  },
+                  child: Text(
+                    "Lanjutkan",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          content: Text(
-            "Selamat datang di aplikasi rental motor.",
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePageUser()),
-                );
-              },
-              child: Text("Lanjutkan"),
-            ),
-          ],
         );
       },
     );
@@ -279,162 +417,169 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                         padding: EdgeInsets.all(30),
                         child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Masuk",
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF2C567E),
-                                ),
-                              ),
-                              SizedBox(height: 30),
-
-                              // Field email
-                              _buildTextField(
-                                controller: emailController,
-                                label: "Email",
-                                icon: Icons.email_outlined,
-                                keyboardType: TextInputType.emailAddress,
-                                isFilled: _isEmailFilled,
-                              ),
-                              SizedBox(height: 20),
-
-                              // Field password
-                              _buildTextField(
-                                controller: passwordController,
-                                label: "Kata Sandi",
-                                icon: Icons.lock_outline,
-                                isPassword: true,
-                                obscureText: _obscureText,
-                                onToggleVisibility: () {
-                                  setState(() {
-                                    _obscureText = !_obscureText;
-                                  });
-                                },
-                                isFilled: _isPasswordFilled,
-                              ),
-                              SizedBox(height: 30),
-
-                              // Tombol masuk
-                              SizedBox(
-                                width: double.infinity,
-                                height: 55,
-                                child: ElevatedButton(
-                                  onPressed: (_isEmailFilled &&
-                                          _isPasswordFilled &&
-                                          !_isLoading)
-                                      ? _handleLogin
-                                      : null,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0xFF2C567E),
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor:
-                                        Colors.grey.shade300,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    elevation: 5,
-                                    shadowColor:
-                                        Color(0xFF2C567E).withOpacity(0.5),
+                          child: Form(
+                            key: _formKey,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "Masuk",
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF2C567E),
                                   ),
-                                  child: _isLoading
-                                      ? Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: CircularProgressIndicator(
-                                                color: Colors.white,
-                                                strokeWidth: 2,
+                                ),
+                                SizedBox(height: 30),
+
+                                // Field email
+                                _buildTextField(
+                                  controller: emailController,
+                                  label: "Email",
+                                  icon: Icons.email_outlined,
+                                  keyboardType: TextInputType.emailAddress,
+                                  isFilled: _isEmailFilled,
+                                  isValid: _isEmailValid,
+                                  errorText: _emailError,
+                                ),
+                                SizedBox(height: 20),
+
+                                // Field password
+                                _buildTextField(
+                                  controller: passwordController,
+                                  label: "Kata Sandi",
+                                  icon: Icons.lock_outline,
+                                  isPassword: true,
+                                  obscureText: _obscureText,
+                                  onToggleVisibility: () {
+                                    setState(() {
+                                      _obscureText = !_obscureText;
+                                    });
+                                  },
+                                  isFilled: _isPasswordFilled,
+                                  isValid: _isPasswordValid,
+                                  errorText: _passwordError,
+                                ),
+                                SizedBox(height: 30),
+
+                                // Tombol masuk
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 55,
+                                  child: ElevatedButton(
+                                    onPressed: (_isEmailFilled &&
+                                            _isPasswordFilled &&
+                                            !_isLoading)
+                                        ? _handleLogin
+                                        : null,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFF2C567E),
+                                      foregroundColor: Colors.white,
+                                      disabledBackgroundColor:
+                                          Colors.grey.shade300,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      elevation: 5,
+                                      shadowColor:
+                                          Color(0xFF2C567E).withOpacity(0.5),
+                                    ),
+                                    child: _isLoading
+                                        ? Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              SizedBox(
+                                                width: 24,
+                                                height: 24,
+                                                child: CircularProgressIndicator(
+                                                  color: Colors.white,
+                                                  strokeWidth: 2,
+                                                ),
                                               ),
-                                            ),
-                                            SizedBox(width: 12),
-                                            Text(
-                                              "Sedang masuk...",
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
+                                              SizedBox(width: 12),
+                                              Text(
+                                                "Sedang masuk...",
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
+                                            ],
+                                          )
+                                        : Text(
+                                            "MASUK",
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1,
                                             ),
-                                          ],
-                                        )
-                                      : Text(
-                                          "MASUK",
+                                          ),
+                                  ),
+                                ),
+                                SizedBox(height: 20),
+
+                                // Opsi daftar
+                                Center(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "Belum punya akun? ",
+                                        style: TextStyle(
+                                          color: Colors.grey.shade700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                              builder: (context) => WelcomePage(),
+                                            ),
+                                          );
+                                        },
+                                        child: Text(
+                                          "Daftar",
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
-                                            letterSpacing: 1,
+                                            color: Color(0xFF2C567E),
                                           ),
-                                        ),
-                                ),
-                              ),
-                              SizedBox(height: 20),
-
-                              // Opsi daftar
-                              Center(
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Belum punya akun? ",
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) => WelcomePage(),
-                                          ),
-                                        );
-                                      },
-                                      child: Text(
-                                        "Daftar",
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF2C567E),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 20),
-
-                              // Pesan error
-                              if (_errorMessage.isNotEmpty)
-                                Container(
-                                  padding: EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.shade50,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border:
-                                        Border.all(color: Colors.red.shade200),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.error_outline,
-                                          color: Colors.red),
-                                      SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          _errorMessage,
-                                          style: TextStyle(
-                                              color: Colors.red.shade800),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                            ],
+                                SizedBox(height: 20),
+
+                                // Pesan error
+                                if (_errorMessage.isNotEmpty)
+                                  Container(
+                                    padding: EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border:
+                                          Border.all(color: Colors.red.shade200),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.error_outline,
+                                            color: Colors.red),
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            _errorMessage,
+                                            style: TextStyle(
+                                                color: Colors.red.shade800),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -458,51 +603,94 @@ class _LoginScreenState extends State<LoginScreen>
     VoidCallback? onToggleVisibility,
     TextInputType keyboardType = TextInputType.text,
     bool isFilled = false,
+    bool isValid = false,
+    String? errorText,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 5,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword ? obscureText : false,
-        keyboardType: keyboardType,
-        style: TextStyle(fontSize: 16),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: Color(0xFF2C567E).withOpacity(0.8),
-            fontSize: 14,
-          ),
-          prefixIcon: Icon(icon, color: Color(0xFF2C567E)),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    obscureText ? Icons.visibility_off : Icons.visibility,
-                    color: Color(0xFF2C567E),
-                  ),
-                  onPressed: onToggleVisibility,
-                )
-              : (isFilled
-                  ? Icon(Icons.check_circle, color: Colors.green)
-                  : null),
-          border: OutlineInputBorder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
             borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide.none,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 5,
+                spreadRadius: 1,
+              ),
+            ],
+            border: errorText != null 
+                ? Border.all(color: Colors.red, width: 1.0)
+                : isValid && isFilled
+                    ? Border.all(color: Colors.green, width: 1.0)
+                    : null,
           ),
-          contentPadding: EdgeInsets.symmetric(vertical: 16),
-          filled: true,
-          fillColor: Colors.grey.shade50,
+          child: TextField(
+            controller: controller,
+            obscureText: isPassword ? obscureText : false,
+            keyboardType: keyboardType,
+            style: TextStyle(fontSize: 16),
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: TextStyle(
+                color: errorText != null 
+                    ? Colors.red
+                    : isValid && isFilled
+                        ? Colors.green
+                        : Color(0xFF2C567E).withOpacity(0.8),
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                icon, 
+                color: errorText != null 
+                    ? Colors.red
+                    : isValid && isFilled
+                        ? Colors.green
+                        : Color(0xFF2C567E)
+              ),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        obscureText ? Icons.visibility_off : Icons.visibility,
+                        color: Color(0xFF2C567E),
+                      ),
+                      onPressed: onToggleVisibility,
+                    )
+                  : (isFilled && isValid
+                      ? Icon(Icons.check_circle, color: Colors.green)
+                      : null),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: EdgeInsets.symmetric(vertical: 16),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+            ),
+            onChanged: (value) {
+              // Validate as user types
+              if (isPassword) {
+                _validatePassword(value);
+              } else {
+                _validateEmail(value);
+              }
+            },
+          ),
         ),
-      ),
+        // Error message
+        if (errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, top: 8),
+            child: Text(
+              errorText,
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
