@@ -1066,25 +1066,6 @@ class _VendorListPageState extends State<VendorListPage>
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
-                          icon: Icon(Icons.call,
-                              size: 16, color: Color(0xFF1565C0)),
-                          label: Text('Hubungi'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Color(0xFF1565C0),
-                            side: BorderSide(color: Color(0xFF1565C0)),
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () {
-                            // Handle call action
-                          },
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
                         flex: 2,
                         child: ElevatedButton.icon(
                           icon: Icon(Icons.visibility,
