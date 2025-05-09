@@ -656,7 +656,8 @@ class _DetailMotorPageState extends State<DetailMotorPage>
               "Rating",
               Colors.amber),
           _buildInfoBox(
-            FontAwesomeIcons.rupiahSign,
+            FontAwesomeIcons
+                .moneyBillWave, // Diubah dari rupiahSign ke moneyBillWave
             "Rp ${_formatCurrency(motor != null ? (motor!["price"] ?? 0) : 0)}",
             "Harga",
             Colors.green,
