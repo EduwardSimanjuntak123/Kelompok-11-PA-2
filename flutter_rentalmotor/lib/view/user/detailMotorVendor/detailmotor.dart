@@ -188,7 +188,10 @@ class _DetailMotorPageState extends State<DetailMotorPage>
         appBar: AppBar(
           backgroundColor: primaryBlue,
           elevation: 0,
-          title: Text("Detail Motor"),
+          title: Text(
+            "Detail Motor",
+            style: TextStyle(color: Colors.white),
+          ),
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),

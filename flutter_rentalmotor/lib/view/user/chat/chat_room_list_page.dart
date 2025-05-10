@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_rentalmotor/view/user/chat/chat_page.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
-import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomListPage extends StatefulWidget {
@@ -17,7 +16,6 @@ class ChatRoomListPage extends StatefulWidget {
 class _ChatRoomListPageState extends State<ChatRoomListPage> {
   List<dynamic> chatRooms = [];
   int? userId;
-  WebSocketChannel? _notificationChannel;
   bool _isConnected = false;
   bool _isLoading = true;
   int _totalUnreadMessages = 0;
@@ -38,74 +36,9 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
       setState(() => userId = id);
       await _fetchChatRooms(id);
       await _fetchUnreadCount(id);
-      _connectToNotificationWebSocket(id);
     } else {
       print('⚠ Tidak ditemukan user_id di SharedPreferences');
       setState(() => _isLoading = false);
-    }
-  }
-
-  void _connectToNotificationWebSocket(int userId) {
-    try {
-      // Koneksi ke WebSocket notifikasi
-      final wsUrl = '${ApiConfig.wsUrl}/ws/notifikasi?user_id=$userId';
-      print('Connecting to notification WebSocket: $wsUrl');
-
-      _notificationChannel = IOWebSocketChannel.connect(Uri.parse(wsUrl));
-
-      setState(() {
-        _isConnected = true;
-      });
-
-      _notificationChannel!.stream.listen(
-        (dynamic data) {
-          print('Notification WebSocket received: $data');
-          try {
-            // Ketika ada notifikasi baru, refresh daftar chat rooms
-            _fetchChatRooms(userId);
-            _fetchUnreadCount(userId);
-          } catch (e) {
-            print('Error handling notification: $e');
-          }
-        },
-        onError: (error) {
-          print('Notification WebSocket Error: $error');
-          setState(() {
-            _isConnected = false;
-          });
-          // Coba reconnect setelah error
-          Future.delayed(const Duration(seconds: 5), () {
-            if (mounted) {
-              _connectToNotificationWebSocket(userId);
-            }
-          });
-        },
-        onDone: () {
-          print('Notification WebSocket connection closed');
-          setState(() {
-            _isConnected = false;
-          });
-          // Coba reconnect ketika koneksi tertutup
-          if (mounted) {
-            Future.delayed(const Duration(seconds: 5), () {
-              if (mounted && !_isConnected) {
-                _connectToNotificationWebSocket(userId);
-              }
-            });
-          }
-        },
-      );
-    } catch (e) {
-      print('Error connecting to notification WebSocket: $e');
-      setState(() {
-        _isConnected = false;
-      });
-      // Coba reconnect setelah error
-      Future.delayed(const Duration(seconds: 5), () {
-        if (mounted) {
-          _connectToNotificationWebSocket(userId!);
-        }
-      });
     }
   }
 
@@ -118,6 +51,9 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        print(
+          ' data chat room: ${response.body}',
+        );
         if (mounted) {
           setState(() {
             chatRooms = data['chat_rooms'];
@@ -126,7 +62,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
         }
       } else {
         print(
-          '❌ Gagal mengambil chat rooms dengan status: ${response.statusCode}',
+          '❌ Gagal mengambil chat rooms dengan status: ${response.body}',
         );
         if (mounted) {
           setState(() => _isLoading = false);
@@ -186,14 +122,6 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
     } catch (e) {
       print('Error marking chat room as read: $e');
     }
-  }
-
-  @override
-  void dispose() {
-    if (_notificationChannel != null) {
-      _notificationChannel!.sink.close();
-    }
-    super.dispose();
   }
 
   @override
@@ -408,7 +336,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
 
                         // Display shop name for vendors
                         final displayName =
-                            otherUserInfo['name'] ?? otherUserInfo['name'];
+                            otherUserInfo['shop_name'] ?? otherUserInfo['name'];
 
                         return InkWell(
                           onTap: () {

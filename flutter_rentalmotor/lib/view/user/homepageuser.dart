@@ -377,6 +377,7 @@ class _HomePageUserState extends State<HomePageUser> {
             children: [
               if (_userId == null)
                 ElevatedButton.icon(
+                  key: ValueKey("guestLoginButton"),
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
@@ -512,6 +513,7 @@ class _HomePageUserState extends State<HomePageUser> {
                     SizedBox(width: 8),
                     Text(
                       "Temukan Motor Rental Terbaik",
+                      key: ValueKey('homepageTitle'),
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white.withOpacity(0.9),
@@ -679,6 +681,7 @@ class _HomePageUserState extends State<HomePageUser> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: TextButton.icon(
+                  key: ValueKey('buttonChat'),
                   onPressed: () {
                     Navigator.push(
                       context,

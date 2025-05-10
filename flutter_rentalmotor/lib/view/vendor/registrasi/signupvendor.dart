@@ -4,6 +4,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/view/user/registrasi/otp_verification.dart';
 import 'package:flutter_rentalmotor/services/autentifikasi/auth_service.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 class SignUpVendorScreen extends StatefulWidget {
   const SignUpVendorScreen({Key? key}) : super(key: key);
@@ -17,14 +21,20 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
   final _shopNameController = TextEditingController();
   final _shopAddressController = TextEditingController();
   final _shopDescriptionController = TextEditingController();
+  final TextEditingController _birthDateController = TextEditingController();
 
   File? _profileImage;
   bool _isLoading = false;
   int? _selectedKecamatanId;
+  DateTime? _selectedDate;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  List<Map<String, dynamic>> _kecamatanList = [];
 
   final Color primaryColor = const Color(0xFF225378);
   final Color accentColor = const Color(0xFF1695A3);
@@ -32,17 +42,36 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
   final Color backgroundColor = const Color(0xFFF3FFE2);
   final Color darkTextColor = const Color(0xFF0A0A0A);
 
-  final List<Map<String, dynamic>> _kecamatanList = [
-    {'id': 1, 'name': 'Ajibata'},
-    {'id': 2, 'name': 'Balige'},
-    {'id': 3, 'name': 'Borbor'},
-    {'id': 4, 'name': 'Laguboti'},
-    {'id': 5, 'name': 'Lumbanjulu'},
-    {'id': 6, 'name': 'Sigumpar'},
-    {'id': 7, 'name': 'Silaen'},
-    {'id': 8, 'name': 'Tampahan'},
-    {'id': 9, 'name': 'Uluan'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchKecamatan();
+  }
+
+  Future<void> _fetchKecamatan() async {
+    final String baseUrl = '${ApiConfig.baseUrl}';
+
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/kecamatan'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _kecamatanList = List<Map<String, dynamic>>.from(
+            data.map((item) => {
+                  'id': item['id_kecamatan'],
+                  'name': item['nama_kecamatan'],
+                }),
+          );
+        });
+      } else {
+        throw Exception('Gagal memuat kecamatan');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error mengambil data kecamatan: $e')),
+      );
+    }
+  }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -54,12 +83,73 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: primaryColor,
+              onPrimary: Colors.white,
+              onSurface: darkTextColor,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _birthDateController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
+      // Check if image is uploaded
+      if (_profileImage == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foto profil wajib diunggah'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Check if passwords match
+      if (_passwordController.text != _confirmPasswordController.text) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password dan konfirmasi tidak cocok'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Check if date of birth is selected
+      if (_selectedDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tanggal lahir wajib diisi'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Check if kecamatan is selected
       if (_selectedKecamatanId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Pilih kecamatan terlebih dahulu'),
+          const SnackBar(
+            content: Text('Pilih kecamatan terlebih dahulu'),
             backgroundColor: Colors.red,
           ),
         );
@@ -69,6 +159,10 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
       setState(() {
         _isLoading = true;
       });
+
+      // Format date of birth as YYYY-MM-DD string
+      String formattedBirthDate =
+          DateFormat('yyyy-MM-dd').format(_selectedDate!);
 
       AuthService authService = AuthService();
       final response = await authService.registerVendor(
@@ -80,6 +174,8 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
         shopAddress: _shopAddressController.text.trim(),
         shopDescription: _shopDescriptionController.text.trim(),
         kecamatanId: _selectedKecamatanId!,
+        birthDate:
+            formattedBirthDate, // Use birthDate parameter name to match the method signature
         profileImage: _profileImage,
       );
 
@@ -260,12 +356,122 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                     _buildEnhancedTextField(
                         _emailController, 'Email', Icons.email,
                         keyboardType: TextInputType.emailAddress),
-                    _buildEnhancedTextField(
-                        _passwordController, 'Password', Icons.lock,
-                        obscureText: true),
+
+                    // Password field with visibility toggle
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Wajib diisi'
+                            : null,
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(Icons.lock, color: primaryColor),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: primaryColor,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                          labelText: 'Password',
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Confirm Password field with visibility toggle
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: TextFormField(
+                        controller: _confirmPasswordController,
+                        obscureText: _obscureConfirmPassword,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Wajib diisi';
+                          }
+                          if (value != _passwordController.text) {
+                            return 'Password tidak cocok';
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          prefixIcon:
+                              Icon(Icons.lock_outline, color: primaryColor),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: primaryColor,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
+                              });
+                            },
+                          ),
+                          labelText: 'Konfirmasi Password',
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade300),
+                          ),
+                        ),
+                      ),
+                    ),
+
                     _buildEnhancedTextField(
                         _phoneController, 'No. Telepon', Icons.phone,
                         keyboardType: TextInputType.phone),
+
+                    // Date of Birth field
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: GestureDetector(
+                        onTap: () => _selectDate(context),
+                        child: AbsorbPointer(
+                          child: TextFormField(
+                            controller: _birthDateController,
+                            validator: (value) => _selectedDate == null
+                                ? 'Tanggal lahir wajib diisi'
+                                : null,
+                            decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.calendar_today,
+                                  color: primaryColor),
+                              labelText: 'Tanggal Lahir',
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade300),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
 

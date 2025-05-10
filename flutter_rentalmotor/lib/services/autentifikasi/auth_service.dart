@@ -18,6 +18,7 @@ class AuthService {
     required String shopAddress,
     required String shopDescription,
     required int kecamatanId,
+    required String birthDate,
     File? profileImage,
   }) async {
     try {
@@ -30,6 +31,8 @@ class AuthService {
       request.fields['phone'] = phone;
       request.fields['shop_name'] = shopName;
       request.fields['shop_address'] = shopAddress;
+      request.fields['birth_date'] = birthDate;
+
       request.fields['shop_description'] = shopDescription;
       request.fields['kecamatan_id'] = kecamatanId.toString();
 

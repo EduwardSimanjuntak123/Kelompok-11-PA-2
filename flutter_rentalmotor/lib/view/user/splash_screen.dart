@@ -96,6 +96,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     ],
                   ),
                   child: Image.asset(
+                    key: ValueKey('splashLogo'),
                     'assets/images/logo1.png',
                     width: 160,
                   ),
@@ -106,6 +107,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ? Column(
                       children: [
                         CircularProgressIndicator(
+                          key: ValueKey('loadingIndicator'),
                           valueColor:
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),

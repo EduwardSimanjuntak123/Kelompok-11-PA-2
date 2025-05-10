@@ -1,0 +1,5 @@
+description: Login flow
+---
+- waitUntilVisible: splashLogo
+- waitUntilVisible: homepageTitle
+- pressOn: loginButton
