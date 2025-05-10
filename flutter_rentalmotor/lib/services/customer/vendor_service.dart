@@ -23,8 +23,16 @@ class VendorService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data['data']);
+
+      if (data['data'] != null && data['data'] is List) {
+        return List<Map<String, dynamic>>.from(data['data']);
+      } else {
+        // Data ada tapi kosong atau tidak sesuai
+        return [];
+      }
     } else {
+      // Bisa return [] daripada lempar exception agar tidak crash
+      // return [];
       throw Exception("Gagal mengambil data motor untuk vendor ID: $vendorId");
     }
   }

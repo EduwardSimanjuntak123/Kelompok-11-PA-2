@@ -107,7 +107,9 @@ class _DataVendorState extends State<DataVendor>
           await _vendorService.fetchMotorsByVendor(widget.vendorId);
       setState(() => _motorList = motorList);
     } catch (e) {
-      setState(() => _errorMessage = "Error: $e");
+      // HANYA log error, jangan tampilkan _errorMessage agar UI tidak terblokir
+      print("Gagal ambil data motor: $e");
+      setState(() => _motorList = []); // tampilkan sebagai kosong
     }
   }
 
