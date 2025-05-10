@@ -97,34 +97,39 @@ class KecamatanController extends Controller
 
 
     public function destroy($id)
-    {
-        try {
-            $token = session('token', 'TOKEN_KAMU_DI_SINI');
-            $response = Http::withToken($token)
-                ->delete("{$this->apiBaseUrl}/kecamatan/{$id}");
+{
+    try {
+        $token = session('token', 'TOKEN_KAMU_DI_SINI');
+        $response = Http::withToken($token)
+            ->delete("{$this->apiBaseUrl}/kecamatan/{$id}");
 
-            // Setelah berhasil menambah data
+        // Default: success atau gagal_hapus
+        if ($response->successful()) {
             session()->flash('success', true);
+            session()->flash('action', 'hapus');
             session()->flash('message', '');
-            session()->flash('action', 'hapus'); // Untuk tambah, gunakan 'tambah'
-
-            if ($response->successful()) {
-                session()->flash('success', 'Kecamatan berhasil dihapus.');
-            }
-            // Jika API mengembalikan 409 = constraint violation
-            elseif ($response->status() === 409) {
-                session()->flash('error', 'Kecamatan gagal dihapus: sedang digunakan oleh vendor lain.');
-            } else {
-                session()->flash('error', 'Kecamatan gagal dihapus: sedang digunakan oleh vendor lain.');
-            }
-
-            return redirect()->back();
-        } catch (\Exception $e) {
-            Log::error("Kesalahan saat menghapus kecamatan: " . $e->getMessage());
-            session()->flash('error', 'Kecamatan gagal dihapus: sedang digunakan oleh vendor lain.');
-            return redirect()->back();
         }
+        elseif ($response->status() === 409) {
+            session()->flash('success', false);
+            session()->flash('action', 'gagal_hapus');
+            session()->flash('message', 'Data kecamatan tidak dapat dihapus karena masih memiliki titik lokasi.');
+        }
+        else {
+            session()->flash('success', false);
+            session()->flash('action', 'gagal_hapus');
+            session()->flash('message', 'Data kecamatan tidak dapat dihapus karena masih memiliki titik lokasi.');
+        }
+
+        return redirect()->back();
+    } catch (\Exception $e) {
+        Log::error("Kesalahan saat menghapus kecamatan: " . $e->getMessage());
+        session()->flash('success', false);
+        session()->flash('action', 'gagal_hapus');
+        session()->flash('message', 'Terjadi exception: gagal menghapus data kecamatan.');
+        return redirect()->back();
     }
+}
+
 
 
     public function create()

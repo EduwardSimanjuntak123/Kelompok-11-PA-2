@@ -32,6 +32,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach ($vendors as $vendor)
+            {{-- @dd($vendors) --}}
                 <div
                     class="bg-gradient-to-br from-white to-gray-50 shadow-xl rounded-2xl p-6 border border-gray-200 hover:shadow-2xl transform hover:scale-[1.02] transition duration-300">
                     <!-- Gambar Profil -->

@@ -4,28 +4,35 @@
 
 @section('content')
     {{-- SweetAlert for success or error --}}
-    @if (session('success'))
+    @if (session('success') !== null)
         <script>
-            let message = '{{ session('message') }}';
-            let action = '{{ session('action') }}'; // Asumsi 'action' menyimpan jenis aksi (tambah, edit, hapus)
+            let msg = '{{ session('message') }}';
+            let action = '{{ session('action') }}';
+            let icon = 'success';
+            let title = 'Berhasil!';
+            let text = '';
 
-            let alertMessage = '';
             if (action === 'tambah') {
-                alertMessage = `Data kecamatan berhasil ditambahkan. ${message}`;
+                text = `Data kecamatan berhasil ditambahkan. ${msg}`;
             } else if (action === 'edit') {
-                alertMessage = `Data kecamatan berhasil diperbaharui. ${message}`;
+                text = `Data kecamatan berhasil diperbaharui. ${msg}`;
             } else if (action === 'hapus') {
-                alertMessage = `Data kecamatan berhasil dihapus. ${message}`;
+                text = `Data kecamatan berhasil dihapus. ${msg}`;
+            } else if (action === 'gagal_hapus') {
+                icon = 'error';
+                title = 'Gagal Menghapus';
+                text = msg || 'Data kecamatan gagal dihapus.';
             }
 
             Swal.fire({
-                icon: 'success',
-                title: 'Berhasil!',
-                text: alertMessage,
+                icon: icon,
+                title: title,
+                text: text,
                 confirmButtonText: 'OK'
             });
         </script>
     @endif
+
 
     <div class="container mx-auto py-6">
         <div class="flex justify-between items-center mb-4">

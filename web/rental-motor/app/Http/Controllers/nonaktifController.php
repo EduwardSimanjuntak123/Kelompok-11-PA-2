@@ -24,24 +24,34 @@ class nonaktifController extends Controller
             $token = session('token');
 
             if (!$token) {
-                return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
+                return redirect()->route('login')
+                    ->with('error', 'Anda harus login terlebih dahulu.');
             }
 
             // Panggil endpoint API untuk mengambil daftar vendor
             $url = "{$this->apiBaseUrl}/admin/vendors";
             Log::info("Mengirim request ke: " . $url);
 
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token
-            ])->timeout(10)->get($url);
+            $response = Http::withToken($token)
+                ->timeout(10)
+                ->get($url);
 
             Log::info("Response body: " . $response->body());
 
             // Cek response dan ambil data
             if ($response->successful() && is_array($response->json())) {
-                $vendors = $response->json();
+                // Map untuk build full URL gambar
+                $vendors = collect($response->json())->map(function ($vendor) {
+                    // Jika profile_image dimulai dengan http(s)
+                    if (isset($vendor['profile_image']) && !preg_match('/^https?:\/\//', $vendor['profile_image'])) {
+                        $vendor['profile_image'] = rtrim($this->apiBaseUrl, '/')
+                            . '/' . ltrim($vendor['profile_image'], '/');
+                    }
+                    return $vendor;
+                })->toArray();
             } else {
-                Log::error("Gagal mengambil data vendor. Status: " . $response->status() . " | Body: " . $response->body());
+                Log::error("Gagal mengambil data vendor. Status: "
+                    . $response->status() . " | Body: " . $response->body());
                 $vendors = [];
             }
 
@@ -50,6 +60,7 @@ class nonaktifController extends Controller
             $vendors = [];
         }
 
+        // Kirim ke view
         return view('admin.nonaktif', compact('vendors'));
     }
 

@@ -18,32 +18,50 @@ class MotorController extends Controller
     public function index()
     {
         try {
-            $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
+            $token = session()->get('token');
+            if (!$token) {
+                return redirect()->route('login')
+                    ->with('error', 'Anda harus login terlebih dahulu.');
+            }
+
+            $url = "{$this->apiBaseUrl}/motor/vendor";
+            Log::info("Request GET list motor: {$url}");
+
             $response = Http::withToken($token)
                 ->timeout(10)
-                ->get("{$this->apiBaseUrl}/motor/vendor");
+                ->get($url);
 
-            $motors = [];
-
-            if ($response->successful()) {
-                $motors = $response->json()['data'] ?? [];
-
-                foreach ($motors as &$motor) {
-                    $motor['image_url'] = !empty($motor['image']) && !str_starts_with($motor['image'], 'http')
-                        ? $this->apiBaseUrl . ltrim($motor['image'])
-                        : $motor['image'];
-                }
-
-                // Filter berdasarkan status jika ada
-                $statusFilter = request('status');
-                if ($statusFilter && $statusFilter !== 'all') {
-                    $motors = array_filter($motors, fn($motor) => $motor['status'] === $statusFilter);
-                }
+            if (!$response->successful()) {
+                Log::error("Gagal mengambil data motor. Status: {$response->status()} | Body: {$response->body()}");
+                $motors = [];
             } else {
-                Log::error("Gagal mengambil data motor. Status: " . $response->status());
+                $payload = $response->json();
+                // struktur API: ['data' => [ ... motors ... ]]
+                $motors = $payload['data'] ?? [];
+
+                // Mapping: build full image_url & cast rating
+                foreach ($motors as &$motor) {
+                    // full URL untuk gambar
+                    if (!empty($motor['image']) && !preg_match('/^https?:\/\//i', $motor['image'])) {
+                        $motor['image_url'] = $this->apiBaseUrl . '/' . ltrim($motor['image'], '/');
+                    } else {
+                        $motor['image_url'] = $motor['image'] ?? null;
+                    }
+                    // pastikan rating integer antara 0-5
+                    $motor['rating'] = isset($motor['rating']) ? intval($motor['rating']) : 0;
+                }
+
+                // Filter status jika ada query param
+                if ($status = request('status')) {
+                    if ($status !== 'all') {
+                        $motors = array_filter($motors, fn($m) => ($m['status'] ?? '') === $status);
+                    }
+                }
             }
+
         } catch (\Exception $e) {
-            Log::error('Kesalahan saat mengambil data motor: ' . $e->getMessage());
+            Log::error('Exception saat mengambil data motor: ' . $e->getMessage());
+            $motors = [];
         }
 
         return view('vendor.motor', compact('motors'));

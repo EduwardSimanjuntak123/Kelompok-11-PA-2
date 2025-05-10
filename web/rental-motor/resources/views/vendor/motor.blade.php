@@ -5,6 +5,8 @@
 @section('content')
     <!-- Sertakan SweetAlert2 dari CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
 
     {{-- Menampilkan pesan sukses atau error menggunakan SweetAlert2 --}}
     <script>
@@ -99,6 +101,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     @forelse ($motors as $motor)
+                        {{-- @dd($motors) --}}
                         <tr class="hover:bg-gray-50">
                             {{-- Gambar --}}
                             <td class="px-4 py-2 whitespace-nowrap">
@@ -157,20 +160,23 @@
                             </td>
 
                             {{-- Rating --}}
-                            <td class="px-4 py-2 whitespace-nowrap">
-                                <div class="flex items-center space-x-1">
-                                    @for ($i = 0; $i < $motor['rating']; $i++)
-                                        <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c...z" />
-                                        </svg>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex justify-center items-center space-x-1">
+                                    @php $stars = intval($motor['rating'] ?? 0); @endphp
+
+                                    {{-- Full stars --}}
+                                    @for ($i = 0; $i < $stars; $i++)
+                                        <i class="bi bi-star-fill text-yellow-400 fs-5"></i>
                                     @endfor
-                                    @for ($i = $motor['rating']; $i < 5; $i++)
-                                        <svg class="h-5 w-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                                            <path d="M9.049 2.927c...z" />
-                                        </svg>
+
+                                    {{-- Empty stars --}}
+                                    @for ($i = $stars; $i < 5; $i++)
+                                        <i class="bi bi-star text-gray-300 fs-5"></i>
                                     @endfor
                                 </div>
                             </td>
+
+
 
                             {{-- Harga --}}
                             <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-semibold text-green-600">
@@ -193,7 +199,7 @@
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
-                                                                                                                                                                                                            1 0 00-1-1m-4 0h4" />
+                                                                                                                                                                                                                            1 0 00-1-1m-4 0h4" />
                                     </svg>
                                 </button>
                             </td>
