@@ -353,7 +353,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                                 builder: (context) => ChatPage(
                                   chatRoomId: chatRoom['id'],
                                   receiverId: otherUserInfo['id'],
-                                  receiverName: otherUserInfo['name'] ??
+                                  receiverName: otherUserInfo['shop_name'] ??
                                       otherUserInfo['name'],
                                 ),
                               ),

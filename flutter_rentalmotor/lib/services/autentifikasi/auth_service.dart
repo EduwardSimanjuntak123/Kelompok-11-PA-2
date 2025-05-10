@@ -32,9 +32,8 @@ class AuthService {
       request.fields['shop_name'] = shopName;
       request.fields['shop_address'] = shopAddress;
       request.fields['birth_date'] = birthDate;
-
       request.fields['shop_description'] = shopDescription;
-      request.fields['kecamatan_id'] = kecamatanId.toString();
+      request.fields['id_kecamatan'] = kecamatanId.toString();
 
       if (profileImage != null) {
         request.files.add(await http.MultipartFile.fromPath(
@@ -43,8 +42,29 @@ class AuthService {
         ));
       }
 
+      // LOG REQUEST FIELDS
+      print("=== REQUEST TO: $uri ===");
+      print("Headers: ${request.headers}");
+      print("Fields:");
+      request.fields.forEach((key, value) {
+        print("  $key: $value");
+      });
+
+      // LOG FILES
+      if (request.files.isNotEmpty) {
+        for (var file in request.files) {
+          print(
+              "File: ${file.field} - ${file.filename} (${file.length} bytes)");
+        }
+      } else {
+        print("No file uploaded.");
+      }
+
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
+
+      print("Status Code: ${response.statusCode}");
+      print("Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -64,6 +84,7 @@ class AuthService {
         };
       }
     } catch (e) {
+      print("Exception during registerVendor: $e");
       return {"success": false, "message": "Error: $e"};
     }
   }
