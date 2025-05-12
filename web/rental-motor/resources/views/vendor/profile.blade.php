@@ -27,13 +27,13 @@
         @endif
     </script>
 
-
-
-
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Header Section -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-4xl font-extrabold mb-6 text-center text-gray-800">Profil Vendor</h1>
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Profil Vendor</h1>
+                <p class="text-gray-600">Kelola informasi profil dan akun Anda</p>
+            </div>
             <div class="flex space-x-3">
                 <button onclick="openModal('editModal')"
                     class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
@@ -42,21 +42,20 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    {{-- Edit Profil --}}
+                    Edit Profil
                 </button>
             </div>
         </div>
 
         <!-- Main Profile Card -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
             <div class="md:flex">
                 <!-- Sidebar (Images and Actions) -->
                 <div class="md:w-1/3 bg-gray-50 p-6 flex flex-col items-center border-r border-gray-200">
                     <!-- Profile Image -->
                     <div class="relative mb-6">
                         <div class="w-40 h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                            <img id="profileImagePreview"
-                                src="{{ config('api.base_url').$user['profile_image']}}"
+                            <img id="profileImagePreview" src="{{ config('api.base_url') . $user['profile_image'] }}"
                                 alt="Foto Profil" class="w-full h-full object-cover">
                         </div>
                         <button onclick="openPhotoModal('profile')"
@@ -71,17 +70,14 @@
                         </button>
                     </div>
 
-
-
                     <!-- Status Badge -->
                     <div
                         class="mt-4 px-4 py-2 rounded-full 
-    @if ($user['status'] === 'active') bg-green-100 text-green-800
-    @elseif($user['status'] === 'pending') bg-yellow-100 text-yellow-800
-    @else bg-red-100 text-red-800 @endif">
+                        @if ($user['status'] === 'active') bg-green-100 text-green-800
+                        @elseif($user['status'] === 'pending') bg-yellow-100 text-yellow-800
+                        @else bg-red-100 text-red-800 @endif">
                         {{ ucfirst($user['status']) }}
                     </div>
-
                 </div>
 
                 <!-- Main Content (Vendor Data) -->
@@ -98,24 +94,25 @@
                             </svg>
                             Informasi Pribadi
                         </h3>
-                        <!-- Informasi Pribadi -->
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">Nama Lengkap</p>
-                            <p class="text-gray-800 font-semibold">{{ $user['name'] ?? '-' }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">Email</p>
-                            <p class="text-gray-800 font-semibold">{{ $user['email'] ?? '-' }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">Telepon</p>
-                            <p class="text-gray-800 font-semibold">{{ $user['phone'] ?? '-' }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">Alamat</p>
-                            <p class="text-gray-800 font-semibold">{{ $user['address'] ?? '-' }}</p>
-                        </div>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Nama Lengkap</p>
+                                <p class="text-gray-800 font-semibold">{{ $user['name'] ?? '-' }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Email</p>
+                                <p class="text-gray-800 font-semibold">{{ $user['email'] ?? '-' }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Telepon</p>
+                                <p class="text-gray-800 font-semibold">{{ $user['phone'] ?? '-' }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Alamat</p>
+                                <p class="text-gray-800 font-semibold">{{ $user['address'] ?? '-' }}</p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Shop Information Section -->
@@ -128,24 +125,26 @@
                             </svg>
                             Informasi Toko
                         </h3>
-                        <!-- Informasi Toko -->
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">Nama Toko</p>
-                            <p class="text-gray-800 font-semibold">{{ $vendor['shop_name'] ?? '-' }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">Nama Kecamatan</p>
-                            <p class="text-gray-800 font-semibold">{{ $vendor['kecamatan']['nama_kecamatan'] ?? '-' }}</p>
-                        </div>
-                        <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">Alamat Toko</p>
-                            <p class="text-gray-800 font-semibold">{{ $vendor['shop_address'] ?? '-' }}</p>
-                        </div>
-                        <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
-                            <p class="text-sm font-medium text-gray-500">Deskripsi Toko</p>
-                            <p class="text-gray-800">{{ $vendor['shop_description'] ?? '-' }}</p>
-                        </div>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Nama Toko</p>
+                                <p class="text-gray-800 font-semibold">{{ $vendor['shop_name'] ?? '-' }}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Nama Kecamatan</p>
+                                <p class="text-gray-800 font-semibold">{{ $vendor['kecamatan']['nama_kecamatan'] ?? '-' }}
+                                </p>
+                            </div>
+                            <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Alamat Toko</p>
+                                <p class="text-gray-800 font-semibold">{{ $vendor['shop_address'] ?? '-' }}</p>
+                            </div>
+                            <div class="md:col-span-2 bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm font-medium text-gray-500">Deskripsi Toko</p>
+                                <p class="text-gray-800">{{ $vendor['shop_description'] ?? '-' }}</p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Timestamps -->
@@ -157,6 +156,53 @@
                                 {{ \Carbon\Carbon::parse($user['updated_at'])->translatedFormat('d F Y H:i') }}</span>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Card -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-blue-500" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Keamanan Akun
+                </h2>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                Untuk keamanan akun Anda, disarankan untuk mengganti kata sandi secara berkala.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+                    <div>
+                        <h3 class="font-medium text-gray-800">Kata Sandi</h3>
+                        <p class="text-sm text-gray-500">Terakhir diubah
+                            {{ \Carbon\Carbon::parse($user['updated_at'])->diffForHumans() }}</p>
+                    </div>
+                    <a href="#" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                        Ubah Kata Sandi
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
                 </div>
             </div>
         </div>
@@ -232,19 +278,6 @@
                                     <textarea name="shop_description" rows="3"
                                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ $vendor['shop_description'] ?? '' }}</textarea>
                                 </div>
-                            </div>
-
-                        </div>
-
-                        <!-- Password Section -->
-                        <div class="mb-6">
-                            <h3 class="text-lg font-semibold text-gray-700 border-b pb-2 mb-4">Keamanan</h3>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru (kosongkan jika
-                                    tidak diubah)</label>
-                                <input type="password" name="password"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Masukkan password baru">
                             </div>
                         </div>
 
@@ -380,4 +413,5 @@
                 }
             }
         </script>
-    @endsection
+    </div>
+@endsection

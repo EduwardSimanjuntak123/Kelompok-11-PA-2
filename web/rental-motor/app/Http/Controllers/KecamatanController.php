@@ -117,7 +117,7 @@ class KecamatanController extends Controller
         else {
             session()->flash('success', false);
             session()->flash('action', 'gagal_hapus');
-            session()->flash('message', 'Data kecamatan tidak dapat dihapus karena masih memiliki titik lokasi.');
+            session()->flash('message', 'Data kecamatan tidak dapat dihapus karena masih memiliki titik lokasi. ');
         }
 
         return redirect()->back();
