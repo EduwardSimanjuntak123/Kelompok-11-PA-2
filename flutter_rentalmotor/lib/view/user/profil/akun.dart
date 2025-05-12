@@ -98,6 +98,7 @@ class _AkunState extends State<Akun> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -140,7 +141,6 @@ class _AkunState extends State<Akun> {
               'Logout',
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
               ),
             ),
           ),
