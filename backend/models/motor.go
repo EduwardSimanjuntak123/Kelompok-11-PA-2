@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // models/motor.go
 type Motor struct {
@@ -20,6 +24,7 @@ type Motor struct {
 	Image       string    `gorm:"size:255" json:"image"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 func (Motor) TableName() string {
