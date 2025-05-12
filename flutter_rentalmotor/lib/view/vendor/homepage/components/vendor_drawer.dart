@@ -8,6 +8,8 @@ import 'package:flutter_rentalmotor/view/user/chat/chat_room_list_page.dart';
 import 'package:flutter_rentalmotor/view/vendor/kelolaMotor.dart';
 import 'package:flutter_rentalmotor/view/vendor/data_transaksi.dart';
 import 'package:flutter_rentalmotor/view/vendor/notifikasivendor.dart';
+import 'package:flutter_rentalmotor/view/vendor/kelola_perpanjangan_sewa.dart';
+
 import 'package:flutter_rentalmotor/view/vendor/ulasanvendor.dart';
 import 'package:flutter_rentalmotor/view/vendor/daftar_pesanan_screen.dart';
 
@@ -381,6 +383,21 @@ class _VendorDrawerState extends State<VendorDrawer>
                     },
                   ),
 
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.update,
+                    title: "Kelola Perpanjangan",
+                    isActive: _selectedMenu == 'Kelola Perpanjangan',
+                    onTap: () {
+                      setState(() => _selectedMenu = 'Kelola Perpanjangan');
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => KelolaPerpanjnganSewa()),
+                      );
+                    },
+                  ),
                   // Communication section
                   Padding(
                     padding:
