@@ -361,3 +361,60 @@ func ActivateVendor(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Akun vendor berhasil diaktifkan"})
 }
 
+
+func GetVendorDetailByAdmin(c *gin.Context) {
+	vendorID := c.Param("id")
+	var vendor models.Vendor
+
+	// Ambil data vendor dan motor terkait
+	if err := config.DB.Preload("Motors").First(&vendor, vendorID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Vendor tidak ditemukan"})
+		return
+	}
+
+	// Hitung jumlah pelanggan per bulan (distinct user_id yang booking motor milik vendor)
+	type MonthlyStats struct {
+		Month         string
+		CustomerCount int
+		IncomeTotal   float64
+	}
+
+	var stats []MonthlyStats
+	query := `
+		SELECT
+    DATE_FORMAT(b.created_at, '%Y-%m') AS month,
+    COUNT(DISTINCT b.customer_id) AS customer_count,
+    SUM(DATEDIFF(b.end_date, b.start_date) * m.price) AS income_total
+FROM bookings b
+JOIN motor m ON b.motor_id = m.id
+WHERE m.vendor_id = ? AND b.status != 'canceled'
+GROUP BY month
+ORDER BY month DESC;
+	`
+	if err := config.DB.Raw(query, vendorID).Scan(&stats).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil statistik bulanan"})
+		return
+	}
+
+	// Hitung jumlah motor tersedia
+	var availableCount int64
+	config.DB.Model(&models.Motor{}).Where("vendor_id = ? AND status = ?", vendorID, "available").Count(&availableCount)
+
+	// Hitung jumlah motor dibooking hari ini
+	var bookedTodayCount int64
+	today := time.Now().Format("2006-01-02")
+	config.DB.Raw(`
+		SELECT COUNT(DISTINCT b.motor_id) 
+		FROM bookings b
+		JOIN motor m ON b.motor_id = m.id
+		WHERE m.vendor_id = ? AND DATE(b.created_at) = ?
+	`, vendorID, today).Scan(&bookedTodayCount)
+
+	c.JSON(http.StatusOK, gin.H{
+		"vendor":             vendor,
+		"motors":             vendor.Motors,
+		"monthly_statistics": stats,
+		"motor_available":    availableCount,
+		"motor_booked_today": bookedTodayCount,
+	})
+}

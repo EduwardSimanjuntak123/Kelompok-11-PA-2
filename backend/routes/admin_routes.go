@@ -26,6 +26,10 @@ func AdminRoutes(router *gin.Engine) {
 
 			admin.PUT("/location-recommendations/:id", controllers.UpdateLocationRecommendation)
 			admin.DELETE("/location-recommendations/:id", controllers.DeleteLocationRecommendation)
+
+
+			// 🔍 Detail vendor lengkap
+			admin.GET("/vendor/:id/detail", controllers.GetVendorDetailByAdmin)
 		}
 	}
 }
