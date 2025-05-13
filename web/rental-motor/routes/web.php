@@ -124,7 +124,11 @@ Route::middleware([CheckAuth::class])->group(function () {
             ->name('vendor.rejectExtension');
 
 
+        Route::get('ubahkatasandi', [VendorController::class, 'showEmailForm'])
+              ->name('ubahkatasandi.form');
 
+               Route::post('ubahkatasandi', [VendorController::class, 'sendOtp'])
+              ->name('email.verify');
 
     });
 
