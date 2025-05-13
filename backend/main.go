@@ -16,8 +16,10 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Koneksi ke database
-	config.ConnectDatabase()
+	db := config.ConnectDatabase()
+config.MigrateDatabase(db)
 
+config.SeedAdminUser(db)
 	// Inisialisasi router
 	router := gin.Default()
 

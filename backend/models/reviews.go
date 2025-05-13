@@ -17,7 +17,8 @@ type Review struct {
 	Booking  *Booking `gorm:"foreignKey:BookingID" json:"booking"`
 	Customer *User    `gorm:"foreignKey:CustomerID" json:"customer"`
 	Motor    *Motor   `gorm:"foreignKey:MotorID" json:"motor"`
-	Vendor   *Vendor  `gorm:"foreignKey:UserID" json:"vendor"`
+	Vendor *Vendor `gorm:"foreignKey:VendorID;references:ID" json:"vendor"`
+
 }
 
 func (Review) TableName() string {

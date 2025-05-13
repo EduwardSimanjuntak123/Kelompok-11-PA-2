@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -11,7 +12,7 @@ import (
 
 var DB *gorm.DB
 
-func ConnectDatabase() {
+func ConnectDatabase() *gorm.DB  {
 	err := godotenv.Load() // Load .env file
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -38,5 +39,7 @@ func ConnectDatabase() {
 
 	DB = database
 	fmt.Println("Database terkoneksi!")
+
+	return DB
 }
 
