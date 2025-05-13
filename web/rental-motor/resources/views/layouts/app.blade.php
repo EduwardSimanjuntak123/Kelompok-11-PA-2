@@ -86,7 +86,7 @@
                     <li>
                         <a href="{{ route('admin.nonaktif', ['id' => $userId]) }}"
                             class="block px-4 py-2 rounded hover:bg-white hover:text-blue-600 {{ request()->routeIs('admin.nonaktif') ? 'bg-white text-blue-600' : '' }}">
-                            Nonaktifkan Akun Vendor
+                            Kelola Akun Vendor
                         </a>
                     </li>
                     <li>
