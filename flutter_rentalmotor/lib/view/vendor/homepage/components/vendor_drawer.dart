@@ -566,6 +566,7 @@ class _VendorDrawerState extends State<VendorDrawer>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: Row(
@@ -580,7 +581,10 @@ class _VendorDrawerState extends State<VendorDrawer>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Batal"),
+              child: const Text(
+                "Batal",
+                style: TextStyle(color: Colors.grey),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
