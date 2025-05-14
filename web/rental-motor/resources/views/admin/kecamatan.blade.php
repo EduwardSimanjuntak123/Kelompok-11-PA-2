@@ -38,7 +38,7 @@
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-gray-800">Daftar Kecamatan</h1>
             <button id="btn-add"
-                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">
+                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
                 Tambah Kecamatan
             </button>
         </div>
@@ -81,8 +81,15 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="px-6 py-4 text-center text-gray-500">
-                                Tidak ada data kecamatan.
+                            <td colspan="3" class="py-12">
+                                <div class="flex flex-col items-center justify-center text-center p-10 bg-white rounded-lg">
+                                    <div class="text-gray-400 text-5xl mb-4">
+                                        <i class="fas fa-map-marked-alt"></i>
+                                    </div>
+                                    <h2 class="text-2xl font-semibold text-gray-700">Belum Ada Data Kecamatan</h2>
+                                    <p class="text-gray-600 mt-2">Data kecamatan belum tersedia. Silakan tambahkan kecamatan
+                                        baru.</p>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -167,6 +174,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+
         // Tombol close modal Tambah
         document.getElementById('btn-add-close').addEventListener('click', () => {
             document.getElementById('modal-add').classList.add('hidden');

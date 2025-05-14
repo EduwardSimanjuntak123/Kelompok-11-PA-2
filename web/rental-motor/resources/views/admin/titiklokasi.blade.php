@@ -33,64 +33,110 @@
         <!-- Sidebar Kecamatan -->
         <aside class="w-64 bg-white border-r">
             <div class="p-4 font-bold text-lg text-left border-b">Kecamatan</div>
-            <nav class="p-4 space-y-2">
-                <template x-for="kecamatan in kecamatans" :key="kecamatan.id_kecamatan">
-                    <button @click="setActive(kecamatan.id_kecamatan)"
-                        class="block w-full text-left px-4 py-2 rounded-lg hover:bg-blue-100"
-                        :class="{ 'bg-blue-200': activeKecamatan === kecamatan.id_kecamatan }">
-                        <span x-text="kecamatan.nama_kecamatan"></span>
-                    </button>
+            <div class="p-4">
+                <template x-if="kecamatans.length === 0">
+                    <div class="flex flex-col items-center justify-center text-center p-4 bg-gray-50 rounded-lg">
+                        <div class="text-gray-400 text-3xl mb-2">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-700">Tidak Ada Kecamatan</h3>
+                        <p class="text-gray-500 text-sm mt-1">Data kecamatan belum tersedia.</p>
+                    </div>
                 </template>
-            </nav>
+
+                <template x-if="kecamatans.length > 0">
+                    <nav class="space-y-2">
+                        <template x-for="kecamatan in kecamatans" :key="kecamatan.id_kecamatan">
+                            <button @click="setActive(kecamatan.id_kecamatan)"
+                                class="block w-full text-left px-4 py-2 rounded-lg hover:bg-blue-100"
+                                :class="{ 'bg-blue-200': activeKecamatan === kecamatan.id_kecamatan }">
+                                <span x-text="kecamatan.nama_kecamatan"></span>
+                            </button>
+                        </template>
+                    </nav>
+                </template>
+            </div>
         </aside>
 
         <!-- Konten Utama -->
         <div class="flex-1 p-6">
-            <template x-for="kecamatan in kecamatans" :key="kecamatan.id_kecamatan">
-                <div x-show="activeKecamatan === kecamatan.id_kecamatan">
-                    <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-2xl font-bold text-gray-800" x-text="kecamatan.nama_kecamatan"></h1>
-                        <button @click="openAddModal(kecamatan.id_kecamatan)"
-                            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">
-                            Tambah Lokasi
-                        </button>
+            <template x-if="kecamatans.length === 0">
+                <div class="flex flex-col items-center justify-center text-center p-10 bg-white rounded-lg shadow-md">
+                    <div class="text-gray-400 text-5xl mb-4">
+                        <i class="fas fa-map-marked-alt"></i>
                     </div>
-
-                    <!-- Tabel Lokasi -->
-                    <div class="overflow-x-auto bg-white rounded-lg shadow-lg">
-                        <table class="min-w-full table-auto text-sm">
-                            <thead class="bg-blue-100 text-gray-600">
-                                <tr>
-                                    <th class="px-6 py-3 text-left font-medium">Nama Tempat</th>
-                                    <th class="px-6 py-3 text-left font-medium">Alamat</th>
-                                    <th class="px-6 py-3 text-center font-medium">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <template x-for="lokasi in filteredLokasi" :key="lokasi.id">
-                                    <tr>
-                                        <td class="px-6 py-4 text-gray-700" x-text="lokasi.place"></td>
-                                        <td class="px-6 py-4 text-gray-700" x-text="lokasi.address"></td>
-                                        <td class="px-6 py-4 text-center space-x-2">
-                                            <button @click="openEditModal(lokasi)"
-                                                class="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg shadow-md">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button" @click="confirmDelete(lokasi.id)"
-                                                class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg shadow-md">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div x-show="filteredLokasi.length === 0" class="p-4 text-center text-gray-500">
-                        Belum ada rekomendasi lokasi.
-                    </div>
+                    <h2 class="text-2xl font-semibold text-gray-700">Tidak Ada Data Kecamatan</h2>
+                    <p class="text-gray-600 mt-2">Data kecamatan belum tersedia. Silakan tambahkan data kecamatan terlebih
+                        dahulu.</p>
                 </div>
+            </template>
+
+            <template x-if="kecamatans.length > 0">
+                <template x-for="kecamatan in kecamatans" :key="kecamatan.id_kecamatan">
+                    <div x-show="activeKecamatan === kecamatan.id_kecamatan">
+                        <div class="flex justify-between items-center mb-6">
+                            <h1 class="text-2xl font-bold text-gray-800" x-text="kecamatan.nama_kecamatan"></h1>
+                            <button @click="openAddModal(kecamatan.id_kecamatan)"
+                                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">
+                                Tambah Lokasi
+                            </button>
+                        </div>
+
+                        <!-- Tabel Lokasi -->
+                        <div class="overflow-x-auto bg-white rounded-lg shadow-lg">
+                            <table class="min-w-full table-auto text-sm">
+                                <thead class="bg-blue-100 text-gray-600">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left font-medium">Nama Tempat</th>
+                                        <th class="px-6 py-3 text-left font-medium">Alamat</th>
+                                        <th class="px-6 py-3 text-center font-medium">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <template x-if="filteredLokasi.length > 0">
+                                        <template x-for="lokasi in filteredLokasi" :key="lokasi.id">
+                                            <tr>
+                                                <td class="px-6 py-4 text-gray-700" x-text="lokasi.place"></td>
+                                                <td class="px-6 py-4 text-gray-700" x-text="lokasi.address"></td>
+                                                <td class="px-6 py-4 text-center space-x-2">
+                                                    <button @click="openEditModal(lokasi)"
+                                                        class="bg-yellow-400 hover:bg-yellow-500 text-white py-2 px-4 rounded-lg shadow-md">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button type="button" @click="confirmDelete(lokasi.id)"
+                                                        class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg shadow-md">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+
+                                    <template x-if="filteredLokasi.length === 0">
+                                        <tr>
+                                            <td colspan="3" class="py-12">
+                                                <div
+                                                    class="flex flex-col items-center justify-center text-center p-6 bg-white rounded-lg">
+                                                    <div class="text-gray-400 text-4xl mb-3">
+                                                        <i class="fas fa-map-marker-slash"></i>
+                                                    </div>
+                                                    <h3 class="text-xl font-medium text-gray-700">Belum Ada Titik Lokasi
+                                                    </h3>
+                                                    <p class="text-gray-500 mt-1">Tidak ada titik lokasi yang tersedia untuk
+                                                        kecamatan ini.</p>
+                                                    <button @click="openAddModal(activeKecamatan)"
+                                                        class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg shadow-md">
+                                                        <i class="fas fa-plus mr-2"></i>Tambah Lokasi
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </template>
             </template>
         </div>
 
