@@ -28,7 +28,8 @@
                 </div>
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">OTP Verification</h2>
                 <p class="text-gray-600">We've sent a 6-digit code to your email</p>
-                <p class="text-sm text-gray-500 mt-1">{{ substr($email, 0, 3) . '****' . substr($email, strpos($email, '@')) }}</p>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ substr($email, 0, 3) . '****' . substr($email, strpos($email, '@')) }}</p>
             </div>
 
             <!-- Status message -->
@@ -75,7 +76,7 @@
                         @for ($i = 1; $i <= 6; $i++)
                             <input type="text" name="otp[]" maxlength="1"
                                 class="w-12 h-12 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500"
-                                oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length==1){document.getElementById('otp{{ $i+1 }}')?.focus()}">
+                                oninput="this.value=this.value.replace(/[^0-9]/g,'');if(this.value.length==1){document.getElementById('otp{{ $i + 1 }}')?.focus()}">
                         @endfor
                     </div>
                     @error('otp')
@@ -168,15 +169,15 @@
             const resendButton = document.getElementById('resendButton');
             const countdown = document.getElementById('countdown');
             const timer = document.getElementById('timer');
-            
+
             resendButton.classList.add('hidden');
             countdown.classList.remove('hidden');
-            
+
             let timeLeft = 60;
             const interval = setInterval(() => {
                 timeLeft--;
                 timer.textContent = timeLeft;
-                
+
                 if (timeLeft <= 0) {
                     clearInterval(interval);
                     resendButton.classList.remove('hidden');

@@ -124,6 +124,7 @@ class VendorController extends Controller
     public function showEmailForm()
     {
         $token = Session::get('token');
+        
         if (!$token) {
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }

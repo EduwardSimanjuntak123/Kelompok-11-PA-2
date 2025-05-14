@@ -373,6 +373,7 @@ class _DashboardState extends State<HomepageVendor> {
                           children: [
                             Text(
                               businessName ?? "Vendor",
+                              key: Key('homepageTitle'),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,

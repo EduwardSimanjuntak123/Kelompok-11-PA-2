@@ -46,30 +46,32 @@ class AdminController extends Controller
         }
 
         if ($response->successful()) {
-            $users = $response->json();
+    $users = $response->json();
 
-            foreach ($users as $user) {
-                if (!isset($user['created_at'], $user['role']))
-                    continue;
+    if (is_array($users)) {
+        foreach ($users as $user) {
+            if (!isset($user['created_at'], $user['role']))
+                continue;
 
-                $createdMonth = \Carbon\Carbon::parse($user['created_at'])->translatedFormat('F Y');
+            $createdMonth = \Carbon\Carbon::parse($user['created_at'])->translatedFormat('F Y');
 
-                // Hanya proses jika bulan ada dalam range
-                if (array_key_exists($createdMonth, $range)) {
-                    $role = $user['role'];
-                    if ($role === 'vendor') {
-                        $range[$createdMonth]['vendor']++;
-                    } elseif ($role === 'customer') {
-                        $range[$createdMonth]['customer']++;
-                    }
+            if (array_key_exists($createdMonth, $range)) {
+                $role = $user['role'];
+                if ($role === 'vendor') {
+                    $range[$createdMonth]['vendor']++;
+                } elseif ($role === 'customer') {
+                    $range[$createdMonth]['customer']++;
                 }
             }
-
-            // Siapkan data untuk Chart.js
-            $labels = array_keys($range);
-            $vendorCounts = array_column($range, 'vendor');
-            $customerCounts = array_column($range, 'customer');
         }
+
+        $labels = array_keys($range);
+        $vendorCounts = array_column($range, 'vendor');
+        $customerCounts = array_column($range, 'customer');
+    } else {
+        Log::warning('Format response API tidak sesuai, bukan array.', ['response' => $users]);
+    }
+}
 
         return view('admin.admin', [
             'labels' => $labels,
