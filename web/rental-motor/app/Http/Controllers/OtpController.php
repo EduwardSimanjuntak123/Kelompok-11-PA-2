@@ -13,7 +13,7 @@ public function showOtpForm()
     
     if (!$token) {
         return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
-    }
+    }   
 
     // Ambil data user dari API
     $response = Http::withToken($token)
@@ -27,30 +27,42 @@ public function showOtpForm()
     }
 
     // Kirim data user ke view otpvertification.blade.php
-    return view('otpvertification', compact('user'));
+    return view('vendor.otp_request', compact('user'));
 }
 
     public function requestResetOtp(Request $request)
     {
         $email = $request->input('email');
-        $token = session()->get('token', 'TOKEN_KAMU_DI_SINI'); // Ambil token dari session atau bisa dari header
-// dd($token);
+        $token = Session::get('token');
+
         if (!$token) {
             return back()->with('error', 'Token tidak ditemukan.');
         }
 
         $response = Http::withToken($token)
-            ->post('http://localhost:8080/request-reset-password-otp', [
+            ->post(config('api.base_url') . '/request-reset-password-otp', [
                 'email' => $email
             ]);
 
-        if ($response->status() === 200) {
-            session(['otp_start_time' => now()]);
-            return back()->with('success', 'Kode OTP telah dikirim ke email Anda.')->with('show_otp_form', true);
-
+        if ($response->successful()) {
+            Session::put('email_for_otp', $email);
+            return redirect()->route('vendor.otp.verify.form')
+                ->with('success', 'Kode OTP telah dikirim ke email Anda.');
         }
 
-        return back()->with('error', 'Gagal mengirim OTP.')->withInput();
+        return back()->with('error', 'Gagal mengirim OTP: ' . $response->json()['message'] ?? '');
+    }
+
+    public function showVerifyOtpForm()
+    {
+        $email = Session::get('email_for_otp');
+        
+        if (!$email) {
+            return redirect()->route('vendor.otp.form')
+                ->with('error', 'Silakan masukkan email terlebih dahulu.');
+        }
+
+        return view('vendor.otp_verify', compact('email'));
     }
 
     public function verifyOtp(Request $request)
@@ -58,41 +70,51 @@ public function showOtpForm()
         $email = $request->input('email');
         $otp = $request->input('otp');
 
-        $otpStartTime = session('otp_start_time');
-        if (!$otpStartTime || now()->diffInMinutes($otpStartTime) > 10) {
-            return back()->with('error', 'OTP kadaluarsa, silakan minta ulang.');
-        }
-
-        $response = Http::post('http://localhost:8080/verify-otp', [
+        $response = Http::post(config('api.base_url') . '/verify-otp', [
             'email' => $email,
             'otp' => $otp
         ]);
 
         if ($response->successful() && $response->json('status') === 'success') {
-    return back()
-        ->with('success', 'OTP berhasil diverifikasi.')
-        ->with('show_reset_form', true); // ✅ TAMBAHKAN INI
-}
+            Session::put('verified_email', $email);
+          return redirect()->route('vendor.password.form');
+        }
 
-        return back()->with('error', 'OTP salah atau tidak valid.')->withInput();
+        return back()->with('error', 'OTP salah atau tidak valid: ' . $response->json()['message'] ?? '');
+    }
+
+    public function showResetPasswordForm()
+    {
+        $email = Session::get('verified_email');
+        
+        if (!$email) {
+            return redirect()->route('vendor.otp.form')
+                ->with('error', 'Silakan verifikasi OTP terlebih dahulu.');
+        }
+
+        return view('vendor.reset_password', compact('email'));
     }
 
     public function updatePassword(Request $request)
-    {
-        $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
-        if (!$token) {
-            return back()->with('error', 'Token tidak ditemukan.');
-        }
+{
+    $token = session()->get('token');
+    $userId = session()->get('user_id'); // Pastikan ini sesuai dengan session ID user
 
-        $response = Http::withToken($token)->post('http://localhost:8080/reset-password', [
-            'old_password' => $request->input('old_password'),
-            'new_password' => $request->input('new_password'),
-        ]);
-
-        if ($response->status() === 200) {
-            return back()->with('success', 'Password berhasil diperbarui.');
-        }
-
-        return back()->with('error', 'Gagal memperbarui password.');
+    if (!$token) {
+        return back()->with('error', 'Token tidak ditemukan.');
     }
+
+    $response = Http::withToken($token)->post(config('api.base_url') . '/reset-password', [
+        'old_password' => $request->input('old_password'),
+        'new_password' => $request->input('new_password'),
+    ]);
+
+    if ($response->successful()) {
+        return redirect()->route('vendor.profile', ['id' => $userId])
+            ->with('success', 'Password berhasil diperbarui.');
+    }
+
+    return back()->with('error', 'Gagal memperbarui password: ' . ($response->json()['message'] ?? ''));
+}
+    
 }

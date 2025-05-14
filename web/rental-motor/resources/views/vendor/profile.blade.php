@@ -27,6 +27,21 @@
         @endif
     </script>
 
+    @if (session('success'))
+        <script>
+            // Alert menggunakan SweetAlert2
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Sukses!',
+                    text: '{{ session('success') }}',
+                    confirmButtonColor: '#6366f1',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+            });
+        </script>
+    @endif
     <div class="container mx-auto px-4 py-8 max-w-6xl">
         <!-- Header Section -->
         <div class="flex justify-between items-center mb-8">
@@ -196,8 +211,8 @@
                         <p class="text-sm text-gray-500">Terakhir diubah
                             {{ \Carbon\Carbon::parse($user['updated_at'])->diffForHumans() }}</p>
                     </div>
-                    <a href="{{ route('ubahkatasandi.form') }}" 
-   class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                    <a href="{{ route('vendor.otp.form') }}"
+                        class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
                         Ubah Kata Sandi
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
