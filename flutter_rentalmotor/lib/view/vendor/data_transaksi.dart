@@ -6,6 +6,7 @@ import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/view/vendor/detail_transaksi.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class TransactionReportScreen extends StatefulWidget {
   @override
@@ -92,7 +93,13 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
 
         if (data is List) {
           setState(() {
+            // Sort transactions by date (newest first)
             transactionList = data;
+            transactionList.sort((a, b) {
+              String aDate = a['created_at'] ?? '';
+              String bDate = b['created_at'] ?? '';
+              return bDate.compareTo(aDate); // Descending order
+            });
             isLoading = false;
           });
           print("Jumlah transaksi yang diterima: ${transactionList.length}");
@@ -242,8 +249,13 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
       if (countY > maxY) maxY = countY;
     }
 
-    // Ensure maxY is not zero
-    if (maxY == 0) maxY = 1000000;
+    // Handle case when all values are zero
+    if (maxY == 0) {
+      maxY = 1000000; // Default max value when no data
+      // Create dummy data points
+      revenueSpots = List.generate(7, (i) => FlSpot(i.toDouble(), 0));
+      transactionSpots = List.generate(7, (i) => FlSpot(i.toDouble(), 0));
+    }
 
     // Add 20% padding to maxY
     maxY = maxY * 1.2;
@@ -289,6 +301,184 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
       default:
         return textSecondaryColor;
     }
+  }
+
+  Widget _buildChart() {
+    // Handle case when there's no data
+    if (transactionList.isEmpty) {
+      return Container(
+        height: 200,
+        width: MediaQuery.of(context).size.width - 32,
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.insert_chart,
+                  size: 48, color: textSecondaryColor.withOpacity(0.5)),
+              SizedBox(height: 16),
+              Text(
+                'Tidak ada data transaksi',
+                style: TextStyle(
+                  color: textSecondaryColor,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      height: 200,
+      width: MediaQuery.of(context).size.width - 32,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16.0, top: 16.0),
+        child: LineChart(
+          LineChartData(
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: true,
+              horizontalInterval:
+                  maxY > 0 ? maxY / 5 : 1, // Ensure interval is not zero
+              verticalInterval: 1,
+              getDrawingHorizontalLine: (value) {
+                return FlLine(
+                  color: Colors.grey.withOpacity(0.2),
+                  strokeWidth: 1,
+                );
+              },
+              getDrawingVerticalLine: (value) {
+                return FlLine(
+                  color: Colors.grey.withOpacity(0.2),
+                  strokeWidth: 1,
+                );
+              },
+            ),
+            titlesData: FlTitlesData(
+              show: true,
+              rightTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              topTitles: AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 30,
+                  interval: 1,
+                  getTitlesWidget: (value, meta) {
+                    if (value % 1 != 0) return const SizedBox.shrink();
+                    final now = DateTime.now();
+                    final date =
+                        now.subtract(Duration(days: (maxX - value).toInt()));
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        DateFormat('dd/MM').format(date),
+                        style: TextStyle(
+                          color: textSecondaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 40,
+                  interval:
+                      maxY > 0 ? maxY / 5 : 1, // Ensure interval is not zero
+                  getTitlesWidget: (value, meta) {
+                    String formattedValue = '';
+                    if (value >= 1000000) {
+                      formattedValue =
+                          '${(value / 1000000).toStringAsFixed(1)}M';
+                    } else if (value >= 1000) {
+                      formattedValue = '${(value / 1000).toStringAsFixed(0)}K';
+                    } else {
+                      formattedValue = value.toStringAsFixed(0);
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(
+                        formattedValue,
+                        style: TextStyle(
+                          color: textSecondaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            borderData: FlBorderData(
+              show: false,
+            ),
+            minX: 0,
+            maxX: maxX,
+            minY: 0,
+            maxY: maxY,
+            lineBarsData: [
+              LineChartBarData(
+                spots: revenueSpots,
+                isCurved: true,
+                color: primaryColor,
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(
+                  show: true,
+                  getDotPainter: (spot, percent, barData, index) {
+                    return FlDotCirclePainter(
+                      radius: 4,
+                      color: primaryColor,
+                      strokeWidth: 2,
+                      strokeColor: Colors.white,
+                    );
+                  },
+                ),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: primaryColor.withOpacity(0.2),
+                ),
+              ),
+              LineChartBarData(
+                spots: transactionSpots,
+                isCurved: true,
+                color: accentColor,
+                barWidth: 3,
+                isStrokeCapRound: true,
+                dotData: FlDotData(
+                  show: true,
+                  getDotPainter: (spot, percent, barData, index) {
+                    return FlDotCirclePainter(
+                      radius: 4,
+                      color: accentColor,
+                      strokeWidth: 2,
+                      strokeColor: Colors.white,
+                    );
+                  },
+                ),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: accentColor.withOpacity(0.2),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -420,8 +610,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                         _buildSummaryCard(
                                           'Total Pendapatan',
                                           'Rp ${formatCurrency(totalIncome)}',
-                                          Icons.monetization_on,
-                                          primaryColor,
+                                          FontAwesomeIcons.moneyBillWave,
+                                          Colors.green,
                                         ),
                                         SizedBox(width: 10),
                                         _buildSummaryCard(
@@ -447,8 +637,8 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                         child: _buildSummaryCard(
                                           'Total Pendapatan',
                                           'Rp ${formatCurrency(totalIncome)}',
-                                          Icons.monetization_on,
-                                          primaryColor,
+                                          FontAwesomeIcons.moneyBillWave,
+                                          Colors.green,
                                         ),
                                       ),
                                       SizedBox(width: 10),
@@ -476,276 +666,9 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                             ),
                           ),
 
-                          // Revenue Chart
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Container(
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: cardColor,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 5),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          'Pendapatan 7 Hari Terakhir',
-                                          style: TextStyle(
-                                            fontSize: MediaQuery.of(context)
-                                                        .size
-                                                        .width <
-                                                    360
-                                                ? 14
-                                                : 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: textPrimaryColor,
-                                          ),
-                                          maxLines: 2,
-                                        ),
-                                      ),
-                                      Flexible(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            Container(
-                                              width: 12,
-                                              height: 12,
-                                              decoration: BoxDecoration(
-                                                color: primaryColor,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              'Pendapatan',
-                                              style: TextStyle(
-                                                fontSize: MediaQuery.of(context)
-                                                            .size
-                                                            .width <
-                                                        360
-                                                    ? 10
-                                                    : 12,
-                                                color: textSecondaryColor,
-                                              ),
-                                            ),
-                                            SizedBox(width: 8),
-                                            Container(
-                                              width: 12,
-                                              height: 12,
-                                              decoration: BoxDecoration(
-                                                color: accentColor,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              'Jumlah',
-                                              style: TextStyle(
-                                                fontSize: MediaQuery.of(context)
-                                                            .size
-                                                            .width <
-                                                        360
-                                                    ? 10
-                                                    : 12,
-                                                color: textSecondaryColor,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 20),
-                                  Container(
-                                    height: 200,
-                                    width:
-                                        MediaQuery.of(context).size.width - 32,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(
-                                          right: 16.0, top: 16.0),
-                                      child: LineChart(
-                                        LineChartData(
-                                          gridData: FlGridData(
-                                            show: true,
-                                            drawVerticalLine: true,
-                                            horizontalInterval: maxY / 5,
-                                            verticalInterval: 1,
-                                            getDrawingHorizontalLine: (value) {
-                                              return FlLine(
-                                                color: Colors.grey
-                                                    .withOpacity(0.2),
-                                                strokeWidth: 1,
-                                              );
-                                            },
-                                            getDrawingVerticalLine: (value) {
-                                              return FlLine(
-                                                color: Colors.grey
-                                                    .withOpacity(0.2),
-                                                strokeWidth: 1,
-                                              );
-                                            },
-                                          ),
-                                          titlesData: FlTitlesData(
-                                            show: true,
-                                            rightTitles: AxisTitles(
-                                              sideTitles:
-                                                  SideTitles(showTitles: false),
-                                            ),
-                                            topTitles: AxisTitles(
-                                              sideTitles:
-                                                  SideTitles(showTitles: false),
-                                            ),
-                                            bottomTitles: AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: true,
-                                                reservedSize: 30,
-                                                interval: 1,
-                                                getTitlesWidget: (value, meta) {
-                                                  if (value % 1 != 0)
-                                                    return const SizedBox
-                                                        .shrink();
-                                                  final now = DateTime.now();
-                                                  final date = now.subtract(
-                                                      Duration(
-                                                          days: (maxX - value)
-                                                              .toInt()));
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            top: 8.0),
-                                                    child: Text(
-                                                      DateFormat('dd/MM')
-                                                          .format(date),
-                                                      style: TextStyle(
-                                                        color:
-                                                            textSecondaryColor,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 10,
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                            leftTitles: AxisTitles(
-                                              sideTitles: SideTitles(
-                                                showTitles: true,
-                                                reservedSize: 40,
-                                                interval: maxY / 5,
-                                                getTitlesWidget: (value, meta) {
-                                                  String formattedValue = '';
-                                                  if (value >= 1000000) {
-                                                    formattedValue =
-                                                        '${(value / 1000000).toStringAsFixed(1)}M';
-                                                  } else if (value >= 1000) {
-                                                    formattedValue =
-                                                        '${(value / 1000).toStringAsFixed(0)}K';
-                                                  } else {
-                                                    formattedValue = value
-                                                        .toStringAsFixed(0);
-                                                  }
-                                                  return Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            right: 8.0),
-                                                    child: Text(
-                                                      formattedValue,
-                                                      style: TextStyle(
-                                                        color:
-                                                            textSecondaryColor,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 10,
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                          borderData: FlBorderData(
-                                            show: false,
-                                          ),
-                                          minX: 0,
-                                          maxX: maxX,
-                                          minY: 0,
-                                          maxY: maxY,
-                                          lineBarsData: [
-                                            LineChartBarData(
-                                              spots: revenueSpots,
-                                              isCurved: true,
-                                              color: primaryColor,
-                                              barWidth: 3,
-                                              isStrokeCapRound: true,
-                                              dotData: FlDotData(
-                                                show: true,
-                                                getDotPainter: (spot, percent,
-                                                    barData, index) {
-                                                  return FlDotCirclePainter(
-                                                    radius: 4,
-                                                    color: primaryColor,
-                                                    strokeWidth: 2,
-                                                    strokeColor: Colors.white,
-                                                  );
-                                                },
-                                              ),
-                                              belowBarData: BarAreaData(
-                                                show: true,
-                                                color: primaryColor
-                                                    .withOpacity(0.2),
-                                              ),
-                                            ),
-                                            LineChartBarData(
-                                              spots: transactionSpots,
-                                              isCurved: true,
-                                              color: accentColor,
-                                              barWidth: 3,
-                                              isStrokeCapRound: true,
-                                              dotData: FlDotData(
-                                                show: true,
-                                                getDotPainter: (spot, percent,
-                                                    barData, index) {
-                                                  return FlDotCirclePainter(
-                                                    radius: 4,
-                                                    color: accentColor,
-                                                    strokeWidth: 2,
-                                                    strokeColor: Colors.white,
-                                                  );
-                                                },
-                                              ),
-                                              belowBarData: BarAreaData(
-                                                show: true,
-                                                color: accentColor
-                                                    .withOpacity(0.2),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
                           // Recent Transactions
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            padding: const EdgeInsets.all(16),
                             child: Container(
                               padding: EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -804,6 +727,108 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
                                                 transaction);
                                           }).toList(),
                                         ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Revenue Chart
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: cardColor,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          'Pendapatan 7 Hari Terakhir',
+                                          style: TextStyle(
+                                            fontSize: MediaQuery.of(context)
+                                                        .size
+                                                        .width <
+                                                    360
+                                                ? 14
+                                                : 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: textPrimaryColor,
+                                          ),
+                                          maxLines: 2,
+                                        ),
+                                      ),
+                                      if (transactionList.isNotEmpty)
+                                        Flexible(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              Container(
+                                                width: 12,
+                                                height: 12,
+                                                decoration: BoxDecoration(
+                                                  color: primaryColor,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Pendapatan',
+                                                style: TextStyle(
+                                                  fontSize:
+                                                      MediaQuery.of(context)
+                                                                  .size
+                                                                  .width <
+                                                              360
+                                                          ? 10
+                                                          : 12,
+                                                  color: textSecondaryColor,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8),
+                                              Container(
+                                                width: 12,
+                                                height: 12,
+                                                decoration: BoxDecoration(
+                                                  color: accentColor,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                'Jumlah',
+                                                style: TextStyle(
+                                                  fontSize:
+                                                      MediaQuery.of(context)
+                                                                  .size
+                                                                  .width <
+                                                              360
+                                                          ? 10
+                                                          : 12,
+                                                  color: textSecondaryColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  SizedBox(height: 20),
+                                  _buildChart(),
                                 ],
                               ),
                             ),
