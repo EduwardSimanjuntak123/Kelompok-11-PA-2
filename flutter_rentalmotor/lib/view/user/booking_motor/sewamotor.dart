@@ -3,7 +3,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart'; 
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/view/user/detailMotorVendor/detailmotor.dart';
