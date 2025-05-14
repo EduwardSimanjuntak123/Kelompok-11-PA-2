@@ -359,6 +359,7 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
                                         const Icon(
                                           Icons.arrow_forward,
                                           size: 18,
+                                          color: Colors.white,
                                         ),
                                       ],
                                     ),

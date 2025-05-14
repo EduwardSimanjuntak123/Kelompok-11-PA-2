@@ -542,7 +542,10 @@ class _NotifikasiPagevState extends State<NotifikasiPagev>
           );
         },
         backgroundColor: primaryColor,
-        child: const Icon(Icons.refresh),
+        child: const Icon(
+          Icons.refresh,
+          color: Colors.white,
+        ),
         tooltip: 'Refresh Data',
         elevation: 4,
       ),

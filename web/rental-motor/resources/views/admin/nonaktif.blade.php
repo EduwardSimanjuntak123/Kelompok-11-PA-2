@@ -31,8 +31,7 @@
         <h2 class="text-4xl font-extrabold text-center text-gray-800 mb-8">Daftar Vendor Terdaftar</h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            @foreach ($vendors as $vendor)
-            {{-- @dd($vendors) --}}
+            @forelse ($vendors as $vendor)
                 <div
                     class="bg-gradient-to-br from-white to-gray-50 shadow-xl rounded-2xl p-6 border border-gray-200 hover:shadow-2xl transform hover:scale-[1.02] transition duration-300">
                     <!-- Gambar Profil -->
@@ -101,7 +100,26 @@
                         @endif
                     </div>
                 </div>
-            @endforeach
+            @empty
+                <div class="col-span-full">
+                    <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-lg p-12 text-center">
+                        <div class="text-gray-400 text-6xl mb-6">
+                            <i class="fas fa-store-slash"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-700 mb-3">Belum Ada Vendor Terdaftar</h3>
+                        <p class="text-gray-500 mb-6 max-w-md">
+                            Sistem belum mencatat vendor terdaftar. Silakan undang vendor baru
+                            atau hubungi administrator untuk informasi lebih lanjut.
+                        </p>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button onclick="window.location.reload()"
+                                class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-3 px-8 rounded-lg shadow-md transition-all flex items-center justify-center">
+                                <i class="fas fa-sync-alt mr-2"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endforelse
         </div>
     </div>
 
