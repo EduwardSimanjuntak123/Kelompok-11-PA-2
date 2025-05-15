@@ -334,6 +334,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                       final chatRoom = room['chat_room'];
                       final unreadCount = room['unread_count'] ?? 0;
                       final otherUserInfo = room['other_user_info'];
+                      
 
                       // Pastikan data tidak null
                       if (chatRoom == null || otherUserInfo == null) {
@@ -386,7 +387,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
 
                       // Display shop name for vendors
                       final displayName =
-                          otherUserInfo['shop_name'] ?? otherUserInfo['name'];
+                          otherUserInfo['name'] ?? otherUserInfo['name'];
 
                       return InkWell(
                         onTap: () {
@@ -403,7 +404,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                               builder: (context) => ChatPage(
                                 chatRoomId: chatRoom['id'],
                                 receiverId: otherUserInfo['id'],
-                                receiverName: otherUserInfo['shop_name'] ??
+                                receiverName: otherUserInfo['name'] ??
                                     otherUserInfo['name'],
                               ),
                             ),

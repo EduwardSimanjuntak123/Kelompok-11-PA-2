@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_rentalmotor/view/user/chat/chat_room_list_page.dart';
+import 'package:flutter_rentalmotor/view/vendor/chat_room_list_page.dart';
 
 import 'package:web_socket_channel/io.dart';
 import 'package:shared_preferences/shared_preferences.dart';
