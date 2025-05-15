@@ -616,7 +616,8 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.app_registration, size: 20),
+                                    Icon(Icons.app_registration,
+                                        size: 20, color: Colors.white),
                                     const SizedBox(width: 10),
                                     const Text(
                                       "BUAT AKUN",
