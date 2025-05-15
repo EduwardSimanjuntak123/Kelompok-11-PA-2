@@ -223,9 +223,8 @@
 
         <!-- Harga (Fleksibel) -->
         <div class="flex bg-white/90 shadow-xl rounded-full px-10 py-4 mt-10 space-x-4 items-center backdrop-blur-sm">
-            <span class="text-green-600 text-xl md:text-2xl font-semibold">
-                Mulai dari <span class="text-gray-800 text-base md:text-lg">Rp</span> <span
-                    id="harga-motor">Tanyakan</span><span class="text-gray-800 text-base md:text-lg"> / 24 jam</span>
+            <span class="text-green-600 text-xl md:text-1xl font-semibold">
+                Harga yang terjangkau <span class="text-gray-800 text-base md:text-lg"> / 24 jam</span>
             </span>
         </div>
 
