@@ -396,19 +396,6 @@ class _DashboardState extends State<HomepageVendor> {
                                 ),
                               ],
                             ),
-                            if (vendorId != null)
-                              Row(
-                                children: [
-                                  const Icon(Icons.badge,
-                                      color: Colors.white70, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    "ID: $vendorId",
-                                    style: const TextStyle(
-                                        color: Colors.white70, fontSize: 12),
-                                  ),
-                                ],
-                              ),
                           ],
                         ),
                       ),
