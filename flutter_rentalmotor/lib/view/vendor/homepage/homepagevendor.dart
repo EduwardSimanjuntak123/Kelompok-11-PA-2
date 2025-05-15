@@ -17,7 +17,7 @@ import 'package:flutter_rentalmotor/services/vendor/DashboardVendorService.dart'
 
 // Import models
 import 'package:flutter_rentalmotor/models/DashboardData.dart';
-
+import 'package:flutter_rentalmotor/services/web_socket_channel/websocket_service.dart';
 // Import components
 import 'package:flutter_rentalmotor/view/vendor/homepage/components/overview_cards.dart';
 import 'package:flutter_rentalmotor/view/vendor/homepage/components/status_section.dart';
@@ -68,6 +68,7 @@ class _DashboardState extends State<HomepageVendor> {
   @override
   void initState() {
     super.initState();
+    
     _initLocalNotifications();
     _loadData();
     _loadNotifications();
