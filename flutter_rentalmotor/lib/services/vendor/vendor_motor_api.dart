@@ -85,6 +85,8 @@ class VendorMotorApi {
       request.fields['price'] = motor.price.toString();
       request.fields['color'] = motor.color;
       request.fields['status'] = motor.status;
+      request.fields['platmotor'] = motor.plate;
+
       request.fields['type'] = motor.type;
       request.fields['description'] = motor.description;
       request.fields['rating'] = motor.rating.toString();

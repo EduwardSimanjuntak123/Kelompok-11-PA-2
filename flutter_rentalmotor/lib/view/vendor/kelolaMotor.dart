@@ -623,6 +623,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                         _buildInfoChip(
                             Icons.calendar_today, motor.year.toString()),
                         _buildInfoChip(Icons.category, motor.type),
+                        _buildInfoChip(Icons.confirmation_number, motor.plate),
                       ],
                     ),
 

@@ -17,6 +17,7 @@ class EditMotorScreen extends StatefulWidget {
 class _EditMotorScreenState extends State<EditMotorScreen> {
   final _formKey = GlobalKey<FormState>();
   late String motorName;
+  late String motorPlate; // Added plate number field
   late int motorYear;
   late double motorPrice;
   late String motorColor;
@@ -45,6 +46,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
   void initState() {
     super.initState();
     motorName = widget.motor.name;
+    motorPlate = widget.motor.plate ?? ''; // Initialize plate number
     motorYear = widget.motor.year;
     motorPrice = widget.motor.price;
     motorColor = widget.motor.color;
@@ -75,6 +77,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
       MotorModel updatedMotor = MotorModel(
         id: widget.motor.id,
         name: motorName,
+        plate: motorPlate, // Added plate number
         brand: widget.motor.brand,
         year: motorYear,
         price: motorPrice,
@@ -96,13 +99,11 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 10),
-                Text('Motor berhasil diperbarui'),
-              ],
-            ),
+            content: Row(children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 10),
+              Text('Motor berhasil diperbarui'),
+            ]),
             backgroundColor: successColor,
             behavior: SnackBarBehavior.floating,
             shape:
@@ -401,6 +402,12 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                             initialValue: motorName,
                             icon: Icons.motorcycle,
                             onSaved: (val) => motorName = val!,
+                          ),
+                          _buildTextField(
+                            label: 'Plat Motor',
+                            initialValue: motorPlate,
+                            icon: Icons.confirmation_number,
+                            onSaved: (val) => motorPlate = val!,
                           ),
                           _buildTextField(
                             label: 'Tahun',

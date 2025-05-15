@@ -42,6 +42,7 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
     motor = MotorModel(
         id: -1,
         name: '',
+        plate: '',
         brand: '',
         year: 0,
         price: 0,
@@ -112,6 +113,14 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
         ),
       );
     }
+  }
+
+  Widget _buildInfoItem(
+      String title, String value, IconData icon, Color color, double width) {
+    return SizedBox(
+      width: width,
+      child: _buildInfoCard(title, value, icon, color),
+    );
   }
 
   Future<void> _refreshData() async {
@@ -673,38 +682,50 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
                                     SizedBox(height: 24),
 
                                     // Rating and specs
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildInfoCard(
-                                            'Rating',
-                                            '${motor.rating}/5',
-                                            Icons.star,
-                                            Colors.amber,
-                                          ),
-                                        ),
-                                        SizedBox(width: 12),
-                                        Expanded(
-                                          child: _buildInfoCard(
-                                            'Tipe',
-                                            motor.type,
-                                            Icons.category,
-                                            secondaryColor,
-                                          ),
-                                        ),
-                                        SizedBox(width: 12),
-                                        Expanded(
-                                          child: _buildInfoCard(
-                                            'Warna',
-                                            motor.color,
-                                            Icons.color_lens,
-                                            accentColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                    LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        double spacing = 12;
+                                        int itemPerRow = 3;
+                                        double totalSpacing =
+                                            spacing * (itemPerRow - 1);
+                                        double itemWidth =
+                                            (constraints.maxWidth -
+                                                    totalSpacing) /
+                                                itemPerRow;
 
-                                    SizedBox(height: 24),
+                                        return Wrap(
+                                          spacing: spacing,
+                                          runSpacing: spacing,
+                                          children: [
+                                            _buildInfoItem(
+                                                'Rating',
+                                                '${motor.rating}/5',
+                                                Icons.star,
+                                                Colors.amber,
+                                                itemWidth),
+                                            _buildInfoItem(
+                                                'Tipe',
+                                                motor.type,
+                                                Icons.category,
+                                                secondaryColor,
+                                                itemWidth),
+                                            _buildInfoItem(
+                                                'Warna',
+                                                motor.color,
+                                                Icons.color_lens,
+                                                accentColor,
+                                                itemWidth),
+                                            _buildInfoItem(
+                                                'Plat Motor',
+                                                motor.plate,
+                                                Icons.confirmation_number,
+                                                accentColor,
+                                                itemWidth),
+                                          ],
+                                        );
+                                      },
+                                    ),
+                                    SizedBox(height: 20),
 
                                     // Description section
                                     Text(
@@ -808,10 +829,10 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
   Widget _buildInfoCard(
       String title, String value, IconData icon, Color color) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(13),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -823,18 +844,18 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
       child: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(8),
+            padding: EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 21),
           ),
-          SizedBox(height: 12),
+          SizedBox(height: 8),
           Text(
             value,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: textPrimaryColor,
             ),

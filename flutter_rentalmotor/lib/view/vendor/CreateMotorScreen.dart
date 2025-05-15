@@ -30,6 +30,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
   final _priceController = TextEditingController();
   final _colorController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _licensePlateController = TextEditingController();
   String _type = 'matic';
 
   @override
@@ -40,6 +41,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
     _priceController.dispose();
     _colorController.dispose();
     _descriptionController.dispose();
+    _licensePlateController.dispose();
     super.dispose();
   }
 
@@ -91,11 +93,8 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
       try {
         _formKey.currentState!.save();
 
-<<<<<<< HEAD
-        final uri = Uri.parse("http://192.168.251.159:8080/motor/vendor/");
-=======
-        final uri = Uri.parse("${ApiConfig.baseUrl}/motor/vendor/");
->>>>>>> ce91a70fd9aa754c09bcfd5ed877f3ad01ddec16
+        final uri = Uri.parse("http://192.168.241.201:8081/motor/vendor/");
+
         final request = http.MultipartRequest('POST', uri);
 
         // Ambil token dari secure storage
@@ -112,6 +111,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
         request.fields['color'] = _colorController.text;
         request.fields['type'] = _type;
         request.fields['description'] = _descriptionController.text;
+        request.fields['license_plate'] = _licensePlateController.text;
 
         // Simulasi upload progress
         for (int i = 1; i <= 10; i++) {
@@ -270,6 +270,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
       _priceController.clear();
       _colorController.clear();
       _descriptionController.clear();
+      _licensePlateController.clear();
       _type = 'matic';
       _imageFile = null;
     });
@@ -283,14 +284,14 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
         title: const Text(
           "Tambah Motor",
           style: TextStyle(
-            color: Colors.white, // Warna teks putih
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: const Color(0xFF2C567E),
         elevation: 0,
         iconTheme: const IconThemeData(
-          color: Colors.white, // Warna ikon back jadi putih
+          color: Colors.white,
         ),
         actions: [
           IconButton(
@@ -466,6 +467,14 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                                 ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _licensePlateController,
+                            decoration: _buildInputDecoration(
+                                'Plat Nomor', Icons.confirmation_number),
+                            validator: (val) =>
+                                val!.isEmpty ? 'Plat nomor wajib diisi' : null,
                           ),
                         ],
                       ),

@@ -1,8 +1,7 @@
-// lib/models/motor_model.dart
-
 class MotorModel {
   final int id;
   final String name;
+  final String plate;
   final String brand;
   final int year;
   final double price;
@@ -16,6 +15,7 @@ class MotorModel {
   MotorModel({
     required this.id,
     required this.name,
+    required this.plate,
     required this.brand,
     required this.year,
     required this.price,
@@ -31,6 +31,7 @@ class MotorModel {
     return MotorModel(
       id: json['id'],
       name: json['name'],
+      plate: json['platmotor'] ?? '', // Add this with null check
       brand: json['brand'],
       year: json['year'],
       price: (json['price'] as num).toDouble(),
@@ -43,11 +44,11 @@ class MotorModel {
     );
   }
 
-  // Method to convert motor model into JSON for API
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
+      'plate': plate, // Add this
       'brand': brand,
       'year': year,
       'price': price,
