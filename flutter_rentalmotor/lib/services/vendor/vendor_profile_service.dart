@@ -92,12 +92,13 @@ class VendorService {
     }
   }
 
-  Future updateVendorProfile({
+  Future<void> updateVendorProfile({
     String? name,
     String? shopName,
     String? phone,
     String? address,
     File? imageFile,
+    int? kecamatanId,
   }) async {
     print('$_logTag Starting profile update...');
     try {
@@ -113,6 +114,8 @@ class VendorService {
       if (shopName != null) request.fields['shop_name'] = shopName;
       if (phone != null) request.fields['phone'] = phone;
       if (address != null) request.fields['address'] = address;
+      if (kecamatanId != null)
+        request.fields['id_kecamatan'] = kecamatanId.toString();
 
       if (imageFile != null) {
         final mimeType =

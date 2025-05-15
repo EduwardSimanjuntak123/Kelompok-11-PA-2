@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../services/vendor/vendor_profile_service.dart';
 import '../../config/api_config.dart';
+import 'package:flutter_rentalmotor/services/autentifikasi/reg_vendor_api.dart'; // Adjust the import path if needed
 
 // Validator class
 class FormValidator {
@@ -92,6 +93,9 @@ class _EdittokovendorState extends State<Edittokovendor> {
   bool _isFormValid = false;
   String? _imageError;
 
+  List<Map<String, dynamic>> _kecamatanList = [];
+  int? _selectedKecamatanId;
+
   @override
   void initState() {
     super.initState();
@@ -127,16 +131,31 @@ class _EdittokovendorState extends State<Edittokovendor> {
     });
 
     try {
+      // Load kecamatan data
+      await _fetchKecamatan();
+
       final profile = await _vendorService.getVendorProfile();
       if (profile != null) {
         setState(() {
           shopNameController.text = profile.shopName ?? '';
+          // We'll keep the district name in the controller for display purposes
           districtController.text = profile.districtName ?? '';
           descriptionController.text = profile.shopDescription ?? '';
           addressController.text = profile.shopAddress ?? '';
           profileImageUrl = profile.profileImage != null
               ? '${ApiConfig.baseUrl}${profile.profileImage}'
               : null;
+
+          // Try to find the matching kecamatan ID based on the name
+          if (profile.districtName != null) {
+            final matchingKecamatan = _kecamatanList.firstWhere(
+              (k) =>
+                  k['name'].toLowerCase() ==
+                  profile.districtName!.toLowerCase(),
+              orElse: () => {'id': null, 'name': ''},
+            );
+            _selectedKecamatanId = matchingKecamatan['id'];
+          }
         });
         _validateForm();
       }
@@ -156,6 +175,31 @@ class _EdittokovendorState extends State<Edittokovendor> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _fetchKecamatan() async {
+    try {
+      final kecamatanData = await fetchKecamatan();
+      if (kecamatanData != null) {
+        setState(() {
+          _kecamatanList = kecamatanData;
+        });
+      } else {
+        throw Exception('Gagal memuat kecamatan');
+      }
+    } catch (e) {
+      debugPrint('Error fetching kecamatan: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error mengambil data kecamatan: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
     }
   }
 
@@ -196,6 +240,21 @@ class _EdittokovendorState extends State<Edittokovendor> {
       return;
     }
 
+    // Check if kecamatan is selected
+    if (_selectedKecamatanId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Pilih kecamatan terlebih dahulu'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -206,6 +265,8 @@ class _EdittokovendorState extends State<Edittokovendor> {
         phone: descriptionController.text,
         address: addressController.text,
         imageFile: selectedImage,
+        kecamatanId:
+            _selectedKecamatanId, // Add this parameter (you may need to update the service method)
       );
       setState(() {
         _isLoading = false;
@@ -566,11 +627,83 @@ class _EdittokovendorState extends State<Edittokovendor> {
                                 Icons.store,
                                 validator: FormValidator.validateShopName,
                               ),
-                              _buildProfileField(
-                                'Kecamatan',
-                                districtController,
-                                Icons.map,
-                                validator: FormValidator.validateDistrict,
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Kecamatan',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.grey.shade300,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.1),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: DropdownButtonFormField<int>(
+                                        decoration: InputDecoration(
+                                          prefixIcon: Icon(
+                                            Icons.map,
+                                            color: primaryColor,
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 12,
+                                          ),
+                                          errorStyle: const TextStyle(
+                                              color: Colors.red),
+                                        ),
+                                        value: _selectedKecamatanId,
+                                        hint: const Text('Pilih Kecamatan'),
+                                        isExpanded: true,
+                                        items: _kecamatanList.map((kecamatan) {
+                                          return DropdownMenuItem<int>(
+                                            value: kecamatan['id'],
+                                            child: Text(kecamatan['name']),
+                                          );
+                                        }).toList(),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedKecamatanId = value;
+                                            // Update the text controller with the selected name for display purposes
+                                            if (value != null) {
+                                              final selectedKecamatan =
+                                                  _kecamatanList.firstWhere(
+                                                (k) => k['id'] == value,
+                                                orElse: () =>
+                                                    {'id': null, 'name': ''},
+                                              );
+                                              districtController.text =
+                                                  selectedKecamatan['name'];
+                                            }
+                                          });
+                                          _validateForm();
+                                        },
+                                        validator: (value) => value == null
+                                            ? 'Pilih kecamatan'
+                                            : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                               _buildProfileField(
                                 'Deskripsi Usaha',
