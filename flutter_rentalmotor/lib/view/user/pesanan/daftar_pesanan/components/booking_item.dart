@@ -86,7 +86,7 @@ class BookingItem extends StatelessWidget {
                         ),
                         SizedBox(width: 6),
                         Text(
-                          status[0].toUpperCase() + status.substring(1),
+                          StatusUtils.getStatusText(status),
                           style: TextStyle(
                             color: StatusUtils.getStatusColor(status),
                             fontWeight: FontWeight.bold,
@@ -95,7 +95,6 @@ class BookingItem extends StatelessWidget {
                         ),
                       ],
                     ),
-                    // Badge "New" for pending orders
                     if (isNewBooking)
                       Container(
                         margin: EdgeInsets.only(top: 4),

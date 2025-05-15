@@ -163,29 +163,6 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                   ),
                 ),
               ),
-            if (!_isConnected)
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red[100],
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.red),
-                  ),
-                  child: Text(
-                    'Offline',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
         actions: [

@@ -1027,7 +1027,7 @@ class _MotorListPageState extends State<MotorListPage>
                         color: (motor["status"] ?? "unknown") == "available"
                             ? Colors.green
                             : (motor["status"] ?? "unknown") == "booked"
-                                ? Colors.red
+                                ? Colors.orange
                                 : Colors.grey,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
@@ -1039,9 +1039,13 @@ class _MotorListPageState extends State<MotorListPage>
                         ],
                       ),
                       child: Text(
-                        (motor["status"] ?? "unknown") == "booked"
-                            ? "in use"
-                            : (motor["status"] ?? "unknown"),
+                        () {
+                          String status = motor["status"] ?? "unknown";
+                          if (status == "available") return "Tersedia";
+                          if (status == "unavaiable") return "Sedang Perbaikan";
+                          if (status == "booked") return "Sedang Digunakan";
+                          return "Tidak Diketahui";
+                        }(),
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

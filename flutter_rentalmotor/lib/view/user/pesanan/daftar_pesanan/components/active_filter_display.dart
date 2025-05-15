@@ -26,19 +26,22 @@ class ActiveFilterDisplay extends StatelessWidget {
             color: StatusUtils.getStatusColor(selectedStatus),
           ),
           SizedBox(width: 8),
-          Text(
-            'Menampilkan pesanan dengan status: ',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[700],
-            ),
-          ),
-          Text(
-            selectedStatus[0].toUpperCase() + selectedStatus.substring(1),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: StatusUtils.getStatusColor(selectedStatus),
+          Flexible(
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                children: [
+                  TextSpan(text: 'Menampilkan pesanan dengan status: '),
+                  TextSpan(
+                    text: StatusUtils.getStatusText(selectedStatus),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: StatusUtils.getStatusColor(selectedStatus),
+                    ),
+                  ),
+                ],
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

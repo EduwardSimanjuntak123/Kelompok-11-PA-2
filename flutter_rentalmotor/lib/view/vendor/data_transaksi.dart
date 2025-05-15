@@ -63,19 +63,18 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
   }
 
   Future<void> fetchTransactionData() async {
-    setState(() {
-      isLoading = true;
-    });
+    setState(() => isLoading = true);
+    print("🔄 Memulai pengambilan data transaksi...");
 
     try {
-      print("Memulai pengambilan data transaksi...");
-
       final token = await storage.read(key: "auth_token");
-      print("Token ditemukan: $token");
+      if (token == null) {
+        throw Exception("Token tidak ditemukan");
+      }
 
       final String baseUrl = ApiConfig.baseUrl;
       final Uri url = Uri.parse('$baseUrl/transaction/');
-      print("Mengirim GET request ke: $url");
+      print("📡 Mengirim GET request ke: $url");
 
       final response = await http.get(
         url,
@@ -85,92 +84,61 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
         },
       );
 
-      print("Status Code: ${response.statusCode}");
-      print("Response Body: ${response.body}");
+      print("📦 Status Code: ${response.statusCode}");
+      print("📦 Response Body: ${response.body}");
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final body = response.body;
+        final decoded = json.decode(body);
 
-        if (data is List) {
+        if (decoded is List) {
+          // Urutkan berdasarkan created_at (terbaru dulu)
+          decoded.sort((a, b) {
+            final aDate = a['created_at'] ?? '';
+            final bDate = b['created_at'] ?? '';
+            return bDate.compareTo(aDate);
+          });
+
           setState(() {
-            // Sort transactions by date (newest first)
-            transactionList = data;
-            transactionList.sort((a, b) {
-              String aDate = a['created_at'] ?? '';
-              String bDate = b['created_at'] ?? '';
-              return bDate.compareTo(aDate); // Descending order
-            });
+            transactionList = decoded;
             isLoading = false;
           });
-          print("Jumlah transaksi yang diterima: ${transactionList.length}");
+
+          print("✅ Jumlah transaksi diterima: ${transactionList.length}");
           _prepareChartData();
           _animationController.forward();
         } else {
-          print("Data tidak memiliki field 'data' atau bukan list");
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.error_outline, color: Colors.white),
-                  SizedBox(width: 10),
-                  Text("Format data tidak valid"),
-                ],
-              ),
-              backgroundColor: dangerColor,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              margin: EdgeInsets.all(10),
-            ),
-          );
-          setState(() {
-            isLoading = false;
-          });
+          _showError("Format data tidak valid (bukan List)");
         }
       } else {
-        print("Gagal memuat data transaksi. Status: ${response.statusCode}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 10),
-                Text("Gagal memuat data transaksi: ${response.statusCode}"),
-              ],
-            ),
-            backgroundColor: dangerColor,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            margin: EdgeInsets.all(10),
-          ),
-        );
-        setState(() {
-          isLoading = false;
-        });
+        _showError("Gagal memuat data transaksi: ${response.statusCode}");
       }
     } catch (e) {
-      print("Terjadi error saat fetch data transaksi: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 10),
-              Expanded(child: Text("Error: $e")),
-            ],
-          ),
-          backgroundColor: dangerColor,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          margin: EdgeInsets.all(10),
-        ),
-      );
-      setState(() {
-        isLoading = false;
-      });
+      print("❌ Terjadi error saat fetch data transaksi: $e");
+      _showError("Terjadi error: $e");
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.white),
+            SizedBox(width: 10),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: dangerColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.all(10),
+      ),
+    );
   }
 
   void _prepareChartData() {

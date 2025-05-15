@@ -199,8 +199,9 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.teal[600],
+        backgroundColor: const Color(0xFF1A567D),
         elevation: 0,
+        iconTheme: IconThemeData(color: Colors.white),
         title: Row(
           children: [
             Text(
@@ -227,29 +228,6 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                   ),
                 ),
               ),
-            if (!_isConnected)
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red[100],
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.red),
-                  ),
-                  child: Text(
-                    'Offline',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
         actions: [
@@ -266,12 +244,6 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                 _fetchChatRooms(userId!);
                 _fetchUnreadCount(userId!);
               }
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {
-              // Menu options
             },
           ),
         ],
@@ -334,7 +306,6 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                       final chatRoom = room['chat_room'];
                       final unreadCount = room['unread_count'] ?? 0;
                       final otherUserInfo = room['other_user_info'];
-                      
 
                       // Pastikan data tidak null
                       if (chatRoom == null || otherUserInfo == null) {

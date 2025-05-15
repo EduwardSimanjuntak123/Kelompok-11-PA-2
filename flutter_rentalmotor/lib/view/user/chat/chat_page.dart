@@ -324,29 +324,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<bool> _confirmExitChat() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Keluar dari Chat?'),
-        content: const Text(
-          'Pesan baru tidak akan diterima jika Anda keluar.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Keluar'),
-          ),
-        ],
-      ),
-    );
-    return result ?? false;
-  }
-
   @override
   void dispose() {
     if (_channel != null) {
@@ -359,166 +336,144 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _confirmExitChat,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Row(
-            children: [
-              const SizedBox(width: 8),
-              Text(
-                widget.receiverName,
-                style: const TextStyle(color: Colors.white),
-              ),
-              if (!_isConnected)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            const SizedBox(width: 8),
+            Text(
+              widget.receiverName,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
+        backgroundColor: const Color(0xFF2C567E),
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          // Tambahkan tombol pencarian
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.white),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  String searchKeyword = '';
+                  return AlertDialog(
+                    title: const Text('Cari Pesan'),
+                    content: TextField(
+                      onChanged: (value) {
+                        searchKeyword = value;
+                      },
+                      decoration: const InputDecoration(
+                        hintText: 'Masukkan kata kunci...',
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      'Offline',
-                      style: TextStyle(fontSize: 12),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _loadMessages(); // Reset pencarian
+                        },
+                        child: const Text('Batal'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _searchMessages(searchKeyword);
+                        },
+                        child: const Text('Cari'),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    controller: _scrollController,
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      final message = _messages[index];
+                      final isMe = message.senderId == _currentUser_Id;
+                      return Align(
+                        alignment:
+                            isMe ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                            vertical: 5,
+                            horizontal: 10,
+                          ),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isMe
+                                ? const Color(0xFFD1E9FF)
+                                : const Color(0xFFE8E8E8),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: isMe
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                message.content,
+                                style: const TextStyle(color: Colors.black),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                DateFormat(
+                                  'hh:mm a',
+                                ).format(message.sentAt),
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if (isMe)
+                                Text(
+                                  message.isRead ? "Dibaca" : "Terkirim",
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: InputDecoration(
+                      hintText: 'Tulis pesan...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30.0),
+                      ),
                     ),
                   ),
                 ),
-            ],
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _sendMessage,
+                ),
+              ],
+            ),
           ),
-          backgroundColor: const Color(0xFF2C567E),
-          iconTheme: const IconThemeData(color: Colors.white),
-          actions: [
-            // Tambahkan tombol pencarian
-            IconButton(
-              icon: const Icon(Icons.search, color: Colors.white),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    String searchKeyword = '';
-                    return AlertDialog(
-                      title: const Text('Cari Pesan'),
-                      content: TextField(
-                        onChanged: (value) {
-                          searchKeyword = value;
-                        },
-                        decoration: const InputDecoration(
-                          hintText: 'Masukkan kata kunci...',
-                        ),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _loadMessages(); // Reset pencarian
-                          },
-                          child: const Text('Batal'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            _searchMessages(searchKeyword);
-                          },
-                          child: const Text('Cari'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ListView.builder(
-                      controller: _scrollController,
-                      itemCount: _messages.length,
-                      itemBuilder: (context, index) {
-                        final message = _messages[index];
-                        final isMe = message.senderId == _currentUser_Id;
-                        return Align(
-                          alignment: isMe
-                              ? Alignment.centerRight
-                              : Alignment.centerLeft,
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 5,
-                              horizontal: 10,
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isMe
-                                  ? const Color(0xFFD1E9FF)
-                                  : const Color(0xFFE8E8E8),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: isMe
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  message.content,
-                                  style: const TextStyle(color: Colors.black),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  DateFormat(
-                                    'hh:mm a',
-                                  ).format(message.sentAt),
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                if (isMe)
-                                  Text(
-                                    message.isRead ? "Dibaca" : "Terkirim",
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _messageController,
-                      decoration: InputDecoration(
-                        hintText: 'Tulis pesan...',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30.0),
-                        ),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    onPressed: _sendMessage,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

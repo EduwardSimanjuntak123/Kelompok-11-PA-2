@@ -89,22 +89,27 @@ class StatusFilter extends StatelessWidget {
                 },
                 items: StatusUtils.getStatusList()
                     .map<DropdownMenuItem<String>>((String value) {
-                  Color statusColor = value == 'Semua'
-                      ? primaryBlue
-                      : StatusUtils.getStatusColor(value);
+                  final bool isSemua = value == 'Semua';
+                  final String label = isSemua
+                      ? 'Semua'
+                      : StatusUtils.getStatusText(
+                          value); // label bahasa Indonesia
+                  final Color statusColor =
+                      isSemua ? primaryBlue : StatusUtils.getStatusColor(value);
+
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Row(
                       children: [
-                        if (value != 'Semua')
+                        if (!isSemua)
                           Icon(
                             StatusUtils.getStatusIcon(value),
                             size: 14,
                             color: statusColor,
                           ),
-                        if (value != 'Semua') SizedBox(width: 8),
+                        if (!isSemua) SizedBox(width: 8),
                         Text(
-                          value[0].toUpperCase() + value.substring(1),
+                          label,
                           style: TextStyle(
                             fontSize: 14,
                             color: statusColor,
@@ -119,7 +124,7 @@ class StatusFilter extends StatelessWidget {
                 }).toList(),
               ),
             ),
-          ),
+          )
         ],
       ),
     );

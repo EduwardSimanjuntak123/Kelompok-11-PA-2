@@ -621,26 +621,6 @@ class _DetailMotorPageState extends State<DetailMotorPage>
     );
   }
 
-  Color getMotorColor(String colorName) {
-    switch (colorName.toLowerCase()) {
-      case "putih":
-        return Colors.black;
-      case "hitam":
-        return Colors.white;
-      case "merah":
-        return Colors.red;
-      case "biru":
-        return Colors.blue;
-      case "kuning":
-        return Colors.amber;
-      case "abu":
-      case "abu-abu":
-        return Colors.grey;
-      default:
-        return Colors.purple; // fallback jika warna tidak dikenali
-    }
-  }
-
   Widget _buildInfoRow() {
     final String motorColor = motor != null
         ? (motor!["color"]?.toString() ?? "Tidak Diketahui")
@@ -672,8 +652,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                   : "Tidak Diketahui",
               "Tipe",
               Colors.blue),
-          _buildInfoBox(
-              Icons.color_lens, motorColor, "Warna", getMotorColor(motorColor)),
+          _buildInfoBox(Icons.color_lens, motorColor, "Warna", Colors.black),
           _buildInfoBox(
               Icons.branding_watermark,
               motor != null
@@ -938,7 +917,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                         Icon(Icons.motorcycle, color: Colors.white, size: 20),
                         SizedBox(width: 10),
                         Text(
-                          "Book Now",
+                          "Pesan Sekarang",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,

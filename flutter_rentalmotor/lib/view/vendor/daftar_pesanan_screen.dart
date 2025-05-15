@@ -34,6 +34,17 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
     'canceled',
     'rejected',
   ];
+  final Map<String, String> statusLabelsIndo = {
+    'pending': 'Menunggu',
+    'confirmed': 'Dikonfirmasi',
+    'in transit': 'Dalam Pengiriman',
+    'in use': 'Sedang Dipakai',
+    'awaiting return': 'Menunggu Pengembalian',
+    'completed': 'Selesai',
+    'canceled': 'Dibatalkan',
+    'rejected': 'Ditolak',
+    'Semua': 'Semua',
+  };
 
   // Status priority order (lower index = higher priority)
   final List<String> statusPriority = [
@@ -177,11 +188,12 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
           final statusColor = status == 'Semua'
               ? const Color(0xFF1976D2)
               : statusColors[status] ?? Colors.grey;
+          final statusLabel = statusLabelsIndo[status] ?? status;
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: FilterChip(
-              label: Text(status),
+              label: Text(statusLabel),
               selected: isSelected,
               selectedColor: statusColor.withOpacity(0.2),
               checkmarkColor: statusColor,
@@ -224,6 +236,7 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
         ?.replaceFirst("localhost", "192.168.151.159"); // Menggunakan baseUrl
     final status = booking['status'] ?? '-';
     final statusColor = statusColors[status] ?? Colors.grey;
+    final statusLabel = statusLabelsIndo[status] ?? status;
 
     return GestureDetector(
       onTap: () {
@@ -270,7 +283,7 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      status,
+                      statusLabel,
                       style: TextStyle(
                         color: statusColor,
                         fontWeight: FontWeight.bold,
@@ -408,36 +421,44 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
               child: isLoading
                   ? const Center(
                       child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Color(0xFF1976D2)),
-                    ))
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF1976D2)),
+                      ),
+                    )
                   : filteredBookings.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.assignment_outlined,
-                                size: 80,
-                                color: Colors.grey.shade400,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'Tidak ada pesanan ${selectedStatus != 'Semua' ? 'dengan status $selectedStatus' : ''}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey,
+                      ? ListView(
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.7,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.assignment_outlined,
+                                      size: 80,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Tidak ada pesanan ${selectedStatus != 'Semua' ? 'dengan status ${statusLabelsIndo[selectedStatus] ?? selectedStatus}' : ''}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    const Text(
+                                      'Tarik ke bawah untuk menyegarkan',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ],
                                 ),
-                                textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Tarik ke bawah untuk menyegarkan',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.only(top: 8, bottom: 16),
