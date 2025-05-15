@@ -4,12 +4,9 @@ import 'package:flutter_rentalmotor/services/vendor/vendor_api_service.dart';
 import 'package:flutter_rentalmotor/view/vendor/lupakatasandiv.dart';
 import 'package:flutter_rentalmotor/view/vendor/editprofilvendor.dart';
 import 'package:flutter_rentalmotor/view/vendor/edittokovendor.dart';
-import 'package:flutter_rentalmotor/view/user/chat/chat_room_list_page.dart';
 import 'package:flutter_rentalmotor/view/vendor/kelolaMotor.dart';
 import 'package:flutter_rentalmotor/view/vendor/data_transaksi.dart';
-import 'package:flutter_rentalmotor/view/vendor/notifikasivendor.dart';
 import 'package:flutter_rentalmotor/view/vendor/kelola_perpanjangan_sewa.dart';
-
 import 'package:flutter_rentalmotor/view/vendor/ulasanvendor.dart';
 import 'package:flutter_rentalmotor/view/vendor/daftar_pesanan_screen.dart';
 
@@ -171,31 +168,6 @@ class _VendorDrawerState extends State<VendorDrawer>
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.verified,
-                                      size: 14, color: Colors.white),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    "ID: ${widget.vendorId ?? '-'}",
-                                    style: const TextStyle(
-                                        fontSize: 14, color: Colors.white),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ],
                         ),
                       ),
@@ -395,52 +367,6 @@ class _VendorDrawerState extends State<VendorDrawer>
                         context,
                         MaterialPageRoute(
                             builder: (context) => KelolaPerpanjnganSewa()),
-                      );
-                    },
-                  ),
-                  // Communication section
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      'KOMUNIKASI',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade600,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.chat,
-                    title: "Chat",
-                    isActive: _selectedMenu == 'Chat',
-                    onTap: () {
-                      setState(() => _selectedMenu = 'Chat');
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ChatRoomListPage()),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.notifications,
-                    title: "Notifikasi",
-                    isActive: _selectedMenu == 'Notifikasi',
-                    onTap: () {
-                      setState(() => _selectedMenu = 'Notifikasi');
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              NotifikasiPagev(userId: widget.vendorId!),
-                        ),
                       );
                     },
                   ),
