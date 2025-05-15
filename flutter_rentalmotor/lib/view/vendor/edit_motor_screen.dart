@@ -187,7 +187,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(ctx).pop(); // tutup dialog
+              Navigator.of(ctx).pop();
             },
             style: TextButton.styleFrom(
               foregroundColor: textSecondaryColor,
