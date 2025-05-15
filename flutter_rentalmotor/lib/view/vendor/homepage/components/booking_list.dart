@@ -49,7 +49,7 @@ class BookingItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Booking #${booking['id']}",
+                  "Booking",
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,

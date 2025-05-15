@@ -433,16 +433,6 @@ class _NotifikasiPageState extends State<NotifikasiPage> {
                                     : Colors.orange.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text(
-                                type == 'booking' ? 'Booking' : 'Sistem',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: type == 'booking'
-                                      ? _themeColor
-                                      : Colors.orange[700],
-                                ),
-                              ),
                             ),
                           ],
                         ),

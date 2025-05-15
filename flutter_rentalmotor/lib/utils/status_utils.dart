@@ -45,6 +45,29 @@ class StatusUtils {
     }
   }
 
+  static String getStatusText(String status) {
+    switch (status) {
+      case 'pending':
+        return 'Menunggu Konfirmasi';
+      case 'confirmed':
+        return 'Terkonfirmasi';
+      case 'in transit':
+        return 'Dalam Pengiriman';
+      case 'in use':
+        return 'Sedang Digunakan';
+      case 'awaiting return':
+        return 'Menunggu Pengembalian';
+      case 'completed':
+        return 'Selesai';
+      case 'canceled':
+        return 'Dibatalkan';
+      case 'rejected':
+        return 'Ditolak';
+      default:
+        return 'Status Tidak Dikenal';
+    }
+  }
+
   static List<String> getStatusList() {
     return [
       'Semua',

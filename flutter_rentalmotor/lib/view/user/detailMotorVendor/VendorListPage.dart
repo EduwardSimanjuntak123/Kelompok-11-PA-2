@@ -1049,19 +1049,6 @@ class _VendorListPageState extends State<VendorListPage>
                   ),
                   SizedBox(height: 16),
 
-                  // Features/Highlights
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildFeatureChip('Terpercaya', Icons.verified),
-                      _buildFeatureChip('Pembayaran Mudah', Icons.payments),
-                      _buildFeatureChip('Respon Cepat', Icons.speed),
-                    ],
-                  ),
-
-                  SizedBox(height: 16),
-
                   // Action buttons
                   Row(
                     children: [

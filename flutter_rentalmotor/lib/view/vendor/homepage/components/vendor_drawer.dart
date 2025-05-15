@@ -252,7 +252,7 @@ class _VendorDrawerState extends State<VendorDrawer>
                   _buildDrawerItem(
                     context,
                     icon: Icons.person,
-                    title: "Edit Profile",
+                    title: "Edit Profil",
                     isActive: _selectedMenu == 'Edit Profile',
                     onTap: () {
                       setState(() => _selectedMenu = 'Edit Profile');

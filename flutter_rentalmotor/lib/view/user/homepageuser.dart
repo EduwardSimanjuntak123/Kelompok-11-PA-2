@@ -41,31 +41,31 @@ class _HomePageUserState extends State<HomePageUser> {
   int? _userId;
   bool _isLoading = true;
 
-String _getStatusText(String? status) {
-  switch (status) {
-    case 'available':
-      return "Tersedia";
-    case 'booked':
-      return "Sedang Digunakan";
-    case 'unavailable':
-      return "Sedang Perbaikan";
-    default:
-      return "Status Tidak Diketahui";
+  String _getStatusText(String? status) {
+    switch (status) {
+      case 'available':
+        return "Tersedia";
+      case 'booked':
+        return "Sedang Digunakan";
+      case 'unavailable':
+        return "Sedang Perbaikan";
+      default:
+        return "Status Tidak Diketahui";
+    }
   }
-}
 
-Color _getStatusColor(String? status) {
-  switch (status) {
-    case 'available':
-      return Colors.green;
-    case 'booked':
-      return Colors.orange;
-    case 'unavailable':
-      return Colors.red;
-    default:
-      return Colors.grey;
+  Color _getStatusColor(String? status) {
+    switch (status) {
+      case 'available':
+        return Colors.green;
+      case 'booked':
+        return Colors.orange;
+      case 'unavailable':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
-}
 
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _vendorList = [];
@@ -1066,33 +1066,34 @@ Color _getStatusColor(String? status) {
                                   ),
                                 ),
                                 // Status badge
-                              Positioned(
-  top: 10,
-  right: 10,
-  child: Container(
-    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: _getStatusColor(motor["status"]),
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.2),
-          blurRadius: 4,
-          offset: Offset(0, 2),
-        ),
-      ],
-    ),
-    child: Text(
-      _getStatusText(motor["status"]),
-      style: TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.bold,
-        fontSize: 10,
-      ),
-    ),
-  ),
-),
-],
+                                Positioned(
+                                  top: 10,
+                                  right: 10,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(motor["status"]),
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 4,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      _getStatusText(motor["status"]),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                             // Konten teks
                             Padding(
@@ -1180,6 +1181,7 @@ Color _getStatusColor(String? status) {
                   },
                 ),
               ),
+        SizedBox(height: 16),
       ],
     );
   }
