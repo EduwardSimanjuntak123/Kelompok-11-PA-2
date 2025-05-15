@@ -44,7 +44,7 @@ class WebSocketService {
               final String message = inner['message'];
 
               final newNotification = {
-                'text': "Booking #$bookingId: $message",
+                'text': "Booking!",
                 'read': false,
                 'timestamp': DateTime.now().toIso8601String(),
                 'booking_id': bookingId,
