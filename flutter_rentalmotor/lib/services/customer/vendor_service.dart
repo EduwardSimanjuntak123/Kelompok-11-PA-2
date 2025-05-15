@@ -18,22 +18,40 @@ class VendorService {
   }
 
   Future<List<Map<String, dynamic>>> fetchMotorsByVendor(int vendorId) async {
-    final response =
-        await http.get(Uri.parse("$baseUrl/customer/motors/vendor/$vendorId"));
+  try {
+    final url = Uri.parse("$baseUrl/customer/motors/vendor/$vendorId");
+    print("📡 Fetching motors for vendor $vendorId: $url");
+
+    final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      final decoded = jsonDecode(response.body);
 
-      if (data['data'] != null && data['data'] is List) {
-        return List<Map<String, dynamic>>.from(data['data']);
+      if (decoded == null || decoded is! Map<String, dynamic>) {
+        print("⚠️ Response bukan Map atau null");
+        return [];
+      }
+
+      final data = decoded['data'];
+
+      if (data is List) {
+        print("✅ Data motor berhasil diambil. Jumlah: ${data.length}");
+        return List<Map<String, dynamic>>.from(data);
       } else {
-        // Data ada tapi kosong atau tidak sesuai
+        print("⚠️ Data motor null atau tidak dalam format list");
         return [];
       }
     } else {
-      // Bisa return [] daripada lempar exception agar tidak crash
-      // return [];
-      throw Exception("Gagal mengambil data motor untuk vendor ID: $vendorId");
+      print("❌ Status bukan 200: ${response.statusCode}");
+      print("❌ Response body: ${response.body}");
+      return [];
     }
+  } catch (e) {
+    print("❌ Exception saat fetch motor vendor $vendorId: $e");
+    return [];
   }
 }
+
+}
+
+

@@ -189,29 +189,21 @@ func GetAllMotorByVendorID(c *gin.Context) {
 	vendorID := c.Param("vendor_id")
 	var motors []models.Motor
 
-	// Ambil semua motor berdasarkan VendorID dengan informasi vendor terkait
 	if err := config.DB.
 		Where("vendor_id = ?", vendorID).
-		Select("id, vendor_id, name, brand,  year, rating, price, platmotor,color,description,type, status, image, created_at, updated_at").
+		Select("id, vendor_id, name, brand, year, rating, price, platmotor, color, description, type, status, image, created_at, updated_at").
 		Find(&motors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data motor"})
 		return
 	}
 
-	// Periksa apakah ada motor yang tersedia untuk vendor tertentu
-	if len(motors) == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Tidak ada motor yang tersedia untuk vendor ini"})
-		return
-	}
-
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Berhasil mengambil data motor berdasarkan vendor",
-		"data":    motors,
+		"data":    motors, // bisa kosong []
 	})
 }
 
 // Fungsi untuk mendapatkan semua motor dari vendor yang login
-// Fungsi untuk mendapatkan semua motor beserta informasi vendor
 func GetAllMotor(c *gin.Context) {
 	var motors []models.Motor
 

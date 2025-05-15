@@ -200,7 +200,7 @@ Color _getStatusColor(String? status) {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-          _chatRooms = List<Map<String, dynamic>>.from(data['chat_rooms']);
+           _chatRooms = List<Map<String, dynamic>>.from(data['chat_rooms'] ?? []);
         });
       } else {
         print('Gagal mengambil chat rooms: ${response.statusCode}');
@@ -298,7 +298,7 @@ Color _getStatusColor(String? status) {
         });
       }
     } catch (e) {
-      // _showErrorMessage("Gagal mengambil data vendor!");
+      _showErrorMessage("Gagal mengambil data vendor!");
     }
   }
 
@@ -312,7 +312,7 @@ Color _getStatusColor(String? status) {
         });
       }
     } catch (e) {
-      // _showErrorMessage("Gagal mengambil data kecamatan!");
+      _showErrorMessage("Gagal mengambil data kecamatan!");
     }
   }
 

@@ -1,7 +1,8 @@
-// sewa-motor-page.tsx - Updated with form guidance
-
 import 'dart:io';
+import 'dart:isolate';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart'; 
 import 'package:flutter_rentalmotor/config/api_config.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'dart:convert';
 import 'package:flutter_rentalmotor/services/customer/create_booking_api.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class SewaMotorPage extends StatefulWidget {
   final Map<String, dynamic> motor;
@@ -32,6 +34,9 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   File? _photoId;
   File? _ktpId;
   bool _isLoading = false;
+  bool _isSubmitting = false;
+  bool _isLoadingLocations = false;
+  bool _isLoadingDates = false;
   late final int selectedKecamatanId;
   OverlayEntry? _pickupOverlayEntry;
   OverlayEntry? _dropoffOverlayEntry;
@@ -44,6 +49,9 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   // Tambahkan variabel untuk menampilkan panduan
   bool _showGuidance = true;
 
+  // Define timeout duration
+  final Duration _apiTimeout = Duration(seconds: 15);
+
   @override
   void initState() {
     super.initState();
@@ -52,7 +60,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     selectedKecamatanId = widget.motor['vendor']['kecamatan']['id_kecamatan'];
     debugPrint('🚀 selectedKecamatanId: $selectedKecamatanId');
     _fetchBookedDates();
-    _fetchLocationRecommendations(); // Tambahkan ini
+    _fetchLocationRecommendations();
 
     _pickupLocationController.addListener(() {
       _updateSuggestions(_pickupLocationController.text, true);
@@ -77,38 +85,65 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     _durationController.dispose();
     _pickupLocationController.dispose();
     _dropoffLocationController.dispose();
+    _removeOverlay(true);
+    _removeOverlay(false);
     super.dispose();
   }
 
   List<Map<String, dynamic>> _locationSuggestions = [];
 
   Future<void> _fetchLocationRecommendations() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingLocations = true;
+    });
+    
     try {
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/location-recommendations'),
-      );
+      ).timeout(_apiTimeout);
 
       print('🔄 Fetching location recommendations...');
       print('🌐 Status Code: ${response.statusCode}');
-      print('📦 Raw Response Body: ${response.body}'); // Debug: print mentahnya
 
       if (response.statusCode == 200) {
-        List<Map<String, dynamic>> data =
-            List<Map<String, dynamic>>.from(json.decode(response.body));
-
-        setState(() {
-          _locationSuggestions = data
-              .cast<Map<String, dynamic>>()
-              .where((loc) =>
-                  loc['kecamatan']['id_kecamatan'] == selectedKecamatanId)
-              .toList();
-        });
+        // Process data in a separate isolate
+        final jsonData = response.body;
+        await compute<String, List<Map<String, dynamic>>>(_parseLocationData, jsonData)
+          .then((result) {
+            if (mounted) {
+              setState(() {
+                _locationSuggestions = result
+                  .where((loc) => loc['kecamatan']['id_kecamatan'] == selectedKecamatanId)
+                  .toList();
+                _isLoadingLocations = false;
+              });
+            }
+          });
       } else {
         print("❌ Failed to load suggestions: ${response.body}");
+        if (mounted) {
+          setState(() {
+            _isLoadingLocations = false;
+          });
+        }
+        _showErrorSnackbar("Gagal memuat lokasi. Silakan coba lagi.");
       }
     } catch (e) {
       print("❗ Error fetching suggestions: $e");
+      if (mounted) {
+        setState(() {
+          _isLoadingLocations = false;
+        });
+      }
+      _showErrorSnackbar("Terjadi kesalahan saat memuat lokasi: ${e.toString().substring(0, 50)}...");
     }
+  }
+
+  // Parse location data in a separate isolate
+  static List<Map<String, dynamic>> _parseLocationData(String jsonData) {
+    return List<Map<String, dynamic>>.from(json.decode(jsonData));
   }
 
   void _updateSuggestions(String input, bool isPickup) {
@@ -134,6 +169,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   void _showOverlay(bool isPickup) {
     _removeOverlay(isPickup);
 
+    if (!mounted) return;
+
     final overlay = Overlay.of(context);
     final renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
@@ -153,21 +190,24 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
           offset: Offset(0, 55),
           child: Material(
             elevation: 4,
-            child: ListView.builder(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              itemCount: suggestions.length,
-              itemBuilder: (context, index) {
-                final suggestion = suggestions[index];
-                return ListTile(
-                  title: Text(suggestion['place']),
-                  subtitle: Text(suggestion['address']),
-                  onTap: () {
-                    controller.text = suggestion['place'];
-                    _removeOverlay(isPickup);
-                  },
-                );
-              },
+            child: Container(
+              constraints: BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: suggestions.length,
+                itemBuilder: (context, index) {
+                  final suggestion = suggestions[index];
+                  return ListTile(
+                    title: Text(suggestion['place']),
+                    subtitle: Text(suggestion['address']),
+                    onTap: () {
+                      controller.text = suggestion['place'];
+                      _removeOverlay(isPickup);
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -194,33 +234,87 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   }
 
   Future<void> _fetchBookedDates() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingDates = true;
+    });
+    
     try {
       final motorId = widget.motor['id'];
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/bookings/motor/$motorId'),
-      );
+      ).timeout(_apiTimeout);
 
       if (response.statusCode == 200) {
-        List<dynamic> bookings = json.decode(response.body);
-
-        List<DateTime> disabled = [];
-
-        for (var booking in bookings) {
-          DateTime startDate = DateTime.parse(booking['start_date']).toLocal();
-          DateTime endDate = DateTime.parse(booking['end_date']).toLocal();
-
-          for (int i = 0; i <= endDate.difference(startDate).inDays; i++) {
-            disabled.add(startDate.add(Duration(days: i)));
-          }
+        // Process data in a separate isolate
+        final jsonData = response.body;
+        await compute<String, List<DateTime>>(_parseBookedDates, jsonData)
+          .then((result) {
+            if (mounted) {
+              setState(() {
+                _disabledDates = result;
+                _isLoadingDates = false;
+              });
+            }
+          });
+      } else {
+        if (mounted) {
+          setState(() {
+            _isLoadingDates = false;
+          });
         }
-
-        setState(() {
-          _disabledDates = disabled;
-        });
+        _showErrorSnackbar("Gagal memuat tanggal yang sudah dibooking.");
       }
     } catch (e) {
       print('❗ Error fetching booked dates: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingDates = false;
+        });
+      }
+      _showErrorSnackbar("Terjadi kesalahan saat memuat tanggal: ${e.toString().substring(0, 50)}...");
     }
+  }
+
+  // Parse booked dates in a separate isolate
+  static List<DateTime> _parseBookedDates(String jsonData) {
+    List<dynamic> bookings = json.decode(jsonData);
+    List<DateTime> disabled = [];
+
+    for (var booking in bookings) {
+      DateTime startDate = DateTime.parse(booking['start_date']).toLocal();
+      DateTime endDate = DateTime.parse(booking['end_date']).toLocal();
+
+      for (int i = 0; i <= endDate.difference(startDate).inDays; i++) {
+        disabled.add(startDate.add(Duration(days: i)));
+      }
+    }
+
+    return disabled;
+  }
+
+  void _showErrorSnackbar(String message) {
+    if (!mounted) return;
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Coba Lagi',
+          textColor: Colors.white,
+          onPressed: () {
+            if (message.contains("lokasi")) {
+              _fetchLocationRecommendations();
+            } else if (message.contains("tanggal")) {
+              _fetchBookedDates();
+            }
+          },
+        ),
+      ),
+    );
   }
 
   DateTime _getInitialAvailableDate() {
@@ -257,23 +351,33 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
               Text("Pilih Lokasi",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               SizedBox(height: 10),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _locationSuggestions.length,
-                  itemBuilder: (context, index) {
-                    final loc = _locationSuggestions[index];
-                    return ListTile(
-                      leading: Icon(Icons.place, color: Colors.blue),
-                      title: Text(loc['place']),
-                      subtitle: Text(loc['address']),
-                      onTap: () {
-                        controller.text = loc['place'];
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
+              if (_isLoadingLocations)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _locationSuggestions.length,
+                    itemBuilder: (context, index) {
+                      final loc = _locationSuggestions[index];
+                      return ListTile(
+                        leading: Icon(Icons.place, color: Colors.blue),
+                        title: Text(loc['place']),
+                        subtitle: Text(loc['address']),
+                        onTap: () {
+                          controller.text = loc['place'];
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
             ],
           ),
         );
@@ -282,6 +386,11 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   }
 
   void _selectDate(BuildContext context) {
+    if (_isLoadingDates) {
+      _showErrorSnackbar("Sedang memuat tanggal yang tersedia. Mohon tunggu sebentar.");
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (context) {
@@ -450,17 +559,38 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   }
 
   Future<void> _pickImage(bool isKtp) async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        if (isKtp) {
-          _ktpId = File(pickedFile.path);
-        } else {
-          _photoId = File(pickedFile.path);
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70, // Compress image to reduce size
+        maxWidth: 1000, // Limit max width
+        maxHeight: 1000, // Limit max height
+      );
+      
+      if (pickedFile != null) {
+        // Process image in a separate isolate
+        final path = pickedFile.path;
+        final result = await compute<String, File>(_processImage, path);
+        
+        if (mounted) {
+          setState(() {
+            if (isKtp) {
+              _ktpId = result;
+            } else {
+              _photoId = result;
+            }
+          });
         }
-      });
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      _showErrorSnackbar("Gagal memilih gambar: ${e.toString().substring(0, 50)}...");
     }
+  }
+
+  // Process image in a separate isolate
+  static File _processImage(String path) {
+    return File(path);
   }
 
   void _showErrorDialog(String message) {
@@ -532,7 +662,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     }
 
     setState(() {
-      _isLoading = true;
+      _isSubmitting = true;
     });
 
     final startDate =
@@ -544,6 +674,20 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     final ktpId = _ktpId!;
 
     try {
+      // Use compute to process in a separate isolate
+      final params = {
+        'context': context,
+        'motorId': widget.motor['id'],
+        'startDate': startDate,
+        'duration': duration,
+        'pickupLocation': pickupLocation,
+        'dropoffLocation': dropoffLocation,
+        'photoId': photoId,
+        'ktpId': ktpId,
+        'motorData': widget.motor,
+        'isGuest': widget.isGuest,
+      };
+      
       final result = await BookingService.createBooking(
         context: context,
         motorId: widget.motor['id'],
@@ -567,9 +711,11 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
       _showErrorDialog(
           'Terjadi kesalahan: ${e.toString().replaceAll('Exception: ', '')}');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -629,582 +775,654 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Motor Image and Info
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [primaryBlue, mediumBlue],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    height: 200,
-                    width: double.infinity,
-                    margin: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Motor Image and Info
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [primaryBlue, mediumBlue],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: imageUrl.startsWith("http")
-                          ? Image.network(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[300],
-                                  child: Icon(
-                                    Icons.image_not_supported,
-                                    size: 50,
-                                    color: Colors.grey[500],
-                                  ),
-                                );
-                              },
-                            )
-                          : Image.asset(
-                              imageUrl,
-                              fit: BoxFit.cover,
-                            ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
                     ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.motor["name"] ?? "Nama Motor Tidak Tersedia",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Container(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: Colors.white.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.motorcycle,
-                                  color: Colors.white, size: 20),
-                              SizedBox(width: 8),
-                              Text(
-                                "$formattedPrice / hari",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Form Section
-            Container(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Panduan pengisian form
-                  if (_showGuidance)
-                    Container(
-                      padding: EdgeInsets.all(15),
-                      margin: EdgeInsets.only(bottom: 15),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 200,
+                        width: double.infinity,
+                        margin: EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: imageUrl.startsWith("http")
+                              ? CachedNetworkImage(
+                                  imageUrl: imageUrl,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Container(
+                                    color: Colors.grey[300],
+                                    child: Center(
+                                      child: SizedBox(
+                                        width: 30,
+                                        height: 30,
+                                        child: CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) => Container(
+                                    color: Colors.grey[300],
+                                    child: Icon(
+                                      Icons.image_not_supported,
+                                      size: 50,
+                                      color: Colors.grey[500],
+                                    ),
+                                  ),
+                                )
+                              : Image.asset(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.motor["name"] ?? "Nama Motor Tidak Tersedia",
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              padding:
+                                  EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: Colors.white.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.info_outline, color: Colors.amber[700], size: 24),
-                                  SizedBox(width: 10),
+                                  Icon(Icons.motorcycle,
+                                      color: Colors.white, size: 20),
+                                  SizedBox(width: 8),
                                   Text(
-                                    "Panduan Pengisian Form",
+                                    "$formattedPrice / hari",
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.amber[800],
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ],
                               ),
-                              IconButton(
-                                icon: Icon(Icons.close, color: Colors.amber[700], size: 20),
-                                padding: EdgeInsets.zero,
-                                constraints: BoxConstraints(),
-                                onPressed: () {
-                                  setState(() {
-                                    _showGuidance = false;
-                                  });
-                                },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Form Section
+                Container(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Panduan pengisian form
+                      if (_showGuidance)
+                        Container(
+                          padding: EdgeInsets.all(15),
+                          margin: EdgeInsets.only(bottom: 15),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.info_outline, color: Colors.amber[700], size: 24),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        "Panduan Pengisian Form",
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.amber[800],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.close, color: Colors.amber[700], size: 20),
+                                    padding: EdgeInsets.zero,
+                                    constraints: BoxConstraints(),
+                                    onPressed: () {
+                                      setState(() {
+                                        _showGuidance = false;
+                                      });
+                                    },
+                                  ),
+                                ],
                               ),
+                              SizedBox(height: 10),
+                              _buildGuidanceItem("Tanggal", "Pilih tanggal mulai sewa motor"),
+                              _buildGuidanceItem("Jam", "Pilih jam pengambilan motor"),
+                              _buildGuidanceItem("Durasi", "Masukkan lama sewa dalam hari (angka)"),
+                              _buildGuidanceItem("Lokasi Pengambilan", "Pilih lokasi pengambilan motor"),
+                              _buildGuidanceItem("Lokasi Pengembalian", "Opsional, kosongkan jika sama dengan lokasi pengambilan"),
+                              _buildGuidanceItem("Foto Diri", "Unggah foto diri Anda yang jelas"),
+                              _buildGuidanceItem("Foto KTP", "Unggah foto KTP yang jelas dan tidak buram"),
                             ],
                           ),
-                          SizedBox(height: 10),
-                          _buildGuidanceItem("Tanggal", "Pilih tanggal mulai sewa motor"),
-                          _buildGuidanceItem("Jam", "Pilih jam pengambilan motor"),
-                          _buildGuidanceItem("Durasi", "Masukkan lama sewa dalam hari (angka)"),
-                          _buildGuidanceItem("Lokasi Pengambilan", "Pilih lokasi pengambilan motor"),
-                          _buildGuidanceItem("Lokasi Pengembalian", "Opsional, kosongkan jika sama dengan lokasi pengambilan"),
-                          _buildGuidanceItem("Foto Diri", "Unggah foto diri Anda yang jelas"),
-                          _buildGuidanceItem("Foto KTP", "Unggah foto KTP yang jelas dan tidak buram"),
-                        ],
-                      ),
-                    ),
+                        ),
 
-                  Container(
-                    padding: EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: accentBlue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: accentBlue.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline, color: primaryBlue, size: 24),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            "Silakan isi informasi pemesanan dengan lengkap untuk melanjutkan proses sewa motor",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.black87,
-                            ),
-                          ),
+                      Container(
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: accentBlue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(color: accentBlue.withOpacity(0.3)),
                         ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Container(
-                    padding: EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.event_note,
-                                color: primaryBlue, size: 22),
-                            SizedBox(width: 10),
-                            Text(
-                              "Informasi Pemesanan",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: primaryBlue,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Divider(height: 25, thickness: 1),
-
-                        // Date and Time Fields
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: _buildTextField(
-                                _dateController,
-                                "Tanggal *",
-                                "Pilih tanggal",
-                                Icons.calendar_today,
-                                () => _selectDate(context),
-                                accentColor: accentBlue,
-                              ),
-                            ),
+                            Icon(Icons.info_outline, color: primaryBlue, size: 24),
                             SizedBox(width: 10),
                             Expanded(
-                              flex: 2,
-                              child: _buildTextField(
-                                _timeController,
-                                "Jam *",
-                                "Pilih jam",
-                                Icons.access_time,
-                                () => _selectTime(context),
-                                accentColor: accentBlue,
+                              child: Text(
+                                "Silakan isi informasi pemesanan dengan lengkap untuk melanjutkan proses sewa motor",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
                               ),
                             ),
                           ],
                         ),
-
-                        _buildTextField(
-                          _durationController,
-                          "Durasi (hari) *",
-                          "Masukkan durasi dalam hari",
-                          Icons.timelapse,
-                          null,
-                          keyboardType: TextInputType.number,
-                          accentColor: primaryBlue,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  Container(
-                    padding: EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // --- Lokasi Pengambilan ---
-                        TypeAheadField<Map<String, dynamic>>(
-                          suggestionsCallback: (pattern) async {
-                            return _locationSuggestions
-                                // 1. Filter berdasarkan kecamatan
-                                .where((loc) =>
-                                    loc['kecamatan']['id_kecamatan'] ==
-                                        selectedKecamatanId &&
-                                    // 2. Filter berdasarkan teks input
-                                    loc['place']
-                                        .toString()
-                                        .toLowerCase()
-                                        .contains(pattern.toLowerCase()))
-                                .toList();
-                          },
-                          itemBuilder: (context, suggestion) => ListTile(
-                            title: Text(suggestion['place'],
-                                style: TextStyle(fontSize: 13)),
-                            subtitle: Text(suggestion['address'],
-                                style: TextStyle(fontSize: 11)),
-                          ),
-                          onSelected: (suggestion) {
-                            _pickupLocationController.text =
-                                '${suggestion['place']}, ${suggestion['address']}';
-                          },
-                          builder: (context, controller, focusNode) {
-                            focusNode.addListener(() {
-                              if (!focusNode.hasFocus) {
-                                final input = controller.text.toLowerCase();
-                                final valid = _locationSuggestions.any((loc) =>
-                                    loc['place'].toString().toLowerCase() ==
-                                        input &&
-                                    loc['kecamatan']['id_kecamatan'] ==
-                                        selectedKecamatanId);
-                                if (!valid) controller.clear();
-                              }
-                            });
-                            return TextField(
-                              controller: _pickupLocationController,
-                              focusNode: focusNode,
-                              decoration: InputDecoration(
-                                labelText: "Lokasi Pengambilan *",
-                                hintText: "Masukkan lokasi",
-                                prefixIcon:
-                                    Icon(Icons.location_on, color: mediumBlue),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 14),
-                              ),
-                              style: TextStyle(fontSize: 14),
-                            );
-                          },
-                        ),
-
-                        SizedBox(height: 10),
-
-                        // --- Lokasi Pengembalian ---
-                        TypeAheadField<Map<String, dynamic>>(
-                          suggestionsCallback: (pattern) async {
-                            return _locationSuggestions
-                                .where((loc) =>
-                                    loc['kecamatan']['id_kecamatan'] ==
-                                        selectedKecamatanId &&
-                                    loc['place']
-                                        .toString()
-                                        .toLowerCase()
-                                        .contains(pattern.toLowerCase()))
-                                .toList();
-                          },
-                          itemBuilder: (context, suggestion) => ListTile(
-                            title: Text(suggestion['place'],
-                                style: TextStyle(fontSize: 13)),
-                            subtitle: Text(suggestion['address'],
-                                style: TextStyle(fontSize: 11)),
-                          ),
-                          onSelected: (suggestion) {
-                            _dropoffLocationController.text =
-                                '${suggestion['place']}, ${suggestion['address']}';
-                          },
-                          builder: (context, controller, focusNode) {
-                            focusNode.addListener(() {
-                              if (!focusNode.hasFocus) {
-                                final input = controller.text.toLowerCase();
-                                final valid = _locationSuggestions.any((loc) =>
-                                    loc['place'].toString().toLowerCase() ==
-                                        input &&
-                                    loc['kecamatan']['id_kecamatan'] ==
-                                        selectedKecamatanId);
-                                if (!valid) controller.clear();
-                              }
-                            });
-                            return TextField(
-                              controller: _dropoffLocationController,
-                              focusNode: focusNode,
-                              decoration: InputDecoration(
-                                labelText: "Lokasi Pengembalian",
-                                hintText: "Masukkan lokasi",
-                                prefixIcon:
-                                    Icon(Icons.location_off, color: mediumBlue),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 14),
-                              ),
-                              style: TextStyle(fontSize: 14),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 15),
-                  Container(
-                    padding: EdgeInsets.all(15),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.badge, color: darkBlue, size: 22),
-                            SizedBox(width: 10),
-                            Text(
-                              "Dokumen Identitas",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: darkBlue,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Divider(height: 25, thickness: 1),
-
-                        // Photo ID Section
-                        Text(
-                          "Foto Diri *",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        _buildImageInput(
-                          "Pilih Foto Diri",
-                          _photoId,
-                          () => _pickImage(false),
-                          Icons.person,
-                          darkBlue,
-                        ),
-                        if (_photoId != null)
-                          Container(
-                            height: 150,
-                            width: double.infinity,
-                            margin: EdgeInsets.only(top: 8, bottom: 16),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: darkBlue.withOpacity(0.5), width: 2),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(
-                                _photoId!,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-
-                        // KTP Section
-                        Text(
-                          "Foto KTP *",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        _buildImageInput(
-                          "Pilih Foto KTP",
-                          _ktpId,
-                          () => _pickImage(true),
-                          Icons.credit_card,
-                          darkBlue,
-                        ),
-                        if (_ktpId != null)
-                          Container(
-                            height: 150,
-                            width: double.infinity,
-                            margin: EdgeInsets.only(top: 8, bottom: 16),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: darkBlue.withOpacity(0.5), width: 2),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.file(
-                                _ktpId!,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            "* KTP asli tetap diberikan kepada pemilik rental saat penjemputan motor sebagai jaminan.",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.redAccent,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  Container(
-                    width: double.infinity,
-                    height: 55,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [mediumBlue, primaryBlue],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryBlue.withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
+                      SizedBox(height: 20),
+                      Container(
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: _isLoading ? null : _submitRental,
-                        borderRadius: BorderRadius.circular(15),
-                        child: Center(
-                          child: _isLoading
-                              ? CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                  strokeWidth: 3,
-                                )
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.check_circle,
-                                        color: Colors.white, size: 20),
-                                    SizedBox(width: 10),
-                                    Text(
-                                      "Submit Pemesanan",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1,
-                                      ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.event_note,
+                                    color: primaryBlue, size: 22),
+                                SizedBox(width: 10),
+                                Text(
+                                  "Informasi Pemesanan",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Divider(height: 25, thickness: 1),
+
+                            // Date and Time Fields
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: _buildTextField(
+                                    _dateController,
+                                    "Tanggal *",
+                                    "Pilih tanggal",
+                                    Icons.calendar_today,
+                                    () => _selectDate(context),
+                                    accentColor: accentBlue,
+                                    isLoading: _isLoadingDates,
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  flex: 2,
+                                  child: _buildTextField(
+                                    _timeController,
+                                    "Jam *",
+                                    "Pilih jam",
+                                    Icons.access_time,
+                                    () => _selectTime(context),
+                                    accentColor: accentBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            _buildTextField(
+                              _durationController,
+                              "Durasi (hari) *",
+                              "Masukkan durasi dalam hari",
+                              Icons.timelapse,
+                              null,
+                              keyboardType: TextInputType.number,
+                              accentColor: primaryBlue,
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                      Container(
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // --- Lokasi Pengambilan ---
+                            TypeAheadField<Map<String, dynamic>>(
+                              suggestionsCallback: (pattern) async {
+                                return _locationSuggestions
+                                    // 1. Filter berdasarkan kecamatan
+                                    .where((loc) =>
+                                        loc['kecamatan']['id_kecamatan'] ==
+                                            selectedKecamatanId &&
+                                        // 2. Filter berdasarkan teks input
+                                        loc['place']
+                                            .toString()
+                                            .toLowerCase()
+                                            .contains(pattern.toLowerCase()))
+                                    .toList();
+                              },
+                              itemBuilder: (context, suggestion) => ListTile(
+                                title: Text(suggestion['place'],
+                                    style: TextStyle(fontSize: 13)),
+                                subtitle: Text(suggestion['address'],
+                                    style: TextStyle(fontSize: 11)),
+                              ),
+                              onSelected: (suggestion) {
+                                _pickupLocationController.text =
+                                    '${suggestion['place']}, ${suggestion['address']}';
+                              },
+                              builder: (context, controller, focusNode) {
+                                focusNode.addListener(() {
+                                  if (!focusNode.hasFocus) {
+                                    final input = controller.text.toLowerCase();
+                                    final valid = _locationSuggestions.any((loc) =>
+                                        loc['place'].toString().toLowerCase() ==
+                                            input &&
+                                        loc['kecamatan']['id_kecamatan'] ==
+                                            selectedKecamatanId);
+                                    if (!valid) controller.clear();
+                                  }
+                                });
+                                return TextField(
+                                  controller: _pickupLocationController,
+                                  focusNode: focusNode,
+                                  decoration: InputDecoration(
+                                    labelText: "Lokasi Pengambilan *",
+                                    hintText: "Masukkan lokasi",
+                                    prefixIcon:
+                                        Icon(Icons.location_on, color: mediumBlue),
+                                    suffixIcon: _isLoadingLocations 
+                                      ? SizedBox(
+                                          width: 20, 
+                                          height: 20, 
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                                            ),
+                                          ),
+                                        )
+                                      : null,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                  ],
-                                ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 14),
+                                  ),
+                                  style: TextStyle(fontSize: 14),
+                                );
+                              },
+                            ),
+
+                            SizedBox(height: 10),
+
+                            // --- Lokasi Pengembalian ---
+                            TypeAheadField<Map<String, dynamic>>(
+                              suggestionsCallback: (pattern) async {
+                                return _locationSuggestions
+                                    .where((loc) =>
+                                        loc['kecamatan']['id_kecamatan'] ==
+                                            selectedKecamatanId &&
+                                        loc['place']
+                                            .toString()
+                                            .toLowerCase()
+                                            .contains(pattern.toLowerCase()))
+                                    .toList();
+                              },
+                              itemBuilder: (context, suggestion) => ListTile(
+                                title: Text(suggestion['place'],
+                                    style: TextStyle(fontSize: 13)),
+                                subtitle: Text(suggestion['address'],
+                                    style: TextStyle(fontSize: 11)),
+                              ),
+                              onSelected: (suggestion) {
+                                _dropoffLocationController.text =
+                                    '${suggestion['place']}, ${suggestion['address']}';
+                              },
+                              builder: (context, controller, focusNode) {
+                                focusNode.addListener(() {
+                                  if (!focusNode.hasFocus) {
+                                    final input = controller.text.toLowerCase();
+                                    final valid = _locationSuggestions.any((loc) =>
+                                        loc['place'].toString().toLowerCase() ==
+                                            input &&
+                                        loc['kecamatan']['id_kecamatan'] ==
+                                            selectedKecamatanId);
+                                    if (!valid) controller.clear();
+                                  }
+                                });
+                                return TextField(
+                                  controller: _dropoffLocationController,
+                                  focusNode: focusNode,
+                                  decoration: InputDecoration(
+                                    labelText: "Lokasi Pengembalian",
+                                    hintText: "Masukkan lokasi",
+                                    prefixIcon:
+                                        Icon(Icons.location_off, color: mediumBlue),
+                                    suffixIcon: _isLoadingLocations 
+                                      ? SizedBox(
+                                          width: 20, 
+                                          height: 20, 
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                                            ),
+                                          ),
+                                        )
+                                      : null,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 14),
+                                  ),
+                                  style: TextStyle(fontSize: 14),
+                                );
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                    ),
+                      SizedBox(height: 15),
+                      Container(
+                        padding: EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.badge, color: darkBlue, size: 22),
+                                SizedBox(width: 10),
+                                Text(
+                                  "Dokumen Identitas",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: darkBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Divider(height: 25, thickness: 1),
+
+                            // Photo ID Section
+                            Text(
+                              "Foto Diri *",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            _buildImageInput(
+                              "Pilih Foto Diri",
+                              _photoId,
+                              () => _pickImage(false),
+                              Icons.person,
+                              darkBlue,
+                            ),
+                            if (_photoId != null)
+                              Container(
+                                height: 150,
+                                width: double.infinity,
+                                margin: EdgeInsets.only(top: 8, bottom: 16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                      color: darkBlue.withOpacity(0.5), width: 2),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    _photoId!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+
+                            // KTP Section
+                            Text(
+                              "Foto KTP *",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            _buildImageInput(
+                              "Pilih Foto KTP",
+                              _ktpId,
+                              () => _pickImage(true),
+                              Icons.credit_card,
+                              darkBlue,
+                            ),
+                            if (_ktpId != null)
+                              Container(
+                                height: 150,
+                                width: double.infinity,
+                                margin: EdgeInsets.only(top: 8, bottom: 16),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                      color: darkBlue.withOpacity(0.5), width: 2),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    _ktpId!,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text(
+                                "* KTP asli tetap diberikan kepada pemilik rental saat penjemputan motor sebagai jaminan.",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.redAccent,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                      Container(
+                        width: double.infinity,
+                        height: 55,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [mediumBlue, primaryBlue],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryBlue.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: (_isSubmitting || _isLoading) ? null : _submitRental,
+                            borderRadius: BorderRadius.circular(15),
+                            child: Center(
+                              child: _isSubmitting
+                                  ? CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                          Colors.white),
+                                      strokeWidth: 3,
+                                    )
+                                  : Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.check_circle,
+                                            color: Colors.white, size: 20),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          "Submit Pemesanan",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 30),
+                    ],
                   ),
-                  SizedBox(height: 30),
-                ],
+                ),
+              ],
+            ),
+          ),
+          // Global loading overlay
+          if (_isLoading)
+            Container(
+              color: Colors.black.withOpacity(0.3),
+              child: Center(
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        "Memuat data...",
+                        style: TextStyle(
+                          color: primaryBlue,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -1252,6 +1470,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     Function()? onTap, {
     TextInputType keyboardType = TextInputType.text,
     Color accentColor = Colors.blue,
+    bool isLoading = false,
   }) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -1287,6 +1506,19 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
             fontSize: 14,
           ),
           prefixIcon: icon != null ? Icon(icon, color: accentColor) : null,
+          suffixIcon: isLoading 
+            ? SizedBox(
+                width: 20, 
+                height: 20, 
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                  ),
+                ),
+              )
+            : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,

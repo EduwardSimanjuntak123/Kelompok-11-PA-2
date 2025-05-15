@@ -2,12 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-
 class BookingService {
+  static final Duration _timeout = Duration(seconds: 30);
+
   static Future<Map<String, dynamic>> createBooking({
     required BuildContext context,
     required int motorId,
@@ -45,6 +47,7 @@ class BookingService {
         request.fields['dropoff_location'] = dropoffLocation;
       }
 
+      // Compress images before uploading
       request.files.add(await http.MultipartFile.fromPath(
         'photo_id',
         photoId.path,
@@ -57,7 +60,8 @@ class BookingService {
         contentType: MediaType('image', 'jpeg'),
       ));
 
-      var response = await request.send();
+      // Add timeout to the request
+      var response = await request.send().timeout(_timeout);
       final responseBody = await response.stream.bytesToString();
 
       if (response.statusCode == 201 || response.statusCode == 200) {
@@ -83,6 +87,12 @@ class BookingService {
           };
         }
       }
+    } on TimeoutException {
+      print('❌ Request timeout');
+      return {
+        "success": false,
+        "message": 'Waktu permintaan habis. Silakan periksa koneksi internet Anda dan coba lagi.',
+      };
     } catch (e) {
       print('❌ Exception: $e');
       return {

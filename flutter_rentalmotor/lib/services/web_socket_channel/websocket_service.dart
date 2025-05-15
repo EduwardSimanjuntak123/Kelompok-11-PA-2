@@ -94,64 +94,7 @@ class WebSocketService {
       connectWebSocket(userId);
     });
   }
-  // void connectChatNotificationWebSocket(int userId) {
-  //   // Close existing connection if any
-  //   _chatNotificationChannel?.sink.close();
-
-  //   // Connect ke WebSocket khusus untuk notifikasi chat
-  //   final chatWsUrl =
-  //       "${ApiConfig.wsUrl}/ws/chat/notifications?user_id=$userId";
-
-  //   debugPrint("Connecting to Chat Notification WebSocket: $chatWsUrl");
-
-  //   try {
-  //     _chatNotificationChannel = IOWebSocketChannel.connect(chatWsUrl);
-
-  //     _chatNotificationChannel!.stream.listen(
-  //       (data) async {
-  //         debugPrint("Chat notification received: $data");
-  //         try {
-  //           final Map<String, dynamic> notification = json.decode(data);
-
-  //           // Jika ada callback untuk notifikasi chat, panggil
-  //           if (onChatMessageReceived != null &&
-  //               notification.containsKey('unread_count')) {
-  //             onChatMessageReceived!(notification['unread_count']);
-  //           }
-
-  //           // Tampilkan notifikasi lokal jika ada pesan baru
-  //           if (notification.containsKey('sender_name') &&
-  //               notification.containsKey('message')) {
-  //             _showLocalNotification(
-  //               "Pesan baru dari ${notification['sender_name']}",
-  //               notification['message'],
-  //             );
-  //           }
-  //         } catch (e) {
-  //           debugPrint("Error parsing chat notification: $e");
-  //         }
-  //       },
-  //       onError: (error) {
-  //         debugPrint("Chat notification WebSocket error: $error");
-  //         Future.delayed(const Duration(seconds: 5), () {
-  //           connectChatNotificationWebSocket(userId);
-  //         });
-  //       },
-  //       onDone: () {
-  //         debugPrint("Chat notification WebSocket connection closed");
-  //         Future.delayed(const Duration(seconds: 5), () {
-  //           connectChatNotificationWebSocket(userId);
-  //         });
-  //       },
-  //     );
-  //   } catch (e) {
-  //     debugPrint("Chat notification WebSocket connection error: $e");
-  //     Future.delayed(const Duration(seconds: 5), () {
-  //       connectChatNotificationWebSocket(userId);
-  //     });
-  //   }
-  // }
-
+  
   Future<void> _showLocalNotification(String title, String body) async {
     // Configure Android notification details with high importance
     const androidDetails = AndroidNotificationDetails(
