@@ -249,19 +249,32 @@
 
                 openAddModal(districtId) {
                     this.setActive(districtId);
+
+                    // Set action form dan district_id
                     document.getElementById('district_id_add').value = districtId;
                     document.getElementById('form-add-lokasi').action =
                         window.routeStoreLokasi.replace('__ID__', districtId);
+
+                    // Reset input dan error
+                    ['place', 'address'].forEach(f => {
+                        document.getElementById(`${f}_add`).value = '';
+                        document.getElementById(`${f}-error`).classList.add('hidden');
+                    });
+
+                    // Tampilkan modal
                     document.getElementById('modal-add-lokasi').classList.remove('hidden');
                 },
 
                 closeAddModal() {
                     document.getElementById('modal-add-lokasi').classList.add('hidden');
+
+                    // Reset input dan error
                     ['place', 'address'].forEach(f => {
-                        document.getElementById(`${f}-error`).classList.add('hidden');
                         document.getElementById(`${f}_add`).value = '';
+                        document.getElementById(`${f}-error`).classList.add('hidden');
                     });
                 },
+
 
                 validateAdd() {
                     let valid = true;
