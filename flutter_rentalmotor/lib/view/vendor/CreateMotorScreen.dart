@@ -91,7 +91,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
       try {
         _formKey.currentState!.save();
 
-        final uri = Uri.parse("http://192.168.251.159:8080/motor/vendor/");
+        final uri = Uri.parse("${ApiConfig.baseUrl}/motor/vendor/");
 
         final request = http.MultipartRequest('POST', uri);
 
