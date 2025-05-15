@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
@@ -146,7 +147,7 @@ func GetVendorTransactions(c *gin.Context) {
 				"brand":         motor.Brand,
 				"year":          motor.Year,
 				"price_per_day": motor.Price,
-				"plat_motor": motor.PlatMotor,
+				"plat_motor":    motor.PlatMotor,
 			},
 		}
 		response = append(response, resp)
@@ -155,18 +156,17 @@ func GetVendorTransactions(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func CalculateTotalPrice(motorID uint, startDate, endDate time.Time) float64 {
+	// Contoh perhitungan harga, ini bisa disesuaikan dengan aturan harga motor
+	var motor models.Motor
+	var motor Motor // Merujuk ke struct Motor dalam paket yang sama
+	if err := config.DB.Where("id = ?", motorID).First(&motor).Error; err != nil {
+		log.Printf("Motor tidak ditemukan: %v", err)
+		return 0
+	}
 
-// func CalculateTotalPrice(motorID uint, startDate, endDate time.Time) float64 {
-// 	// Contoh perhitungan harga, ini bisa disesuaikan dengan aturan harga motor
-// 	var motor models.Motor
-// 	var motor Motor // Merujuk ke struct Motor dalam paket yang sama
-// 	if err := config.DB.Where("id = ?", motorID).First(&motor).Error; err != nil {
-// 		log.Printf("Motor tidak ditemukan: %v", err)
-// 		return 0
-// 	}
-
-// 	// Hitung durasi rental dalam hari
-// 	duration := endDate.Sub(startDate).Hours() / 24
-// 	totalPrice := duration * float64(motor.Price)
-// 	return totalPrice
-// }
+	// Hitung durasi rental dalam hari
+	duration := endDate.Sub(startDate).Hours() / 24
+	totalPrice := duration * float64(motor.Price)
+	return totalPrice
+}
