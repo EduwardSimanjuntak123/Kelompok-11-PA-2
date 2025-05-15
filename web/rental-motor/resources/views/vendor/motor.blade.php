@@ -155,9 +155,29 @@
                             <td class="px-4 py-2 whitespace-nowrap">
                                 <span
                                     class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded">
-                                    {{ $motor['type'] }}
+                                    @switch($motor['type'])
+                                        @case('automatic')
+                                            Matic
+                                        @break
+
+                                        @case('manual')
+                                            Manual
+                                        @break
+
+                                        @case('clutch')
+                                            Kopling
+                                        @break
+
+                                        @case('vespa')
+                                            Vespa
+                                        @break
+
+                                        @default
+                                            -
+                                    @endswitch
                                 </span>
                             </td>
+
 
                             {{-- Rating --}}
                             <td class="px-6 py-4 text-center">
@@ -199,7 +219,7 @@
                                         stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1
-                                                                                                                                                                                                                            1 0 00-1-1m-4 0h4" />
+                                                                                                                                                                                                                                                                                                        1 0 00-1-1m-4 0h4" />
                                     </svg>
                                 </button>
                             </td>
@@ -344,7 +364,7 @@
                 if (!data.brand) setError('brand', 'Merek harus diisi.');
                 if (!data.year || data.year < 1900 || data.year > new Date().getFullYear())
                     setError('year', 'Tahun tidak valid.');
-                if (!['matic', 'manual', 'kopling', 'vespa'].includes(data.type))
+                if (!['automatic', 'manual', 'clutch', 'vespa'].includes(data.type))
                     setError('type', 'Tipe harus dipilih.');
                 if (!data.color) setError('color', 'Warna harus diisi.');
                 if (isNaN(data.price)) setError('price', 'Harga harus diisi.');
