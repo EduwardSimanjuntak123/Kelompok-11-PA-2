@@ -284,7 +284,7 @@ Color _getStatusColor(String? status) {
         });
       }
     } catch (e) {
-      _showErrorMessage("Gagal mengambil data motor!");
+      // _showErrorMessage("Gagal mengambil data motor!");
       setState(() => _isLoading = false);
     }
   }
@@ -298,7 +298,7 @@ Color _getStatusColor(String? status) {
         });
       }
     } catch (e) {
-      _showErrorMessage("Gagal mengambil data vendor!");
+      // _showErrorMessage("Gagal mengambil data vendor!");
     }
   }
 
@@ -312,7 +312,7 @@ Color _getStatusColor(String? status) {
         });
       }
     } catch (e) {
-      _showErrorMessage("Gagal mengambil data kecamatan!");
+      // _showErrorMessage("Gagal mengambil data kecamatan!");
     }
   }
 

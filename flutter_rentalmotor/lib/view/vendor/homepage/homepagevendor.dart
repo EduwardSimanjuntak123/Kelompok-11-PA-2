@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
-import 'package:flutter_rentalmotor/view/vendor/chatvendor.dart';
 import 'package:flutter_rentalmotor/view/vendor/notifikasivendor.dart';
 import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
@@ -8,7 +7,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/view/user/chat/chat_room_list_page.dart';
 
-import 'package:permission_handler/permission_handler.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -27,7 +25,6 @@ import 'package:flutter_rentalmotor/view/vendor/homepage/components/revenue_char
 import 'package:flutter_rentalmotor/view/vendor/homepage/components/booking_list.dart';
 import 'package:flutter_rentalmotor/view/vendor/homepage/components/transaction_list.dart';
 import 'package:flutter_rentalmotor/view/vendor/homepage/components/vendor_drawer.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HomepageVendor extends StatefulWidget {
   const HomepageVendor({super.key});

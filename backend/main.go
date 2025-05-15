@@ -17,9 +17,9 @@ func main() {
 
 	// Koneksi ke database
 	db := config.ConnectDatabase()
-config.MigrateDatabase(db)
+	config.MigrateDatabase(db)
 
-config.SeedAdminUser(db)
+	config.SeedAdminUser(db)
 	// Inisialisasi router
 	router := gin.Default()
 
@@ -46,7 +46,7 @@ config.SeedAdminUser(db)
 	// Tentukan port server
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "8081"
 	}
 
 	// Jalankan server

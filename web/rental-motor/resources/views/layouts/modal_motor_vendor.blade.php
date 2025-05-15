@@ -25,9 +25,9 @@
                     <label class="block text-gray-700 mt-2">Tipe</label>
                     <select name="type" class="w-full border p-2 rounded placeholder:text-sm placeholder-gray-500">
                         <option value="">-- Pilih Tipe --</option>
-                        <option value="matic">Matic</option>
+                        <option value="automatic">Matic</option>
                         <option value="manual">Manual</option>
-                        <option value="kopling">Kopling</option>
+                        <option value="clutch">Kopling</option>
                         <option value="vespa">Vespa</option>
                     </select>
                     <small class="text-red-500 text-sm error-message" data-field="type"></small>
@@ -95,9 +95,9 @@
                     <label class="block text-gray-700 mt-2">Tipe</label>
                     <select id="editMotortype" name="type"
                         class="w-full border p-2 rounded placeholder:text-sm placeholder-gray-500">
-                        <option value="matic">Matic</option>
+                        <option value="automatic">Matic</option>
                         <option value="manual">Manual</option>
-                        <option value="kopling">Kopling</option>
+                        <option value="clutch">Kopling</option>
                         <option value="vespa">Vespa</option>
                     </select>
                 </div>

@@ -78,7 +78,7 @@ class MotorController extends Controller
                 'brand' => 'required|string|max:255',
                 'year' => 'required|integer|min:1900|max:' . date('Y'),
                 'color' => 'required|string|max:255',
-                'type' => 'required|in:matic,manual,kopling,vespa',
+                'type' => 'required|in:automatic,manual,clutch,vespa',
                 'description' => 'required|string',
                 'platmotor' => 'required|string',
                 'price' => 'required|numeric|min:1000',
@@ -122,6 +122,7 @@ class MotorController extends Controller
     {
         try {
             $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
+            // dd($request);
 
             // Validasi input
             $validated = $request->validate([
@@ -129,7 +130,7 @@ class MotorController extends Controller
                 'brand' => 'required|string|max:255',
                 'year' => 'required|integer|min:1900|max:' . date('Y'),
                 'color' => 'required|string|max:255',
-                'type' => 'required|in:matic,manual,kopling,vespa',
+                'type' => 'required|in:automatic,manual,clutch,vespa',
                 'description' => 'required|string',
                 'platmotor' => 'required|string',
                 'price' => 'required|numeric|min:1000',
@@ -157,7 +158,6 @@ class MotorController extends Controller
             $response = Http::withToken($token)
                 ->asMultipart()
                 ->put("{$this->apiBaseUrl}/motor/vendor/{$id}", $multipart);
-
             session()->flash('message', $response->successful() ? 'Motor berhasil diperbarui!' : 'Gagal memperbarui motor.');
             session()->flash('type', $response->successful() ? 'success' : 'error');
 
