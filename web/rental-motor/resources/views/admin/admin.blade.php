@@ -3,6 +3,8 @@
 @section('title', 'Dashboard Admin')
 
 @section('content')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
     <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-xl p-6">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
             <div>
@@ -21,11 +23,7 @@
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div class="flex items-center">
                     <div class="p-3 rounded-lg bg-blue-50 text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                        </svg>
+                        <i class="bi bi-building h-8 w-8 text-2xl"></i>
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-500">Total Vendor</p>
@@ -37,11 +35,7 @@
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div class="flex items-center">
                     <div class="p-3 rounded-lg bg-green-50 text-green-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
+                        <i class="bi bi-people-fill h-8 w-8 text-2xl"></i>
                     </div>
                     <div class="ml-4">
                         <p class="text-sm font-medium text-gray-500">Total Customer</p>
@@ -70,11 +64,7 @@
             <div class="space-y-4">
                 <div class="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                     <div class="p-2 rounded-lg bg-blue-50 text-blue-600 mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
+                        <i class="bi bi-person-lines-fill text-lg"></i>
                     </div>
                     <div class="flex-1">
                         <p class="text-sm font-medium text-gray-800">Total {{ array_sum($vendorCounts) }} vendor dan
@@ -84,11 +74,7 @@
                 </div>
                 <div class="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                     <div class="p-2 rounded-lg bg-green-50 text-green-600 mr-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <i class="bi bi-check-circle-fill text-lg"></i>
                     </div>
                     <div class="flex-1">
                         <p class="text-sm font-medium text-gray-800">Sistem berjalan dengan baik</p>
@@ -98,6 +84,7 @@
             </div>
         </div>
     </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>

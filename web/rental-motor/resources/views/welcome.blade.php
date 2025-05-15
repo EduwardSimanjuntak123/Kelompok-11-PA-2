@@ -52,7 +52,7 @@
                 Login
             </a>
         </div>
-        
+
     </header>
 
     <!-- Halaman 1: Hero Section -->
@@ -72,7 +72,7 @@
                 <!-- App Store & Google Play Buttons -->
                 <div class="mt-6 flex space-x-4">
                     <!-- App Store -->
-                    <a href="#"
+                    <div
                         class="flex items-center border border-gray-400 px-4 py-3 rounded-lg shadow-md bg-white hover:bg-gray-200 transition">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
                             alt="Apple Logo" class="w-6 h-6 mr-2">
@@ -80,10 +80,10 @@
                             <p class="text-xs text-gray-500">Tersedia di</p>
                             <p class="text-lg font-semibold text-black">App Store</p>
                         </div>
-                    </a>
+                    </div>
 
                     <!-- Google Play -->
-                    <a href="#"
+                    <div
                         class="flex items-center border border-gray-400 px-4 py-3 rounded-lg shadow-md bg-white hover:bg-gray-200 transition">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
                             alt="Google Play Logo" class="w-6 h-6 mr-2">
@@ -91,7 +91,7 @@
                             <p class="text-xs text-gray-500">Tersedia di</p>
                             <p class="text-lg font-semibold text-black">Google Play</p>
                         </div>
-                    </a>
+                    </div>
                 </div>
             </div>
     </body>
@@ -164,44 +164,36 @@
         </div>
     </section>
 
-    <!-- Halaman 4: Pilih Motor -->
-    <section id="pick-motor" class="relative flex flex-col items-center justify-center h-screen bg-cover bg-center"
+    <section id="pick-motor"
+        class="relative flex flex-col items-center justify-center min-h-screen px-4 md:px-12 bg-cover bg-center"
         style="background-image: url('{{ asset('rentsection.png') }}');">
 
         <!-- Judul -->
-        <h2 class="absolute top-10 left-1/2 transform -translate-x-1/2 text-4xl font-bold text-white drop-shadow-lg">
+        <h2
+            class="absolute top-10 left-1/2 transform -translate-x-1/2 text-4xl font-bold text-white drop-shadow-lg text-center">
             Pilih Motor Anda
         </h2>
 
-        <div class="swiper w-full max-w-5xl mt-20">
+        <!-- Swiper Slider -->
+        <div class="swiper w-full max-w-5xl mt-28">
             <div class="swiper-wrapper">
-                <!-- Slide 1 -->
-                <div class="swiper-slide swiper-slide-custom flex justify-center">
-                    <img src="{{ asset('m1.png') }}" alt="Motor 1" class="w-3/5 object-contain" />
-                </div>
-                <!-- Slide 2 -->
-                <div class="swiper-slide swiper-slide-custom flex justify-center">
-                    <img src="{{ asset('m2.png') }}" alt="Motor 2" class="w-3/5 object-contain" />
-                </div>
-                <!-- Slide 3 -->
-                <div class="swiper-slide swiper-slide-custom flex justify-center">
-                    <img src="{{ asset('m3.png') }}" alt="Motor 3" class="w-3/5 object-contain" />
-                </div>
-                <!-- Slide 4 -->
-                <div class="swiper-slide swiper-slide-custom flex justify-center">
-                    <img src="{{ asset('scopp.png') }}" alt="Motor 4" class="w-3/5 object-contain" />
-                </div>
+                <!-- Slide Motor -->
+                @foreach (['m1.png', 'm2.png', 'm3.png', 'scopp.png'] as $img)
+                    <div class="swiper-slide swiper-slide-custom flex justify-center">
+                        <img src="{{ asset($img) }}" alt="Motor"
+                            class="w-3/5 object-contain transition-transform duration-300 hover:scale-105" />
+                    </div>
+                @endforeach
             </div>
-            <!-- Pagination -->
-            <div class="swiper-pagination mt-4"></div>
+            <div class="swiper-pagination mt-6"></div>
         </div>
 
         <!-- Spesifikasi Motor -->
-        <div class="flex flex-wrap justify-center gap-8 text-white text-center text-base font-medium mt-10">
-            <!-- Kecepatan -->
+        <div
+            class="flex flex-wrap justify-center gap-10 text-white text-center text-base font-medium mt-12 bg-black/40 rounded-xl px-6 py-6 backdrop-blur-md">
+            <!-- Speed -->
             <div class="flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
+                <svg class="h-8 w-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M12 16v.01" />
                     <path d="M10 12a2 2 0 1 1 4 0m-4 0a2 2 0 0 0 4 0" />
                     <path d="M12 4a8 8 0 1 0 8 8" />
@@ -210,20 +202,18 @@
                 <p>100 km/jam</p>
             </div>
 
-            <!-- Jumlah Kursi -->
+            <!-- Seat -->
             <div class="flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
+                <svg class="h-8 w-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M9 20H4v-2a3 3 0 015.356-1.857M15 11a4 4 0 10-8 0 4 4 0 008 0zm6 0a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 <p>2 Kursi</p>
             </div>
 
-            <!-- Kapasitas Tangki -->
+            <!-- Fuel -->
             <div class="flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
+                <svg class="h-8 w-8 mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M9.75 3v4.5m0 0a2.25 2.25 0 004.5 0V3m-4.5 4.5H8.25A2.25 2.25 0 006 9.75v8.25A2.25 2.25 0 008.25 20.25h7.5A2.25 2.25 0 0018 18V9.75a2.25 2.25 0 00-2.25-2.25H14.25" />
                 </svg>
@@ -231,17 +221,15 @@
             </div>
         </div>
 
-        <!-- Harga & Tombol -->
-        <div class="flex bg-white/90 shadow-xl rounded-full px-8 py-4 mt-10 space-x-6 items-center backdrop-blur-sm">
-            <span class="text-green-600 text-xl md:text-2xl font-semibold">
-                Rp 150.000<span class="text-gray-600 text-base md:text-lg"> /24 jam</span>
+        <!-- Harga (Fleksibel) -->
+        <div class="flex bg-white/90 shadow-xl rounded-full px-10 py-4 mt-10 space-x-4 items-center backdrop-blur-sm">
+            <span class="text-green-600 text-xl md:text-1xl font-semibold">
+                Harga yang terjangkau <span class="text-gray-800 text-base md:text-lg"> / 24 jam</span>
             </span>
-            <button
-                class="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition font-semibold shadow-md">
-                Sewa sekarang
-            </button>
         </div>
+
     </section>
+
 
 
     <!-- Halaman 4: Testimoni Pelanggan -->
@@ -287,7 +275,7 @@
             <img src="{{ asset('frame2.png') }}" alt="Frame 2" class="max-w-full max-h-full">
 
             <!-- Bagian teks dan tombol download -->
-            <div class="absolute left-10 text-white">
+            <div class="absolute left-12 text-white">
                 <h2 class="text-4xl font-bold mb-4">
                     Unduh <span class="text-white">motoRent</span> <span class="text-yellow-400">GRATIS</span>
                 </h2>
@@ -295,7 +283,7 @@
                 <!-- App Store & Google Play Buttons -->
                 <div class="mt-6 flex space-x-4">
                     <!-- App Store -->
-                    <a href="#"
+                    <div
                         class="flex items-center border border-gray-400 px-4 py-3 rounded-lg shadow-md bg-white hover:bg-gray-200 transition">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg"
                             alt="Apple Logo" class="w-6 h-6 mr-2">
@@ -303,10 +291,10 @@
                             <p class="text-xs text-gray-500">Tersedia di</p>
                             <p class="text-lg font-semibold text-black">App Store</p>
                         </div>
-                    </a>
+                    </div>
 
                     <!-- Google Play -->
-                    <a href="#"
+                    <div
                         class="flex items-center border border-gray-400 px-4 py-3 rounded-lg shadow-md bg-white hover:bg-gray-200 transition">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
                             alt="Google Play Logo" class="w-6 h-6 mr-2">
@@ -314,7 +302,7 @@
                             <p class="text-xs text-gray-500">Tersedia di</p>
                             <p class="text-lg font-semibold text-black">Google Play</p>
                         </div>
-                    </a>
+                    </div>
                 </div>
             </div>
 

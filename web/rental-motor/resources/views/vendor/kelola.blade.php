@@ -64,7 +64,7 @@
             <!-- Tombol Booking Manual -->
             <button onclick="openModal('addBookingModal')"
                 class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                + Booking Manual
+                Tambah Booking Manual
             </button>
         </div>
 
@@ -209,70 +209,78 @@
 
         <!-- Modal Detail Pemesanan -->
         <div id="bookingDetailModal"
-            class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center px-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 overflow-y-auto max-h-[90vh] relative">
-                <button type="button" onclick="closeBookingModal()"
-                    class="close-modal absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-3xl leading-none">
-                    &times;
-                </button>
+            class="modal hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300"
+            data-modal-id="bookingDetailModal">
+            <div
+                class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 md:p-8 relative scale-95 transition-transform duration-200">
 
-                <div class="flex flex-row gap-6">
-                    {{-- Kolom Foto di Kiri --}}
-                    <div class="w-1/3 flex justify-center items-start">
+                <!-- Header -->
+                <div class="flex justify-between items-center border-b pb-4 mb-6">
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
+                        <!-- ikon kalender -->
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M8 7V3m8 4V3m-9 8h10m-9 4h10m-3 4h3a2 2 0 002-2v-5a2 2 0 00-2-2h-3M5 21h3a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2z" />
+                        </svg>
+                        Detail Pemesanan
+                    </h2>
+                    <button type="button" onclick="closeBookingModal()"
+                        class="close-modal close-btn text-gray-500 hover:text-red-600 text-3xl leading-none font-light transition-all duration-200">
+                        &times;
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Image -->
+                    <div class="w-full md:w-1/2 flex justify-center items-start">
                         <img id="modalCustomerPhoto" src="" alt="Foto Customer"
-                            class="w-60 h-60 object-cover rounded-lg shadow-md"
+                            class="w-full h-64 md:h-60 object-cover rounded-xl border shadow"
                             onerror="this.onerror=null; this.src='{{ asset('images/default-user.png') }}'">
                     </div>
-
-                    {{-- Kolom Data di Kanan --}}
-                    <div class="w-2/3 flex flex-col space-y-4 text-gray-700">
-                        {{-- Nama Customer --}}
-                        <div>
+                    <!-- Info -->
+                    <div class="w-full md:w-1/2 space-y-3 text-sm sm:text-base text-gray-700">
+                        <p>
                             <span class="font-semibold">Nama:</span>
                             <span id="modalCustomerName">–</span>
-                        </div>
-
-                        {{-- Booking Date (highlight) --}}
-                        <div>
+                        </p>
+                        <p>
                             <span class="font-semibold">Tanggal Booking:</span>
                             <span id="modalBookingDate"
                                 class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 font-medium rounded">
                                 –
                             </span>
-                        </div>
-
-                        {{-- Start Date (highlight) --}}
-                        <div>
-                            <span class="font-semibold">Tanggal Mulai:</span>
+                        </p>
+                        <p>
+                            <span class="font-semibold">Mulai Sewa:</span>
                             <span id="modalStartDate"
                                 class="ml-2 px-2 py-1 bg-green-100 text-green-800 font-medium rounded">
                                 –
                             </span>
-                        </div>
-
-                        {{-- End Date (highlight) --}}
-                        <div>
-                            <span class="font-semibold">Tanggal Berakhir:</span>
+                        </p>
+                        <p>
+                            <span class="font-semibold">Akhir Sewa:</span>
                             <span id="modalEndDate" class="ml-2 px-2 py-1 bg-red-100 text-red-800 font-medium rounded">
                                 –
                             </span>
-                        </div>
-
-                        {{-- Pickup Location --}}
-                        <div>
-                            <span class="font-semibold">Jemput di:</span>
+                        </p>
+                        <p>
+                            <span class="font-semibold">Lokasi Jemput:</span>
                             <span id="modalPickup">–</span>
-                        </div>
-
-                        {{-- Status --}}
-                        <div>
+                        </p>
+                        <p>
                             <span class="font-semibold">Status:</span>
-                            <span id="modalStatus" class="capitalize">–</span>
-                        </div>
+                            <span id="modalStatus"
+                                class="inline-block ml-2 px-3 py-1 text-sm font-semibold rounded-full capitalize bg-blue-100 text-blue-800">
+                                –
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
+
 
 
         <div class="mt-8 flex items-center justify-between">
@@ -383,7 +391,8 @@
 
                     <!-- Pickup Location -->
                     <div class="mt-6">
-                        <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Lokasi Pengambilan</label>
+                        <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Lokasi
+                            Pengambilan</label>
                         <textarea name="pickup_location" id="pickup_location" rows="3"
                             placeholder="cth: Jalan Merdeka No. 12, Jakarta"
                             class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500">{{ old('pickup_location') }}</textarea>
@@ -549,11 +558,11 @@
                         url = `${BASE_API}/vendor/bookings/${id}/reject`;
                         break;
                     case 'transit':
-                        txt = 'in transit';
+                        txt = 'antarkan motor';
                         url = `${BASE_API}/vendor/bookings/transit/${id}`;
                         break;
                     case 'inuse':
-                        txt = 'in use';
+                        txt = 'gunakan motor';
                         url = `${BASE_API}/vendor/bookings/inuse/${id}`;
                         break;
                     case 'complete':
@@ -597,7 +606,32 @@
                     el.textContent = formatDateTime(el.textContent.trim());
                 });
 
-                // Modal detail booking
+                // 1. Definisikan mapping kelas warna untuk tiap status
+                const statusClasses = {
+                    'pending': 'bg-yellow-100 text-yellow-800',
+                    'confirmed': 'bg-blue-100 text-blue-800',
+                    'in transit': 'bg-indigo-100 text-indigo-800',
+                    'in use': 'bg-purple-100 text-purple-800',
+                    'awaiting return': 'bg-orange-100 text-orange-800',
+                    'completed': 'bg-green-100 text-green-800',
+                    'rejected': 'bg-red-100 text-red-800',
+                };
+
+                // 2. Fungsi terjemahan label status
+                function translateStatus(status) {
+                    const labels = {
+                        'pending': 'Menunggu Konfirmasi',
+                        'confirmed': 'Dikonfirmasi',
+                        'in transit': 'Motor Diantar',
+                        'in use': 'Sedang Digunakan',
+                        'awaiting return': 'Menunggu Pengembalian',
+                        'completed': 'Selesai',
+                        'rejected': 'Ditolak',
+                    };
+                    return labels[status] || status.charAt(0).toUpperCase() + status.slice(1);
+                }
+
+                // 3. Event listener untuk buka modal
                 document.querySelectorAll('.open-booking-modal').forEach(link => {
                     link.addEventListener('click', e => {
                         e.preventDefault();
@@ -609,6 +643,7 @@
                             return;
                         }
 
+                        // Set teks-teks lain...
                         document.getElementById('modalCustomerName').textContent = data.customer_name ||
                             '-';
                         document.getElementById('modalBookingDate').textContent = formatDateTime(data
@@ -618,11 +653,27 @@
                         document.getElementById('modalEndDate').textContent = formatDateTime(data
                             .end_date);
                         document.getElementById('modalPickup').textContent = data.pickup_location ||
-                        '-';
-                        // Gunakan translateStatus di sini
-                        document.getElementById('modalStatus').textContent = translateStatus(data
-                            .status || '-');
+                            '-';
 
+                        // 4. Set teks dan kelas badge status
+                        const statusEl = document.getElementById('modalStatus');
+                        const statusKey = data.status || 'pending';
+                        statusEl.textContent = translateStatus(statusKey);
+                        // Reset dulu kelas dasar (inline-block ml-2 px-3 py-1 text-sm font-semibold rounded-full capitalize)
+                        statusEl.className = [
+                            'inline-block',
+                            'ml-2',
+                            'px-3',
+                            'py-1',
+                            'text-sm',
+                            'font-semibold',
+                            'rounded-full',
+                            'capitalize',
+                            // tambahkan warna sesuai status, atau abu-abu jika tidak ada mapping
+                            statusClasses[statusKey] || 'bg-gray-100 text-gray-800'
+                        ].join(' ');
+
+                        // Set foto (sama seperti sebelumnya)...
                         const imgEl = document.getElementById('modalCustomerPhoto');
                         imgEl.onerror = () => {
                             imgEl.onerror = null;
