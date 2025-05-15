@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/view/vendor/detail_booking_screen.dart';
 
 class AppNotification {
@@ -55,7 +56,7 @@ class _NotifikasiPagevState extends State<NotifikasiPagev>
   List<Map<String, dynamic>> _bookings = [];
   int _vendorId = 0;
   final storage = FlutterSecureStorage();
-  final String baseUrl = 'http://192.168.34.159:8080';
+  final String baseUrl = '${ApiConfig.baseUrl}';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 

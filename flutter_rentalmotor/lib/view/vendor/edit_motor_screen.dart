@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:flutter_rentalmotor/models/motor_model.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/vendor/vendor_motor_api.dart';
 
 class EditMotorScreen extends StatefulWidget {
@@ -315,7 +316,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                                       ? Image.network(
                                           motorImage.startsWith('http')
                                               ? motorImage
-                                              : 'http://192.168.151.159:8080$motorImage',
+                                              : '${ApiConfig.baseUrl}$motorImage',
                                           fit: BoxFit.cover,
                                           errorBuilder:
                                               (context, error, stackTrace) {

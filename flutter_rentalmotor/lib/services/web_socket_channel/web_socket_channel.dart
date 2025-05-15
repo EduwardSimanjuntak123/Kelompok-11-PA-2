@@ -1,5 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
 Future<void> connectWebSocket() async {
   final prefs = await SharedPreferences.getInstance();
@@ -12,7 +13,7 @@ Future<void> connectWebSocket() async {
   }
 
   final channel = WebSocketChannel.connect(
-    Uri.parse('ws://192.168.161.159:8080/ws?user_id=$userId'),
+    Uri.parse('${ApiConfig.wsUrl}/ws?user_id=$userId'),
   );
 
   channel.stream.listen((message) {

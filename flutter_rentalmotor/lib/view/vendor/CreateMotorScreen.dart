@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -90,7 +91,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
       try {
         _formKey.currentState!.save();
 
-        final uri = Uri.parse("http://192.168.87.159:8080/motor/vendor/");
+        final uri = Uri.parse("${ApiConfig.baseUrl}/motor/vendor/");
         final request = http.MultipartRequest('POST', uri);
 
         // Ambil token dari secure storage

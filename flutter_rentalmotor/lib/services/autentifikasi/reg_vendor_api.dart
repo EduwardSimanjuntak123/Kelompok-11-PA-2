@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_rentalmotor/config/api_config.dart';
 
-const String baseUrl = 'http://192.168.9.93:8080';
+const String baseUrl = '${ApiConfig.baseUrl}';
 
 // Fetch data kecamatan
 Future<List<Map<String, dynamic>>?> fetchKecamatan() async {
