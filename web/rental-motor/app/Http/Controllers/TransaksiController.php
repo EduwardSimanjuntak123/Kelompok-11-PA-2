@@ -21,47 +21,29 @@ class TransaksiController extends Controller
     }
 
     public function index()
-    {
-        try {
-            // Ambil token
-            $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
-            if (!$token) {
-                Log::error("Token tidak ditemukan");
-                return redirect()->route('login')
-                    ->with('error', 'Anda harus login terlebih dahulu.');
-            }
-
-            // Fetch transaksi
-            $url = "{$this->apiBaseUrl}/transaction";
-            $response = Http::withToken($token)
-                ->timeout(10)
-                ->get($url);
-            $jsonData = $response->successful()
-                ? $response->json()
-                : [];
-            $rawTransactions = $jsonData['data'] ?? $jsonData;
-
-            // Fetch motor vendor
-            $urlMotors = "{$this->apiBaseUrl}/motor/vendor";
-            $responseMotors = Http::withToken($token)
-                ->timeout(10)
-                ->get($urlMotors);
-            $jsonMotor = $responseMotors->successful()
-                ? $responseMotors->json()
-                : [];
-            $motors = $jsonMotor['data'] ?? $jsonMotor;
-
-        } catch (\Exception $e) {
-            Log::error("Kesalahan saat mengambil data: " . $e->getMessage());
-            $rawTransactions = [];
-            $motors = [];
+{
+    try {
+        $token = session()->get('token', 'TOKEN_KAMU_DI_SINI');
+        if (!$token) {
+            return redirect()->route('login')
+                ->with('error', 'Anda harus login terlebih dahulu.');
         }
 
-        // === Merge data motor ke setiap transaksi ===
-        $transactionsWithMotor = collect($rawTransactions)->map(function ($t) use ($motors) {
-            // cari motor berdasarkan motor_id
-            $motor = collect($motors)->firstWhere('id', $t['motor_id']) ?? [];
+        // Ambil transaksi
+        $url = "{$this->apiBaseUrl}/transaction";
+        $response = Http::withToken($token)
+            ->timeout(10)
+            ->get($url);
+        
+        $rawTransactions = $response->successful() 
+            ? $response->json()
+            : [];
+        $rawTransactions = $rawTransactions['data'] ?? $rawTransactions;
 
+        // Format ulang data transaksi
+        $transactionsWithMotor = collect($rawTransactions)->map(function ($t) {
+            $motor = $t['motor'] ?? []; // Ambil langsung dari transaksi
+            
             return [
                 'id' => $t['id'],
                 'customer_name' => $t['customer_name'] ?? '-',
@@ -71,13 +53,15 @@ class TransaksiController extends Controller
                 'end_date' => $t['end_date'] ?? null,
                 'pickup_location' => $t['pickup_location'] ?? '-',
                 'total_price' => $t['total_price'] ?? 0,
-                'motor' => [
-                    'id' => $motor['id'] ?? null,
-                    'name' => $motor['name'] ?? '-',
-                    'brand' => $motor['brand'] ?? '-',
-                    'year' => $motor['year'] ?? '-',
-                    'platmotor' => $motor['platmotor'] ?? '-',     // pastikan key ini sesuai API
-                    'price_per_day' => $motor['price_per_day'] ?? 0,
+                // Di dalam map function transaksi
+'motor' => [
+    'id' => $motor['id'] ?? null,
+    'name' => $motor['name'] ?? '-',
+    'brand' => $motor['brand'] ?? '-',
+    'year' => $motor['year'] ?? '-',
+     'platmotor' => $motor['platmotor'] ?? '-',     // pastikan key ini sesuai API'platmotor' => $motor['plat_motor'] ?? '-', // <-- PASTIKAN KEY INI BENAR
+    'price_per_day' => $motor['price_per_day'] ?? 0,
+
                 ],
             ];
         })->toArray();
@@ -101,10 +85,16 @@ class TransaksiController extends Controller
         );
         // === END: manual paginasi ===
 
-        return view('vendor.transaksi', [
+         return view('vendor.transaksi', [
             'transactions' => $paginatedTransactions,
         ]);
+
+    } catch (\Exception $e) {
+        Log::error("Kesalahan saat mengambil data: " . $e->getMessage());
+        return redirect()->back()
+            ->with('error', 'Gagal mengambil data transaksi: ' . $e->getMessage());
     }
+}
 
 
     // Fungsi untuk menambahkan transaksi manual (sudah ada)
