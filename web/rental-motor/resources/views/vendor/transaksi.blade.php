@@ -43,6 +43,7 @@
         @if ($transactions->count())
             <div class="space-y-4">
                 @foreach ($transactions as $t)
+                    {{-- @dd($transactions) --}}
                     <div class="p-4 bg-white shadow rounded cursor-pointer hover:bg-gray-100 transition flex justify-between items-center"
                         onclick='showTransactionDetails(@json($t))'>
                         <div>
@@ -243,7 +244,7 @@
                                 ${renderItem("Nama", transaction.motor.name)}
                                 ${renderItem("Merek", transaction.motor.brand)}
                                 ${renderItem("Tahun", transaction.motor.year)}
-                                ${renderItem("Plat Motor", transaction.motor.platmotor)}
+                                ${renderItem("Plat Motor", transaction.motor.plat_motor)}
                                 ${renderItem("Harga / Hari", `Rp ${transaction.motor.price_per_day.toLocaleString('id-ID')}`)}
                             </div>
                         </div>` : "";
