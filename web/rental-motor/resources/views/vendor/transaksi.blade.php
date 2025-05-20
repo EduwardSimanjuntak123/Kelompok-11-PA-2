@@ -39,7 +39,7 @@
                 {{ session('error') }}
             </div>
         @endif
-
+@dd($transactions)
         @if ($transactions->count())
             <div class="space-y-4">
                 @foreach ($transactions as $t)

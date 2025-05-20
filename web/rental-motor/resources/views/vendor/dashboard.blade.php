@@ -46,6 +46,8 @@
         // Hitung jumlah pesanan yang berstatus "pending"
         $pesananPending = collect($bookingData)->where('status', 'pending')->count();
     @endphp
+    
+    {{-- @dd($id) --}}
     <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-xl p-6">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
             <div>

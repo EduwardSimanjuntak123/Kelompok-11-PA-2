@@ -119,7 +119,7 @@ func GetVendorTransactions(c *gin.Context) {
 
 		// Ambil detail motor (pastikan field sesuai model Motor)
 		var motor models.Motor
-		if err := config.DB.Select("id, name, brand, year, price").Where("id = ?", t.MotorID).First(&motor).Error; err != nil {
+		if err := config.DB.Select("id, name, brand, year, price, platmotor").Where("id = ?", t.MotorID).First(&motor).Error; err != nil {
 			motor = models.Motor{}
 		}
 
