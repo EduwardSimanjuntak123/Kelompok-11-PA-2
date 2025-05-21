@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -103,22 +104,26 @@ func RegisterVendor(c *gin.Context) {
 		BirthDate       *time.Time `form:"birth_date" time_format:"2006-01-02"`
 	}
 
-	// Ambil form-data (bukan JSON)
+	// Ambil form-data
 	if err := c.ShouldBind(&input); err != nil {
+		log.Println("[ERROR] Failed to bind input:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	log.Println("[INFO] Input berhasil dibaca:", input)
 
-	// Cek apakah email sudah terdaftar
+	// Cek email
 	var existingUser models.User
 	if err := config.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
+		log.Println("[ERROR] Email sudah digunakan:", input.Email)
 		c.JSON(http.StatusConflict, gin.H{"error": "Email sudah digunakan"})
 		return
 	}
 
-	// Cek apakah nomor telepon sudah terdaftar
+	// Cek nomor telepon
 	var existingPhone models.User
 	if err := config.DB.Where("phone = ?", input.Phone).First(&existingPhone).Error; err == nil {
+		log.Println("[ERROR] Nomor telepon sudah digunakan:", input.Phone)
 		c.JSON(http.StatusConflict, gin.H{"error": "Nomor telepon sudah digunakan"})
 		return
 	}
@@ -126,18 +131,22 @@ func RegisterVendor(c *gin.Context) {
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(strings.TrimSpace(input.Password)), bcrypt.DefaultCost)
 	if err != nil {
+		log.Println("[ERROR] Gagal hashing password:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Kesalahan dalam hashing password"})
 		return
 	}
+	log.Println("[INFO] Password berhasil di-hash")
 
-	// Simpan gambar profil vendor (opsional)
-	profileImage, err := saveUserImage(c, "profile_image") // gunakan input name="profile_image"
+	// Simpan gambar profil
+	profileImage, err := saveUserImage(c, "profile_image")
 	if err != nil {
+		log.Println("[ERROR] Gagal menyimpan gambar profil:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan gambar profil"})
 		return
 	}
+	log.Println("[INFO] Gambar profil berhasil disimpan:", profileImage)
 
-	// Generate OTP dan simpan
+	// Generate dan simpan OTP
 	otp := generateOTP()
 	otpRequest := models.OtpRequest{
 		Email:     input.Email,
@@ -145,17 +154,21 @@ func RegisterVendor(c *gin.Context) {
 		ExpiresAt: time.Now().Add(10 * time.Minute),
 	}
 	if err := config.DB.Create(&otpRequest).Error; err != nil {
+		log.Println("[ERROR] Gagal menyimpan data OTP:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data OTP"})
 		return
 	}
+	log.Println("[INFO] OTP berhasil disimpan:", otp)
 
 	// Kirim OTP ke email
 	if err := SendOTPEmail(input.Email, otp); err != nil {
+		log.Println("[ERROR] Gagal mengirim OTP ke email:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengirim OTP ke email"})
 		return
 	}
+	log.Println("[INFO] OTP berhasil dikirim ke:", input.Email)
 
-	// Simpan data user dan vendor dengan status "pending"
+	// Simpan user
 	user := models.User{
 		Name:         input.Name,
 		Email:        input.Email,
@@ -165,14 +178,17 @@ func RegisterVendor(c *gin.Context) {
 		Address:      input.ShopAddress,
 		Status:       "inactive",
 		ProfileImage: profileImage,
-		BirthDate:    input.BirthDate, // 👈 tambahkan ini
+		BirthDate:    input.BirthDate,
 	}
 
 	if err := config.DB.Create(&user).Error; err != nil {
+		log.Println("[ERROR] Gagal menyimpan data user:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data user"})
 		return
 	}
+	log.Println("[INFO] User berhasil disimpan dengan ID:", user.ID)
 
+	// Simpan vendor
 	vendor := models.Vendor{
 		UserID:          user.ID,
 		ShopName:        input.ShopName,
@@ -181,11 +197,15 @@ func RegisterVendor(c *gin.Context) {
 		IDKecamatan:     input.IDKecamatan,
 		Status:          "active",
 	}
+
 	if err := config.DB.Create(&vendor).Error; err != nil {
+		log.Println("[ERROR] Gagal menyimpan data vendor:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan data vendor"})
 		return
 	}
+	log.Println("[INFO] Vendor berhasil disimpan untuk user ID:", user.ID)
 
+	// Berhasil
 	c.JSON(http.StatusOK, gin.H{
 		"message":       "OTP telah dikirim ke email, harap verifikasi",
 		"profile_image": profileImage,
@@ -304,11 +324,16 @@ func CalculateTotalPrice(motorID uint, startDate, endDate time.Time) float64 {
 		return 0
 	}
 
-	duration := endDate.Sub(startDate).Hours() / 24
+	// Hitung durasi dan bulatkan ke atas
+	duration := math.Ceil(endDate.Sub(startDate).Hours() / 24)
 	if duration < 1 {
-		duration = 1 // minimal 1 hari
+		duration = 1
 	}
-	return duration * motor.Price
+
+	total := duration * motor.Price
+
+	log.Printf("🧮 Harga: %.2f x Durasi: %.0f = Total: %.2f", motor.Price, duration, total)
+	return total
 }
 
 // GetVendorProfile mengambil data vendor beserta data user

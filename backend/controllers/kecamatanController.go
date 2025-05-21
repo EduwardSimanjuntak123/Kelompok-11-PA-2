@@ -1,11 +1,12 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 	"rental-backend/config"
 	"rental-backend/models"
+
 	"github.com/gin-gonic/gin"
-	"log"
 )
 
 // Create Kecamatan (Admin)

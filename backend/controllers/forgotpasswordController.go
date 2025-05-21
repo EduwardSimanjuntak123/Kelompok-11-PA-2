@@ -18,7 +18,7 @@ import (
 // SendOTPEmail mengirim email yang berisi OTP
 func SendOTPEmail(email string, otp string) error {
 	from := "eduwardsimanjuntak02@gmail.com" // Ganti dengan alamat email pengirim
-	pass := "nhto bysa efzx aoyw"  // Ganti dengan password email pengirim
+	pass := "tgrr ofoe ncff rtxf"  // Ganti dengan password email pengirim
 
 	// Membuat pesan email
 	subject := "Your OTP for Password Reset"
