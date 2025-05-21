@@ -59,7 +59,7 @@ class TransaksiController extends Controller
     'name' => $motor['name'] ?? '-',
     'brand' => $motor['brand'] ?? '-',
     'year' => $motor['year'] ?? '-',
-     'platmotor' => $motor['platmotor'] ?? '-',     // pastikan key ini sesuai API'platmotor' => $motor['plat_motor'] ?? '-', // <-- PASTIKAN KEY INI BENAR
+     'platmotor' => $motor['plat_motor'] ?? '-',     // pastikan key ini sesuai API'platmotor' => $motor['plat_motor'] ?? '-', // <-- PASTIKAN KEY INI BENAR
     'price_per_day' => $motor['price_per_day'] ?? 0,
 
                 ],

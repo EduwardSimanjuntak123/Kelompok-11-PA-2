@@ -18,7 +18,7 @@ type Motor struct {
 	Price       float64        `gorm:"type:decimal(10,2);not null" json:"price" form:"price"`
 	PlatMotor   string         `gorm:"column:platmotor;size:50" json:"platmotor" form:"platmotor"`
 	Color       string         `gorm:"size:50" json:"color" form:"color"`
-	Status      string         `gorm:"size:20;default:'available'" json:"status" form:"status"`
+	Status      string         `gorm:"type:enum('available','booked','unavailable');default:'available';not null" json:"status" form:"status"`
 	Type        string         `gorm:"type:enum('automatic', 'manual', 'clutch', 'vespa');not null" json:"type" form:"type"`
 	Description string         `gorm:"type:text" json:"description" form:"description"`
 	Image       string         `gorm:"size:255" json:"image"`
