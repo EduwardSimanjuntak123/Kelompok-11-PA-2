@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
 
 class CalendarExtension extends StatelessWidget {
   final List<DateTime> unavailableDates;
@@ -13,84 +12,67 @@ class CalendarExtension extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.grey[100],
-      ),
-      child: TableCalendar(
-        firstDay: DateTime.utc(2020, 1, 1),
-        lastDay: DateTime.utc(2030, 12, 31),
-        focusedDay: DateTime.now(),
-        availableGestures: AvailableGestures.none,
-        calendarFormat: CalendarFormat.month,
-        startingDayOfWeek: StartingDayOfWeek.monday,
-        headerStyle: HeaderStyle(
-          formatButtonVisible: false,
-          titleCentered: true,
-        ),
-        calendarBuilders: CalendarBuilders(
-          defaultBuilder: (context, day, _) {
-            final dayPure = DateTime(day.year, day.month, day.day);
+    DateTime now = DateTime.now();
+    DateTime firstDayOfMonth = DateTime(now.year, now.month, 1);
+    DateTime lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
 
-            // Cek apakah tanggal berada dalam rentang booking
-            final startDate = DateTime.parse(booking['start_date']);
-            final endDate = DateTime.parse(booking['end_date']);
+    int totalDays = lastDayOfMonth.day;
+    int startWeekday = firstDayOfMonth.weekday % 7; // Minggu = 0, Senin = 1 ...
+    int totalItems = totalDays + startWeekday;
 
-            // Normalisasi untuk membandingkan tanggal tanpa waktu
-            final normalizedStartDate =
-                DateTime(startDate.year, startDate.month, startDate.day);
-            final normalizedEndDate =
-                DateTime(endDate.year, endDate.month, endDate.day);
+    // Tambahkan baris ekstra agar grid rapi (42 sel = 6 minggu)
+    int remaining = totalItems % 7 == 0 ? 0 : (7 - (totalItems % 7));
+    totalItems += remaining;
 
-            // Menandai tanggal yang dibooking dengan warna oranye
-            if (!dayPure.isBefore(normalizedStartDate) &&
-                !dayPure.isAfter(normalizedEndDate)) {
-              return _buildCalendarCircle(day.day,
-                  Colors.orange[200]!); // Tanggal yang dipesan oleh pengguna
-            }
+    List<Widget> dayWidgets = [];
 
-            // Cek apakah tanggal tersebut sudah dipesan orang lain
-            if (unavailableDates.contains(dayPure)) {
-              return Center(
-                child: Text(
-                  '${day.day}',
-                  style: TextStyle(
-                    color: Colors.red,
-                    decoration: TextDecoration.lineThrough,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              );
-            }
+    for (int i = 0; i < totalItems; i++) {
+      if (i < startWeekday || i >= startWeekday + totalDays) {
+        // Slot kosong di awal/akhir grid
+        dayWidgets.add(Container());
+      } else {
+        int day = i - startWeekday + 1;
+        DateTime currentDate = DateTime(now.year, now.month, day);
 
-            return null; // Jika tidak ada penandaan
-          },
-        ),
-      ),
-    );
-  }
+        bool isUnavailable = unavailableDates.any((date) =>
+            date.year == currentDate.year &&
+            date.month == currentDate.month &&
+            date.day == currentDate.day);
 
-  Widget _buildCalendarCircle(int day, Color color) {
-    return Center(
-      child: Container(
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          '$day',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
+        dayWidgets.add(
+          Container(
+            margin: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: isUnavailable ? Colors.red[100] : Colors.blue[50],
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '$day',
+              style: TextStyle(
+                color: isUnavailable ? Colors.red : Colors.black,
+                fontWeight: isUnavailable ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ),
+        );
+      }
+    }
+
+    return Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8.0),
+          
         ),
-      ),
+        GridView.count(
+          crossAxisCount: 7,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: dayWidgets,
+        ),
+      ],
     );
   }
 }
