@@ -14,6 +14,7 @@ type Booking struct {
 	StartDate      time.Time `gorm:"not null" json:"start_date" form:"start_date"`
 	EndDate        time.Time `gorm:"not null" json:"end_date" form:"end_date"`
 	PickupLocation string    `gorm:"not null" json:"pickup_location" form:"pickup_location"`
+	BookingPurpose string    `gorm:"type:text" json:"booking_purpose" form:"booking_purpose"`
 	Status         string    `gorm:"type:enum('pending','confirmed','canceled','completed','rejected','in transit','in use','awaiting return');default:'pending';not null" json:"status"`
 
 	PhotoID         string    `gorm:"not null" json:"photo_id"`

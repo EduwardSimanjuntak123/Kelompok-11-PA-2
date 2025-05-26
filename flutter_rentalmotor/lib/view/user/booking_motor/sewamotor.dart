@@ -30,6 +30,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   TextEditingController _durationController = TextEditingController();
   TextEditingController _pickupLocationController = TextEditingController();
   TextEditingController _dropoffLocationController = TextEditingController();
+  TextEditingController _bookingPurposeController = TextEditingController();
   List<DateTime> _disabledDates = [];
   File? _photoId;
   File? _ktpId;
@@ -85,6 +86,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     _durationController.dispose();
     _pickupLocationController.dispose();
     _dropoffLocationController.dispose();
+    _bookingPurposeController.dispose(); // Tambahkan dispose untuk booking purpose
     _removeOverlay(true);
     _removeOverlay(false);
     super.dispose();
@@ -703,24 +705,11 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     final duration = _durationController.text;
     final pickupLocation = _pickupLocationController.text;
     final dropoffLocation = _dropoffLocationController.text;
+    final bookingPurpose = _bookingPurposeController.text; // Tambahkan ini
     final photoId = _photoId!;
     final ktpId = _ktpId!;
 
     try {
-      // Use compute to process in a separate isolate
-      final params = {
-        'context': context,
-        'motorId': widget.motor['id'],
-        'startDate': startDate,
-        'duration': duration,
-        'pickupLocation': pickupLocation,
-        'dropoffLocation': dropoffLocation,
-        'photoId': photoId,
-        'ktpId': ktpId,
-        'motorData': widget.motor,
-        'isGuest': widget.isGuest,
-      };
-
       final result = await BookingService.createBooking(
         context: context,
         motorId: widget.motor['id'],
@@ -728,6 +717,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         duration: duration,
         pickupLocation: pickupLocation,
         dropoffLocation: dropoffLocation,
+        bookingPurpose: bookingPurpose, // Tambahkan parameter ini
         photoId: photoId,
         ktpId: ktpId,
         motorData: widget.motor,
@@ -999,6 +989,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                   "Pilih lokasi pengambilan motor"),
                               _buildGuidanceItem("Lokasi Pengembalian",
                                   "Opsional, kosongkan jika sama dengan lokasi pengambilan"),
+                              _buildGuidanceItem("Tujuan/Keperluan",
+                                  "Jelaskan tujuan atau keperluan sewa motor (opsional)"),
                               _buildGuidanceItem("Foto Diri",
                                   "Unggah foto diri Anda yang jelas"),
                               _buildGuidanceItem("Foto KTP",
@@ -1112,6 +1104,18 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                               keyboardType: TextInputType.number,
                               accentColor: primaryBlue,
                             ),
+
+                            // Tambahkan field booking purpose dengan styling yang konsisten
+                            _buildTextField(
+                              _bookingPurposeController,
+                              "Tujuan/Keperluan Booking",
+                              "Contoh: Liburan, kerja, dll.",
+                              Icons.description,
+                              null,
+                              keyboardType: TextInputType.multiline,
+                              accentColor: primaryBlue,
+                              maxLines: 2,
+                            ),
                           ],
                         ),
                       ),
@@ -1132,6 +1136,23 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Row(
+                              children: [
+                                Icon(Icons.location_on,
+                                    color: mediumBlue, size: 22),
+                                SizedBox(width: 10),
+                                Text(
+                                  "Informasi Lokasi",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: mediumBlue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Divider(height: 25, thickness: 1),
+
                             // --- Lokasi Pengambilan ---
                             TypeAheadField<Map<String, dynamic>>(
                               suggestionsCallback: (pattern) async {
@@ -1544,6 +1565,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     TextInputType keyboardType = TextInputType.text,
     Color accentColor = Colors.blue,
     bool isLoading = false,
+    int maxLines = 1,
   }) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -1563,6 +1585,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         controller: controller,
         readOnly: onTap != null,
         keyboardType: keyboardType,
+        maxLines: maxLines,
         style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w500,

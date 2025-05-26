@@ -356,7 +356,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     onPressed: _remainingSeconds == 0
                         ? () {
                             setState(() {
-                              _remainingSeconds = 180;
+                              _remainingSeconds = 600;
                             });
                             _startTimer();
                           }

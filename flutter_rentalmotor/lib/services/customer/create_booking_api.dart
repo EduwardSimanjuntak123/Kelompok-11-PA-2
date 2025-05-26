@@ -17,6 +17,7 @@ class BookingService {
     required String duration,
     required String pickupLocation,
     String? dropoffLocation,
+    String? bookingPurpose, // Tambahkan parameter booking purpose
     required File photoId,
     required File ktpId,
     required dynamic motorData, // Data motor
@@ -45,6 +46,11 @@ class BookingService {
 
       if (dropoffLocation != null && dropoffLocation.isNotEmpty) {
         request.fields['dropoff_location'] = dropoffLocation;
+      }
+
+      // Tambahkan booking purpose ke request
+      if (bookingPurpose != null && bookingPurpose.isNotEmpty) {
+        request.fields['booking_purpose'] = bookingPurpose;
       }
 
       // Compress images before uploading

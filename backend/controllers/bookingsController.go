@@ -60,7 +60,7 @@ func ConfirmBooking(c *gin.Context) {
 			BookingID: booking.ID,
 			CreatedAt: time.Now(),
 		}
-	
+
 		if err := config.DB.Create(&notification).Error; err != nil {
 			log.Println("❗ Gagal menyimpan notifikasi:", err)
 		} else {
@@ -69,8 +69,7 @@ func ConfirmBooking(c *gin.Context) {
 				"message":    notification.Message,
 				"booking_id": notification.BookingID,
 			}
-			
-	
+
 			notifJSON, err := json.Marshal(notifPayload)
 			if err != nil {
 				log.Println("❗ Gagal encode notifikasi ke JSON:", err)
@@ -79,7 +78,6 @@ func ConfirmBooking(c *gin.Context) {
 			}
 		}
 	}
-	
 
 	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil dikonfirmasi"})
 }
@@ -156,6 +154,7 @@ func SetBookingToTransit(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Status booking berhasil diubah ke 'in transit'"})
 }
+
 // SetBookingToInUse mengubah status booking menjadi "in use"
 func SetBookingToInUse(c *gin.Context) {
 	id := c.Param("id")
@@ -248,7 +247,6 @@ func AutoSetAwaitingReturn() {
 		return
 	}
 
-
 	now := time.Now()
 
 	for _, booking := range bookings {
@@ -292,8 +290,6 @@ func AutoSetAwaitingReturn() {
 		}
 	}
 }
-
-
 
 // Reject Booking
 func RejectBooking(c *gin.Context) {
@@ -370,7 +366,6 @@ func RejectBooking(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Booking berhasil ditolak"})
 }
 
-
 func GetVendorBookings(c *gin.Context) {
 	// Ambil user_id dari token JWT
 	userID, exists := c.Get("user_id")
@@ -418,12 +413,12 @@ func GetVendorBookings(c *gin.Context) {
 
 		if booking.Motor != nil {
 			motorData = map[string]interface{}{
-				"id":            booking.Motor.ID,
-				"name":          booking.Motor.Name,
-				"brand":         booking.Motor.Brand,
-				"color":         booking.Motor.Color,
-				"year":          booking.Motor.Year,
-				"plat_motor":          booking.Motor.PlatMotor,
+				"id":         booking.Motor.ID,
+				"name":       booking.Motor.Name,
+				"brand":      booking.Motor.Brand,
+				"color":      booking.Motor.Color,
+				"year":       booking.Motor.Year,
+				"plat_motor": booking.Motor.PlatMotor,
 
 				"price_per_day": booking.Motor.Price,
 				"total_price":   booking.Motor.Price * float64(booking.GetDurationDays()),
@@ -442,16 +437,17 @@ func GetVendorBookings(c *gin.Context) {
 		bookingData := map[string]interface{}{
 			"id":              booking.ID,
 			"customer_name":   customerName,
-			"customer_id": booking.CustomerID,
+			"customer_id":     booking.CustomerID,
 			"booking_date":    booking.BookingDate,
 			"start_date":      booking.StartDate,
 			"end_date":        booking.EndDate,
+			"booking_purpose": booking.BookingPurpose,
 			"status":          booking.Status,
 			"message":         "Booking berhasil diambil",
 			"pickup_location": booking.PickupLocation,
 			"motor":           motorData,
-			"ktpid":booking.KtpID,
-			"potoid":booking.PhotoID,
+			"ktpid":           booking.KtpID,
+			"potoid":          booking.PhotoID,
 		}
 
 		response = append(response, bookingData)
@@ -459,7 +455,6 @@ func GetVendorBookings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
-
 
 // GetBookingByIDForVendor mengambil detail booking berdasarkan ID oleh vendor
 func GetBookingByIDForVendor(c *gin.Context) {
@@ -497,76 +492,75 @@ func GetBookingByIDForVendor(c *gin.Context) {
 	})
 }
 
+func GetCustomerBookings(c *gin.Context) {
+	// Ambil user_id dari token JWT
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Customer tidak terautentikasi"})
+		return
+	}
 
+	var bookings []models.Booking
+	// Query booking berdasarkan customer_id dan preload data Motor
+	if err := config.DB.
+		Where("customer_id = ?", userID).
+		Preload("Motor", "id IS NOT NULL AND name IS NOT NULL").
+		Preload("Vendor").
+		Find(&bookings).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data booking"})
+		return
+	}
 
-	func GetCustomerBookings(c *gin.Context) {
-		// Ambil user_id dari token JWT
-		userID, exists := c.Get("user_id")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Customer tidak terautentikasi"})
-			return
-		}
+	// Format respons
+	var response []map[string]interface{}
+	for _, booking := range bookings {
+		motorData := map[string]interface{}{}
+		if booking.Motor != nil {
+			motorData = map[string]interface{}{
+				"id":         booking.Motor.ID,
+				"name":       booking.Motor.Name,
+				"brand":      booking.Motor.Brand,
+				"year":       booking.Motor.Year,
+				"plat_motor": booking.Motor.PlatMotor,
 
-		var bookings []models.Booking
-		// Query booking berdasarkan customer_id dan preload data Motor
-		if err := config.DB.
-			Where("customer_id = ?", userID).
-			Preload("Motor", "id IS NOT NULL AND name IS NOT NULL").
-			Preload("Vendor").
-			Find(&bookings).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan data booking"})
-			return
-		}
-
-		// Format respons
-		var response []map[string]interface{}
-		for _, booking := range bookings {
-			motorData := map[string]interface{}{}
-			if booking.Motor != nil {
-				motorData = map[string]interface{}{
-					"id":            booking.Motor.ID,
-					"name":          booking.Motor.Name,
-					"brand":         booking.Motor.Brand,
-					"year":          booking.Motor.Year,
-					"plat_motor":          booking.Motor.PlatMotor,
-
-					"price_per_day": booking.Motor.Price,
-					"total_price":   booking.Motor.Price * float64(booking.GetDurationDays()),
-					"image": func() string {
-						if booking.Motor.Image != "" {
-							if strings.HasPrefix(booking.Motor.Image, "http") {
-								return booking.Motor.Image
-							}
+				"price_per_day": booking.Motor.Price,
+				"total_price":   booking.Motor.Price * float64(booking.GetDurationDays()),
+				"image": func() string {
+					if booking.Motor.Image != "" {
+						if strings.HasPrefix(booking.Motor.Image, "http") {
 							return booking.Motor.Image
 						}
-						return "https://via.placeholder.com/150"
-					}(),
-				}
+						return booking.Motor.Image
+					}
+					return "https://via.placeholder.com/150"
+				}(),
 			}
-
-			bookingData := map[string]interface{}{
-				"id":              booking.ID,
-				"vendor_Id":booking.Vendor.UserID,
-				"booking_date":    booking.BookingDate,
-				"start_date":      booking.StartDate,
-				"end_date":        booking.EndDate,
-				"status":          booking.Status,
-				"dropoff_location":booking.DropoffLocation,
-				"pickup_location": booking.PickupLocation,
-				"motor":           motorData,
-				"shop_name": func() string {
-    if booking.Vendor != nil {
-        return booking.Vendor.ShopName
-    }
-    return "Unknown Vendor" // fallback value
-}(),
-			}
-
-			response = append(response, bookingData)
 		}
 
-		c.JSON(http.StatusOK, response)
+		bookingData := map[string]interface{}{
+			"id":               booking.ID,
+			"vendor_Id":        booking.Vendor.UserID,
+			"booking_date":     booking.BookingDate,
+			"purpose_booking":  booking.BookingPurpose,
+			"start_date":       booking.StartDate,
+			"end_date":         booking.EndDate,
+			"status":           booking.Status,
+			"dropoff_location": booking.DropoffLocation,
+			"pickup_location":  booking.PickupLocation,
+			"motor":            motorData,
+			"shop_name": func() string {
+				if booking.Vendor != nil {
+					return booking.Vendor.ShopName
+				}
+				return "Unknown Vendor" // fallback value
+			}(),
+		}
+
+		response = append(response, bookingData)
 	}
+
+	c.JSON(http.StatusOK, response)
+}
 
 func CreateManualBooking(c *gin.Context) {
 	// Ambil data teks dari form-data
@@ -709,28 +703,26 @@ func CreateManualBooking(c *gin.Context) {
 
 	// Response
 	c.JSON(http.StatusOK, gin.H{
-		"message":         "Booking manual berhasil dibuat",
-		"booking_id":      booking.ID,
-		"customer_name":   booking.CustomerName,
-		"booking_date":    booking.BookingDate,
-		"start_date":      booking.StartDate,
-		"end_date":        booking.EndDate,
-		"pickup_location": booking.PickupLocation,
+		"message":          "Booking manual berhasil dibuat",
+		"booking_id":       booking.ID,
+		"customer_name":    booking.CustomerName,
+		"booking_date":     booking.BookingDate,
+		"start_date":       booking.StartDate,
+		"end_date":         booking.EndDate,
+		"pickup_location":  booking.PickupLocation,
 		"dropoff_location": booking.DropoffLocation,
-		"status":          booking.Status,
+		"status":           booking.Status,
 		"motor": gin.H{
 			"id":            motor.ID,
 			"name":          motor.Name,
 			"brand":         motor.Brand,
 			"year":          motor.Year,
 			"price_per_day": motor.Price,
-			"plat_motor": motor.PlatMotor,
-			
-			"total_price":   totalPrice,
+			"plat_motor":    motor.PlatMotor,
+
+			"total_price": totalPrice,
 		},
 		"photo_id": booking.PhotoID,
 		"ktp_id":   booking.KtpID,
 	})
 }
-
-
