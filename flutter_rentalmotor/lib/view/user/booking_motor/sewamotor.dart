@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart'; 
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/view/user/detailMotorVendor/detailmotor.dart';
@@ -94,15 +94,17 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
 
   Future<void> _fetchLocationRecommendations() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoadingLocations = true;
     });
-    
+
     try {
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/location-recommendations'),
-      ).timeout(_apiTimeout);
+      final response = await http
+          .get(
+            Uri.parse('${ApiConfig.baseUrl}/location-recommendations'),
+          )
+          .timeout(_apiTimeout);
 
       print('🔄 Fetching location recommendations...');
       print('🌐 Status Code: ${response.statusCode}');
@@ -110,17 +112,19 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
       if (response.statusCode == 200) {
         // Process data in a separate isolate
         final jsonData = response.body;
-        await compute<String, List<Map<String, dynamic>>>(_parseLocationData, jsonData)
-          .then((result) {
-            if (mounted) {
-              setState(() {
-                _locationSuggestions = result
-                  .where((loc) => loc['kecamatan']['id_kecamatan'] == selectedKecamatanId)
+        await compute<String, List<Map<String, dynamic>>>(
+                _parseLocationData, jsonData)
+            .then((result) {
+          if (mounted) {
+            setState(() {
+              _locationSuggestions = result
+                  .where((loc) =>
+                      loc['kecamatan']['id_kecamatan'] == selectedKecamatanId)
                   .toList();
-                _isLoadingLocations = false;
-              });
-            }
-          });
+              _isLoadingLocations = false;
+            });
+          }
+        });
       } else {
         print("❌ Failed to load suggestions: ${response.body}");
         if (mounted) {
@@ -137,7 +141,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
           _isLoadingLocations = false;
         });
       }
-      _showErrorSnackbar("Terjadi kesalahan saat memuat lokasi: ${e.toString().substring(0, 50)}...");
+      _showErrorSnackbar(
+          "Terjadi kesalahan saat memuat lokasi: ${e.toString().substring(0, 50)}...");
     }
   }
 
@@ -235,29 +240,31 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
 
   Future<void> _fetchBookedDates() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoadingDates = true;
     });
-    
+
     try {
       final motorId = widget.motor['id'];
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/bookings/motor/$motorId'),
-      ).timeout(_apiTimeout);
+      final response = await http
+          .get(
+            Uri.parse('${ApiConfig.baseUrl}/bookings/motor/$motorId'),
+          )
+          .timeout(_apiTimeout);
 
       if (response.statusCode == 200) {
         // Process data in a separate isolate
         final jsonData = response.body;
         await compute<String, List<DateTime>>(_parseBookedDates, jsonData)
-          .then((result) {
-            if (mounted) {
-              setState(() {
-                _disabledDates = result;
-                _isLoadingDates = false;
-              });
-            }
-          });
+            .then((result) {
+          if (mounted) {
+            setState(() {
+              _disabledDates = result;
+              _isLoadingDates = false;
+            });
+          }
+        });
       } else {
         if (mounted) {
           setState(() {
@@ -273,7 +280,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
           _isLoadingDates = false;
         });
       }
-      _showErrorSnackbar("Terjadi kesalahan saat memuat tanggal: ${e.toString().substring(0, 50)}...");
+      _showErrorSnackbar(
+          "Terjadi kesalahan saat memuat tanggal: ${e.toString().substring(0, 50)}...");
     }
   }
 
@@ -296,7 +304,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
 
   void _showErrorSnackbar(String message) {
     if (!mounted) return;
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -387,10 +395,11 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
 
   void _selectDate(BuildContext context) {
     if (_isLoadingDates) {
-      _showErrorSnackbar("Sedang memuat tanggal yang tersedia. Mohon tunggu sebentar.");
+      _showErrorSnackbar(
+          "Sedang memuat tanggal yang tersedia. Mohon tunggu sebentar.");
       return;
     }
-    
+
     showDialog(
       context: context,
       builder: (context) {
@@ -508,9 +517,11 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   }
 
   Future<void> _selectTime(BuildContext context) async {
+    TimeOfDay nowTime = TimeOfDay.now();
+
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: nowTime,
       helpText: 'Pilih Jam',
       builder: (context, child) {
         return Theme(
@@ -532,11 +543,32 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     );
 
     if (pickedTime != null) {
-      String formattedTime =
-          "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
-      setState(() {
-        _timeController.text = formattedTime;
-      });
+      final now = DateTime.now();
+      final selectedDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        pickedTime.hour,
+        pickedTime.minute,
+      );
+
+      final minSelectableTime = now.add(Duration(minutes: 30));
+
+      if (selectedDateTime.isBefore(minSelectableTime)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Silakan pilih waktu setidaknya 30 menit dari sekarang.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else {
+        String formattedTime =
+            "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
+        setState(() {
+          _timeController.text = formattedTime;
+        });
+      }
     }
   }
 
@@ -566,12 +598,12 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         maxWidth: 1000, // Limit max width
         maxHeight: 1000, // Limit max height
       );
-      
+
       if (pickedFile != null) {
         // Process image in a separate isolate
         final path = pickedFile.path;
         final result = await compute<String, File>(_processImage, path);
-        
+
         if (mounted) {
           setState(() {
             if (isKtp) {
@@ -584,7 +616,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
       }
     } catch (e) {
       print('Error picking image: $e');
-      _showErrorSnackbar("Gagal memilih gambar: ${e.toString().substring(0, 50)}...");
+      _showErrorSnackbar(
+          "Gagal memilih gambar: ${e.toString().substring(0, 50)}...");
     }
   }
 
@@ -687,7 +720,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         'motorData': widget.motor,
         'isGuest': widget.isGuest,
       };
-      
+
       final result = await BookingService.createBooking(
         context: context,
         motorId: widget.motor['id'],
@@ -831,13 +864,16 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                         width: 30,
                                         height: 30,
                                         child: CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                  primaryBlue),
                                           strokeWidth: 2,
                                         ),
                                       ),
                                     ),
                                   ),
-                                  errorWidget: (context, url, error) => Container(
+                                  errorWidget: (context, url, error) =>
+                                      Container(
                                     color: Colors.grey[300],
                                     child: Icon(
                                       Icons.image_not_supported,
@@ -858,7 +894,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              widget.motor["name"] ?? "Nama Motor Tidak Tersedia",
+                              widget.motor["name"] ??
+                                  "Nama Motor Tidak Tersedia",
                               style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
@@ -867,8 +904,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                             ),
                             SizedBox(height: 8),
                             Container(
-                              padding:
-                                  EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
@@ -913,17 +950,20 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                           decoration: BoxDecoration(
                             color: Colors.amber.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                            border: Border.all(
+                                color: Colors.amber.withOpacity(0.5)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.info_outline, color: Colors.amber[700], size: 24),
+                                      Icon(Icons.info_outline,
+                                          color: Colors.amber[700], size: 24),
                                       SizedBox(width: 10),
                                       Text(
                                         "Panduan Pengisian Form",
@@ -936,7 +976,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                     ],
                                   ),
                                   IconButton(
-                                    icon: Icon(Icons.close, color: Colors.amber[700], size: 20),
+                                    icon: Icon(Icons.close,
+                                        color: Colors.amber[700], size: 20),
                                     padding: EdgeInsets.zero,
                                     constraints: BoxConstraints(),
                                     onPressed: () {
@@ -948,13 +989,20 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                 ],
                               ),
                               SizedBox(height: 10),
-                              _buildGuidanceItem("Tanggal", "Pilih tanggal mulai sewa motor"),
-                              _buildGuidanceItem("Jam", "Pilih jam pengambilan motor"),
-                              _buildGuidanceItem("Durasi", "Masukkan lama sewa dalam hari (angka)"),
-                              _buildGuidanceItem("Lokasi Pengambilan", "Pilih lokasi pengambilan motor"),
-                              _buildGuidanceItem("Lokasi Pengembalian", "Opsional, kosongkan jika sama dengan lokasi pengambilan"),
-                              _buildGuidanceItem("Foto Diri", "Unggah foto diri Anda yang jelas"),
-                              _buildGuidanceItem("Foto KTP", "Unggah foto KTP yang jelas dan tidak buram"),
+                              _buildGuidanceItem(
+                                  "Tanggal", "Pilih tanggal mulai sewa motor"),
+                              _buildGuidanceItem(
+                                  "Jam", "Pilih jam pengambilan motor"),
+                              _buildGuidanceItem("Durasi",
+                                  "Masukkan lama sewa dalam hari (angka)"),
+                              _buildGuidanceItem("Lokasi Pengambilan",
+                                  "Pilih lokasi pengambilan motor"),
+                              _buildGuidanceItem("Lokasi Pengembalian",
+                                  "Opsional, kosongkan jika sama dengan lokasi pengambilan"),
+                              _buildGuidanceItem("Foto Diri",
+                                  "Unggah foto diri Anda yang jelas"),
+                              _buildGuidanceItem("Foto KTP",
+                                  "Unggah foto KTP yang jelas dan tidak buram"),
                             ],
                           ),
                         ),
@@ -964,11 +1012,13 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                         decoration: BoxDecoration(
                           color: accentBlue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: accentBlue.withOpacity(0.3)),
+                          border:
+                              Border.all(color: accentBlue.withOpacity(0.3)),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.info_outline, color: primaryBlue, size: 24),
+                            Icon(Icons.info_outline,
+                                color: primaryBlue, size: 24),
                             SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -1045,6 +1095,13 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '⏱️ Waktu sewa minimal 30 menit dari sekarang.',
+                              style: TextStyle(
+                                  fontSize: 12, color: const Color.fromARGB(255, 253, 46, 46)),
+                            ),
+                            const SizedBox(height: 12),
 
                             _buildTextField(
                               _durationController,
@@ -1104,11 +1161,14 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                 focusNode.addListener(() {
                                   if (!focusNode.hasFocus) {
                                     final input = controller.text.toLowerCase();
-                                    final valid = _locationSuggestions.any((loc) =>
-                                        loc['place'].toString().toLowerCase() ==
-                                            input &&
-                                        loc['kecamatan']['id_kecamatan'] ==
-                                            selectedKecamatanId);
+                                    final valid = _locationSuggestions.any(
+                                        (loc) =>
+                                            loc['place']
+                                                    .toString()
+                                                    .toLowerCase() ==
+                                                input &&
+                                            loc['kecamatan']['id_kecamatan'] ==
+                                                selectedKecamatanId);
                                     if (!valid) controller.clear();
                                   }
                                 });
@@ -1118,21 +1178,24 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                   decoration: InputDecoration(
                                     labelText: "Lokasi Pengambilan *",
                                     hintText: "Masukkan lokasi",
-                                    prefixIcon:
-                                        Icon(Icons.location_on, color: mediumBlue),
-                                    suffixIcon: _isLoadingLocations 
-                                      ? SizedBox(
-                                          width: 20, 
-                                          height: 20, 
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                                    prefixIcon: Icon(Icons.location_on,
+                                        color: mediumBlue),
+                                    suffixIcon: _isLoadingLocations
+                                        ? SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(primaryBlue),
+                                              ),
                                             ),
-                                          ),
-                                        )
-                                      : null,
+                                          )
+                                        : null,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -1173,11 +1236,14 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                 focusNode.addListener(() {
                                   if (!focusNode.hasFocus) {
                                     final input = controller.text.toLowerCase();
-                                    final valid = _locationSuggestions.any((loc) =>
-                                        loc['place'].toString().toLowerCase() ==
-                                            input &&
-                                        loc['kecamatan']['id_kecamatan'] ==
-                                            selectedKecamatanId);
+                                    final valid = _locationSuggestions.any(
+                                        (loc) =>
+                                            loc['place']
+                                                    .toString()
+                                                    .toLowerCase() ==
+                                                input &&
+                                            loc['kecamatan']['id_kecamatan'] ==
+                                                selectedKecamatanId);
                                     if (!valid) controller.clear();
                                   }
                                 });
@@ -1187,21 +1253,24 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                   decoration: InputDecoration(
                                     labelText: "Lokasi Pengembalian",
                                     hintText: "Masukkan lokasi",
-                                    prefixIcon:
-                                        Icon(Icons.location_off, color: mediumBlue),
-                                    suffixIcon: _isLoadingLocations 
-                                      ? SizedBox(
-                                          width: 20, 
-                                          height: 20, 
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
+                                    prefixIcon: Icon(Icons.location_off,
+                                        color: mediumBlue),
+                                    suffixIcon: _isLoadingLocations
+                                        ? SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                        Color>(primaryBlue),
+                                              ),
                                             ),
-                                          ),
-                                        )
-                                      : null,
+                                          )
+                                        : null,
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -1273,7 +1342,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                      color: darkBlue.withOpacity(0.5), width: 2),
+                                      color: darkBlue.withOpacity(0.5),
+                                      width: 2),
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
@@ -1309,7 +1379,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                      color: darkBlue.withOpacity(0.5), width: 2),
+                                      color: darkBlue.withOpacity(0.5),
+                                      width: 2),
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
@@ -1355,7 +1426,9 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            onTap: (_isSubmitting || _isLoading) ? null : _submitRental,
+                            onTap: (_isSubmitting || _isLoading)
+                                ? null
+                                : _submitRental,
                             borderRadius: BorderRadius.circular(15),
                             child: Center(
                               child: _isSubmitting
@@ -1506,19 +1579,19 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
             fontSize: 14,
           ),
           prefixIcon: icon != null ? Icon(icon, color: accentColor) : null,
-          suffixIcon: isLoading 
-            ? SizedBox(
-                width: 20, 
-                height: 20, 
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+          suffixIcon: isLoading
+              ? SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                    ),
                   ),
-                ),
-              )
-            : null,
+                )
+              : null,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,

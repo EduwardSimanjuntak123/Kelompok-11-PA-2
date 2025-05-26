@@ -368,31 +368,31 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
 
                           const SizedBox(height: 24),
                           // Help text
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: lightColor.withOpacity(0.3),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  Icons.help_outline,
-                                  color: primaryColor,
-                                  size: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Butuh bantuan?',
-                                style: TextStyle(
-                                  color: primaryColor,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
+                          // Row(
+                          //   mainAxisAlignment: MainAxisAlignment.center,
+                          //   children: [
+                          //     Container(
+                          //       padding: const EdgeInsets.all(8),
+                          //       decoration: BoxDecoration(
+                          //         color: lightColor.withOpacity(0.3),
+                          //         shape: BoxShape.circle,
+                          //       ),
+                          //       child: Icon(
+                          //         Icons.help_outline,
+                          //         color: primaryColor,
+                          //         size: 16,
+                          //       ),
+                          //     ),
+                          //     const SizedBox(width: 8),
+                          //     // Text(
+                          //     //   'Butuh bantuan?',
+                          //     //   style: TextStyle(
+                          //     //     color: primaryColor,
+                          //     //     fontWeight: FontWeight.w500,
+                          //     //   ),
+                          //     // ),
+                          //   ],
+                          // ),
                         ],
                       ),
                     ),

@@ -62,66 +62,76 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
     super.dispose();
   }
 
-  Future<void> fetchTransactionData() async {
-    setState(() => isLoading = true);
-    print("🔄 Memulai pengambilan data transaksi...");
+ Future<void> fetchTransactionData() async {
+  setState(() => isLoading = true);
+  print("🔄 Memulai pengambilan data transaksi...");
 
-    try {
-      final token = await storage.read(key: "auth_token");
-      if (token == null) {
-        throw Exception("Token tidak ditemukan");
+  try {
+    final token = await storage.read(key: "auth_token");
+    if (token == null) {
+      throw Exception("Token tidak ditemukan");
+    }
+
+    final String baseUrl = ApiConfig.baseUrl;
+    final Uri url = Uri.parse('$baseUrl/transaction/');
+    print("📡 Mengirim GET request ke: $url");
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    print("📦 Status Code: ${response.statusCode}");
+    print("📦 Response Body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      final body = response.body;
+
+      // Cek apakah body kosong atau null
+      if (body.trim().isEmpty || body == 'null') {
+        setState(() {
+          transactionList = [];
+        });
+        print("⚠️ Response kosong atau null. Tidak ada transaksi.");
+        return;
       }
 
-      final String baseUrl = ApiConfig.baseUrl;
-      final Uri url = Uri.parse('$baseUrl/transaction/');
-      print("📡 Mengirim GET request ke: $url");
+      final decoded = json.decode(body);
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      if (decoded is List) {
+        // Urutkan berdasarkan 'created_at' jika ada
+        decoded.sort((a, b) {
+          final aDate = a['created_at'] ?? '';
+          final bDate = b['created_at'] ?? '';
+          return bDate.compareTo(aDate);
+        });
 
-      print("📦 Status Code: ${response.statusCode}");
-      print("📦 Response Body: ${response.body}");
+        setState(() {
+          transactionList = decoded;
+        });
 
-      if (response.statusCode == 200) {
-        final body = response.body;
-        final decoded = json.decode(body);
+        print("✅ Jumlah transaksi diterima: ${transactionList.length}");
 
-        if (decoded is List) {
-          // Urutkan berdasarkan created_at (terbaru dulu)
-          decoded.sort((a, b) {
-            final aDate = a['created_at'] ?? '';
-            final bDate = b['created_at'] ?? '';
-            return bDate.compareTo(aDate);
-          });
-
-          setState(() {
-            transactionList = decoded;
-            isLoading = false;
-          });
-
-          print("✅ Jumlah transaksi diterima: ${transactionList.length}");
-          _prepareChartData();
-          _animationController.forward();
-        } else {
-          _showError("Format data tidak valid (bukan List)");
-        }
+        _prepareChartData();
+        _animationController.forward();
       } else {
-        _showError("Gagal memuat data transaksi: ${response.statusCode}");
+        _showError("Format data tidak valid (bukan List)");
       }
-    } catch (e) {
-      print("❌ Terjadi error saat fetch data transaksi: $e");
-      _showError("Terjadi error: $e");
-    } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+    } else {
+      _showError("Gagal memuat data transaksi: ${response.statusCode}");
+    }
+  } catch (e) {
+    print("❌ Terjadi error saat fetch data transaksi: $e");
+    _showError("Terjadi error: $e");
+  } finally {
+    if (mounted) {
+      setState(() => isLoading = false);
     }
   }
+}
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

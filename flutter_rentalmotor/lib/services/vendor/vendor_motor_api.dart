@@ -32,10 +32,10 @@ class VendorMotorApi {
         final data = json.decode(response.body);
         motorList = data['data']; // Get motor data
       } else {
-        throw Exception("Failed to load motor data: ${response.statusCode}");
+        print("Failed to load motor data: ${response.statusCode}");
       }
     } catch (e) {
-      throw Exception("Error: $e");
+      print("Error: $e");
     }
 
     return motorList;

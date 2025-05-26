@@ -111,7 +111,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
         request.fields['color'] = _colorController.text;
         request.fields['type'] = _type;
         request.fields['description'] = _descriptionController.text;
-        request.fields['license_plate'] = _licensePlateController.text;
+        request.fields['platmotor'] = _licensePlateController.text;
 
         // Simulasi upload progress
         for (int i = 1; i <= 10; i++) {
