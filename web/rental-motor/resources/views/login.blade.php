@@ -10,20 +10,23 @@
     <style>
         body {
             background: url("{{ asset('back4.jpg') }}") no-repeat center center/cover;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
 
         .inner-background {
             background: url("{{ asset('back3.jpg') }}") no-repeat center center/cover;
-            width: 95%;
-            height: 90%;
+            width: 100%;
+            min-height: 500px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 5%;
+            justify-content: center;
+            padding: 20px;
+            border-radius: 10px;
         }
 
         .text-custom-orange {
@@ -32,70 +35,121 @@
 
         .error-message {
             color: #dc2626;
-            /* Tailwind's red-600 */
             font-size: 0.875rem;
-            /* text-sm */
             margin-top: 0.5rem;
-            /* mt-2 */
         }
-        
-    @keyframes fade-right {
-        0% {
-            opacity: 0;
-            transform: translateX(-20px);
+
+        @keyframes fade-right {
+            0% {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
-        100% {
-            opacity: 1;
-            transform: translateX(0);
+
+        @keyframes zoom-in {
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
-    }
 
-    @keyframes zoom-in {
-        0% {
-            opacity: 0;
-            transform: scale(0.9);
+        .animate-fade-right {
+            animation: fade-right 1s ease-out forwards;
         }
-        100% {
-            opacity: 1;
-            transform: scale(1);
+
+        .animate-zoom-in {
+            animation: zoom-in 1s ease-out forwards;
         }
-    }
 
-    .animate-fade-right {
-        animation: fade-right 1s ease-out forwards;
-    }
+        /* Media Queries */
+        @media (min-width: 768px) {
+            .inner-background {
+                flex-direction: row;
+                justify-content: space-between;
+                padding: 0 5%;
+                height: 90%;
+            }
 
-    .animate-zoom-in {
-        animation: zoom-in 1s ease-out forwards;
-    }
+            .login-form {
+                width: 380px;
+            }
 
+            .welcome-text {
+                display: flex;
+                width: 50%;
+                padding-right: 40px;
+            }
+        }
 
+        @media (max-width: 767px) {
+            .welcome-text {
+                text-align: center;
+                margin-bottom: 30px;
+                width: 100%;
+            }
+
+            .login-form {
+                width: 100%;
+                max-width: 380px;
+            }
+
+            body {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-form {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="inner-background">
-        <div class="hidden md:flex w-1/2 pr-10 flex-col justify-center animate-fade-right">
-            <h1 class="text-4xl font-bold text-[#FEA501] mb-4 leading-tight drop-shadow-lg">
-                Portal Resmi Admin & Vendor MotorRent!
-            </h1>
-            <p class="text-lg text-gray-100 drop-shadow-md">
-                Akses sistem pengelolaan rental motor secara efisien dan aman.
-            </p>            
+        <!-- Welcome Text (shown on all screens) -->
+        <div class="welcome-text animate-fade-right">
+            <div>
+                <h1 class="text-2xl md:text-4xl font-bold text-[#FEA501] mb-2 md:mb-4 leading-tight drop-shadow-lg">
+                    Portal Resmi Admin & Vendor MotorRent!
+                </h1>
+                <p class="text-sm md:text-lg text-gray-100 drop-shadow-md">
+                    Akses sistem pengelolaan rental motor secara efisien dan aman.
+                </p>
+            </div>
         </div>
-        
+
         <!-- Form Login -->
-        <div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-2xl w-96 animate-zoom-in">
+        <div class="login-form bg-white bg-opacity-90 p-6 md:p-8 rounded-lg shadow-2xl animate-zoom-in">
             <div class="flex justify-center mb-4">
-                <img src="{{ asset('logo.jpg') }}" alt="Motorrent Logo" class="w-24">
+                <img src="{{ asset('logo.jpg') }}" alt="Motorrent Logo" class="w-20 md:w-24">
             </div>
             <h2 class="text-custom-orange text-center font-bold text-lg">MASUKKAN AKUN ANDA</h2>
 
             @if (session('error'))
-                <p class="text-red-500 text-center mt-2">{{ session('error') }}</p>
+                <p class="text-red-500 text-center mt-2 text-sm">{{ session('error') }}</p>
             @endif
             @if (session('alert'))
-                <div class="bg-red-500 text-white text-center p-2 rounded mb-4">
+                <div class="bg-red-500 text-white text-center p-2 rounded mb-4 text-sm">
                     {{ session('alert') }}
                 </div>
             @endif
@@ -105,30 +159,30 @@
 
                 <!-- Input Email -->
                 <div class="mt-4">
-                    <label class="block text-gray-700 font-semibold">Email</label>
+                    <label class="block text-gray-700 font-semibold text-sm md:text-base">Email</label>
                     <div class="flex items-center border rounded-md px-3 py-2 mt-1 bg-gray-100">
-                        <img src="{{ asset('user.png') }}" alt="User Logo" class="w-5 h-5 flex-shrink-0 mr-2">
+                        <img src="{{ asset('user.png') }}" alt="User Logo"
+                            class="w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mr-2">
                         <input type="email" name="email" placeholder="Email"
-                            class="w-full bg-transparent focus:outline-none appearance-none">
+                            class="w-full bg-transparent focus:outline-none appearance-none text-sm md:text-base">
                     </div>
                     <div class="error-message" id="emailError"></div>
                 </div>
 
                 <!-- Input Password -->
                 <div class="mt-4">
-                    <label class="block text-gray-700 font-semibold">Password</label>
+                    <label class="block text-gray-700 font-semibold text-sm md:text-base">Password</label>
                     <div class="relative flex items-center border rounded-md px-3 py-2 mt-1 bg-gray-100">
                         <img src="{{ asset('eyeslash.svg') }}" alt="Toggle Password" id="togglePassword"
-                            class="w-5 h-5 cursor-pointer mr-2">
+                            class="w-4 h-4 md:w-5 md:h-5 cursor-pointer mr-2">
                         <input type="password" name="password" id="passwordInput" placeholder="Password"
-                            class="w-full bg-transparent focus:outline-none pr-2 appearance-none">
+                            class="w-full bg-transparent focus:outline-none pr-2 appearance-none text-sm md:text-base">
                     </div>
                     <div class="error-message" id="passwordError"></div>
                 </div>
 
                 <div class="error-message" id="generalError"></div>
 
-                <!-- Script -->
                 <script>
                     const togglePassword = document.getElementById('togglePassword');
                     const passwordInput = document.getElementById('passwordInput');
@@ -177,12 +231,12 @@
                 </script>
 
                 <button type="submit"
-                    class="w-full mt-6 bg-[#FEA501] hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition">
+                    class="w-full mt-6 bg-[#FEA501] hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm md:text-base">
                     LOGIN
                 </button>
 
                 <a href="{{ url('/') }}"
-                    class="block text-center text-blue-700 font-semibold underline text-base mt-4 hover:text-blue-900">
+                    class="block text-center text-blue-700 font-semibold underline text-sm md:text-base mt-4 hover:text-blue-900">
                     Back
                 </a>
             </form>
