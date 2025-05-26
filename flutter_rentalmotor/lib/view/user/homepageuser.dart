@@ -606,7 +606,14 @@ class _HomePageUserState extends State<HomePageUser> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             height: 48, // tinggi dropdown field yang pas
             decoration: BoxDecoration(
-              color: const Color(0xFF265B7A),
+              gradient: LinearGradient(
+                colors: [
+                  primaryBlue,
+                  const Color(0xFF1976D2),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.blue.shade200, width: 1),
             ),
@@ -616,11 +623,12 @@ class _HomePageUserState extends State<HomePageUser> {
                 value: _selectedKecamatan,
                 icon: const Icon(Icons.keyboard_arrow_down_rounded,
                     color: Colors.white),
-                dropdownColor: const Color(0xFF265B7A),
+                dropdownColor:
+                    const Color(0xFF1976D2), // pilih salah satu warna gradien
                 borderRadius: BorderRadius.circular(12),
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 16, // font size lebih besar supaya pas
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
                 items: _buildDropdownItems(),
