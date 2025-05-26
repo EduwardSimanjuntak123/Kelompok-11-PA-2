@@ -143,43 +143,55 @@
         <!-- Modal Tambah Lokasi -->
         <div id="modal-add-lokasi"
             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-            <div class="relative bg-white rounded-lg w-full max-w-md p-6">
-                <button type="button" @click="closeAddModal()"
-                    class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            <div class="relative bg-white rounded-lg w-full max-w-md transform transition-all duration-300 ease-in-out">
+                <!-- Header dengan Background Biru -->
+                <div class="bg-blue-600 text-white rounded-t-lg px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Tambah Lokasi</h2>
+                            <p class="text-sm text-blue-100 mt-1">Tambahkan lokasi baru</p>
+                        </div>
+                        <button type="button" @click="closeAddModal()" class="text-white hover:text-blue-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
 
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Tambah Lokasi</h2>
-                <form id="form-add-lokasi" method="POST" action="" @submit.prevent="validateAdd">
+                <!-- Body Form -->
+                <form id="form-add-lokasi" method="POST" action="" @submit.prevent="validateAdd" class="p-6">
                     @csrf
                     <input type="hidden" name="district_id" id="district_id_add">
 
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Nama Tempat</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Tempat</label>
                         <input type="text" name="place" id="place_add"
-                            class="mt-1 w-full px-4 py-2 border rounded-md focus:ring-blue-400 focus:outline-none">
+                            class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300">
                         <div id="place-error" class="text-red-500 text-sm mt-1 hidden">Nama Tempat harus diisi!</div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Alamat</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Alamat</label>
                         <input type="text" name="address" id="address_add"
-                            class="mt-1 w-full px-4 py-2 border rounded-md focus:ring-blue-400 focus:outline-none">
+                            class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300">
                         <div id="address-error" class="text-red-500 text-sm mt-1 hidden">Alamat harus diisi!</div>
                     </div>
 
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" @click="closeAddModal()"
-                            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-md">
-                            Batal
-                        </button>
-                        <button type="submit"
-                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-md">
-                            Simpan
-                        </button>
+                    <!-- Footer -->
+                    <div class="border-t border-gray-200 pt-6 mt-6">
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" @click="closeAddModal()"
+                                class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md font-semibold transition duration-300">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md font-semibold shadow-md transition duration-300">
+                                Simpan
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -188,231 +200,146 @@
         <!-- Modal Edit Lokasi -->
         <div id="modal-edit-lokasi"
             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-            <div class="relative bg-white rounded-lg w-full max-w-md p-6">
-                <button type="button" @click="closeEditModal()"
-                    class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            <div class="relative bg-white rounded-lg w-full max-w-md transform transition-all duration-300 ease-in-out">
+                <!-- Header dengan Background Biru -->
+                <div class="bg-blue-600 text-white rounded-t-lg px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Edit Lokasi</h2>
+                            <p class="text-sm text-blue-100 mt-1">Perbarui data lokasi</p>
+                        </div>
+                        <button type="button" @click="closeEditModal()" class="text-white hover:text-blue-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
 
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Edit Lokasi</h2>
-                <form id="form-edit-lokasi" method="POST" action="" @submit.prevent="validateEdit">
+                <!-- Body Form -->
+                <form id="form-edit-lokasi" method="POST" action="" @submit.prevent="validateEdit"
+                    class="p-6">
                     @csrf
                     @method('PUT')
 
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Nama Tempat</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Tempat</label>
                         <input type="text" name="place" id="place_edit"
-                            class="mt-1 w-full px-4 py-2 border rounded-md focus:ring-yellow-400 focus:outline-none">
+                            class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300">
                     </div>
 
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700">Alamat</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Alamat</label>
                         <input type="text" name="address" id="address_edit"
-                            class="mt-1 w-full px-4 py-2 border rounded-md focus:ring-yellow-400 focus:outline-none">
+                            class="w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300">
                     </div>
 
-                    <div class="flex justify-end space-x-2">
-                        <button type="button" @click="closeEditModal()"
-                            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-md">
-                            Batal
-                        </button>
-                        <button type="submit"
-                            class="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white font-semibold rounded-md">
-                            Update
-                        </button>
+                    <!-- Footer -->
+                    <div class="border-t border-gray-200 pt-6 mt-6">
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" @click="closeEditModal()"
+                                class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md font-semibold transition duration-300">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md font-semibold shadow-md transition duration-300">
+                                Update
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
 
-    <script>
-        function titikLokasiApp(kecamatans, titiklokasis) {
-            const hash = parseInt(window.location.hash.substring(1));
-            return {
-                kecamatans,
-                titiklokasis,
-                activeKecamatan: Number.isInteger(hash) && kecamatans.some(k => k.id_kecamatan === hash) ?
-                    hash : (kecamatans.length ? kecamatans[0].id_kecamatan : null),
+        <script>
+            function titikLokasiApp(kecamatans, titiklokasis) {
+                const hash = parseInt(window.location.hash.substring(1));
+                return {
+                    kecamatans,
+                    titiklokasis,
+                    activeKecamatan: Number.isInteger(hash) && kecamatans.some(k => k.id_kecamatan === hash) ?
+                        hash : (kecamatans.length ? kecamatans[0].id_kecamatan : null),
 
-                setActive(id) {
-                    this.activeKecamatan = id;
-                    window.location.hash = id;
-                },
+                    setActive(id) {
+                        this.activeKecamatan = id;
+                        window.location.hash = id;
+                    },
 
-                get filteredLokasi() {
-                    return this.titiklokasis.filter(l => l.district_id === this.activeKecamatan);
-                },
+                    get filteredLokasi() {
+                        return this.titiklokasis.filter(l => l.district_id === this.activeKecamatan);
+                    },
 
-                openAddModal(districtId) {
-                    this.setActive(districtId);
+                    openAddModal(districtId) {
+                        this.setActive(districtId);
 
-                    // Set action form dan district_id
-                    document.getElementById('district_id_add').value = districtId;
-                    document.getElementById('form-add-lokasi').action =
-                        window.routeStoreLokasi.replace('__ID__', districtId);
+                        // Set action form dan district_id
+                        document.getElementById('district_id_add').value = districtId;
+                        document.getElementById('form-add-lokasi').action =
+                            window.routeStoreLokasi.replace('__ID__', districtId);
 
-                    // Reset input dan error
-                    ['place', 'address'].forEach(f => {
-                        document.getElementById(`${f}_add`).value = '';
-                        document.getElementById(`${f}-error`).classList.add('hidden');
-                    });
-
-                    // Tampilkan modal
-                    document.getElementById('modal-add-lokasi').classList.remove('hidden');
-                },
-
-                closeAddModal() {
-                    document.getElementById('modal-add-lokasi').classList.add('hidden');
-
-                    // Reset input dan error
-                    ['place', 'address'].forEach(f => {
-                        document.getElementById(`${f}_add`).value = '';
-                        document.getElementById(`${f}-error`).classList.add('hidden');
-                    });
-                },
-
-
-                validateAdd() {
-                    let valid = true;
-                    ['place', 'address'].forEach(f => {
-                        const input = document.getElementById(`${f}_add`);
-                        const err = document.getElementById(`${f}-error`);
-                        if (!input.value.trim()) {
-                            err.classList.remove('hidden');
-                            valid = false;
-                        } else {
-                            err.classList.add('hidden');
-                        }
-                    });
-                    if (!valid) return;
-
-                    const form = document.getElementById('form-add-lokasi');
-                    const data = new FormData(form);
-                    fetch(form.action, {
-                            method: 'POST',
-                            body: data,
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                    'content')
-                            }
-                        })
-                        .then(res => res.ok ? res.json() : Promise.reject(res))
-                        .then(res => {
-                            if (res.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Berhasil!',
-                                    text: 'Lokasi berhasil ditambahkan.',
-                                    confirmButtonText: 'OK'
-                                }).then(() => {
-                                    window.location.reload();
-                                });
-                            }
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal',
-                                text: 'Gagal menambah lokasi',
-                                confirmButtonText: 'OK'
-                            });
+                        // Reset input dan error
+                        ['place', 'address'].forEach(f => {
+                            document.getElementById(`${f}_add`).value = '';
+                            document.getElementById(`${f}-error`).classList.add('hidden');
                         });
-                },
 
-                openEditModal(loc) {
-                    document.getElementById('place_edit').value = loc.place;
-                    document.getElementById('address_edit').value = loc.address;
-                    document.getElementById('form-edit-lokasi').action = `/admin/titiklokasi/${loc.id}`;
-                    document.getElementById('modal-edit-lokasi').classList.remove('hidden');
-                },
+                        // Tampilkan modal
+                        document.getElementById('modal-add-lokasi').classList.remove('hidden');
+                    },
 
-                closeEditModal() {
-                    document.getElementById('modal-edit-lokasi').classList.add('hidden');
-                },
+                    closeAddModal() {
+                        document.getElementById('modal-add-lokasi').classList.add('hidden');
 
-                validateEdit() {
-                    const form = document.getElementById('form-edit-lokasi');
-                    const data = new FormData(form);
-                    data.append('_method', 'PUT');
-
-                    fetch(form.action, {
-                            method: 'POST',
-                            body: data,
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                                    'content')
-                            }
-                        })
-                        .then(res => res.ok ? res.json() : Promise.reject(res))
-                        .then(res => {
-                            if (res.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Berhasil!',
-                                    text: 'Lokasi berhasil perbaharui.',
-                                    confirmButtonText: 'OK'
-                                }).then(() => {
-                                    window.location.reload();
-                                });
-                            }
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Gagal menambah lokasi',
-                            });
+                        // Reset input dan error
+                        ['place', 'address'].forEach(f => {
+                            document.getElementById(`${f}_add`).value = '';
+                            document.getElementById(`${f}-error`).classList.add('hidden');
                         });
-                },
+                    },
 
-                confirmDelete(id) {
-                    Swal.fire({
-                        title: 'Yakin ingin menghapus?',
-                        text: 'Data lokasi ini akan dihapus permanen.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc2626',
-                        cancelButtonColor: '#6b7280',
-                        confirmButtonText: 'Ya, Hapus!',
-                        cancelButtonText: 'Batal'
-                    }).then(result => {
-                        if (!result.isConfirmed) return;
 
-                        const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    validateAdd() {
+                        let valid = true;
+                        ['place', 'address'].forEach(f => {
+                            const input = document.getElementById(`${f}_add`);
+                            const err = document.getElementById(`${f}-error`);
+                            if (!input.value.trim()) {
+                                err.classList.remove('hidden');
+                                valid = false;
+                            } else {
+                                err.classList.add('hidden');
+                            }
+                        });
+                        if (!valid) return;
 
-                        fetch(`/admin/titiklokasi/${id}`, {
-                                method: 'DELETE',
+                        const form = document.getElementById('form-add-lokasi');
+                        const data = new FormData(form);
+                        fetch(form.action, {
+                                method: 'POST',
+                                body: data,
                                 headers: {
                                     'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': token
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                        'content')
                                 }
                             })
-                            .then(async res => {
-                                const json = await res.json().catch(() => ({}));
-                                if (res.ok && json.success) {
+                            .then(res => res.ok ? res.json() : Promise.reject(res))
+                            .then(res => {
+                                if (res.success) {
                                     Swal.fire({
                                         icon: 'success',
                                         title: 'Berhasil!',
-                                        text: 'Lokasi berhasil dihapus.',
+                                        text: 'Lokasi berhasil ditambahkan.',
                                         confirmButtonText: 'OK'
                                     }).then(() => {
                                         window.location.reload();
                                     });
-                                } else {
-                                    const msg = json.message || 'Gagal hapus lokasi';
-                                    return Promise.reject(msg);
                                 }
                             })
                             .catch(err => {
-                                console.error('Delete error:', err);
+                                console.error(err);
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Gagal',
@@ -420,11 +347,108 @@
                                     confirmButtonText: 'OK'
                                 });
                             });
-                    });
-                }
-            };
-        }
+                    },
 
-        window.routeStoreLokasi = "{{ route('titiklokasi.store', ['id_kecamatan' => '__ID__']) }}";
-    </script>
-@endsection
+                    openEditModal(loc) {
+                        document.getElementById('place_edit').value = loc.place;
+                        document.getElementById('address_edit').value = loc.address;
+                        document.getElementById('form-edit-lokasi').action = `/admin/titiklokasi/${loc.id}`;
+                        document.getElementById('modal-edit-lokasi').classList.remove('hidden');
+                    },
+
+                    closeEditModal() {
+                        document.getElementById('modal-edit-lokasi').classList.add('hidden');
+                    },
+
+                    validateEdit() {
+                        const form = document.getElementById('form-edit-lokasi');
+                        const data = new FormData(form);
+                        data.append('_method', 'PUT');
+
+                        fetch(form.action, {
+                                method: 'POST',
+                                body: data,
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                        'content')
+                                }
+                            })
+                            .then(res => res.ok ? res.json() : Promise.reject(res))
+                            .then(res => {
+                                if (res.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Berhasil!',
+                                        text: 'Lokasi berhasil perbaharui.',
+                                        confirmButtonText: 'OK'
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                }
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Gagal menambah lokasi',
+                                });
+                            });
+                    },
+
+                    confirmDelete(id) {
+                        Swal.fire({
+                            title: 'Yakin ingin menghapus?',
+                            text: 'Data lokasi ini akan dihapus permanen.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#dc2626',
+                            cancelButtonColor: '#6b7280',
+                            confirmButtonText: 'Ya, Hapus!',
+                            cancelButtonText: 'Batal'
+                        }).then(result => {
+                            if (!result.isConfirmed) return;
+
+                            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                            fetch(`/admin/titiklokasi/${id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': token
+                                    }
+                                })
+                                .then(async res => {
+                                    const json = await res.json().catch(() => ({}));
+                                    if (res.ok && json.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Berhasil!',
+                                            text: 'Lokasi berhasil dihapus.',
+                                            confirmButtonText: 'OK'
+                                        }).then(() => {
+                                            window.location.reload();
+                                        });
+                                    } else {
+                                        const msg = json.message || 'Gagal hapus lokasi';
+                                        return Promise.reject(msg);
+                                    }
+                                })
+                                .catch(err => {
+                                    console.error('Delete error:', err);
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Gagal',
+                                        text: 'Gagal menambah lokasi',
+                                        confirmButtonText: 'OK'
+                                    });
+                                });
+                        });
+                    }
+                };
+            }
+
+            window.routeStoreLokasi = "{{ route('titiklokasi.store', ['id_kecamatan' => '__ID__']) }}";
+        </script>
+    @endsection

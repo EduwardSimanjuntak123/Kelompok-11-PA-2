@@ -101,33 +101,46 @@
     {{-- Modal Tambah --}}
     <div id="modal-add" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div
-            class="relative bg-white rounded-lg w-full max-w-md p-6 transform transition-all duration-300 ease-in-out scale-95 hover:scale-100">
-            {{-- Close button --}}
-            <button type="button" id="btn-add-close" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
-                {{-- Heroicon X --}}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+            class="relative bg-white rounded-lg w-full max-w-md transform transition-all duration-300 ease-in-out scale-95 hover:scale-100">
+            <!-- Header dengan Background Biru -->
+            <div class="bg-blue-600 text-white rounded-t-lg px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">Tambah Kecamatan</h2>
+                        <p class="text-sm text-blue-100 mt-1">Tambahkan data kecamatan baru</p>
+                    </div>
+                    <button type="button" id="btn-add-close" class="text-white hover:text-blue-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
 
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Tambah Kecamatan</h2>
-            <form action="{{ route('kecamatan.store') }}" method="POST">
+            <!-- Body Form -->
+            <form action="{{ route('kecamatan.store') }}" method="POST" class="p-6">
                 @csrf
                 <div class="mb-4">
-                    <label for="nama_kecamatan_add" class="block text-sm font-medium text-gray-700">Nama Kecamatan</label>
+                    <label for="nama_kecamatan_add" class="block text-sm font-medium text-gray-700 mb-2">Nama
+                        Kecamatan</label>
                     <input type="text" name="nama_kecamatan" id="nama_kecamatan_add"
-                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none transition duration-300 ease-in-out">
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-300">
                 </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" id="btn-add-cancel"
-                        class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold transition duration-300 ease-in-out transform hover:scale-105">
-                        Batal
-                    </button>
-                    <button type="submit"
-                        class="px-4 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white font-semibold transition duration-300 ease-in-out transform hover:scale-105">
-                        Simpan
-                    </button>
+
+                <!-- Footer -->
+                <div class="border-t border-gray-200 pt-6 mt-6">
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="btn-add-cancel"
+                            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md font-semibold transition duration-300">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md font-semibold transition duration-300">
+                            Simpan
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -136,34 +149,48 @@
     {{-- Modal Edit --}}
     <div id="modal-edit" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden">
         <div
-            class="relative bg-white rounded-lg w-full max-w-md p-6 transform transition-all duration-300 ease-in-out scale-95 hover:scale-100">
-            {{-- Close button --}}
-            <button type="button" id="btn-edit-close" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+            class="relative bg-white rounded-lg w-full max-w-md transform transition-all duration-300 ease-in-out scale-95 hover:scale-100">
+            <!-- Header dengan Background Biru -->
+            <div class="bg-blue-600 text-white rounded-t-lg px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold">Edit Kecamatan</h2>
+                        <p class="text-sm text-blue-100 mt-1">Perbarui data kecamatan</p>
+                    </div>
+                    <button type="button" id="btn-edit-close" class="text-white hover:text-blue-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
 
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Edit Kecamatan</h2>
-            <form id="form-edit" method="POST">
+            <!-- Body Form -->
+            <form id="form-edit" method="POST" class="p-6">
                 @csrf
                 @method('PUT')
                 <div class="mb-4">
-                    <label for="nama_kecamatan_edit" class="block text-sm font-medium text-gray-700">Nama Kecamatan</label>
+                    <label for="nama_kecamatan_edit" class="block text-sm font-medium text-gray-700 mb-2">Nama
+                        Kecamatan</label>
                     <input type="text" name="nama_kecamatan" id="nama_kecamatan_edit"
-                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-yellow-400 focus:outline-none transition duration-300 ease-in-out"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-300"
                         required>
                 </div>
-                <div class="flex justify-end space-x-2">
-                    <button type="button" id="btn-edit-cancel"
-                        class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold transition duration-300 ease-in-out transform hover:scale-105">
-                        Batal
-                    </button>
-                    <button type="submit"
-                        class="px-4 py-2 rounded bg-yellow-400 hover:bg-yellow-500 text-white font-semibold transition duration-300 ease-in-out transform hover:scale-105">
-                        Update
-                    </button>
+
+                <!-- Footer -->
+                <div class="border-t border-gray-200 pt-6 mt-6">
+                    <div class="flex justify-end space-x-2">
+                        <button type="button" id="btn-edit-cancel"
+                            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-md font-semibold transition duration-300">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md font-semibold shadow-md transition duration-300">
+                            Update
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -174,7 +201,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-
         // Tombol close modal Tambah
         document.getElementById('btn-add-close').addEventListener('click', () => {
             document.getElementById('modal-add').classList.add('hidden');

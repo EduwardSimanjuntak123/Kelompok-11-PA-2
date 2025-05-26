@@ -300,121 +300,138 @@
         <!-- Modal untuk Booking Manual -->
         <div id="addBookingModal"
             class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center px-4">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 md:p-8 overflow-y-auto max-h-screen relative">
-                <!-- Tombol Close -->
-                <button type="button" onclick="closeModal('addBookingModal')"
-                    class="absolute top-4 right-4 text-gray-600 hover:text-gray-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-y-auto max-h-screen">
+                <!-- Header -->
+                <div class="bg-blue-600 text-white rounded-t-2xl px-6 py-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold">Tambah Booking Manual</h2>
+                            <p class="text-sm text-blue-100 mt-1">Lengkapi data booking pelanggan</p>
+                        </div>
+                        <button type="button" onclick="closeModal('addBookingModal')"
+                            class="text-white hover:text-blue-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
 
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Tambah Booking Manual</h2>
+                <!-- Body Form -->
                 <form id="manualBookingForm" action="{{ route('vendor.manual.booking.store') }}" method="POST"
-                    enctype="multipart/form-data">
+                    enctype="multipart/form-data" class="p-6 md:p-8">
                     @csrf
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Dropdown Motor -->
-                        <div>
-                            <label for="motor_id" class="block text-gray-700 font-semibold mb-1">Pilih Motor</label>
-                            <select name="motor_id" id="motor_id"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500">
-                                <option value="">-- Pilih Motor --</option>
-                                @foreach ($motors as $motor)
-                                    <option value="{{ $motor['id'] }}"
-                                        {{ old('motor_id') == $motor['id'] ? 'selected' : '' }}>
-                                        {{ $motor['name'] }} ({{ $motor['brand'] }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <small class="error-message text-red-500" data-field="motor_id"></small>
+                        <!-- Kolom Kiri -->
+                        <div class="space-y-6">
+                            <!-- Dropdown Motor -->
+                            <div>
+                                <label for="motor_id" class="block text-gray-700 font-semibold mb-1">Pilih Motor</label>
+                                <select name="motor_id" id="motor_id"
+                                    class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    <!-- Opsi motor -->
+                                </select>
+                                <small class="error-message text-red-500" data-field="motor_id"></small>
+                            </div>
+
+                            <!-- Nama Pelanggan -->
+                            <div>
+                                <label for="customer_name" class="block text-gray-700 font-semibold mb-1">Nama
+                                    Pelanggan</label>
+                                <input type="text" name="customer_name" id="customer_name"
+                                    class="w-full p-3 border rounded-lg">
+                                <small class="error-message text-red-500" data-field="customer_name"></small>
+                            </div>
+
+                            <!-- Tanggal & Jam Mulai -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="start_date_date" class="block text-gray-700 font-semibold mb-1">Tanggal
+                                        Mulai</label>
+                                    <input type="date" name="start_date_date" id="start_date_date"
+                                        class="w-full p-3 border rounded-lg">
+                                    <small class="error-message text-red-500" data-field="start_date_date"></small>
+                                </div>
+
+                                <div>
+                                    <label for="start_date_time" class="block text-gray-700 font-semibold mb-1">Jam
+                                        Mulai</label>
+                                    <input type="time" name="start_date_time" id="start_date_time"
+                                        class="w-full p-3 border rounded-lg">
+                                    <small class="error-message text-red-500" data-field="start_date_time"></small>
+                                </div>
+                            </div>
+
+                            <!-- Durasi -->
+                            <div>
+                                <label for="duration" class="block text-gray-700 font-semibold mb-1">Durasi (hari)</label>
+                                <input type="number" name="duration" id="duration"
+                                    class="w-full p-3 border rounded-lg">
+                                <small class="error-message text-red-500" data-field="duration"></small>
+                            </div>
                         </div>
 
-                        <!-- Customer Name -->
-                        <div>
-                            <label for="customer_name" class="block text-gray-700 font-semibold mb-1">Nama
-                                Pelanggan</label>
-                            <input type="text" name="customer_name" id="customer_name"
-                                placeholder="cth: Budi Santoso"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500"
-                                value="{{ old('customer_name') }}">
-                            <small class="error-message text-red-500" data-field="customer_name"></small>
-                        </div>
+                        <!-- Kolom Kanan - Upload File -->
+                        <div class="space-y-6">
+                            <!-- Foto Diri -->
+                            <div>
+                                <label for="photo_id" class="block text-gray-700 font-semibold mb-1">Foto Pelanggan
+                                    (Opsional)</label>
+                                <div class="relative group">
+                                    <input type="file" name="photo_id" id="photo_id"
+                                        class="w-full p-3 border rounded-lg file:transition-colors
+                                   file:border-0 file:bg-blue-50 file:text-blue-700
+                                   hover:file:bg-blue-100 file:rounded-md file:px-4 file:py-2">
+                                </div>
+                                <small class="error-message text-red-500" data-field="photo_id"></small>
+                            </div>
 
-                        <!-- Start Date -->
-                        <div>
-                            <label for="start_date_date" class="block text-gray-700 font-semibold mb-1">Tanggal
-                                Mulai</label>
-                            <input type="date" name="start_date_date" id="start_date_date"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500"
-                                value="{{ old('start_date_date') }}">
-                            <small class="error-message text-red-500" data-field="start_date_date"></small>
-                        </div>
-
-                        <!-- Jam Mulai -->
-                        <div>
-                            <label for="start_date_time" class="block text-gray-700 font-semibold mb-1">Jam Mulai</label>
-                            <input type="time" name="start_date_time" id="start_date_time"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500"
-                                value="{{ old('start_date_time') }}">
-                            <small class="error-message text-red-500" data-field="start_date_time"></small>
-                        </div>
-
-                        <!-- Duration -->
-                        <div>
-                            <label for="duration" class="block text-gray-700 font-semibold mb-1">Durasi (hari)</label>
-                            <input type="number" name="duration" id="duration" placeholder="cth: 3" min="1"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500"
-                                value="{{ old('duration') }}">
-                            <small class="error-message text-red-500" data-field="duration"></small>
-                        </div>
-
-                        <!-- Foto ID -->
-                        <div>
-                            <label for="photo_id" class="block text-gray-700 font-semibold mb-1">Foto Pelanggan
-                                (Opsional)</label>
-                            <input type="file" name="photo_id" id="photo_id"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400">
-                            <small class="error-message text-red-500" data-field="photo_id"></small>
-                        </div>
-
-                        <!-- Foto KTP -->
-                        <div>
-                            <label for="ktp_id" class="block text-gray-700 font-semibold mb-1">Foto KTP
-                                (Opsional)</label>
-                            <input type="file" name="ktp_id" id="ktp_id"
-                                class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400">
-                            <small class="error-message text-red-500" data-field="ktp_id"></small>
+                            <!-- Foto KTP -->
+                            <div>
+                                <label for="ktp_id" class="block text-gray-700 font-semibold mb-1">Foto KTP
+                                    (Opsional)</label>
+                                <div class="relative group">
+                                    <input type="file" name="ktp_id" id="ktp_id"
+                                        class="w-full p-3 border rounded-lg file:transition-colors
+                                   file:border-0 file:bg-blue-50 file:text-blue-700
+                                   hover:file:bg-blue-100 file:rounded-md file:px-4 file:py-2">
+                                </div>
+                                <small class="error-message text-red-500" data-field="ktp_id"></small>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Pickup Location -->
-                    <div class="mt-6">
-                        <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Lokasi
-                            Pengambilan</label>
-                        <textarea name="pickup_location" id="pickup_location" rows="3"
-                            placeholder="cth: Jalan Merdeka No. 12, Jakarta"
-                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500">{{ old('pickup_location') }}</textarea>
-                        <small class="error-message text-red-500" data-field="pickup_location"></small>
+                    <!-- Lokasi Pengambilan & Penjemputan -->
+                    <div class="mt-6 space-y-6">
+                        <div>
+                            <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Lokasi
+                                Pengambilan</label>
+                            <textarea name="pickup_location" id="pickup_location" rows="3" class="w-full p-3 border rounded-lg"></textarea>
+                            <small class="error-message text-red-500" data-field="pickup_location"></small>
+                        </div>
+
+                        <div>
+                            <label for="dropoff_location" class="block text-gray-700 font-semibold mb-1">Lokasi
+                                Penjemputan (Opsional)</label>
+                            <textarea name="dropoff_location" id="dropoff_location" rows="3" class="w-full p-3 border rounded-lg"></textarea>
+                            <small class="error-message text-red-500" data-field="dropoff_location"></small>
+                        </div>
                     </div>
 
-                    <!-- Dropoff Location -->
-                    <div class="mt-6">
-                        <label for="dropoff_location" class="block text-gray-700 font-semibold mb-1">Lokasi Penjemputan
-                            (Opsional)</label>
-                        <textarea name="dropoff_location" id="dropoff_location" rows="3"
-                            placeholder="cth: Jalan Sudirman No. 45, Bandung"
-                            class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-400 placeholder:text-sm placeholder-gray-500">{{ old('dropoff_location') }}</textarea>
-                        <small class="error-message text-red-500" data-field="dropoff_location"></small>
-                    </div>
-
-                    <!-- Buttons -->
-                    <div class="mt-8 flex flex-col sm:flex-row justify-end gap-4">
-                        <button type="button" onclick="closeModal('addBookingModal')"
-                            class="px-5 py-2.5 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition">Batal</button>
-                        <button type="submit"
-                            class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition">Simpan</button>
+                    <!-- Footer -->
+                    <div class="bg-gray-50 px-6 py-4 mt-8 border-t border-gray-200 rounded-b-2xl">
+                        <div class="flex justify-end gap-4">
+                            <button type="button" onclick="closeModal('addBookingModal')"
+                                class="px-5 py-2.5 bg-gray-400 hover:bg-gray-500 text-white rounded-lg">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">
+                                Simpan Booking
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

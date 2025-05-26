@@ -37,7 +37,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                
+
             </button>
         </div>
 
@@ -120,10 +120,14 @@
     <div id="editModal"
         class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50 p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-xl">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-gray-800">Edit Data Profil</h2>
-                    <button onclick="closeModal('editModal')" class="text-gray-500 hover:text-gray-700">
+            <!-- Header dengan Background Biru -->
+            <div class="bg-blue-600 text-white rounded-t-xl px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold">Edit Data Profil</h2>
+                        <p class="text-sm text-blue-100 mt-1">Perbarui informasi profil administrator</p>
+                    </div>
+                    <button onclick="closeModal('editModal')" class="text-white hover:text-blue-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -131,48 +135,54 @@
                         </svg>
                     </button>
                 </div>
+            </div>
 
+            <!-- Body Form -->
+            <div class="p-6">
                 <form action="{{ route('admin.update') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-600">Nama Lengkap</label>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Nama Lengkap</label>
                             <input type="text" name="name" value="{{ $adminData['name'] }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-600">Email</label>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Email</label>
                             <input type="email" name="email" value="{{ $adminData['email'] }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-600">Telepon</label>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Telepon</label>
                             <input type="text" name="phone" value="{{ $adminData['phone'] }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-600">Alamat</label>
+                            <label class="block text-sm font-medium text-gray-600 mb-2">Alamat</label>
                             <input type="text" name="address" value="{{ $adminData['address'] }}"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring focus:ring-blue-200">
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-300">
                         </div>
                     </div>
 
-                    <div class="flex justify-end mt-6 space-x-3 pt-4 border-t border-gray-200">
-                        <button type="button" onclick="closeModal('editModal')"
-                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                            Batal
-                        </button>
-                        <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                            Simpan Perubahan
-                        </button>
+                    <!-- Footer -->
+                    <div class="border-t border-gray-200 pt-6 mt-6">
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" onclick="closeModal('editModal')"
+                                class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg transition duration-300">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-md transition duration-300">
+                                Simpan Perubahan
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
+    </div>  
 
 
     <!-- Edit Photo Modal -->
