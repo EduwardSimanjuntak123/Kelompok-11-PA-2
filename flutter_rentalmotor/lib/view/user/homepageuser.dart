@@ -200,7 +200,8 @@ class _HomePageUserState extends State<HomePageUser> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
-           _chatRooms = List<Map<String, dynamic>>.from(data['chat_rooms'] ?? []);
+          _chatRooms =
+              List<Map<String, dynamic>>.from(data['chat_rooms'] ?? []);
         });
       } else {
         print('Gagal mengambil chat rooms: ${response.statusCode}');
@@ -575,10 +576,11 @@ class _HomePageUserState extends State<HomePageUser> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: primaryBlue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
@@ -589,17 +591,22 @@ class _HomePageUserState extends State<HomePageUser> {
               const Text(
                 "Filter Kecamatan",
                 style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87),
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
+
+          // Dropdown
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            height: 48, // tinggi dropdown field yang pas
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.05),
+              color: const Color(0xFF265B7A),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.blue.shade200, width: 1),
             ),
@@ -607,7 +614,15 @@ class _HomePageUserState extends State<HomePageUser> {
               child: DropdownButton<String>(
                 isExpanded: true,
                 value: _selectedKecamatan,
-                icon: Icon(Icons.keyboard_arrow_down, color: primaryBlue),
+                icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white),
+                dropdownColor: const Color(0xFF265B7A),
+                borderRadius: BorderRadius.circular(12),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16, // font size lebih besar supaya pas
+                  fontWeight: FontWeight.w600,
+                ),
                 items: _buildDropdownItems(),
                 onChanged: (String? newValue) {
                   if (newValue != null) {
@@ -616,11 +631,25 @@ class _HomePageUserState extends State<HomePageUser> {
                     });
                   }
                 },
-                style: TextStyle(
-                  color: primaryBlue,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
+                selectedItemBuilder: (BuildContext context) {
+                  // Ini untuk mengatur style teks yang tampil di button dropdown
+                  return _buildDropdownItems()
+                      .map((item) => Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                item.value ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ))
+                      .toList();
+                },
               ),
             ),
           ),
@@ -630,21 +659,30 @@ class _HomePageUserState extends State<HomePageUser> {
   }
 
   List<DropdownMenuItem<String>> _buildDropdownItems() {
-    List<DropdownMenuItem<String>> items = [];
-    items.add(const DropdownMenuItem(
-      value: "Semua",
-      child: Text("Semua"),
-    ));
-    for (var kec in _kecamatanList) {
-      String nama = kec["nama_kecamatan"]?.toString().trim() ?? "";
-      if (nama.isNotEmpty) {
-        items.add(DropdownMenuItem(
-          value: nama,
-          child: Text(nama),
-        ));
-      }
-    }
-    return items;
+    List<String> daftarKecamatan = [
+      "Semua",
+      ..._kecamatanList
+          .map((e) => e["nama_kecamatan"]?.toString().trim() ?? "")
+          .where((e) => e.isNotEmpty),
+    ];
+
+    return daftarKecamatan.map((nama) {
+      return DropdownMenuItem<String>(
+        value: nama,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+              vertical: 12), // padding vertikal diperbesar
+          child: Text(
+            nama,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16, // ukuran font disamakan
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      );
+    }).toList();
   }
 
   Widget _buildVendorSection(List<Map<String, dynamic>> vendorList) {
@@ -687,7 +725,7 @@ class _HomePageUserState extends State<HomePageUser> {
                             child: Text(
                               "Daftar Vendor",
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 14,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
@@ -891,42 +929,43 @@ class _HomePageUserState extends State<HomePageUser> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Flexible(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: primaryBlue,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: primaryBlue,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Row(
-                        children: [
-                          Icon(Icons.motorcycle, color: primaryBlue, size: 20),
-                          SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              "Rekomendasi Motor",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                  ),
+                  const SizedBox(width: 10),
+                  Row(
+                    children: [
+                      Icon(Icons.motorcycle, color: primaryBlue, size: 20),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 150, // batasi lebar supaya teks tetap rapi
+                        child: Text(
+                          "Rekomendasi Motor",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
-                        ],
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
+
+              // Tombol "Lihat Semua"
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: primaryBlue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -960,228 +999,233 @@ class _HomePageUserState extends State<HomePageUser> {
             ],
           ),
         ),
-        _motorList.isEmpty
-            ? Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                alignment: Alignment.center,
-                child: Column(
-                  children: [
-                    Icon(Icons.motorcycle_outlined,
-                        size: 50, color: Colors.grey[400]),
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Tidak ada motor tersedia",
-                      style: TextStyle(fontSize: 16, color: Colors.black87),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              )
-            : SizedBox(
-                height: 280,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: _motorList.length,
-                  itemBuilder: (context, index) {
-                    final motor = _motorList[index];
 
-                    String path = motor["image"]?.toString().trim() ?? "";
-                    String imageUrl = path.isNotEmpty
-                        ? (path.startsWith("http") ? path : "$baseUrl$path")
-                        : "assets/images/default_motor.png";
+        // Konten list motor atau pesan kosong
+        if (_motorList.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Column(
+              children: [
+                Icon(Icons.motorcycle_outlined,
+                    size: 50, color: Colors.grey[400]),
+                const SizedBox(height: 10),
+                const Text(
+                  "Tidak ada motor tersedia",
+                  style: TextStyle(fontSize: 16, color: Colors.black87),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          )
+        else
+          SizedBox(
+            height: 280,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: _motorList.length,
+              itemBuilder: (context, index) {
+                final motor = _motorList[index];
 
-                    String formattedPrice;
-                    if (motor["price"] != null) {
-                      final priceValue =
-                          num.tryParse(motor["price"].toString());
-                      if (priceValue != null) {
-                        formattedPrice = NumberFormat.decimalPattern('id')
-                            .format(priceValue);
-                      } else {
-                        formattedPrice = "Harga Tidak Valid";
-                      }
-                    } else {
-                      formattedPrice = "Harga Tidak Diketahui";
-                    }
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => DetailMotorPage(
-                                  motorId: int.parse(motor["id"]
-                                      .toString()), // Konversi ke int
-                                  isGuest: _userId == null,
-                                )));
-                      },
-                      child: Container(
-                        width: 180,
-                        margin: const EdgeInsets.only(right: 15),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                          border: Border.all(color: Colors.blue.shade50),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Gambar motor with status badge
-                            Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(15)),
-                                  child: Image.network(
-                                    imageUrl,
-                                    height: 120,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Image.asset(
-                                        "assets/images/default_motor.png",
-                                        height: 120,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                      );
-                                    },
-                                  ),
-                                ),
-                                // Status badge
-                                Positioned(
-                                  top: 10,
-                                  right: 10,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: _getStatusColor(motor["status"]),
-                                      borderRadius: BorderRadius.circular(12),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
-                                          blurRadius: 4,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      _getStatusText(motor["status"]),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            // Konten teks
-                            Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    motor["name"] ?? "Nama Tidak Diketahui",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: primaryBlue,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.category,
-                                          size: 12, color: Colors.grey[600]),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        "Type: ${motor["type"] ?? "unknown"}",
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[700]),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.location_on,
-                                          size: 12, color: Colors.grey[600]),
-                                      SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          (motor["vendor"]?["kecamatan"]
-                                                      ?["nama_kecamatan"]
-                                                  ?.toString()
-                                                  .replaceAll('\r', '')
-                                                  .replaceAll('\n', '')
-                                                  .trim()) ??
-                                              "Tidak Diketahui",
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey[700]),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 6),
-                                  _buildRatingDisplay(
-                                      motor["rating"]?.toString() ?? "0"),
-                                  SizedBox(height: 6),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.shade50,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: Colors.green.shade200),
-                                    ),
-                                    child: Text(
-                                      "Rp $formattedPrice/hari",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green.shade700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                String path = motor["image"]?.toString().trim() ?? "";
+                String imageUrl = path.isNotEmpty
+                    ? (path.startsWith("http") ? path : "$baseUrl$path")
+                    : "assets/images/default_motor.png";
+
+                String formattedPrice;
+                if (motor["price"] != null) {
+                  final priceValue = num.tryParse(motor["price"].toString());
+                  if (priceValue != null) {
+                    formattedPrice =
+                        NumberFormat.decimalPattern('id').format(priceValue);
+                  } else {
+                    formattedPrice = "Harga Tidak Valid";
+                  }
+                } else {
+                  formattedPrice = "Harga Tidak Diketahui";
+                }
+
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => DetailMotorPage(
+                          motorId: int.parse(motor["id"].toString()),
+                          isGuest: _userId == null,
                         ),
                       ),
                     );
                   },
-                ),
-              ),
-        SizedBox(height: 16),
+                  child: Container(
+                    width: 180,
+                    margin: const EdgeInsets.only(right: 15),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                      border: Border.all(color: Colors.blue.shade50),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Gambar motor dengan status badge
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(15)),
+                              child: Image.network(
+                                imageUrl,
+                                height: 120,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                    "assets/images/default_motor.png",
+                                    height: 120,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  );
+                                },
+                              ),
+                            ),
+                            Positioned(
+                              top: 10,
+                              right: 10,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(motor["status"]),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  _getStatusText(motor["status"]),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Konten teks
+                        Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                motor["name"] ?? "Nama Tidak Diketahui",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: primaryBlue,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.category,
+                                      size: 12, color: Colors.grey[600]),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    "Type: ${motor["type"] ?? "unknown"}",
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey[700]),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.location_on,
+                                      size: 12, color: Colors.grey[600]),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      (motor["vendor"]?["kecamatan"]
+                                                  ?["nama_kecamatan"]
+                                              ?.toString()
+                                              .replaceAll('\r', '')
+                                              .replaceAll('\n', '')
+                                              .trim()) ??
+                                          "Tidak Diketahui",
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[700]),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              _buildRatingDisplay(
+                                  motor["rating"]?.toString() ?? "0"),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade50,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border:
+                                      Border.all(color: Colors.green.shade200),
+                                ),
+                                child: Text(
+                                  "Rp $formattedPrice/hari",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+        const SizedBox(height: 16),
       ],
     );
   }

@@ -274,21 +274,24 @@ func DeactivateVendor(c *gin.Context) {
 }
 
 func GetAllVendors(c *gin.Context) {
-	// Ambil semua vendor dengan preload relasi Motors
+	// Ambil semua vendor yang user-nya memiliki role 'vendor'
 	var vendors []models.Vendor
-	// Preload Motors agar kita dapat menghitung jumlah motor
-	if err := config.DB.Preload("Motors").Find(&vendors).Error; err != nil {
+	if err := config.DB.
+		Joins("JOIN users ON users.id = vendors.user_id").
+		Where("users.role = ?", "vendor").
+		Find(&vendors).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil data vendor"})
 		return
 	}
 
-	// Hasil akhir untuk dikembalikan
 	var result []gin.H
 
-	// Iterasi setiap vendor untuk menggabungkan data dari tabel users
 	for _, vendor := range vendors {
-		// Hitung jumlah motor yang dimiliki vendor (dari preload)
-		motorCount := len(vendor.Motors)
+		var user models.User
+		if err := config.DB.First(&user, vendor.UserID).Error; err != nil {
+			log.Printf("Gagal mengambil user: %v\n", err)
+			continue
+		}
 
 		// Hitung jumlah transaksi vendor
 		var transactionCount int64
@@ -297,16 +300,7 @@ func GetAllVendors(c *gin.Context) {
 			return
 		}
 
-		// Ambil data user terkait vendor berdasarkan vendor.UserID
-		var user models.User
-		if err := config.DB.Where("id = ?", vendor.UserID).First(&user).Error; err != nil {
-			// Jika gagal mengambil data user, lewati vendor ini
-			log.Printf("Gagal mengambil user: %v\n", err)
-			continue
-		}
-
-
-		// Gabungkan data yang lengkap ke dalam response
+		// Susun data response
 		result = append(result, gin.H{
 			"id":                user.ID,
 			"name":              user.Name,
@@ -318,7 +312,6 @@ func GetAllVendors(c *gin.Context) {
 			"status":            user.Status,
 			"created_at":        user.CreatedAt,
 			"updated_at":        user.UpdatedAt,
-			"motor_count":       motorCount,
 			"transaction_count": transactionCount,
 		})
 	}

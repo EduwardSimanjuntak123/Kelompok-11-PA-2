@@ -302,9 +302,23 @@ class _MotorListPageState extends State<MotorListPage>
                               hintText: 'Cari motor...',
                               prefixIcon:
                                   Icon(Icons.search, color: Color(0xFF1565C0)),
-                              border: InputBorder.none,
+                              filled: true,
+                              fillColor: Colors.white,
                               contentPadding:
-                                  EdgeInsets.symmetric(vertical: 15),
+                                  EdgeInsets.symmetric(vertical: 14),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(25),
+                                borderSide: BorderSide(
+                                    color: Color(0xFF1565C0), width: 1.5),
+                              ),
                             ),
                           ),
                         ),
@@ -823,8 +837,8 @@ class _MotorListPageState extends State<MotorListPage>
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) =>
-                DetailMotorPage(motorId: motor["id"], isGuest: widget.isGuest)));
+            builder: (context) => DetailMotorPage(
+                motorId: motor["id"], isGuest: widget.isGuest)));
       },
       child: Container(
         decoration: BoxDecoration(

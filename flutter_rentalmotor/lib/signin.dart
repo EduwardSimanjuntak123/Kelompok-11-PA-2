@@ -648,88 +648,96 @@ class _LoginScreenState extends State<LoginScreen>
     String? errorText,
     TextInputAction? textInputAction,
   }) {
+    // Tentukan warna border berdasarkan validasi/error
+    Color borderColor;
+    if (errorText != null) {
+      borderColor = Colors.red;
+    } else if (isFilled && isValid) {
+      borderColor = Color(0xFF2C567E); // warna biru
+    } else {
+      borderColor = Colors.grey.shade300; // default abu-abu
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
-                blurRadius: 5,
-                spreadRadius: 1,
-              ),
-            ],
-            border: errorText != null
-                ? Border.all(color: Colors.red, width: 1.0)
-                : isValid && isFilled
-                    ? Border.all(color: Colors.green, width: 1.0)
-                    : null,
-          ),
-          child: TextField(
-            key: Key(label == "Email"
-                ? 'emailField'
-                : label == "Kata Sandi"
-                    ? 'passwordField'
-                    : ''),
-            controller: controller,
-            obscureText: isPassword ? obscureText : false,
-            keyboardType: keyboardType,
-            style: TextStyle(fontSize: 16),
-            // Add these properties to dismiss keyboard
-            textInputAction: textInputAction,
-            onEditingComplete: isPassword ? _dismissKeyboard : null,
-            onSubmitted: (_) => _dismissKeyboard(),
-            decoration: InputDecoration(
-              labelText: label,
-              labelStyle: TextStyle(
-                color: errorText != null
-                    ? Colors.red
-                    : isValid && isFilled
-                        ? Colors.green
-                        : Color(0xFF2C567E).withOpacity(0.8),
-                fontSize: 14,
-              ),
-              prefixIcon: Icon(
-                icon,
-                color: errorText != null
-                    ? Colors.red
-                    : isValid && isFilled
-                        ? Colors.green
-                        : Color(0xFF2C567E),
-              ),
-              suffixIcon: isPassword
-                  ? IconButton(
-                      icon: Icon(
-                        obscureText ? Icons.visibility_off : Icons.visibility,
-                        color: Color(0xFF2C567E),
-                      ),
-                      onPressed: onToggleVisibility,
-                    )
-                  : (isFilled && isValid
-                      ? Icon(Icons.check_circle, color: Colors.green)
-                      : null),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: EdgeInsets.symmetric(vertical: 16),
-              filled: true,
-              fillColor: Colors.grey.shade50,
+        TextField(
+          key: Key(label == "Email"
+              ? 'emailField'
+              : label == "Kata Sandi"
+                  ? 'passwordField'
+                  : ''),
+          controller: controller,
+          obscureText: isPassword ? obscureText : false,
+          keyboardType: keyboardType,
+          textInputAction: textInputAction,
+          onEditingComplete: isPassword ? _dismissKeyboard : null,
+          onSubmitted: (_) => _dismissKeyboard(),
+          onChanged: (value) {
+            if (isPassword) {
+              _validatePassword(value);
+            } else {
+              _validateEmail(value);
+            }
+          },
+          style: TextStyle(fontSize: 16),
+          decoration: InputDecoration(
+            labelText: label,
+            floatingLabelBehavior: FloatingLabelBehavior.auto,
+            labelStyle: TextStyle(
+              color: errorText != null
+                  ? Colors.red
+                  : isFilled && isValid
+                      ? Color(0xFF2C567E).withOpacity(0.8)
+                      : Color(0xFF2C567E).withOpacity(0.8),
+              fontSize: 14,
             ),
-            onChanged: (value) {
-              // Validate as user types
-              if (isPassword) {
-                _validatePassword(value);
-              } else {
-                _validateEmail(value);
-              }
-            },
+            prefixIcon: Icon(
+              icon,
+              color: errorText != null
+                  ? Colors.red
+                  : isFilled && isValid
+                      ? Color(0xFF2C567E)
+                      : Color(0xFF2C567E),
+            ),
+            suffixIcon: isPassword
+                ? IconButton(
+                    icon: Icon(
+                      obscureText ? Icons.visibility_off : Icons.visibility,
+                      color: Color(0xFF2C567E),
+                    ),
+                    onPressed: onToggleVisibility,
+                  )
+                : (isFilled && isValid
+                    ? Icon(Icons.check_circle, color: Colors.green)
+                    : null),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(
+                color: borderColor,
+                width: 1.5,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(
+                color: borderColor,
+                width: 2,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(color: Colors.red, width: 2),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide(color: Colors.red, width: 2),
+            ),
+            contentPadding: EdgeInsets.fromLTRB(16, 20, 16, 20),
+            filled: true,
+            fillColor: Colors.grey.shade50,
           ),
         ),
-        // Error message
         if (errorText != null)
           Padding(
             padding: const EdgeInsets.only(left: 12, top: 8),
