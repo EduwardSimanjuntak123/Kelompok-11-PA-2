@@ -277,7 +277,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 32.0),
                         child: Text(
-                          "Mulai chat dengan vendor untuk menyewa motor",
+                          "Tunggu sampai ada customer memulai chat dengan anda",
                           style:
                               TextStyle(fontSize: 16, color: Colors.grey[600]),
                           textAlign: TextAlign.center,

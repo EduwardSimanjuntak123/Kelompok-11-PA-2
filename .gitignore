@@ -1,0 +1,4 @@
+# Ignore file konfigurasi
+
+flutter_rentalmotor/lib/config/api_config.dart
+*.env

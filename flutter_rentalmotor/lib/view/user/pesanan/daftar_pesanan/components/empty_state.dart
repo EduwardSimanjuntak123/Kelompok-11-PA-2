@@ -65,17 +65,21 @@ class EmptyState extends StatelessWidget {
           ),
           SizedBox(height: 16),
           ElevatedButton.icon(
-            icon: Icon(Icons.motorcycle, size: 16),
-            label: Text('Sewa Motor Sekarang', style: TextStyle(fontSize: 14)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryBlue,
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: onActionPressed,
-          ),
+  icon: Icon(Icons.motorcycle, size: 16, color: Colors.white),  // ikon putih
+  label: Text(
+    'Sewa Motor Sekarang',
+    style: TextStyle(fontSize: 14, color: Colors.white),  // teks putih
+  ),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: primaryBlue,
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+    ),
+  ),
+  onPressed: onActionPressed,
+)
+
         ],
       ),
     );

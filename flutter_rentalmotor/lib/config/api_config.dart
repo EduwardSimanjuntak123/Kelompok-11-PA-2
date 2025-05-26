@@ -2,8 +2,8 @@
 class ApiConfig {
   // Base URL API
   static const String baseUrl =
-      "https://backend-rental-golang-production.up.railway.app";
+      "http://192.168.98.93:8080";
 
   static const String wsUrl =
-      "wss://backend-rental-golang-production.up.railway.app";
+      "ws://192.168.98.93:8080";
 }

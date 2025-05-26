@@ -488,55 +488,58 @@ class _VendorDrawerState extends State<VendorDrawer>
   }
 
   void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          title: Row(
-            children: [
-              Icon(Icons.logout_rounded, color: Colors.red),
-              SizedBox(width: 10),
-              Text("Konfirmasi Logout",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ],
-          ),
-          content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                "Batal",
-                style: TextStyle(color: Colors.grey),
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Row(
+          children: [
+            Icon(Icons.logout_rounded, color: Colors.red),
+            SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                "Konfirmasi Logout",
+                style: TextStyle(fontWeight: FontWeight.bold,
+                fontSize: 19,),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                final apiService = VendorApiService();
-                await apiService.logout();
-
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                  (route) => false,
-                );
-
-                widget.onLogout();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              child:
-                  const Text("Logout", style: TextStyle(color: Colors.white)),
             ),
           ],
-        );
-      },
-    );
-  }
+        ),
+        content: const Text("Apakah Anda yakin ingin keluar dari akun?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Batal",
+              style: TextStyle(color: Colors.grey),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final apiService = VendorApiService();
+              await apiService.logout();
+
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+                (route) => false,
+              );
+
+              widget.onLogout();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text("Logout", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      );
+    },
+  );
 }
+    }

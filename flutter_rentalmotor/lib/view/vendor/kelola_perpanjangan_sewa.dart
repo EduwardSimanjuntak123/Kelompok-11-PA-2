@@ -59,70 +59,83 @@ class _KelolaPerpanjnganSewaState extends State<KelolaPerpanjnganSewa>
     super.dispose();
   }
 
-  Future<void> fetchData() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = '';
-    });
+Future<void> fetchData() async {
+  setState(() {
+    isLoading = true;
+    errorMessage = '';
+  });
 
-    try {
-      final String? token = await storage.read(key: "auth_token");
+  try {
+    final String? token = await storage.read(key: "auth_token");
 
-      if (token == null) {
+    if (token == null) {
+      setState(() {
+        errorMessage = 'Token tidak ditemukan. Silakan login ulang.';
+      });
+      return;
+    }
+
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    final extensionsResponse = await http.get(
+      Uri.parse('$baseUrl/vendor/extensions'),
+      headers: headers,
+    );
+
+    if (extensionsResponse.statusCode == 200) {
+      final extensionsData = json.decode(extensionsResponse.body);
+      extensions = extensionsData['extensions'] ?? [];
+
+      if (extensions.isEmpty) {
         setState(() {
-          errorMessage = 'Token tidak ditemukan. Silakan login ulang.';
+          errorMessage = 'Belum ada permintaan perpanjangan sewa.';
         });
         return;
       }
 
-      final headers = {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      };
-
-      final extensionsResponse = await http.get(
-        Uri.parse('$baseUrl/vendor/extensions'),
+      final bookingsResponse = await http.get(
+        Uri.parse('$baseUrl/vendor/bookings/'),
         headers: headers,
       );
 
-      if (extensionsResponse.statusCode == 200) {
-        final extensionsData = json.decode(extensionsResponse.body);
-        extensions = extensionsData['extensions'];
+      if (bookingsResponse.statusCode == 200) {
+        final bookingsJson = json.decode(bookingsResponse.body);
 
-        final bookingsResponse = await http.get(
-          Uri.parse('$baseUrl/vendor/bookings/'),
-          headers: headers,
-        );
-
-        if (bookingsResponse.statusCode == 200) {
-          final List<dynamic> bookingsData = json.decode(bookingsResponse.body);
-
-          for (var booking in bookingsData) {
+        if (bookingsJson is List) {
+          for (var booking in bookingsJson) {
             bookings[booking['id']] = booking;
           }
         } else {
           setState(() {
-            errorMessage =
-                'Gagal memuat data bookings: ${bookingsResponse.statusCode}';
+            errorMessage = 'Format data bookings tidak valid.';
           });
         }
       } else {
         setState(() {
           errorMessage =
-              'Gagal memuat data perpanjangan: ${extensionsResponse.statusCode}';
+              'Gagal memuat data bookings: ${bookingsResponse.statusCode}';
         });
       }
-    } catch (e) {
+    } else {
       setState(() {
-        errorMessage = 'Error: ${e.toString()}';
+        errorMessage =
+            'Gagal memuat data perpanjangan: ${extensionsResponse.statusCode}';
       });
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-      _animationController.forward();
     }
+  } catch (e) {
+    setState(() {
+      errorMessage = 'Terjadi kesalahan: ${e.toString()}';
+    });
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
+    _animationController.forward();
   }
+}
 
   Future<void> approveExtension(int extensionId) async {
     _showActionDialog(
@@ -483,18 +496,18 @@ class _KelolaPerpanjnganSewaState extends State<KelolaPerpanjnganSewa>
               Icon(
                 Icons.error_outline,
                 size: 80,
-                color: dangerColor.withOpacity(0.7),
+                color: textSecondaryColor.withOpacity(0.7),
               ),
               SizedBox(height: 16),
-              Text(
-                'Terjadi Kesalahan',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimaryColor,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              // Text(
+              //   'Terjadi Kesalahan',
+              //   style: TextStyle(
+              //     fontSize: 20,
+              //     fontWeight: FontWeight.bold,
+              //     color: textPrimaryColor,
+              //   ),
+              //   textAlign: TextAlign.center,
+              // ),
               SizedBox(height: 8),
               Text(
                 errorMessage,
