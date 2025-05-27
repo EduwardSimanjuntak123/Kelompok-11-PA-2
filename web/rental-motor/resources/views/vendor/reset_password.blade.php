@@ -5,6 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password</title>
+    <!-- Favicon Basic -->
+    <link rel="icon" href="/logo2.png" type="image/png">
+
+    <!-- Untuk browser modern -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo1.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo1.png">
+    <link rel="apple-touch-icon" href="/logo1.png">
+
+    <!-- Fallback untuk berbagai browser -->
+    <link rel="shortcut icon" href="/logo1.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>

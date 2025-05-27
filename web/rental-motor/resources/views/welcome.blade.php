@@ -5,6 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MOTORENT - Rental Motor</title>
+
+    <!-- Favicon Basic -->
+    <link rel="icon" href="/logo2.png" type="image/png">
+
+    <!-- Untuk browser modern -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo1.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo1.png">
+    <link rel="apple-touch-icon" href="/logo1.png">
+
+    <!-- Fallback untuk berbagai browser -->
+    <link rel="shortcut icon" href="/logo1.png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     <!-- Swiper CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />

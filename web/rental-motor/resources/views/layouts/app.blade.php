@@ -7,6 +7,16 @@
     <meta name="auth-token" content="{{ session('token') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title')</title>
+    <!-- Favicon Basic -->
+    <link rel="icon" href="/logo2.png" type="image/png">
+
+    <!-- Untuk browser modern -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo1.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/logo1.png">
+    <link rel="apple-touch-icon" href="/logo1.png">
+
+    <!-- Fallback untuk berbagai browser -->
+    <link rel="shortcut icon" href="/logo1.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
