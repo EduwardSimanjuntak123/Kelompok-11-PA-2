@@ -23,11 +23,22 @@ class CustomBottomNavBar extends StatelessWidget {
           children: const [
             Icon(Icons.lock, color: Color(0xFF2196F3)),
             SizedBox(width: 10),
-            Text("Login Diperlukan"),
+            Flexible(
+              child: Text(
+                "Masuk Diperlukan",
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: const Text(
-            "Anda harus login terlebih dahulu untuk mengakses fitur ini."),
+          "Anda harus masuk terlebih dahulu untuk mengakses fitur ini.",
+          style: TextStyle(fontSize: 14),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -47,7 +58,7 @@ class CustomBottomNavBar extends StatelessWidget {
               );
             },
             child: const Text(
-              "Login",
+              "Masuk",
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -58,11 +69,16 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double iconSize = MediaQuery.of(context).size.width < 360 ? 20 : 24;
+    double fontSize = MediaQuery.of(context).size.width < 360 ? 10 : 12;
+
     return BottomNavigationBar(
       backgroundColor: Colors.white,
       currentIndex: currentIndex,
       selectedItemColor: const Color(0xFF2C567E),
       unselectedItemColor: Colors.grey,
+      selectedFontSize: fontSize,
+      unselectedFontSize: fontSize,
       onTap: (index) {
         if (isGuest && (index == 1 || index == 2)) {
           _showLoginAlert(context);
@@ -70,14 +86,20 @@ class CustomBottomNavBar extends StatelessWidget {
           onTap(index);
         }
       },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
+      items: [
         BottomNavigationBarItem(
-          icon: Icon(Icons.receipt_long_outlined),
-          activeIcon: Icon(Icons.receipt_long),
+          icon: Icon(Icons.home, size: iconSize),
+          label: "Beranda",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.receipt_long_outlined, size: iconSize),
+          activeIcon: Icon(Icons.receipt_long, size: iconSize),
           label: "Pesanan",
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Akun"),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person, size: iconSize),
+          label: "Akun",
+        ),
       ],
     );
   }
