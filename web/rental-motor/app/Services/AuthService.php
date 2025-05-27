@@ -13,7 +13,7 @@ class AuthService
 
     public function __construct()
     {
-        $this->apiBaseUrl = env('GOLANG_API_URL', 'http://localhost:8080');
+        $this->apiBaseUrl = env('API_BASE_URL', 'http://localhost:8080');
 
         // Inisialisasi Guzzle Client dengan konfigurasi dasar
         $this->client = new Client([

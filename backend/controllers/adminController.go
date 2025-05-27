@@ -73,12 +73,11 @@ func GetDataAdmin(c *gin.Context) {
 	}
 
 	// Siapkan base URL untuk membangun URL gambar lengkap
-	baseURL := "http://localhost:8080"
 
 	// Buat URL gambar lengkap untuk profile_image
 	var profileImageURL string
 	if user.ProfileImage != "" {
-		profileImageURL = baseURL + user.ProfileImage
+		profileImageURL = user.ProfileImage
 	} else {
 		profileImageURL = "https://via.placeholder.com/150"
 	}
@@ -353,7 +352,6 @@ func ActivateVendor(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Akun vendor berhasil diaktifkan"})
 }
-
 
 func GetVendorDetailByAdmin(c *gin.Context) {
 	vendorID := c.Param("id")
