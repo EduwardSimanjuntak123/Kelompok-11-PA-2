@@ -49,7 +49,7 @@ class _ReviewPageState extends State<ReviewPage> {
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Token tidak ditemukan. Harap login kembali."),
+          content: Text("Token tidak ditemukan. Harap masuk kembali."),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -269,7 +269,8 @@ class _ReviewPageState extends State<ReviewPage> {
                               hintText: "Bagaimana pengalaman Anda?",
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide:
+                                    BorderSide(color: Colors.grey[300]!),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
