@@ -8,15 +8,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title')</title>
     <!-- Favicon Basic -->
-    <link rel="icon" href="/logo2.png" type="image/png">
-
-    <!-- Untuk browser modern -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/logo1.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/logo1.png">
-    <link rel="apple-touch-icon" href="/logo1.png">
-
-    <!-- Fallback untuk berbagai browser -->
-    <link rel="shortcut icon" href="/logo1.png">
+    <link rel="icon" href="/test.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -47,7 +39,8 @@
 
     <div class="flex min-h-screen">
         <!-- Mobile Menu Button -->
-        <button id="mobile-menu-button" class="lg:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-2 rounded-md shadow-md">
+        <button id="mobile-menu-button"
+            class="lg:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-2 rounded-md shadow-md">
             <i class="fas fa-bars text-lg"></i>
         </button>
 
@@ -55,7 +48,8 @@
         <div id="mobile-overlay" class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
 
         <!-- Sidebar -->
-        <aside id="sidebar" class="w-64 bg-blue-600 text-white min-h-screen p-4 sm:p-6 space-y-4 sm:space-y-6 fixed lg:relative lg:translate-x-0 transform -translate-x-full transition-transform duration-300 ease-in-out z-40">
+        <aside id="sidebar"
+            class="w-64 bg-blue-600 text-white min-h-screen p-4 sm:p-6 space-y-4 sm:space-y-6 fixed lg:relative lg:translate-x-0 transform -translate-x-full transition-transform duration-300 ease-in-out z-40">
             <!-- Close button for mobile -->
             <button id="close-sidebar" class="lg:hidden absolute top-4 right-4 text-white text-xl">
                 <i class="fas fa-times"></i>
@@ -85,7 +79,8 @@
                                 <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                             </a>
                         @else
-                            <span class="block px-3 sm:px-4 py-2 rounded bg-gray-400 text-white font-semibold cursor-not-allowed text-sm sm:text-base">
+                            <span
+                                class="block px-3 sm:px-4 py-2 rounded bg-gray-400 text-white font-semibold cursor-not-allowed text-sm sm:text-base">
                                 <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                             </span>
                         @endif
@@ -110,13 +105,15 @@
                         <li>
                             <a href="{{ route('admin.nonaktif', ['id' => $userId]) }}"
                                 class="block px-3 sm:px-4 py-2 rounded hover:bg-white hover:text-blue-600 text-sm sm:text-base {{ request()->routeIs('admin.nonaktif') ? 'bg-white text-blue-600' : '' }}">
-                                <i class="fas fa-users-cog mr-2"></i><span class="hidden sm:inline">Kelola Akun</span><span class="sm:hidden">Akun</span> Vendor
+                                <i class="fas fa-users-cog mr-2"></i><span class="hidden sm:inline">Kelola
+                                    Akun</span><span class="sm:hidden">Akun</span> Vendor
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('admin.kecamatan', ['id' => $userId]) }}"
                                 class="block px-3 sm:px-4 py-2 rounded hover:bg-white hover:text-blue-600 text-sm sm:text-base {{ request()->routeIs('admin.kecamatan') ? 'bg-white text-blue-600' : '' }}">
-                                <i class="fas fa-map-marker-alt mr-2"></i><span class="hidden sm:inline">Kelola</span> Kecamatan
+                                <i class="fas fa-map-marker-alt mr-2"></i><span class="hidden sm:inline">Kelola</span>
+                                Kecamatan
                             </a>
                         </li>
                         <li>
@@ -130,19 +127,24 @@
                         <li>
                             <a href="{{ route('vendor.motor', ['id' => $userId]) }}"
                                 class="block px-3 sm:px-4 py-2 rounded hover:bg-white hover:text-blue-600 text-sm sm:text-base {{ request()->routeIs('vendor.motor') ? 'bg-white text-blue-600' : '' }}">
-                                <i class="fas fa-motorcycle mr-2"></i><span class="hidden lg:inline">Kelola Harga &</span> <span class="lg:hidden">Harga &</span> <span class="hidden sm:inline">Ketersediaan</span> Motor
+                                <i class="fas fa-motorcycle mr-2"></i><span class="hidden lg:inline">Kelola Harga
+                                    &</span> <span class="lg:hidden">Harga &</span> <span
+                                    class="hidden sm:inline">Ketersediaan</span> Motor
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('vendor.kelola', ['id' => $userId]) }}"
                                 class="block px-3 sm:px-4 py-2 rounded hover:bg-white hover:text-blue-600 text-sm sm:text-base {{ request()->routeIs('vendor.kelola') ? 'bg-white text-blue-600' : '' }}">
-                                <i class="fas fa-clipboard-check mr-2"></i><span class="hidden sm:inline">Setujui/Tolak</span><span class="sm:hidden">Kelola</span> Pesanan
+                                <i class="fas fa-clipboard-check mr-2"></i><span
+                                    class="hidden sm:inline">Setujui/Tolak</span><span class="sm:hidden">Kelola</span>
+                                Pesanan
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('vendor.perpanjangansewa', ['id' => $userId]) }}"
                                 class="block px-3 sm:px-4 py-2 rounded hover:bg-white hover:text-blue-600 text-sm sm:text-base {{ request()->routeIs('vendor.perpanjangansewa') ? 'bg-white text-blue-600' : '' }}">
-                                <i class="fas fa-calendar-plus mr-2"></i><span class="hidden sm:inline">Perpanjangan</span> Sewa
+                                <i class="fas fa-calendar-plus mr-2"></i><span
+                                    class="hidden sm:inline">Perpanjangan</span> Sewa
                             </a>
                         </li>
                         <li>
