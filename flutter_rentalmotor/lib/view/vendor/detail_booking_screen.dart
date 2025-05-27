@@ -209,12 +209,15 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
             color: getStatusColor(status),
           ),
           const SizedBox(width: 6),
-          Text(
-            getStatusText(status),
-            style: TextStyle(
-              color: getStatusColor(status),
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
+          Flexible(
+            child: Text(
+              getStatusText(status),
+              style: TextStyle(
+                color: getStatusColor(status),
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+              softWrap: true,
             ),
           ),
         ],
@@ -746,91 +749,88 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
   }
 
   Widget buildHeaderSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [primaryColor, secondaryColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.confirmation_number,
-                      color: Colors.white.withOpacity(0.9), size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    'ID Booking: #${widget.bookingId}',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmallScreen = constraints.maxWidth < 360;
+        final paddingValue = isSmallScreen ? 12.0 : 16.0;
+        final avatarRadius = isSmallScreen ? 16.0 : 20.0;
+        final nameFontSize = isSmallScreen ? 14.0 : 16.0;
+        final motorFontSize = isSmallScreen ? 12.0 : 14.0;
+        final initialFontSize = isSmallScreen ? 16.0 : 18.0;
+        final spacing = isSmallScreen ? 8.0 : 12.0;
+
+        return Container(
+          padding: EdgeInsets.all(paddingValue),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primaryColor, secondaryColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: primaryColor.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Avatar + info
+              Expanded(
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      radius: avatarRadius,
+                      child: Text(
+                        bookingData!['customer']?['name']
+                                ?.substring(0, 1)
+                                .toUpperCase() ??
+                            'C',
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: initialFontSize,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: spacing),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            bookingData!['customer']?['name'] ?? 'Customer',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: nameFontSize,
+                            ),
+                          ),
+                          SizedBox(height: isSmallScreen ? 1.0 : 2.0),
+                          Text(
+                            bookingData!['motor']?['name'] ?? 'Motor',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: motorFontSize,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Status badge
               buildStatusBadge(bookingData!['status']),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: Colors.white,
-                radius: 20,
-                child: Text(
-                  bookingData!['customer']?['name']
-                          ?.substring(0, 1)
-                          .toUpperCase() ??
-                      'C',
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    bookingData!['customer']?['name'] ?? 'Customer',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    bookingData!['motor']?['name'] ?? 'Motor',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
