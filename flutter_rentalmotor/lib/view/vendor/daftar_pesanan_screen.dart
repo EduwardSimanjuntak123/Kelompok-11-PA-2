@@ -77,82 +77,82 @@ class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
     _refreshData(); // Refresh data saat aplikasi dibuka
   }
 
-Future<void> fetchBookings() async {
-  if (!isRefreshing) {
-    setState(() {
-      isLoading = true;
-    });
-  }
-
-  try {
-    final token = await storage.read(key: 'auth_token');
-
-    if (token == null) {
-      throw Exception('Token tidak ditemukan. Silakan login kembali.');
+  Future<void> fetchBookings() async {
+    if (!isRefreshing) {
+      setState(() {
+        isLoading = true;
+      });
     }
 
-    final response = await http.get(
-      Uri.parse('$baseUrl/vendor/bookings'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
+    try {
+      final token = await storage.read(key: 'auth_token');
 
-    print("📡 GET: $baseUrl/vendor/bookings");
-    print("📦 Status Code: ${response.statusCode}");
-    print("📦 Response Body: ${response.body}");
-
-    if (response.statusCode == 200) {
-      if (response.body.trim().isEmpty || response.body == 'null') {
-        // Jika kosong atau null
-        setState(() {
-          bookings = [];
-        });
-        print('⚠️ Data bookings kosong.');
-      } else {
-        final decoded = jsonDecode(response.body);
-
-        if (decoded is List) {
-          // Jika response adalah List langsung
-          setState(() {
-            bookings = decoded;
-          });
-        } else if (decoded is Map && decoded['data'] is List) {
-          // Jika data ada di dalam key "data"
-          setState(() {
-            bookings = decoded['data'];
-          });
-        } else {
-          throw Exception("Format data bookings tidak dikenali.");
-        }
+      if (token == null) {
+        throw Exception('Token tidak ditemukan. Silakan masuk kembali.');
       }
-    } else {
-      throw Exception('Gagal memuat pesanan: ${response.statusCode}');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/vendor/bookings'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print("📡 GET: $baseUrl/vendor/bookings");
+      print("📦 Status Code: ${response.statusCode}");
+      print("📦 Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        if (response.body.trim().isEmpty || response.body == 'null') {
+          // Jika kosong atau null
+          setState(() {
+            bookings = [];
+          });
+          print('⚠️ Data bookings kosong.');
+        } else {
+          final decoded = jsonDecode(response.body);
+
+          if (decoded is List) {
+            // Jika response adalah List langsung
+            setState(() {
+              bookings = decoded;
+            });
+          } else if (decoded is Map && decoded['data'] is List) {
+            // Jika data ada di dalam key "data"
+            setState(() {
+              bookings = decoded['data'];
+            });
+          } else {
+            throw Exception("Format data bookings tidak dikenali.");
+          }
+        }
+      } else {
+        throw Exception('Gagal memuat pesanan: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ Error: $e');
+      setState(() {
+        isLoading = false;
+        isRefreshing = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Terjadi kesalahan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
     }
-  } catch (e) {
-    print('❌ Error: $e');
+
     setState(() {
       isLoading = false;
       isRefreshing = false;
     });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-    return;
   }
-
-  setState(() {
-    isLoading = false;
-    isRefreshing = false;
-  });
-}
 
   Future<void> _refreshData() async {
     setState(() {
