@@ -19,7 +19,6 @@ class BookingService {
     String? dropoffLocation,
     String? bookingPurpose, // Tambahkan parameter booking purpose
     required File photoId,
-    required File ktpId,
     required dynamic motorData, // Data motor
     required bool isGuest,
   }) async {
@@ -60,12 +59,6 @@ class BookingService {
         contentType: MediaType('image', 'jpeg'),
       ));
 
-      request.files.add(await http.MultipartFile.fromPath(
-        'ktp_id',
-        ktpId.path,
-        contentType: MediaType('image', 'jpeg'),
-      ));
-
       // Add timeout to the request
       var response = await request.send().timeout(_timeout);
       final responseBody = await response.stream.bytesToString();
@@ -97,7 +90,8 @@ class BookingService {
       print('❌ Request timeout');
       return {
         "success": false,
-        "message": 'Waktu permintaan habis. Silakan periksa koneksi internet Anda dan coba lagi.',
+        "message":
+            'Waktu permintaan habis. Silakan periksa koneksi internet Anda dan coba lagi.',
       };
     } catch (e) {
       print('❌ Exception: $e');
