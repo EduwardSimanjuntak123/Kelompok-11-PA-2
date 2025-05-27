@@ -203,11 +203,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (role == "customer") {
         _showSuccessDialog();
       } else if (role == "vendor") {
-        // Navigasi ke HomepageVendor dengan data vendor
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomepageVendor()),
-        );
+        _showVendorSuccessDialog();
       } else {
         setState(() {
           _errorMessage = "Akses ditolak! Peran tidak dikenali.";
@@ -280,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 SizedBox(height: 10),
                 Text(
-                  "Selamat datang di aplikasi rental motor.",
+                  "Selamat Datang di Aplikasi Motorent.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -317,6 +313,117 @@ class _LoginScreenState extends State<LoginScreen>
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (c) => HomePageUser()),
+                      );
+                    }
+                  },
+                  child: Text(
+                    "Lanjutkan",
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showVendorSuccessDialog() {
+    print('[DEBUG] _showVendorSuccessDialog dipanggil');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          key: const Key('vendorSuccessDialog'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10.0,
+                  offset: Offset(0.0, 10.0),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Success icon
+                Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.check_circle,
+                    color: Colors.green,
+                    size: 60,
+                  ),
+                ),
+                SizedBox(height: 15),
+                Text(
+                  "Login Berhasil",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2C567E),
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  "Selamat Datang di Halaman Vendor",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  key: const Key('lanjutkanVendorButton'),
+                  onPressed: () {
+                    print("Tombol lanjutkan vendor ditekan");
+
+                    final binding = WidgetsBinding.instance;
+                    final bool inWidgetTest =
+                        binding is TestWidgetsFlutterBinding;
+                    final bool inIntegrationTest =
+                        binding is IntegrationTestWidgetsFlutterBinding;
+
+                    if (inWidgetTest || inIntegrationTest) {
+                      print("Berjalan dalam mode pengujian/integration test");
+
+                      // Pop + navigasi tanpa animasi
+                      Navigator.of(context).pop();
+                      Navigator.pushReplacement(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder: (c, a1, a2) => HomepageVendor(),
+                          transitionDuration: Duration.zero,
+                        ),
+                      );
+                    } else {
+                      // Mode release/debug normal
+                      Navigator.pop(context);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (c) => HomepageVendor()),
                       );
                     }
                   },
