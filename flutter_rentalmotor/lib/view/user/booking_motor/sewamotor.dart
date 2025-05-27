@@ -33,7 +33,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   TextEditingController _bookingPurposeController = TextEditingController();
   List<DateTime> _disabledDates = [];
   File? _photoId;
-  File? _ktpId;
   bool _isLoading = false;
   bool _isSubmitting = false;
   bool _isLoadingLocations = false;
@@ -593,34 +592,24 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     return combined.toIso8601String();
   }
 
-  Future<void> _pickImage(bool isKtp) async {
+  Future<void> _pickImage() async {
     try {
       final pickedFile = await ImagePicker().pickImage(
         source: ImageSource.gallery,
-        imageQuality: 70, // Compress image to reduce size
-        maxWidth: 1000, // Limit max width
-        maxHeight: 1000, // Limit max height
+        imageQuality: 70,
+        maxWidth: 1000,
+        maxHeight: 1000,
       );
 
       if (pickedFile != null) {
-        // Process image in a separate isolate
-        final path = pickedFile.path;
-        final result = await compute<String, File>(_processImage, path);
-
-        if (mounted) {
-          setState(() {
-            if (isKtp) {
-              _ktpId = result;
-            } else {
-              _photoId = result;
-            }
-          });
-        }
+        setState(() {
+          _photoId = File(pickedFile.path);
+        });
+      } else {
+        debugPrint("⚠ Tidak ada gambar yang dipilih.");
       }
     } catch (e) {
-      print('Error picking image: $e');
-      _showErrorSnackbar(
-          "Gagal memilih gambar: ${e.toString().substring(0, 50)}...");
+      debugPrint("❌ Gagal memilih gambar: $e");
     }
   }
 
@@ -691,8 +680,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         _timeController.text.isEmpty ||
         _durationController.text.isEmpty ||
         _pickupLocationController.text.isEmpty ||
-        _photoId == null ||
-        _ktpId == null) {
+        _photoId == null) {
       _showErrorDialog('Harap isi semua kolom yang bertanda *');
       return;
     }
@@ -708,7 +696,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     final dropoffLocation = _dropoffLocationController.text;
     final bookingPurpose = _bookingPurposeController.text; // Tambahkan ini
     final photoId = _photoId!;
-    final ktpId = _ktpId!;
 
     try {
       final result = await BookingService.createBooking(
@@ -720,7 +707,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         dropoffLocation: dropoffLocation,
         bookingPurpose: bookingPurpose, // Tambahkan parameter ini
         photoId: photoId,
-        ktpId: ktpId,
         motorData: widget.motor,
         isGuest: widget.isGuest,
       );
@@ -1352,7 +1338,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                             _buildImageInput(
                               "Pilih Foto Diri",
                               _photoId,
-                              () => _pickImage(false),
+                              () => _pickImage(),
                               Icons.person,
                               darkBlue,
                             ),
@@ -1375,17 +1361,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                   ),
                                 ),
                               ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                "nb* KTP asli tetap diberikan kepada pemilik rental saat penjemputan motor sebagai jaminan.",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.redAccent,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ),
