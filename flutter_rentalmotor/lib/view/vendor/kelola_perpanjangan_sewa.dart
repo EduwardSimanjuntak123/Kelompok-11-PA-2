@@ -59,83 +59,83 @@ class _KelolaPerpanjnganSewaState extends State<KelolaPerpanjnganSewa>
     super.dispose();
   }
 
-Future<void> fetchData() async {
-  setState(() {
-    isLoading = true;
-    errorMessage = '';
-  });
+  Future<void> fetchData() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = '';
+    });
 
-  try {
-    final String? token = await storage.read(key: "auth_token");
+    try {
+      final String? token = await storage.read(key: "auth_token");
 
-    if (token == null) {
-      setState(() {
-        errorMessage = 'Token tidak ditemukan. Silakan login ulang.';
-      });
-      return;
-    }
-
-    final headers = {
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    };
-
-    final extensionsResponse = await http.get(
-      Uri.parse('$baseUrl/vendor/extensions'),
-      headers: headers,
-    );
-
-    if (extensionsResponse.statusCode == 200) {
-      final extensionsData = json.decode(extensionsResponse.body);
-      extensions = extensionsData['extensions'] ?? [];
-
-      if (extensions.isEmpty) {
+      if (token == null) {
         setState(() {
-          errorMessage = 'Belum ada permintaan perpanjangan sewa.';
+          errorMessage = 'Token tidak ditemukan. Silakan masuk ulang.';
         });
         return;
       }
 
-      final bookingsResponse = await http.get(
-        Uri.parse('$baseUrl/vendor/bookings/'),
+      final headers = {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      };
+
+      final extensionsResponse = await http.get(
+        Uri.parse('$baseUrl/vendor/extensions'),
         headers: headers,
       );
 
-      if (bookingsResponse.statusCode == 200) {
-        final bookingsJson = json.decode(bookingsResponse.body);
+      if (extensionsResponse.statusCode == 200) {
+        final extensionsData = json.decode(extensionsResponse.body);
+        extensions = extensionsData['extensions'] ?? [];
 
-        if (bookingsJson is List) {
-          for (var booking in bookingsJson) {
-            bookings[booking['id']] = booking;
+        if (extensions.isEmpty) {
+          setState(() {
+            errorMessage = 'Belum ada permintaan perpanjangan sewa.';
+          });
+          return;
+        }
+
+        final bookingsResponse = await http.get(
+          Uri.parse('$baseUrl/vendor/bookings/'),
+          headers: headers,
+        );
+
+        if (bookingsResponse.statusCode == 200) {
+          final bookingsJson = json.decode(bookingsResponse.body);
+
+          if (bookingsJson is List) {
+            for (var booking in bookingsJson) {
+              bookings[booking['id']] = booking;
+            }
+          } else {
+            setState(() {
+              errorMessage = 'Format data bookings tidak valid.';
+            });
           }
         } else {
           setState(() {
-            errorMessage = 'Format data bookings tidak valid.';
+            errorMessage =
+                'Gagal memuat data bookings: ${bookingsResponse.statusCode}';
           });
         }
       } else {
         setState(() {
           errorMessage =
-              'Gagal memuat data bookings: ${bookingsResponse.statusCode}';
+              'Gagal memuat data perpanjangan: ${extensionsResponse.statusCode}';
         });
       }
-    } else {
+    } catch (e) {
       setState(() {
-        errorMessage =
-            'Gagal memuat data perpanjangan: ${extensionsResponse.statusCode}';
+        errorMessage = 'Terjadi kesalahan: ${e.toString()}';
       });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+      _animationController.forward();
     }
-  } catch (e) {
-    setState(() {
-      errorMessage = 'Terjadi kesalahan: ${e.toString()}';
-    });
-  } finally {
-    setState(() {
-      isLoading = false;
-    });
-    _animationController.forward();
   }
-}
 
   Future<void> approveExtension(int extensionId) async {
     _showActionDialog(
@@ -153,7 +153,7 @@ Future<void> fetchData() async {
           if (token == null) {
             Navigator.of(context).pop(); // Close loading dialog
             _showSnackBar(
-                'Token tidak ditemukan. Silakan login ulang.', dangerColor);
+                'Token tidak ditemukan. Silakan masuk ulang.', dangerColor);
             return;
           }
 
