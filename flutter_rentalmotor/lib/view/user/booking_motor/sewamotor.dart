@@ -86,7 +86,8 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     _durationController.dispose();
     _pickupLocationController.dispose();
     _dropoffLocationController.dispose();
-    _bookingPurposeController.dispose(); // Tambahkan dispose untuk booking purpose
+    _bookingPurposeController
+        .dispose(); // Tambahkan dispose untuk booking purpose
     _removeOverlay(true);
     _removeOverlay(false);
     super.dispose();
@@ -1091,7 +1092,9 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                             Text(
                               '⏱️ Waktu sewa minimal 30 menit dari sekarang.',
                               style: TextStyle(
-                                  fontSize: 12, color: const Color.fromARGB(255, 253, 46, 46)),
+                                  fontSize: 12,
+                                  color:
+                                      const Color.fromARGB(255, 253, 46, 46)),
                             ),
                             const SizedBox(height: 12),
 
@@ -1465,7 +1468,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                             color: Colors.white, size: 20),
                                         SizedBox(width: 10),
                                         Text(
-                                          "Submit Pemesanan",
+                                          "Buat Pesanan",
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 16,
