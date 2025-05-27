@@ -944,7 +944,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                   Icon(Icons.info_outline, color: Colors.red),
                   SizedBox(width: 8),
                   Text(
-                    "Silakan login untuk memesan.",
+                    "Silakan masuk untuk memesan.",
                     style: TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
