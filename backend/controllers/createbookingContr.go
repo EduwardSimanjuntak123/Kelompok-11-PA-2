@@ -190,13 +190,11 @@ func CreateBooking(c *gin.Context) {
 			booking.KtpID = ktpPath
 		} else {
 			log.Printf("[DEBUG] Failed to upload KTP: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengupload KTP"})
-			return
+			// Upload gagal, tapi tidak fatal karena KTP opsional
 		}
 	} else {
 		log.Printf("[DEBUG] KTP not uploaded: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "KTP wajib diunggah"})
-		return
+		// Tidak ada file yang diupload, tidak masalah karena opsional
 	}
 
 	// Simpan booking
