@@ -5,86 +5,88 @@
 @section('content')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-    <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-xl p-6">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-            <div>
-                <h2 class="text-3xl font-bold text-gray-800">Dashboard Admin</h2>
-                <p class="text-gray-600 mt-2">Ringkasan aktivitas dan statistik sistem</p>
+    <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl shadow-xl p-4 sm:p-6">
+        <!-- Header Section - Improved responsive layout -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+            <div class="w-full sm:w-auto">
+                <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard Admin</h2>
+                <p class="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Ringkasan aktivitas dan statistik sistem</p>
             </div>
-            <div class="mt-4 md:mt-0">
-                <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+            <div class="w-full sm:w-auto">
+                <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs sm:text-sm font-medium w-full sm:w-auto text-center">
                     {{ now()->format('d F Y') }}
                 </span>
             </div>
         </div>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+        <!-- Stats Cards - Enhanced responsive grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-blue-50 text-blue-600">
-                        <i class="bi bi-building h-8 w-8 text-2xl"></i>
+                    <div class="p-2 sm:p-3 rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
+                        <i class="bi bi-building text-xl sm:text-2xl"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Total Vendor</p>
-                        <p class="text-2xl font-semibold text-gray-800">{{ array_sum($vendorCounts) }}</p>
+                    <div class="ml-3 sm:ml-4 min-w-0 flex-1">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500 truncate">Total Vendor</p>
+                        <p class="text-xl sm:text-2xl font-semibold text-gray-800">{{ array_sum($vendorCounts) }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                 <div class="flex items-center">
-                    <div class="p-3 rounded-lg bg-green-50 text-green-600">
-                        <i class="bi bi-people-fill h-8 w-8 text-2xl"></i>
+                    <div class="p-2 sm:p-3 rounded-lg bg-green-50 text-green-600 flex-shrink-0">
+                        <i class="bi bi-people-fill text-xl sm:text-2xl"></i>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Total Customer</p>
-                        <p class="text-2xl font-semibold text-gray-800">{{ array_sum($customerCounts) }}</p>
+                    <div class="ml-3 sm:ml-4 min-w-0 flex-1">
+                        <p class="text-xs sm:text-sm font-medium text-gray-500 truncate">Total Customer</p>
+                        <p class="text-xl sm:text-2xl font-semibold text-gray-800">{{ array_sum($customerCounts) }}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main Chart -->
-        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-800">Pertumbuhan Pengguna</h3>
-                    <p class="text-gray-600">Perkembangan pendaftar vendor dan customer</p>
+        <!-- Main Chart - Responsive container -->
+        <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg mb-6 sm:mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-4">
+                <div class="w-full sm:w-auto">
+                    <h3 class="text-lg sm:text-xl font-bold text-gray-800">Pertumbuhan Pengguna</h3>
+                    <p class="text-sm sm:text-base text-gray-600 mt-1">Perkembangan pendaftar vendor dan customer</p>
                 </div>
             </div>
-            <div class="h-96">
-                <canvas id="pendaftarChart"></canvas>
+            <!-- Responsive chart container -->
+            <div class="h-64 sm:h-80 lg:h-96 w-full">
+                <canvas id="pendaftarChart" class="w-full h-full"></canvas>
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="bg-white p-6 rounded-2xl shadow-lg">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Aktivitas Terakhir</h3>
-            <div class="space-y-4">
-                <div class="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                    <div class="p-2 rounded-lg bg-blue-50 text-blue-600 mr-3">
-                        <i class="bi bi-person-lines-fill text-lg"></i>
+        <!-- Recent Activity - Enhanced mobile layout -->
+        <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
+            <h3 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4">Aktivitas Terakhir</h3>
+            <div class="space-y-3 sm:space-y-4">
+                <div class="flex items-start pb-3 sm:pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                    <div class="p-2 rounded-lg bg-blue-50 text-blue-600 mr-3 flex-shrink-0">
+                        <i class="bi bi-person-lines-fill text-base sm:text-lg"></i>
                     </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium text-gray-800">Total {{ array_sum($vendorCounts) }} vendor dan
-                            {{ array_sum($customerCounts) }} customer terdaftar</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs sm:text-sm font-medium text-gray-800 break-words">
+                            Total {{ array_sum($vendorCounts) }} vendor dan {{ array_sum($customerCounts) }} customer terdaftar
+                        </p>
                         <p class="text-xs text-gray-500 mt-1">Hari ini</p>
                     </div>
                 </div>
-                <div class="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                    <div class="p-2 rounded-lg bg-green-50 text-green-600 mr-3">
-                        <i class="bi bi-check-circle-fill text-lg"></i>
+                <div class="flex items-start pb-3 sm:pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                    <div class="p-2 rounded-lg bg-green-50 text-green-600 mr-3 flex-shrink-0">
+                        <i class="bi bi-check-circle-fill text-base sm:text-lg"></i>
                     </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-medium text-gray-800">Sistem berjalan dengan baik</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs sm:text-sm font-medium text-gray-800">Sistem berjalan dengan baik</p>
                         <p class="text-xs text-gray-500 mt-1">Hari ini</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -130,22 +132,22 @@
                         position: 'top',
                         labels: {
                             usePointStyle: true,
-                            padding: 20,
+                            padding: window.innerWidth < 640 ? 10 : 20,
                             font: {
-                                size: 14
+                                size: window.innerWidth < 640 ? 12 : 14
                             }
                         }
                     },
                     tooltip: {
                         backgroundColor: '#1F2937',
                         titleFont: {
-                            size: 14,
+                            size: window.innerWidth < 640 ? 12 : 14,
                             weight: 'bold'
                         },
                         bodyFont: {
-                            size: 13
+                            size: window.innerWidth < 640 ? 11 : 13
                         },
-                        padding: 12,
+                        padding: window.innerWidth < 640 ? 8 : 12,
                         usePointStyle: true,
                         callbacks: {
                             label: function(context) {
@@ -164,14 +166,14 @@
                         ticks: {
                             stepSize: 1,
                             font: {
-                                size: 12
+                                size: window.innerWidth < 640 ? 10 : 12
                             }
                         },
                         title: {
                             display: true,
                             text: 'Jumlah Pendaftar',
                             font: {
-                                size: 13,
+                                size: window.innerWidth < 640 ? 11 : 13,
                                 weight: 'bold'
                             }
                         }
@@ -183,20 +185,26 @@
                         },
                         ticks: {
                             font: {
-                                size: 12
-                            }
+                                size: window.innerWidth < 640 ? 10 : 12
+                            },
+                            maxRotation: window.innerWidth < 640 ? 45 : 0
                         },
                         title: {
                             display: true,
                             text: 'Bulan',
                             font: {
-                                size: 13,
+                                size: window.innerWidth < 640 ? 11 : 13,
                                 weight: 'bold'
                             }
                         }
                     }
                 }
             }
+        });
+
+        // Handle window resize for chart responsiveness
+        window.addEventListener('resize', function() {
+            pendaftarChart.resize();
         });
     </script>
 @endsection
