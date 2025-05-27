@@ -204,7 +204,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       _timer?.cancel(); // Cancel the timer if verification is successful
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text("OTP berhasil diverifikasi! Silakan login.")),
+            content: Text("OTP berhasil diverifikasi! Silakan masuk.")),
       );
 
       // Navigasi ke halaman login
