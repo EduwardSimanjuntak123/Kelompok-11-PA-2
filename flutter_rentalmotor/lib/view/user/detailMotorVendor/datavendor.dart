@@ -822,7 +822,7 @@ class ChatVendorButton extends StatelessWidget {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Silakan login untuk mulai chat')),
+            SnackBar(content: Text('Silakan masuk untuk mulai chat')),
           );
         }
       } else {
