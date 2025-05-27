@@ -39,7 +39,7 @@
                 Edit Profil
             </button>
         </div>
-
+        
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <!-- Profile Image Section -->
@@ -47,8 +47,8 @@
                 <!-- Profile Picture -->
                 <div class="relative group mb-6">
                     <div class="w-32 h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
-                        <img id="profileImage" src="{{ $adminData['profile_image'] ?? 'https://via.placeholder.com/150' }}"
-                            alt="Foto Profil" class="w-full h-full object-cover">
+                        <img id="profileImage" src="{{ config('api.base_url') . $adminData['profile_image'] }}" alt="Foto Profil" class="w-full h-full object-cover">
+
                     </div>
                     <button onclick="openPhotoModal('profile')"
                         class="absolute bottom-2 right-2 lg:bottom-3 lg:right-3 bg-blue-600 p-2 rounded-full shadow-lg hover:bg-blue-700 transition">
