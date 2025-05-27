@@ -178,6 +178,21 @@ class _DetailMotorPageState extends State<DetailMotorPage>
     }
   }
 
+  String translateMotorType(String? type) {
+    switch (type) {
+      case 'automatic':
+        return 'Otomatis';
+      case 'manual':
+        return 'Manual';
+      case 'clutch':
+        return 'Kopling';
+      case 'vespa':
+        return 'Vespa';
+      default:
+        return 'Tidak diketahui';
+    }
+  }
+
   // Removed _toggleFavorite function
 
   @override
@@ -317,7 +332,8 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(
-                                    motor?["type"] ?? "Tidak Diketahui",
+                                    translateMotorType(
+                                        motor?["type"]?.toString()),
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
@@ -646,12 +662,13 @@ class _DetailMotorPageState extends State<DetailMotorPage>
             Colors.green,
           ),
           _buildInfoBox(
-              Icons.motorcycle,
-              motor != null
-                  ? (motor!["type"]?.toString() ?? "Tidak Diketahui")
-                  : "Tidak Diketahui",
-              "Tipe",
-              Colors.blue),
+            Icons.motorcycle,
+            motor != null
+                ? translateMotorType(motor!["type"]?.toString())
+                : "Tidak diketahui",
+            "Tipe",
+            Colors.blue,
+          ),
           _buildInfoBox(Icons.color_lens, motorColor, "Warna", Colors.black),
           _buildInfoBox(
               Icons.branding_watermark,
