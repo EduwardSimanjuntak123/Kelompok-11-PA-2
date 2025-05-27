@@ -86,7 +86,6 @@ class VendorMotorApi {
       request.fields['color'] = motor.color;
       request.fields['status'] = motor.status;
       request.fields['platmotor'] = motor.plate;
-
       request.fields['type'] = motor.type;
       request.fields['description'] = motor.description;
       request.fields['rating'] = motor.rating.toString();
@@ -108,10 +107,30 @@ class VendorMotorApi {
       // Add token to headers
       request.headers['Authorization'] = 'Bearer $token';
 
+      // DEBUG: Print fields
+      print('---- DEBUGGING REQUEST ----');
+      print('URL: ${request.url}');
+      print('Method: ${request.method}');
+      print('Headers: ${request.headers}');
+      print('Fields:');
+      request.fields.forEach((key, value) {
+        print('  $key: $value');
+      });
+
+      if (request.files.isNotEmpty) {
+        print('Files:');
+        for (var file in request.files) {
+          print(
+              '  field: ${file.field}, filename: ${file.filename}, contentType: ${file.contentType}, length: ${file.length}');
+        }
+      }
+
       // Send the request
       var response = await request.send();
 
       response.stream.transform(utf8.decoder).listen((value) {
+        print('Response Code: ${response.statusCode}');
+        print('Response Body: $value');
         if (response.statusCode == 200) {
           print("Motor updated successfully: ${motor.id}");
         } else {
@@ -119,6 +138,7 @@ class VendorMotorApi {
         }
       });
     } catch (e) {
+      print("Exception occurred: $e");
       throw Exception("Error: $e");
     }
   }

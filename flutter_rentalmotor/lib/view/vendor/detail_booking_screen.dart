@@ -530,7 +530,7 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
 
                       // Customer Information
                       buildCardSection(
-                        title: 'Informasi Customer',
+                        title: 'Informasi Pelanggan',
                         icon: Icons.person,
                         children: [
                           buildInfoRow(
@@ -553,9 +553,9 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
 
                       const SizedBox(height: 16),
 
-                      // Booking Information
+                      // Di bagian Booking Information
                       buildCardSection(
-                        title: 'Detail Booking',
+                        title: 'Detail Pesanan',
                         icon: Icons.calendar_today,
                         children: [
                           buildInfoRow(
@@ -586,6 +586,7 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                               bookingData!['dropoff_location'],
                               icon: Icons.location_off,
                             ),
+                          buildPurposeSection(),
                         ],
                       ),
 
@@ -831,6 +832,57 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget buildPurposeSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.grey.shade200,
+            width: 1,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.description,
+                  size: 18, color: primaryColor.withOpacity(0.7)),
+              const SizedBox(width: 8),
+              Text(
+                'Tujuan/Keperluan',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: textSecondaryColor,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: Text(
+              bookingData!['booking_purpose'] ?? 'Tidak ada informasi tujuan',
+              style: TextStyle(
+                color: textPrimaryColor,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -931,7 +931,7 @@ class _HomePageUserState extends State<HomePageUser> {
   String translateMotorType(String? type) {
     switch (type) {
       case 'automatic':
-        return 'Otomatis';
+        return 'Matic';
       case 'manual':
         return 'Manual';
       case 'clutch':

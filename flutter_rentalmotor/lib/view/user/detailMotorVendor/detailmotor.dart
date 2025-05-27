@@ -181,7 +181,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
   String translateMotorType(String? type) {
     switch (type) {
       case 'automatic':
-        return 'Otomatis';
+        return 'Matic';
       case 'manual':
         return 'Manual';
       case 'clutch':

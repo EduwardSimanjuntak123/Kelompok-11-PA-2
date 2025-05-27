@@ -36,6 +36,12 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
   final Color warningColor = const Color(0xFFFFC107); // Warning amber
   final Color dangerColor = const Color(0xFFF44336); // Danger red
 
+  final Map<String, String> statusTranslations = {
+    'available': 'Tersedia',
+    'unavailable': 'Tidak Tersedia',
+    'booked': 'Sedang Digunakan'
+  };
+
   @override
   void initState() {
     super.initState();
@@ -368,6 +374,21 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
     );
   }
 
+  String getMotorTypeLabel(String type) {
+    switch (type.toLowerCase()) {
+      case 'automatic':
+        return 'Matic';
+      case 'manual':
+        return 'Manual';
+      case 'clutch':
+        return 'Kopling';
+      case 'vespa':
+        return 'Vespa';
+      default:
+        return 'Matic'; // Default label
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final String baseUrl = ApiConfig.baseUrl;
@@ -544,14 +565,24 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
                                             color: motor.status.toLowerCase() ==
                                                     'available'
                                                 ? successColor.withOpacity(0.1)
-                                                : dangerColor.withOpacity(0.1),
+                                                : motor.status.toLowerCase() ==
+                                                        'booked'
+                                                    ? warningColor
+                                                        .withOpacity(0.1)
+                                                    : dangerColor
+                                                        .withOpacity(0.1),
                                             borderRadius:
                                                 BorderRadius.circular(20),
                                             border: Border.all(
-                                              color:
-                                                  motor.status.toLowerCase() ==
-                                                          'available'
-                                                      ? successColor
+                                              color: motor.status
+                                                          .toLowerCase() ==
+                                                      'available'
+                                                  ? successColor
+                                                      .withOpacity(0.5)
+                                                  : motor.status
+                                                              .toLowerCase() ==
+                                                          'booked'
+                                                      ? warningColor
                                                           .withOpacity(0.5)
                                                       : dangerColor
                                                           .withOpacity(0.5),
@@ -565,26 +596,37 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
                                                 motor.status.toLowerCase() ==
                                                         'available'
                                                     ? Icons.check_circle
-                                                    : Icons.cancel,
+                                                    : motor.status
+                                                                .toLowerCase() ==
+                                                            'booked'
+                                                        ? Icons.timer
+                                                        : Icons.cancel,
                                                 size: 16,
                                                 color: motor.status
                                                             .toLowerCase() ==
                                                         'available'
                                                     ? successColor
-                                                    : dangerColor,
+                                                    : motor.status
+                                                                .toLowerCase() ==
+                                                            'booked'
+                                                        ? warningColor
+                                                        : dangerColor,
                                               ),
                                               SizedBox(width: 6),
                                               Text(
-                                                motor.status
-                                                        .substring(0, 1)
-                                                        .toUpperCase() +
-                                                    motor.status.substring(1),
+                                                statusTranslations[motor.status
+                                                        .toLowerCase()] ??
+                                                    motor.status,
                                                 style: TextStyle(
                                                   color: motor.status
                                                               .toLowerCase() ==
                                                           'available'
                                                       ? successColor
-                                                      : dangerColor,
+                                                      : motor.status
+                                                                  .toLowerCase() ==
+                                                              'booked'
+                                                          ? warningColor
+                                                          : dangerColor,
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 14,
                                                 ),
@@ -704,11 +746,12 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
                                                 Colors.amber,
                                                 itemWidth),
                                             _buildInfoItem(
-                                                'Tipe',
-                                                motor.type,
-                                                Icons.category,
-                                                secondaryColor,
-                                                itemWidth),
+                                              'Tipe',
+                                              getMotorTypeLabel(motor.type),
+                                              Icons.category,
+                                              secondaryColor,
+                                              itemWidth,
+                                            ),
                                             _buildInfoItem(
                                                 'Warna',
                                                 motor.color,

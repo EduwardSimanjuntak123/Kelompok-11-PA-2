@@ -132,6 +132,34 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
     }
   }
 
+  String _getStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'available':
+        return 'Tersedia';
+      case 'booked':
+        return 'Sedang Digunakan';
+      case 'unavailable':
+        return 'Tidak Tersedia';
+      default:
+        return status;
+    }
+  }
+
+  String getMotorTypeLabel(String type) {
+    switch (type.toLowerCase()) {
+      case 'automatic':
+        return 'Matic';
+      case 'manual':
+        return 'Manual';
+      case 'clutch':
+        return 'Kopling';
+      case 'vespa':
+        return 'Vespa';
+      default:
+        return type; // Default label
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -242,7 +270,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                   ),
                   SizedBox(width: 12),
                   _buildStatCard(
-                    'Disewa',
+                    'Sedang Digunakan',
                     motorList
                         .where((m) => m.status.toLowerCase() == 'booked')
                         .length
@@ -533,8 +561,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                         ],
                       ),
                       child: Text(
-                        motor.status.substring(0, 1).toUpperCase() +
-                            motor.status.substring(1),
+                        _getStatusLabel(motor.status),
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -622,7 +649,8 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
                         _buildInfoChip(Icons.branding_watermark, motor.brand),
                         _buildInfoChip(
                             Icons.calendar_today, motor.year.toString()),
-                        _buildInfoChip(Icons.category, motor.type),
+                        _buildInfoChip(
+                            Icons.category, getMotorTypeLabel(motor.type)),
                         _buildInfoChip(Icons.confirmation_number, motor.plate),
                       ],
                     ),

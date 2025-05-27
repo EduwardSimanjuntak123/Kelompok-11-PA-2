@@ -17,7 +17,7 @@ class EditMotorScreen extends StatefulWidget {
 class _EditMotorScreenState extends State<EditMotorScreen> {
   final _formKey = GlobalKey<FormState>();
   late String motorName;
-  late String motorPlate; // Added plate number field
+  late String motorPlate;
   late int motorYear;
   late double motorPrice;
   late String motorColor;
@@ -31,30 +31,45 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
   bool _isLoading = false;
 
   // Theme colors
-  final Color primaryColor = const Color(0xFF1A567D); // Modern indigo
-  final Color secondaryColor = const Color(0xFF00BFA5); // Modern teal
-  final Color accentColor = const Color(0xFFFF6D00); // Modern orange
-  final Color backgroundColor = const Color(0xFFF5F7FA); // Light gray
+  final Color primaryColor = const Color(0xFF1A567D);
+  final Color secondaryColor = const Color(0xFF00BFA5);
+  final Color accentColor = const Color(0xFFFF6D00);
+  final Color backgroundColor = const Color(0xFFF5F7FA);
   final Color cardColor = Colors.white;
-  final Color textPrimaryColor = const Color(0xFF263238); // Dark gray
-  final Color textSecondaryColor = const Color(0xFF607D8B); // Blue gray
-  final Color successColor = const Color(0xFF4CAF50); // Success green
-  final Color warningColor = const Color(0xFFFFC107); // Warning amber
-  final Color dangerColor = const Color(0xFFF44336); // Danger red
+  final Color textPrimaryColor = const Color(0xFF263238);
+  final Color textSecondaryColor = const Color(0xFF607D8B);
+  final Color successColor = const Color(0xFF4CAF50);
+  final Color warningColor = const Color(0xFFFFC107);
+  final Color dangerColor = const Color(0xFFF44336);
 
   @override
   void initState() {
     super.initState();
     motorName = widget.motor.name;
-    motorPlate = widget.motor.plate ?? ''; // Initialize plate number
+    motorPlate = widget.motor.plate ?? '';
     motorYear = widget.motor.year;
     motorPrice = widget.motor.price;
     motorColor = widget.motor.color;
     motorStatus = widget.motor.status;
-    motorType = widget.motor.type;
+    motorType = _convertMotorType(widget.motor.type); // Convert type value
     motorDescription = widget.motor.description;
     motorImage = widget.motor.image ?? '';
     motorRating = widget.motor.rating;
+  }
+
+  String _convertMotorType(String backendType) {
+    switch (backendType.toLowerCase()) {
+      case 'automatic':
+        return 'automatic';
+      case 'manual':
+        return 'manual';
+      case 'clutch':
+        return 'clutch';
+      case 'vespa':
+        return 'vespa';
+      default:
+        return 'automatic'; // fallback default
+    }
   }
 
   Future<void> _pickImage() async {
@@ -77,7 +92,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
       MotorModel updatedMotor = MotorModel(
         id: widget.motor.id,
         name: motorName,
-        plate: motorPlate, // Added plate number
+        plate: motorPlate,
         brand: widget.motor.brand,
         year: motorYear,
         price: motorPrice,
@@ -481,11 +496,34 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                               }
                             },
                           ),
-                          _buildTextField(
-                            label: 'Tipe',
-                            initialValue: motorType,
-                            icon: Icons.category,
-                            onSaved: (val) => motorType = val!,
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: DropdownButtonFormField<String>(
+                              decoration: _buildInputDecoration(
+                                  'Tipe Motor', Icons.category),
+                              value: motorType,
+                              items: const [
+                                DropdownMenuItem(
+                                    value: 'automatic', child: Text('Matic')),
+                                DropdownMenuItem(
+                                    value: 'manual', child: Text('Manual')),
+                                DropdownMenuItem(
+                                    value: 'clutch', child: Text('Kopling')),
+                                DropdownMenuItem(
+                                    value: 'vespa', child: Text('Vespa')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => motorType = val);
+                                }
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Mohon pilih tipe motor';
+                                }
+                                return null;
+                              },
+                            ),
                           ),
                           const SizedBox(height: 20),
                           Text(
@@ -620,6 +658,28 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
     );
   }
 
+  InputDecoration _buildInputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: primaryColor),
+      filled: true,
+      fillColor: Colors.grey[50],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: primaryColor),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+    );
+  }
+
   Widget _buildDropdownField({
     required String label,
     required String initialValue,
@@ -628,6 +688,12 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
     required Function(String?) onChanged,
   }) {
     final isSmallScreen = MediaQuery.of(context).size.width < 360;
+
+    final statusMap = {
+      'available': 'Tersedia',
+      'unavailable': 'Tidak Tersedia',
+      'booked': 'Sedang Digunakan'
+    };
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -657,7 +723,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
           return DropdownMenuItem<String>(
             value: value,
             child: Text(
-              value.substring(0, 1).toUpperCase() + value.substring(1),
+              statusMap[value] ?? value,
               style: TextStyle(
                   color: textPrimaryColor, fontSize: isSmallScreen ? 14 : 16),
             ),
