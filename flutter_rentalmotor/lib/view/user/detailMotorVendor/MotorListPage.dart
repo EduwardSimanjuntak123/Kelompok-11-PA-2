@@ -148,7 +148,7 @@ class _MotorListPageState extends State<MotorListPage>
     });
 
     if (widget.isGuest && (index == 1 || index == 2)) {
-      _showErrorMessage("Anda harus login untuk mengakses halaman ini.");
+      _showErrorMessage("Anda harus masuk untuk mengakses halaman ini.");
       return;
     }
 
