@@ -928,6 +928,21 @@ class _HomePageUserState extends State<HomePageUser> {
     );
   }
 
+  String translateMotorType(String? type) {
+    switch (type) {
+      case 'automatic':
+        return 'Otomatis';
+      case 'manual':
+        return 'Manual';
+      case 'clutch':
+        return 'Kopling';
+      case 'vespa':
+        return 'Vespa';
+      default:
+        return 'Tidak diketahui';
+    }
+  }
+
   Widget _buildMotorSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1170,7 +1185,7 @@ class _HomePageUserState extends State<HomePageUser> {
                                       size: 12, color: Colors.grey[600]),
                                   const SizedBox(width: 4),
                                   Text(
-                                    "Type: ${motor["type"] ?? "unknown"}",
+                                    "Tipe: ${translateMotorType(motor["type"])}",
                                     style: TextStyle(
                                         fontSize: 12, color: Colors.grey[700]),
                                   ),
