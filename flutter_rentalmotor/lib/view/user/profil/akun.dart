@@ -107,7 +107,7 @@ class _AkunState extends State<Akun> {
             Icon(Icons.logout, color: Colors.red),
             SizedBox(width: 8),
             Text(
-              'Konfirmasi Logout',
+              'Konfirmasi Keluar',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -138,7 +138,7 @@ class _AkunState extends State<Akun> {
               _logout();
             },
             child: const Text(
-              'Logout',
+              'Keluar',
               style: TextStyle(
                 color: Colors.white,
               ),
@@ -154,7 +154,7 @@ class _AkunState extends State<Akun> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Sesi Berakhir'),
-        content: const Text('Sesi telah habis, silakan login kembali.'),
+        content: const Text('Sesi telah habis, silakan masuk kembali.'),
         actions: [
           TextButton(
             onPressed: () async {
