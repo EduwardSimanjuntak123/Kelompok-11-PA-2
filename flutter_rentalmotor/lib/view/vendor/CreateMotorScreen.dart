@@ -423,16 +423,18 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _nameController,
-                            decoration: _buildInputDecoration(
-                                'Nama Motor', Icons.motorcycle),
+                            decoration: _buildInputDecoration('Nama Motor',
+                                Icons.motorcycle, 'Cth: Beat Street'),
+                            style: TextStyle(fontSize: 12),
                             validator: (val) =>
                                 val!.isEmpty ? 'Nama motor wajib diisi' : null,
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _brandController,
-                            decoration: _buildInputDecoration(
-                                'Merek', Icons.branding_watermark),
+                            decoration: _buildInputDecoration('Merek',
+                                Icons.branding_watermark, 'Cth: Honda'),
+                            style: TextStyle(fontSize: 12),
                             validator: (val) =>
                                 val!.isEmpty ? 'Merek wajib diisi' : null,
                           ),
@@ -442,8 +444,9 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                               Expanded(
                                 child: TextFormField(
                                   controller: _yearController,
-                                  decoration: _buildInputDecoration(
-                                      'Tahun', Icons.calendar_today),
+                                  decoration: _buildInputDecoration('Tahun',
+                                      Icons.calendar_today, 'Cth: 2022'),
+                                  style: TextStyle(fontSize: 12),
                                   keyboardType: TextInputType.number,
                                   validator: (val) {
                                     if (val!.isEmpty) {
@@ -461,7 +464,8 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                                 child: TextFormField(
                                   controller: _colorController,
                                   decoration: _buildInputDecoration(
-                                      'Warna', Icons.palette),
+                                      'Warna', Icons.palette, 'Cth: Hitam'),
+                                  style: TextStyle(fontSize: 12),
                                   validator: (val) =>
                                       val!.isEmpty ? 'Warna wajib diisi' : null,
                                 ),
@@ -471,8 +475,9 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                           const SizedBox(height: 16),
                           TextFormField(
                             controller: _licensePlateController,
-                            decoration: _buildInputDecoration(
-                                'Plat Nomor', Icons.confirmation_number),
+                            decoration: _buildInputDecoration('Plat Nomor',
+                                Icons.confirmation_number, 'Cth: BB 4182 GH'),
+                            style: TextStyle(fontSize: 12),
                             validator: (val) =>
                                 val!.isEmpty ? 'Plat nomor wajib diisi' : null,
                           ),
@@ -508,6 +513,8 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                             controller: _priceController,
                             decoration: InputDecoration(
                               labelText: 'Harga / hari',
+                              hintText: 'Cth: 50000',
+                              hintStyle: TextStyle(fontSize: 12),
                               prefixIcon: Padding(
                                 padding: const EdgeInsets.all(12),
                                 child: Text(
@@ -537,7 +544,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                           const SizedBox(height: 16),
                           DropdownButtonFormField<String>(
                             decoration: _buildInputDecoration(
-                                'Tipe Motor', Icons.category),
+                                'Tipe Motor', Icons.category, null),
                             value: _type,
                             items: const [
                               DropdownMenuItem(
@@ -559,7 +566,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                           TextFormField(
                             controller: _descriptionController,
                             decoration: _buildInputDecoration(
-                                'Deskripsi', Icons.description),
+                                'Deskripsi', Icons.description, null),
                             maxLines: 4,
                           ),
                         ],
@@ -647,9 +654,11 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
     );
   }
 
-  InputDecoration _buildInputDecoration(String label, IconData icon) {
+  InputDecoration _buildInputDecoration(
+      String label, IconData icon, String? hintText) {
     return InputDecoration(
       labelText: label,
+      hintText: hintText,
       prefixIcon: Icon(icon, color: const Color(0xFF2C567E)),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
