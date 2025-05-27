@@ -42,7 +42,7 @@
             });
         </script>
     @endif
-    
+
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 lg:mb-8 space-y-4 sm:space-y-0">
         <div>
@@ -66,7 +66,8 @@
     <div class="bg-white rounded-xl shadow-md overflow-hidden mb-6 lg:mb-8">
         <div class="flex flex-col lg:flex-row">
             <!-- Sidebar (Images and Actions) -->
-            <div class="lg:w-1/3 bg-gray-50 p-4 sm:p-6 flex flex-col items-center border-b lg:border-b-0 lg:border-r border-gray-200">
+            <div
+                class="lg:w-1/3 bg-gray-50 p-4 sm:p-6 flex flex-col items-center border-b lg:border-b-0 lg:border-r border-gray-200">
                 <!-- Profile Image -->
                 <div class="relative mb-4 sm:mb-6">
                     <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-white shadow-lg">
@@ -97,13 +98,14 @@
 
             <!-- Main Content (Vendor Data) -->
             <div class="lg:w-2/3 p-4 sm:p-6">
-                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 pb-2 border-b border-gray-200">Informasi Vendor</h2>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 pb-2 border-b border-gray-200">Informasi
+                    Vendor</h2>
 
                 <!-- Personal Information Section -->
                 <div class="mb-6 sm:mb-8">
                     <h3 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 sm:mb-4 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-500" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-500"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
@@ -113,11 +115,13 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                             <p class="text-xs sm:text-sm font-medium text-gray-500">Nama Lengkap</p>
-                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">{{ $user['name'] ?? '-' }}</p>
+                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">
+                                {{ $user['name'] ?? '-' }}</p>
                         </div>
                         <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                             <p class="text-xs sm:text-sm font-medium text-gray-500">Email</p>
-                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-all">{{ $user['email'] ?? '-' }}</p>
+                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-all">
+                                {{ $user['email'] ?? '-' }}</p>
                         </div>
                         <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                             <p class="text-xs sm:text-sm font-medium text-gray-500">Telepon</p>
@@ -125,7 +129,8 @@
                         </div>
                         <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                             <p class="text-xs sm:text-sm font-medium text-gray-500">Alamat</p>
-                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">{{ $user['address'] ?? '-' }}</p>
+                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">
+                                {{ $user['address'] ?? '-' }}</p>
                         </div>
                     </div>
                 </div>
@@ -133,8 +138,8 @@
                 <!-- Shop Information Section -->
                 <div class="mb-6 sm:mb-8">
                     <h3 class="text-base sm:text-lg font-semibold text-gray-700 mb-3 sm:mb-4 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-500" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-500"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
@@ -144,19 +149,23 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                             <p class="text-xs sm:text-sm font-medium text-gray-500">Nama Toko</p>
-                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">{{ $vendor['shop_name'] ?? '-' }}</p>
+                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">
+                                {{ $vendor['shop_name'] ?? '-' }}</p>
                         </div>
                         <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
                             <p class="text-xs sm:text-sm font-medium text-gray-500">Nama Kecamatan</p>
-                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">{{ $vendor['kecamatan']['nama_kecamatan'] ?? '-' }}</p>
+                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">
+                                {{ $vendor['kecamatan']['nama_kecamatan'] ?? '-' }}</p>
                         </div>
                         <div class="sm:col-span-2 bg-gray-50 p-3 sm:p-4 rounded-lg">
                             <p class="text-xs sm:text-sm font-medium text-gray-500">Alamat Toko</p>
-                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">{{ $vendor['shop_address'] ?? '-' }}</p>
+                            <p class="text-sm sm:text-base text-gray-800 font-semibold break-words">
+                                {{ $vendor['shop_address'] ?? '-' }}</p>
                         </div>
                         <div class="sm:col-span-2 bg-gray-50 p-3 sm:p-4 rounded-lg">
                             <p class="text-xs sm:text-sm font-medium text-gray-500">Deskripsi Toko</p>
-                            <p class="text-sm sm:text-base text-gray-800 break-words">{{ $vendor['shop_description'] ?? '-' }}</p>
+                            <p class="text-sm sm:text-base text-gray-800 break-words">
+                                {{ $vendor['shop_description'] ?? '-' }}</p>
                         </div>
                     </div>
                 </div>
@@ -189,8 +198,8 @@
             <div class="bg-blue-50 border-l-4 border-blue-500 p-3 sm:p-4 rounded-r-lg mb-3 sm:mb-4">
                 <div class="flex">
                     <div class="flex-shrink-0">
-                        <svg class="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                            fill="currentColor">
+                        <svg class="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z"
                                 clip-rule="evenodd" />
@@ -204,7 +213,8 @@
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-gray-50 p-3 sm:p-4 rounded-lg space-y-3 sm:space-y-0">
+            <div
+                class="flex flex-col sm:flex-row sm:justify-between sm:items-center bg-gray-50 p-3 sm:p-4 rounded-lg space-y-3 sm:space-y-0">
                 <div>
                     <h3 class="font-medium text-gray-800 text-sm sm:text-base">Kata Sandi</h3>
                     <p class="text-xs sm:text-sm text-gray-500">Terakhir diubah
@@ -213,8 +223,8 @@
                 <a href="{{ route('vendor.otp.form') }}"
                     class="text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center sm:justify-start text-sm sm:text-base">
                     Ubah Kata Sandi
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 ml-1" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 ml-1" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </a>
@@ -226,23 +236,22 @@
     <div id="editModal"
         class="modal hidden fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 z-50 p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <!-- Header dengan Background Biru -->
-            <div class="bg-blue-600 text-white rounded-t-xl px-4 sm:px-6 py-3 sm:py-4">
+            <!-- Header dengan Background Biru (Sticky) -->
+            <div class="bg-blue-600 text-white rounded-t-xl px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-10 shadow-md">
                 <div class="flex justify-between items-center">
                     <div>
                         <h2 class="text-xl sm:text-2xl font-bold">Edit Profil Vendor</h2>
                         <p class="text-xs sm:text-sm text-blue-100 mt-1">Perbarui informasi profil dan toko</p>
                     </div>
                     <button onclick="closeModal('editModal')" class="text-white hover:text-blue-200">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
             </div>
-
             <!-- Body Form -->
             <div class="p-4 sm:p-6">
                 <form action="{{ route('vendor.profile.edit') }}" method="POST" enctype="multipart/form-data">
@@ -252,7 +261,8 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
                         <!-- Personal Information -->
                         <div class="space-y-4">
-                            <h3 class="text-base sm:text-lg font-semibold text-gray-700 border-b pb-2">Informasi Pribadi</h3>
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-700 border-b pb-2">Informasi Pribadi
+                            </h3>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
                                 <input type="text" name="name" value="{{ $user['name'] }}"
@@ -334,8 +344,8 @@
                 <div class="flex justify-between items-center mb-4">
                     <h2 id="photoModalTitle" class="text-lg sm:text-xl font-bold text-gray-800"></h2>
                     <button onclick="closeModal('editPhotoModal')" class="text-gray-500 hover:text-gray-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -351,11 +361,13 @@
                         <div class="flex justify-center mb-4">
                             <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 w-full text-center">
                                 <div id="imagePreviewContainer" class="mb-3 hidden">
-                                    <img id="imagePreview" src="#" alt="Preview" class="max-h-32 sm:max-h-40 mx-auto rounded-lg">
+                                    <img id="imagePreview" src="#" alt="Preview"
+                                        class="max-h-32 sm:max-h-40 mx-auto rounded-lg">
                                 </div>
                                 <label for="photoInput" class="cursor-pointer">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-10 w-10 sm:h-12 sm:w-12 mx-auto text-gray-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                                     </svg>
@@ -367,7 +379,8 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
+                    <div
+                        class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-gray-200">
                         <button type="button" onclick="closeModal('editPhotoModal')"
                             class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition text-sm sm:text-base">
                             Batal
