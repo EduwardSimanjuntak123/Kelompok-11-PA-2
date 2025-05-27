@@ -733,12 +733,6 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                                   '$baseUrl${bookingData!['photo_id']}',
                                   Icons.person,
                                 ),
-                              if (bookingData!['ktp_id'] != null)
-                                buildPhotoSection(
-                                  'Foto KTP',
-                                  '$baseUrl${bookingData!['ktp_id']}',
-                                  Icons.credit_card,
-                                ),
                             ],
                           ),
                         ),

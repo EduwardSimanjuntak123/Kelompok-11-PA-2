@@ -994,8 +994,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                   "Jelaskan tujuan atau keperluan sewa motor (opsional)"),
                               _buildGuidanceItem("Foto Diri",
                                   "Unggah foto diri Anda yang jelas"),
-                              _buildGuidanceItem("Foto KTP",
-                                  "Unggah foto KTP yang jelas dan tidak buram"),
                             ],
                           ),
                         ),
@@ -1377,47 +1375,10 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                                   ),
                                 ),
                               ),
-
-                            // KTP Section
-                            Text(
-                              "Foto KTP *",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            _buildImageInput(
-                              "Pilih Foto KTP",
-                              _ktpId,
-                              () => _pickImage(true),
-                              Icons.credit_card,
-                              darkBlue,
-                            ),
-                            if (_ktpId != null)
-                              Container(
-                                height: 150,
-                                width: double.infinity,
-                                margin: EdgeInsets.only(top: 8, bottom: 16),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                      color: darkBlue.withOpacity(0.5),
-                                      width: 2),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    _ktpId!,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
-                                "* KTP asli tetap diberikan kepada pemilik rental saat penjemputan motor sebagai jaminan.",
+                                "nb* KTP asli tetap diberikan kepada pemilik rental saat penjemputan motor sebagai jaminan.",
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.redAccent,
