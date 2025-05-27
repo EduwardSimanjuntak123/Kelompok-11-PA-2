@@ -422,7 +422,7 @@ class _HomePageUserState extends State<HomePageUser> {
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
                   icon: const Icon(Icons.login, size: 20),
-                  label: const Text("Login",
+                  label: const Text("Masuk",
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 )
               else ...[
