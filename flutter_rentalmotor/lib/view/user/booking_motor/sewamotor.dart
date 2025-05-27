@@ -1533,18 +1533,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   }) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: accentColor.withOpacity(0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
       child: TextField(
         controller: controller,
         readOnly: onTap != null,
@@ -1554,6 +1542,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
           fontSize: 15,
           fontWeight: FontWeight.w500,
         ),
+        onTap: onTap,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
@@ -1579,13 +1568,17 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                   ),
                 )
               : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
+          floatingLabelBehavior: FloatingLabelBehavior.auto,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: accentColor.withOpacity(0.3)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: accentColor, width: 2),
+          ),
         ),
-        onTap: onTap,
       ),
     );
   }
