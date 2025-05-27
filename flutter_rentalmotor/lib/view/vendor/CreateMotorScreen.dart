@@ -425,16 +425,17 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                             controller: _nameController,
                             decoration: _buildInputDecoration('Nama Motor',
                                 Icons.motorcycle, 'Cth: Beat Street'),
-                            style: TextStyle(fontSize: 12),
+                            style: TextStyle(fontSize: 15),
                             validator: (val) =>
                                 val!.isEmpty ? 'Nama motor wajib diisi' : null,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 15),
                           TextFormField(
                             controller: _brandController,
                             decoration: _buildInputDecoration('Merek',
                                 Icons.branding_watermark, 'Cth: Honda'),
-                            style: TextStyle(fontSize: 12),
+                            style: TextStyle(
+                                fontSize: 16), // Ukuran teks input yang diketik
                             validator: (val) =>
                                 val!.isEmpty ? 'Merek wajib diisi' : null,
                           ),
@@ -446,7 +447,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                                   controller: _yearController,
                                   decoration: _buildInputDecoration('Tahun',
                                       Icons.calendar_today, 'Cth: 2022'),
-                                  style: TextStyle(fontSize: 12),
+                                  style: TextStyle(fontSize: 15),
                                   keyboardType: TextInputType.number,
                                   validator: (val) {
                                     if (val!.isEmpty) {
@@ -465,7 +466,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                                   controller: _colorController,
                                   decoration: _buildInputDecoration(
                                       'Warna', Icons.palette, 'Cth: Hitam'),
-                                  style: TextStyle(fontSize: 12),
+                                  style: TextStyle(fontSize: 15),
                                   validator: (val) =>
                                       val!.isEmpty ? 'Warna wajib diisi' : null,
                                 ),
@@ -477,7 +478,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                             controller: _licensePlateController,
                             decoration: _buildInputDecoration('Plat Nomor',
                                 Icons.confirmation_number, 'Cth: BB 4182 GH'),
-                            style: TextStyle(fontSize: 12),
+                            style: TextStyle(fontSize: 15),
                             validator: (val) =>
                                 val!.isEmpty ? 'Plat nomor wajib diisi' : null,
                           ),
@@ -514,7 +515,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                             decoration: InputDecoration(
                               labelText: 'Harga / hari',
                               hintText: 'Cth: 50000',
-                              hintStyle: TextStyle(fontSize: 12),
+                              hintStyle: TextStyle(fontSize: 15),
                               prefixIcon: Padding(
                                 padding: const EdgeInsets.all(12),
                                 child: Text(
