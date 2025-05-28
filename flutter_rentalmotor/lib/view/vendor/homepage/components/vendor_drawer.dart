@@ -388,10 +388,10 @@ class _VendorDrawerState extends State<VendorDrawer>
                   _buildDrawerItem(
                     context,
                     icon: Icons.lock,
-                    title: "Lupa Kata Sandi",
-                    isActive: _selectedMenu == 'Lupa Kata Sandi',
+                    title: "Ubah Kata Sandi",
+                    isActive: _selectedMenu == 'Ubah Kata Sandi',
                     onTap: () {
-                      setState(() => _selectedMenu = 'Lupa Kata Sandi');
+                      setState(() => _selectedMenu = 'Ubah Kata Sandi');
                       Navigator.pop(context);
                       Navigator.push(
                         context,
