@@ -324,8 +324,6 @@ func GetMotorByIDolehvendor(c *gin.Context) {
 	})
 }
 
-// Fungsi untuk menghapus motor
-// Fungsi untuk menghapus motor
 func DeleteMotor(c *gin.Context) {
 	id := c.Param("id")
 	var motor models.Motor
@@ -356,24 +354,11 @@ func DeleteMotor(c *gin.Context) {
 		return
 	}
 
-	// Periksa apakah ada booking aktif yang terkait dengan motor ini
-	var activeBookings []models.Booking
-	if err := config.DB.Where("motor_id = ? AND status IN ('pending', 'confirmed', 'in transit', 'in use')", motor.ID).Find(&activeBookings).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal memeriksa booking aktif"})
-		return
-	}
-
-	// Jika ada booking aktif, motor tidak dapat dihapus
-	if len(activeBookings) > 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Motor tidak dapat dihapus karena masih ada booking aktif"})
-		return
-	}
-
-	// Hapus motor dari database
+	// Soft delete motor dari database
 	if err := config.DB.Delete(&motor).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus motor"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil dihapus"})
+	c.JSON(http.StatusOK, gin.H{"message": "Motor berhasil dihapus (soft delete)"})
 }

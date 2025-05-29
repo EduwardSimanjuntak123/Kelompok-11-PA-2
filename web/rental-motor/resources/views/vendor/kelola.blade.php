@@ -546,6 +546,7 @@
 
         <script>
             const BASE_API = "{{ config('api.base_url') }}";
+            dd(BASE_API);
 
             // Menerjemahkan status ke Bahasa Indonesia
             function translateStatus(status) {
