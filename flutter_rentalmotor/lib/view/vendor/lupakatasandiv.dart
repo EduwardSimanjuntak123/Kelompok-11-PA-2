@@ -134,7 +134,7 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Lupa Kata Sandi',
+                            'Ubah Kata Sandi',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -176,7 +176,7 @@ class _LupaKataSandiScreenState extends State<LupaKataSandiScreen> {
 
                           // Title and description
                           Text(
-                            'Lupa Kata Sandi?',
+                            'Ubah Kata Sandi?',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,

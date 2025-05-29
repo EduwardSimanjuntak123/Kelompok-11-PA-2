@@ -539,7 +539,7 @@ class _AkunState extends State<Akun> {
                             const SizedBox(height: 12),
                             _buildSettingButton(
                               Icons.lock,
-                              'Lupa Kata Sandi',
+                              'Ubah Kata Sandi',
                               accentBlue,
                               () {
                                 Navigator.push(

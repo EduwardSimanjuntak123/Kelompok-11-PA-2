@@ -386,7 +386,7 @@ class _DataVendorState extends State<DataVendor>
                         tabs: [
                           Tab(text: "Motors"),
                           Tab(text: "Ulasan"),
-                          Tab(text: "About"),
+                          Tab(text: "Tentang"),
                         ],
                       ),
                     ),
