@@ -189,25 +189,28 @@ class KelolaBookingController extends Controller
     }
 
 
-    public function addManualBooking(Request $request)
+public function addManualBooking(Request $request)
 {
-    
     try {
         $token = session()->get('token');
         if (!$token) {
+            if ($request->ajax()) {
+                return response()->json(['error' => 'Anda harus login terlebih dahulu.'], 401);
+            }
             return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
         }
 
         // Validasi input (tanpa end_date, pakai duration)
         $validated = $request->validate([
             'motor_id' => 'required|integer',
-            'customer_name' => 'required|string',
+            'customer_name' => 'required|string|min:3',
             'start_date_date' => 'required|date_format:Y-m-d',
             'start_date_time' => 'required|date_format:H:i',
             'duration' => 'required|integer|min:1',
             'pickup_location' => 'required|string',
-            'photo_id' => 'nullable|file|mimes:jpg,jpeg,png',
-            'ktp_id' => 'nullable|file|mimes:jpg,jpeg,png',
+            'dropoff_location' => 'nullable|string',
+            'photo_id' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'ktp_id' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         // Gabungkan input tanggal dan waktu
@@ -216,7 +219,11 @@ class KelolaBookingController extends Controller
         // Buat Carbon date dan validasi tidak di masa lalu
         $carbonStartDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $startDateInput, 'Asia/Jakarta');
         if ($carbonStartDate->lt(\Carbon\Carbon::now('Asia/Jakarta'))) {
-            return redirect()->back()->with('error', 'Tanggal dan jam mulai tidak boleh kurang dari waktu saat ini.');
+            $errorMessage = 'Tanggal dan jam mulai tidak boleh kurang dari waktu saat ini.';
+            if ($request->ajax()) {
+                return response()->json(['error' => $errorMessage], 422);
+            }
+            return redirect()->back()->with('error', $errorMessage);
         }
 
         // Format ISO8601
@@ -232,6 +239,11 @@ class KelolaBookingController extends Controller
             ['name' => 'type', 'contents' => 'manual'],
             ['name' => 'status', 'contents' => 'confirmed'],
         ];
+
+        // Tambahkan dropoff_location jika ada
+        if (!empty($validated['dropoff_location'])) {
+            $multipart[] = ['name' => 'dropoff_location', 'contents' => $validated['dropoff_location']];
+        }
 
         // File upload opsional
         if ($request->hasFile('photo_id')) {
@@ -251,44 +263,120 @@ class KelolaBookingController extends Controller
             ];
         }
 
-        Log::info("Manual Booking (pakai duration):", [
+        Log::info("Manual Booking Request:", [
             'start_date' => $startDate,
             'duration' => $validated['duration'],
-            'validated' => $validated
+            'motor_id' => $validated['motor_id'],
+            'customer_name' => $validated['customer_name']
         ]);
 
-        // Kirim request
+        // Kirim request ke API
         $response = Http::withToken($token)
+            ->timeout(30)
             ->asMultipart()
             ->post(config('api.base_url') . '/vendor/manual/bookings', $multipart);
 
-            if ($response->successful()) {
-                return redirect()->back()->with('message', 'Booking manual berhasil dibuat');
-            } else {
-                // Debugging tambahan untuk response API
-                Log::error("Error API Response:", [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'json' => $response->json(),
+        Log::info("API Response:", [
+            'status' => $response->status(),
+            'headers' => $response->headers(),
+            'body' => $response->body()
+        ]);
+
+        if ($response->successful()) {
+            $responseData = $response->json();
+            $successMessage = $responseData['message'] ?? 'Booking manual berhasil dibuat';
+            
+            if ($request->ajax()) {
+                return response()->json([
+                    'message' => $successMessage,
+                    'data' => $responseData
                 ]);
+            }
+            return redirect()->back()->with('message', $successMessage);
+        } else {
+            // Handle error response dari API
+            $errorMessage = 'Gagal menambahkan booking manual.';
+            $statusCode = $response->status();
             
-                // Ambil pesan error yang bersih jika tersedia
-                $errorMessage = 'Gagal menambahkan booking manual.';
-            
-                if ($response->header('Content-Type') === 'application/json') {
-                    $json = $response->json();
-                    if (isset($json['error'])) {
-                        $errorMessage = $json['error']; // Pesan error yang lebih spesifik dari API
+            Log::error("API Error Response:", [
+                'status' => $statusCode,
+                'body' => $response->body(),
+                'headers' => $response->headers()
+            ]);
+
+            // Coba parse response sebagai JSON
+            try {
+                $errorData = $response->json();
+                
+                // Prioritaskan error message dari API
+                if (isset($errorData['error'])) {
+                    $errorMessage = $errorData['error'];
+                } elseif (isset($errorData['message'])) {
+                    $errorMessage = $errorData['message'];
+                } elseif (isset($errorData['errors'])) {
+                    // Handle validation errors
+                    if (is_array($errorData['errors'])) {
+                        $errorMessages = [];
+                        foreach ($errorData['errors'] as $field => $messages) {
+                            if (is_array($messages)) {
+                                $errorMessages[] = implode(', ', $messages);
+                            } else {
+                                $errorMessages[] = $messages;
+                            }
+                        }
+                        $errorMessage = implode('; ', $errorMessages);
                     }
                 }
-            
-                return redirect()->back()->with('error', $errorMessage); // Mengirim pesan error ke session
+                
+                if ($request->ajax()) {
+                    return response()->json([
+                        'error' => $errorMessage,
+                        'errors' => $errorData['errors'] ?? null
+                    ], $statusCode);
+                }
+                
+            } catch (\Exception $parseError) {
+                // Jika tidak bisa parse JSON, gunakan response body langsung
+                $responseBody = $response->body();
+                if (!empty($responseBody)) {
+                    $errorMessage = $responseBody;
+                }
+                
+                Log::error("Failed to parse API error response:", [
+                    'parse_error' => $parseError->getMessage(),
+                    'response_body' => $responseBody
+                ]);
             }
-            
 
+            if ($request->ajax()) {
+                return response()->json(['error' => $errorMessage], $statusCode);
+            }
+            return redirect()->back()->with('error', $errorMessage);
+        }
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        Log::error("Validation Error:", ['errors' => $e->errors()]);
+        
+        if ($request->ajax()) {
+            return response()->json([
+                'error' => 'Data yang dimasukkan tidak valid.',
+                'errors' => $e->errors()
+            ], 422);
+        }
+        return redirect()->back()->withErrors($e->errors())->withInput();
+        
     } catch (\Exception $e) {
-        Log::error("Error saat booking manual (duration): " . $e->getMessage());
-        return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        Log::error("Exception in addManualBooking:", [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        $errorMessage = 'Terjadi kesalahan sistem: ' . $e->getMessage();
+        
+        if ($request->ajax()) {
+            return response()->json(['error' => $errorMessage], 500);
+        }
+        return redirect()->back()->with('error', $errorMessage);
     }
 }
 

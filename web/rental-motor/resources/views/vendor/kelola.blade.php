@@ -430,10 +430,11 @@
                         <div class="space-y-6">
                             <!-- Dropdown Motor -->
                             <div>
-                                <label for="motor_id" class="block text-gray-700 font-semibold mb-1">Pilih Motor</label>
+                                <label for="motor_id" class="block text-gray-700 font-semibold mb-1">Pilih Motor <span class="text-red-500">*</span></label>
                                 <select name="motor_id" id="motor_id"
                                     class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
-                                    <!-- Opsi motor -->
+                                    <option value="">-- Pilih Motor --</option>
+                                    <!-- Opsi motor akan diisi oleh JavaScript -->
                                 </select>
                                 <small class="error-message text-red-500" data-field="motor_id"></small>
                             </div>
@@ -441,7 +442,7 @@
                             <!-- Nama Pelanggan -->
                             <div>
                                 <label for="customer_name" class="block text-gray-700 font-semibold mb-1">Nama
-                                    Pelanggan</label>
+                                    Pelanggan <span class="text-red-500">*</span></label>
                                 <input type="text" name="customer_name" id="customer_name"
                                     class="w-full p-3 border rounded-lg">
                                 <small class="error-message text-red-500" data-field="customer_name"></small>
@@ -451,7 +452,7 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label for="start_date_date" class="block text-gray-700 font-semibold mb-1">Tanggal
-                                        Mulai</label>
+                                        Mulai <span class="text-red-500">*</span></label>
                                     <input type="date" name="start_date_date" id="start_date_date"
                                         class="w-full p-3 border rounded-lg">
                                     <small class="error-message text-red-500" data-field="start_date_date"></small>
@@ -459,7 +460,7 @@
 
                                 <div>
                                     <label for="start_date_time" class="block text-gray-700 font-semibold mb-1">Jam
-                                        Mulai</label>
+                                        Mulai <span class="text-red-500">*</span></label>
                                     <input type="time" name="start_date_time" id="start_date_time"
                                         class="w-full p-3 border rounded-lg">
                                     <small class="error-message text-red-500" data-field="start_date_time"></small>
@@ -468,9 +469,9 @@
 
                             <!-- Durasi -->
                             <div>
-                                <label for="duration" class="block text-gray-700 font-semibold mb-1">Durasi (hari)</label>
+                                <label for="duration" class="block text-gray-700 font-semibold mb-1">Durasi (hari) <span class="text-red-500">*</span></label>
                                 <input type="number" name="duration" id="duration"
-                                    class="w-full p-3 border rounded-lg">
+                                    class="w-full p-3 border rounded-lg" min="1" value="1">
                                 <small class="error-message text-red-500" data-field="duration"></small>
                             </div>
                         </div>
@@ -486,6 +487,9 @@
                                         class="w-full p-3 border rounded-lg file:transition-colors file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:rounded-md file:px-4 file:py-2">
                                 </div>
                                 <small class="error-message text-red-500" data-field="photo_id"></small>
+                                <div id="photo_preview" class="mt-2 hidden">
+                                    <img src="/placeholder.svg" alt="Preview Foto" class="w-32 h-32 object-cover rounded">
+                                </div>
                             </div>
 
                             <!-- Foto KTP -->
@@ -497,6 +501,9 @@
                                         class="w-full p-3 border rounded-lg file:transition-colors file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:rounded-md file:px-4 file:py-2">
                                 </div>
                                 <small class="error-message text-red-500" data-field="ktp_id"></small>
+                                <div id="ktp_preview" class="mt-2 hidden">
+                                    <img src="/placeholder.svg" alt="Preview KTP" class="w-32 h-32 object-cover rounded">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -505,7 +512,7 @@
                     <div class="mt-6 space-y-6">
                         <div>
                             <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Lokasi
-                                Pengambilan</label>
+                                Pengambilan <span class="text-red-500">*</span></label>
                             <textarea name="pickup_location" id="pickup_location" rows="3" class="w-full p-3 border rounded-lg"></textarea>
                             <small class="error-message text-red-500" data-field="pickup_location"></small>
                         </div>
@@ -518,6 +525,10 @@
                         </div>
                     </div>
 
+                    <!-- Hidden fields for additional data -->
+                    <input type="hidden" name="type" value="manual">
+                    <input type="hidden" name="status" value="confirmed">
+
                     <!-- Footer -->
                     <div class="bg-gray-50 px-4 sm:px-6 py-4 mt-8 border-t border-gray-200 rounded-b-2xl sticky bottom-0">
                         <div class="flex flex-col sm:flex-row justify-end gap-4">
@@ -525,7 +536,7 @@
                                 class="px-5 py-2.5 bg-gray-400 hover:bg-gray-500 text-white rounded-lg order-2 sm:order-1">
                                 Batal
                             </button>
-                            <button type="submit"
+                            <button type="submit" id="submitBtn"
                                 class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow order-1 sm:order-2">
                                 Simpan Booking
                             </button>
@@ -546,7 +557,6 @@
 
         <script>
             const BASE_API = "{{ config('api.base_url') }}";
-            dd(BASE_API);
 
             // Menerjemahkan status ke Bahasa Indonesia
             function translateStatus(status) {
@@ -612,6 +622,21 @@
                 if (m) {
                     m.classList.remove('hidden');
                     document.body.style.overflow = 'hidden';
+                    
+                    // Jika modal yang dibuka adalah modal tambah booking, muat data motor
+                    if (id === 'addBookingModal') {
+                        loadMotorData();
+                        
+                        // Set tanggal default ke hari ini
+                        const today = new Date().toISOString().split('T')[0];
+                        document.getElementById('start_date_date').value = today;
+                        
+                        // Set waktu default ke jam sekarang
+                        const now = new Date();
+                        const hours = String(now.getHours()).padStart(2, '0');
+                        const minutes = String(now.getMinutes()).padStart(2, '0');
+                        document.getElementById('start_date_time').value = `${hours}:${minutes}`;
+                    }
                 }
             }
 
@@ -621,6 +646,13 @@
                     m.classList.add('hidden');
                     document.body.style.overflow = 'auto';
                     m.querySelectorAll('.error-message').forEach(e => e.textContent = '');
+                    
+                    // Reset form jika modal booking
+                    if (id === 'addBookingModal') {
+                        document.getElementById('manualBookingForm').reset();
+                        document.getElementById('photo_preview').classList.add('hidden');
+                        document.getElementById('ktp_preview').classList.add('hidden');
+                    }
                 }
             }
 
@@ -691,26 +723,33 @@
                 showConfirmation('Konfirmasi', `Apakah Anda yakin ingin ${txt} booking ini?`, `Ya, ${txt}!`, 'Batal')
                     .then(res => {
                         if (!res.isConfirmed) return;
+                        console.log("URL:", url);
+                        console.log("Token:", "{{ session('token') }}");
+
                         fetch(url, {
-                                method: 'PUT',
-                                headers: {
-                                    "Authorization": "Bearer {{ session('token') }}",
-                                    "Content-Type": "application/json"
-                                }
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.message) {
-                                    showSuccessAlert(data.message);
-                                } else {
-                                    showSuccessAlert('Berhasil memperbarui status.');
-                                }
-                                setTimeout(() => location.reload(), 1500);
-                            })
-                            .catch(err => {
-                                console.error(err);
-                                showErrorAlert('Terjadi kesalahan: ' + err.message);
-                            });
+                            method: 'PUT',
+                            headers: {
+                                "Authorization": "Bearer {{ session('token') }}",
+                                "Content-Type": "application/json"
+                            }
+                        })
+                        .then(response => {
+                            console.log("Status:", response.status);
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Response Data:", data);
+                            if (data.message) {
+                                showSuccessAlert(data.message);
+                            } else {
+                                showSuccessAlert('Berhasil memperbarui status.');
+                            }
+                            setTimeout(() => location.reload(), 1500);
+                        })
+                        .catch(err => {
+                            console.error("Fetch Error:", err);
+                            showErrorAlert('Terjadi kesalahan: ' + err.message);
+                        });
                     });
             }
 
@@ -807,48 +846,131 @@
                     });
                 });
 
-                // Validasi form manual booking
-                document.getElementById('manualBookingForm')?.addEventListener('submit', e => {
-                    const f = e.target;
-                    f.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-                    let hasError = false;
-                    const setError = (field, msg) => {
-                        const el = f.querySelector(`.error-message[data-field="${field}"]`);
-                        if (el) el.textContent = msg;
-                        hasError = true;
-                    };
-
-                    const cn = f.customer_name.value.trim();
-                    if (!cn) setError('customer_name', 'Nama pelanggan harus diisi.');
-                    else if (cn.length < 3) setError('customer_name', 'Nama minimal 3 karakter.');
-                    else if (!/^[a-zA-Z\s]+$/.test(cn)) setError('customer_name',
-                        'Nama hanya boleh huruf dan spasi.');
-
-                    if (!f.motor_id.value) setError('motor_id', 'Pilih motor terlebih dahulu.');
-                    if (!f.start_date_date.value) setError('start_date_date', 'Tanggal mulai harus diisi.');
-                    if (!f.start_date_time.value) setError('start_date_time', 'Waktu mulai harus diisi.');
-
-                    const dur = parseInt(f.duration.value);
-                    if (!dur || dur <= 0) setError('duration', 'Durasi harus lebih dari 0.');
-
-                    if (!f.pickup_location.value.trim()) setError('pickup_location',
-                        'Lokasi penjemputan harus diisi.');
-
-                    [
-                        ['ktp_file', 'KTP'],
-                        ['photo_file', 'Foto']
-                    ].forEach(([fld, label]) => {
-                        const file = f[fld]?.files[0];
-                        if (file) {
-                            if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type))
-                                setError(fld, `File ${label} harus JPG atau PNG.`);
-                            if (file.size > 2 * 1024 * 1024)
-                                setError(fld, `Ukuran ${label} maksimal 2MB.`);
+                // Preview foto yang diupload
+                document.getElementById('photo_id')?.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const preview = document.getElementById('photo_preview');
+                            preview.querySelector('img').src = e.target.result;
+                            preview.classList.remove('hidden');
                         }
-                    });
-
-                    if (hasError) e.preventDefault();
+                        reader.readAsDataURL(file);
+                    }
                 });
+
+                document.getElementById('ktp_id')?.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const preview = document.getElementById('ktp_preview');
+                            preview.querySelector('img').src = e.target.result;
+                            preview.classList.remove('hidden');
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // Form submission
+                const form = document.getElementById('manualBookingForm');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        // Clear previous errors
+                        form.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+                        
+                        // Validasi form
+                        const errors = validateForm(form);
+                        if (Object.keys(errors).length > 0) {
+                            // Tampilkan error
+                            for (const [field, message] of Object.entries(errors)) {
+                                const errorEl = form.querySelector(`.error-message[data-field="${field}"]`);
+                                if (errorEl) errorEl.textContent = message;
+                            }
+                            return;
+                        }
+                        
+                        // Tampilkan loading
+                        const submitBtn = document.getElementById('submitBtn');
+                        const originalText = submitBtn.textContent;
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
+                        
+                        // Submit form
+                        const formData = new FormData(form);
+                        
+                        // Debug
+                        console.log('Form data:');
+                        for (const [key, value] of formData.entries()) {
+                            console.log(`${key}: ${value}`);
+                        }
+                        
+                        // Kirim ke server
+                        fetch(form.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || form.querySelector('input[name="_token"]').value
+                            }
+                        })
+                        .then(async response => {
+                            console.log('Response status:', response.status);
+                            
+                            const contentType = response.headers.get('content-type');
+                            let data;
+                            
+                            if (contentType && contentType.includes('application/json')) {
+                                data = await response.json();
+                            } else {
+                                data = { error: 'Response tidak dalam format JSON' };
+                            }
+                            
+                            console.log('Response data:', data);
+                            
+                            if (response.ok && data.message && !data.error) {
+                                // Sukses
+                                showSuccessAlert(data.message);
+                                closeModal('addBookingModal');
+                                setTimeout(() => location.reload(), 1500);
+                            } else {
+                                // Error - prioritaskan error dari API
+                                if (data.error) {
+                                    showErrorAlert(data.error);
+                                } else if (data.errors) {
+                                    // Validation errors
+                                    let errorMessages = [];
+                                    for (const [field, messages] of Object.entries(data.errors)) {
+                                        const errorEl = form.querySelector(`.error-message[data-field="${field}"]`);
+                                        if (errorEl) {
+                                            errorEl.textContent = Array.isArray(messages) ? messages[0] : messages;
+                                        }
+                                        errorMessages.push(Array.isArray(messages) ? messages[0] : messages);
+                                    }
+                                    if (errorMessages.length > 0) {
+                                        showErrorAlert('Terdapat kesalahan pada form: ' + errorMessages.join(', '));
+                                    }
+                                } else if (data.message) {
+                                    showErrorAlert(data.message);
+                                } else {
+                                    showErrorAlert('Terjadi kesalahan saat menyimpan booking');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Network Error:', error);
+                            showErrorAlert('Terjadi kesalahan jaringan: ' + error.message);
+                        })
+                        .finally(() => {
+                            // Reset button
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalText;
+                        });
+                    });
+                }
 
                 // Close modal when clicking outside
                 document.querySelectorAll('.modal').forEach(modal => {
@@ -859,6 +981,111 @@
                     });
                 });
             });
+
+            // Validasi form
+            function validateForm(form) {
+                const errors = {};
+                
+                // Validasi field wajib
+                const requiredFields = [
+                    { name: 'motor_id', label: 'Motor' },
+                    { name: 'customer_name', label: 'Nama Pelanggan' },
+                    { name: 'start_date_date', label: 'Tanggal Mulai' },
+                    { name: 'start_date_time', label: 'Jam Mulai' },
+                    { name: 'duration', label: 'Durasi' },
+                    { name: 'pickup_location', label: 'Lokasi Pengambilan' }
+                ];
+                
+                requiredFields.forEach(field => {
+                    const value = form[field.name].value.trim();
+                    if (!value) {
+                        errors[field.name] = `${field.label} harus diisi`;
+                    }
+                });
+                
+                // Validasi nama pelanggan
+                const customerName = form.customer_name.value.trim();
+                if (customerName && customerName.length < 3) {
+                    errors.customer_name = 'Nama minimal 3 karakter';
+                }
+                
+                // Validasi durasi
+                const duration = parseInt(form.duration.value);
+                if (isNaN(duration) || duration <= 0) {
+                    errors.duration = 'Durasi harus lebih dari 0';
+                }
+                
+                // Validasi file
+                ['photo_id', 'ktp_id'].forEach(fieldName => {
+                    const file = form[fieldName]?.files[0];
+                    if (file) {
+                        if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+                            errors[fieldName] = 'File harus JPG atau PNG';
+                        }
+                        if (file.size > 2 * 1024 * 1024) {
+                            errors[fieldName] = 'Ukuran file maksimal 2MB';
+                        }
+                    }
+                });
+                
+                return errors;
+            }
+
+            // Fungsi untuk memuat data motor
+            async function loadMotorData() {
+                try {
+                    const response = await fetch(`${BASE_API}/motor/vendor/`, {
+                        method: 'GET',
+                        headers: {
+                            "Authorization": "Bearer {{ session('token') }}",
+                            "Content-Type": "application/json"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.data && Array.isArray(result.data)) {
+                        populateMotorDropdown(result.data);
+                    } else {
+                        console.error('Format data motor tidak sesuai:', result);
+                        showErrorAlert('Gagal memuat data motor: Format data tidak sesuai');
+                    }
+                } catch (error) {
+                    console.error('Error loading motor data:', error);
+                    showErrorAlert('Gagal memuat data motor: ' + error.message);
+                }
+            }
+
+            // Fungsi untuk mengisi dropdown motor
+            function populateMotorDropdown(motors) {
+                const motorSelect = document.getElementById('motor_id');
+                
+                // Hapus opsi yang ada kecuali opsi default
+                motorSelect.innerHTML = '<option value="">-- Pilih Motor --</option>';
+                
+                // Tambahkan opsi motor - tampilkan semua motor
+                motors.forEach(motor => {
+                    const option = document.createElement('option');
+                    option.value = motor.id;
+                    
+                    // Tambahkan indikator status motor
+                    const statusText = motor.status === 'available' ? '' : ` (${motor.status})`;
+                    option.textContent = `${motor.name} - ${motor.brand} (${motor.year}) - Rp ${motor.price.toLocaleString('id-ID')}/hari - ${motor.platmotor}${statusText}`;
+                    option.setAttribute('data-motor', JSON.stringify(motor));
+                    
+                    // Tambahkan class untuk styling berdasarkan status
+                    if (motor.status !== 'available') {
+                        option.style.color = '#6B7280'; // gray-500
+                        option.style.fontStyle = 'italic';
+                    }
+                    
+                    motorSelect.appendChild(option);
+                });
+            }
         </script>
     </div>
 @endsection
