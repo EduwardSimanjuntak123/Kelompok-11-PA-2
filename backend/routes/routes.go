@@ -49,5 +49,5 @@ func SetupRoutes(router *gin.Engine) {
 	router.DELETE("/chat/room/:id", controllers.DeleteChatRoom)
 	router.GET("/chat/search", controllers.SearchChatMessages)
 	router.GET("/location-recommendations", controllers.GetAllLocationRecommendations)
-router.GET("/location-recommendations/:id", controllers.GetLocationRecommendationByID)
+	router.GET("/location-recommendations/:id", controllers.GetLocationRecommendationByID)
 }

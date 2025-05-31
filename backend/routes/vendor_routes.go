@@ -33,12 +33,11 @@ func VendorRoutes(router *gin.Engine) {
 
 			vendor.PUT("/bookings/:id/confirm", controllers.ConfirmBooking)
 			vendor.PUT("/bookings/:id/reject", controllers.RejectBooking)
-			
+
 			// Transaksi Otomatis
 			vendor.PUT("/bookings/transit/:id", controllers.SetBookingToTransit)
 			vendor.PUT("/bookings/inuse/:id", controllers.SetBookingToInUse)
 			vendor.PUT("/bookings/complete/:id", controllers.CompleteBooking)
-
 
 			// Transaksi Manual
 		}

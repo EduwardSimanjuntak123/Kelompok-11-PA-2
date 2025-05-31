@@ -1,66 +1,116 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+DOKUMENTASI API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+✅ AUTHENTIKASI & OTP
+POST /login                            : Login user
+POST /send-otp                         : Mengirim OTP ke email
+POST /verify-otp                       : Verifikasi OTP untuk login
+POST /request-reset-password-otp       : Request OTP untuk reset password (butuh login)
+POST /verify-reset-password-otp        : Verifikasi OTP untuk reset password
+POST /reset-password                   : Reset password dengan login
+POST /change-password                  : Ganti password menggunakan OTP
 
-## About Laravel
+✅ BOOKING & REVIEW (Public)
+GET /bookings/motor/:idmotor           : Melihat semua booking untuk motor tertentu
+GET /reviews/motor/:id                 : Melihat review untuk motor tertentu
+GET /reviews/vendor/:id                : Melihat review untuk vendor tertentu
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+✅ NOTIFIKASI (WebSocket & API)
+GET    /ws/notifikasi                         : WebSocket notifikasi real-time
+PUT    /notifications/:notification_id/status : Update status notifikasi
+GET    /notifications                         : Mendapatkan notifikasi user yang login
+DELETE /notifications/:notification_id        : Menghapus notifikasi tertentu
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+✅ MOTOR WEBSOCKET
+GET /ws/motor                         : WebSocket untuk update motor
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+✅ CHAT / PESAN (User & Vendor)
+GET    /ws/chat                       : WebSocket untuk chatting
+POST   /chat/message                  : Mengirim pesan baru
+GET    /chat/messages                 : Mengambil semua pesan dalam satu room
+POST   /chat/room                     : Mendapatkan atau membuat chat room
+GET    /chat/rooms                    : Mendapatkan semua chat room milik user
+PUT    /chat/messages/:id/read        : Tandai pesan sebagai sudah dibaca
+POST   /chat/mark-all-read            : Tandai semua pesan sebagai sudah dibaca
+GET    /chat/unread                   : Mendapatkan jumlah pesan yang belum dibaca
+DELETE /chat/room/:id                 : Menghapus chat room
+GET    /chat/search                   : Mencari pesan dalam semua chat
 
-## Learning Laravel
+✅ REKOMENDASI LOKASI
+GET /location-recommendations          : Mendapatkan semua rekomendasi lokasi
+GET /location-recommendations/:id      : Mendapatkan detail rekomendasi lokasi tertentu
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+✅ ADMIN ROUTES
+GET    /admin/vendors                          : Melihat semua vendor
+GET    /admin/transactions                     : Melihat semua transaksi
+GET    /admin/users                            : Melihat semua pengguna
+GET    /admin/profile                          : Melihat profil admin
+PUT    /admin/profile/edit                     : Mengedit profil admin
+PUT    /admin/activate-vendor/:id              : Mengaktifkan vendor
+PUT    /admin/deactivate-vendor/:id            : Menonaktifkan vendor
+GET    /admin/CustomerandVendor                : Mendapatkan data gabungan customer dan vendor
+POST   /admin/location-recommendations         : Menambahkan rekomendasi lokasi
+PUT    /admin/location-recommendations/:id     : Mengedit rekomendasi lokasi
+DELETE /admin/location-recommendations/:id     : Menghapus rekomendasi lokasi
+GET    /admin/vendor/:id/detail                : Melihat detail lengkap vendor
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+✅ CUSTOMER ROUTES
+POST /customer/register                        : Registrasi sebagai customer
+POST /customer/cancel-registration             : Membatalkan pendaftaran
+GET  /customer/motors                          : Melihat semua motor
+GET  /customer/motors/vendor/:vendor_id        : Melihat motor berdasarkan vendor
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+POST   /customer/bookings                      : Membuat booking baru
+GET    /customer/bookings                      : Melihat semua booking customer
+GET    /customer/profile                       : Melihat profil customer
+POST   /customer/review/:id                    : Membuat review untuk vendor/motor
+GET    /customer/extensions                    : Melihat permintaan perpanjangan
+GET    /customer/bookings/:booking_id/extensions : Lihat semua perpanjangan untuk 1 booking
+PUT    /customer/bookings/:id/cancel           : Membatalkan booking
+POST   /customer/bookings/:id/extend           : Meminta perpanjangan booking
+GET    /customer/transactions                  : Melihat riwayat transaksi customer
+PUT    /customer/profile                       : Mengedit profil customer
+PUT    /customer/change-password               : Mengubah password customer
 
-## Laravel Sponsors
+✅ KECAMATAN ROUTES
+GET /kecamatan/                                : Melihat semua kecamatan
+GET /kecamatan/:id                             : Melihat detail kecamatan berdasarkan ID
+POST   /kecamatan/                             : Menambahkan kecamatan baru
+PUT    /kecamatan/:id                          : Mengedit kecamatan
+DELETE /kecamatan/:id                          : Menghapus kecamatan
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+✅ MOTOR ROUTES
+GET /motor/                                    : Melihat semua motor
+GET /motor/:id                                 : Melihat detail motor
+GET    /motor/vendor/                          : Melihat semua motor milik vendor
+GET    /motor/vendor/:id                       : Melihat detail motor milik vendor
+POST   /motor/vendor/                          : Menambahkan motor baru
+PUT    /motor/vendor/:id                       : Mengedit motor
+DELETE /motor/vendor/:id                       : Menghapus motor
 
-### Premium Partners
+✅ TRANSACTIONS ROUTES
+GET  /transaction/           : Melihat semua transaksi milik vendor
+POST /transaction/manual     : Menambahkan transaksi manual oleh vendor
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+✅ VENDOR ROUTES
+GET  /vendor/:id                         : Melihat detail vendor berdasarkan ID
+GET  /vendor/                            : Melihat daftar semua vendor
+POST /vendor/register                    : Registrasi sebagai vendor
+POST /vendor/cancel-registration         : Membatalkan pendaftaran
+GET    /vendor/profile                   : Melihat profil vendor
+PUT    /vendor/profile/edit              : Mengedit profil vendor
+GET    /vendor/reviews                   : Melihat review untuk vendor
+POST   /vendor/review/:id/reply          : Membalas review tertentu
+POST   /vendor/manual/bookings           : Membuat booking manual
+GET    /vendor/extensions                : Melihat permintaan perpanjangan booking
+PUT    /vendor/extensions/:id/approve    : Menyetujui perpanjangan booking
+PUT    /vendor/extensions/:id/reject     : Menolak perpanjangan booking
+GET  /vendor/bookings                   : Melihat semua booking vendor
+GET  /vendor/bookings/:id               : Melihat detail booking tertentu
+PUT  /vendor/bookings/:id/confirm       : Mengonfirmasi booking
+PUT  /vendor/bookings/:id/reject        : Menolak booking
+PUT  /vendor/bookings/transit/:id       : Mengubah status booking menjadi "Transit"
+PUT  /vendor/bookings/inuse/:id         : Mengubah status booking menjadi "Sedang digunakan"
+PUT  /vendor/bookings/complete/:id      : Menyelesaikan booking
 
-## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

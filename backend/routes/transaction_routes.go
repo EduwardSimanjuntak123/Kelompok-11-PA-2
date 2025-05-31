@@ -10,10 +10,8 @@ import (
 func TransactionRoutes(router *gin.Engine) {
 	transaction := router.Group("/transaction")
 	{
-		// transaction.GET("/", controllers.GetAllMotor)
-		// transaction.GET("/:id", controllers.GetMotorByID)
 
-		// Admin-only routes																	
+		// Admin-only routes
 		transaction.Use(middleware.AuthMiddleware("vendor"))
 		{
 			transaction.GET("/", controllers.GetVendorTransactions)
@@ -23,5 +21,3 @@ func TransactionRoutes(router *gin.Engine) {
 		}
 	}
 }
-
-
