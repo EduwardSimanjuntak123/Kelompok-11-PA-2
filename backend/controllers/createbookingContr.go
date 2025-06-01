@@ -88,7 +88,7 @@ func CreateBooking(c *gin.Context) {
 	log.Printf("[DEBUG] Creating booking for user_id: %d", userID)
 
 	// Hitung tanggal mulai & selesai
-	startDateUTC := bookingInput.StartDate.UTC()
+	startDateUTC := bookingInput.StartDate
 	endDateUTC := startDateUTC.Add(time.Duration(bookingInput.Duration*24) * time.Hour)
 
 	// Cek konflik
