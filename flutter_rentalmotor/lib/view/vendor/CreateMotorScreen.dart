@@ -31,7 +31,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
   final _colorController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _licensePlateController = TextEditingController();
-  String _type = 'matic';
+  String _type = 'automatic';
 
   @override
   void dispose() {
@@ -549,7 +549,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                             value: _type,
                             items: const [
                               DropdownMenuItem(
-                                  value: 'matic', child: Text('Matic')),
+                                  value: 'automatic', child: Text('Matic')),
                               DropdownMenuItem(
                                   value: 'manual', child: Text('Manual')),
                               DropdownMenuItem(
