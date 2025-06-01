@@ -88,25 +88,10 @@ func CreateBooking(c *gin.Context) {
 	log.Printf("[DEBUG] Creating booking for user_id: %d", userID)
 
 	// Hitung tanggal mulai & selesai
-// Perlakukan input UTC seolah-olah dikirim sebagai WIB
-loc, _ := time.LoadLocation("Asia/Jakarta")
+	// Perlakukan input UTC seolah-olah dikirim sebagai WIB
 
-startDateWIB := time.Date(
-	bookingInput.StartDate.Year(),
-	bookingInput.StartDate.Month(),
-	bookingInput.StartDate.Day(),
-	bookingInput.StartDate.Hour(),
-	bookingInput.StartDate.Minute(),
-	bookingInput.StartDate.Second(),
-	bookingInput.StartDate.Nanosecond(),
-	loc,
-)
-
-startDateUTC := startDateWIB.UTC()
-endDateUTC := startDateUTC.Add(time.Duration(bookingInput.Duration*24) * time.Hour)
-
-
-
+	startDateUTC := bookingInput.StartDate.UTC()
+	endDateUTC := startDateUTC.Add(time.Duration(bookingInput.Duration*24) * time.Hour)
 
 	if err := checkBookingConflict(startDateUTC, endDateUTC, bookingInput.MotorID); err != nil {
 		log.Printf("[DEBUG] Booking conflict detected: %v", err)

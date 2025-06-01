@@ -467,7 +467,6 @@ func GetVendorBookings(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-
 // GetBookingByIDForVendor mengambil detail booking berdasarkan ID oleh vendor
 func GetBookingByIDForVendor(c *gin.Context) {
 	id := c.Param("id")

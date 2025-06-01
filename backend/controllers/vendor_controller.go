@@ -278,6 +278,12 @@ func CompleteBooking(c *gin.Context) {
 }
 
 func CreateTransaction(booking models.Booking) error {
+
+	if booking.CustomerID == nil {
+		log.Printf("[INFO] Booking ID %d tidak punya CustomerID, pakai dummy ID", booking.ID)
+		dummyID := uint(9999) // Sesuaikan dengan user dummy di DB
+		booking.CustomerID = &dummyID
+	}
 	// Hitung total harga menggunakan fungsi terpisah
 	totalPrice := CalculateTotalPrice(booking.MotorID, booking.StartDate, booking.EndDate)
 	if totalPrice == 0 {
