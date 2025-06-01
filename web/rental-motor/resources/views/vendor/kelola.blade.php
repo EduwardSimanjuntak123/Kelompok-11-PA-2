@@ -94,14 +94,14 @@
 
                                 <td class="py-4 px-6 text-left align-middle">
                                     <a href="javascript:void(0)"
-                                        class="open-booking-modal group text-blue-600 font-semibold underline hover:underline cursor-pointer flex items-center"
+                                        class="open-booking-modal group text-blue-600 font-reguler underline hover:underline cursor-pointer flex items-center"
                                         data-booking='@json(array_merge($pesanan, ['potoid' => $pesanan['potoid'] ? config('api.base_url') . $pesanan['potoid'] : null]),
                                             JSON_UNESCAPED_SLASHES)'
                                         title="Klik untuk melihat detail pemesanan">
-                                        <i class="fas fa-info-circle mr-1 text-gray-500 group-hover:text-blue-500"></i>
-                                        <span>{{ $pesanan['customer_name'] }}</span>
+                                        <span class="italic">lihat data pemesan &gt;</span>
                                     </a>
                                 </td>
+                                
 
                                 <!-- Detail Motor -->
                                 <td class="py-3 px-4 text-left align-middle">
@@ -314,71 +314,126 @@
 
         <!-- Modal Detail Pemesanan -->
         <div id="bookingDetailModal"
-            class="modal hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300 p-4"
-            data-modal-id="bookingDetailModal">
+            class="modal hidden fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm z-50 flex items-center justify-center transition-opacity duration-300 p-4">
             <div
-                class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative scale-95 transition-transform duration-200">
-                <!-- Header dengan background biru -->
+                class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto relative transition-transform duration-200">
+                <!-- Header dengan background gradient -->
                 <div
-                    class="flex justify-between items-center border-b p-4 sm:p-6 sticky top-0 bg-blue-600 text-white rounded-t-2xl">
-                    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor"
-                            stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M8 7V3m8 4V3m-9 8h10m-9 4h10m-3 4h3a2 2 0 002-2v-5a2 2 0 00-2-2h-3M5 21h3a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2z" />
-                        </svg>
-                        Detail Pemesanan
-                    </h2>
+                    class="flex justify-between items-center p-6 sticky top-0 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-t-2xl">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-700 rounded-full">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8 7V3m8 4V3m-9 8h10m-9 4h10m-3 4h3a2 2 0 002-2v-5a2 2 0 00-2-2h-3M5 21h3a2 2 0 002-2v-5a2 2 0 00-2-2H5a2 2 0 00-2 2v5a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold">Detail Pemesanan</h2>
+                        </div>
+                    </div>
                     <button type="button" onclick="closeBookingModal()"
-                        class="close-modal close-btn text-white hover:text-gray-200 text-2xl sm:text-3xl leading-none font-light transition-all duration-200">
+                        class="close-modal close-btn text-white hover:text-blue-200 text-3xl leading-none font-light transition-all duration-200">
                         &times;
                     </button>
                 </div>
 
                 <!-- Content -->
-                <div class="p-4 sm:p-6">
-                    <div class="flex flex-col lg:flex-row gap-6">
-                        <!-- Image -->
-                        <div class="w-full lg:w-1/2 flex justify-center items-start">
-                            <img id="modalCustomerPhoto" src="/placeholder.svg" alt="Foto Customer"
-                                class="w-full max-w-sm h-48 sm:h-64 lg:h-60 object-cover rounded-xl border shadow"
-                                onerror="this.onerror=null; this.src='{{ asset('images/default-user.png') }}'">
+                <div class="p-6">
+                    <div class="flex flex-col lg:flex-row gap-8">
+                        <!-- Foto Profil dengan Frame -->
+                        <div class="w-full lg:w-2/5 flex flex-col items-center">
+                            <div class="relative mb-4">
+                                <img id="modalCustomerPhoto" src="/placeholder.svg" alt="Foto Customer"
+                                    class="w-40 h-40 object-cover rounded-xl border-4 border-white shadow-lg ring-2 ring-blue-200"
+                                    onerror="this.onerror=null; this.src='{{ asset('images/default-user.png') }}'">
+                            </div>
+
+                            <!-- Info Kontak -->
+                            <div class="w-full bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-2">
+                                <div class="flex items-center gap-2 text-gray-700">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5.121 17.804A13.937 13.937 0 0112 15c2.761 0 5.304.804 7.879 2.196M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span id="modalCustomerName">-</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-700">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <span id="modalCustomerEmail">-</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-700">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                    <span id="modalCustomerPhone">-</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Info -->
-                        <div class="w-full lg:w-1/2 space-y-3 text-sm sm:text-base text-gray-700">
-                            <p class="flex flex-col sm:flex-row sm:items-center">
-                                <span class="font-semibold mb-1 sm:mb-0 sm:mr-2">Nama:</span>
-                                <span id="modalCustomerName" class="break-words">–</span>
-                            </p>
-                            <p class="flex flex-col sm:flex-row sm:items-center">
-                                <span class="font-semibold mb-1 sm:mb-0 sm:mr-2">Tanggal Booking:</span>
-                                <span id="modalBookingDate"
-                                    class="px-2 py-1 bg-blue-100 text-blue-800 font-medium rounded text-xs sm:text-sm">–</span>
-                            </p>
-                            <p class="flex flex-col sm:flex-row sm:items-center">
-                                <span class="font-semibold mb-1 sm:mb-0 sm:mr-2">Mulai Sewa:</span>
-                                <span id="modalStartDate"
-                                    class="px-2 py-1 bg-green-100 text-green-800 font-medium rounded text-xs sm:text-sm">–</span>
-                            </p>
-                            <p class="flex flex-col sm:flex-row sm:items-center">
-                                <span class="font-semibold mb-1 sm:mb-0 sm:mr-2">Akhir Sewa:</span>
-                                <span id="modalEndDate"
-                                    class="px-2 py-1 bg-red-100 text-red-800 font-medium rounded text-xs sm:text-sm">–</span>
-                            </p>
-                            <p class="flex flex-col sm:flex-row sm:items-center">
-                                <span class="font-semibold mb-1 sm:mb-0 sm:mr-2">Tujuan Booking:</span>
-                                <span id="modalPurpose" class="break-words">–</span>
-                            </p>
-                            <p class="flex flex-col sm:flex-row sm:items-center">
-                                <span class="font-semibold mb-1 sm:mb-0 sm:mr-2">Lokasi Jemput:</span>
-                                <span id="modalPickup" class="break-words">–</span>
-                            </p>
-                            <p class="flex flex-col sm:flex-row sm:items-center">
-                                <span class="font-semibold mb-1 sm:mb-0 sm:mr-2">Status:</span>
-                                <span id="modalStatus"
-                                    class="inline-block px-3 py-1 text-sm font-semibold rounded-full capitalize bg-blue-100 text-blue-800">–</span>
-                            </p>
+                        <!-- Detail Pemesanan -->
+                        <div class="w-full lg:w-3/5 space-y-5">
+                            <!-- Card Tanggal -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                    <p class="text-sm text-blue-600 font-medium">Tanggal Booking</p>
+                                    <p id="modalBookingDate" class="text-lg font-semibold text-blue-800">-</p>
+                                </div>
+                                <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                                    <p class="text-sm text-green-600 font-medium">Mulai Sewa</p>
+                                    <p id="modalStartDate" class="text-lg font-semibold text-green-800">-</p>
+                                </div>
+                                <div class="bg-red-50 p-4 rounded-lg border border-red-100">
+                                    <p class="text-sm text-red-600 font-medium">Akhir Sewa</p>
+                                    <p id="modalEndDate" class="text-lg font-semibold text-red-800">-</p>
+                                </div>
+                            </div>
+
+                            <!-- Card Informasi -->
+                            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        Informasi Pemesanan
+                                    </h3>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <p class="text-sm text-gray-500">Tujuan Booking</p>
+                                            <p id="modalPurpose" class="font-medium text-gray-800">-</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-500">Lokasi Penjemputan</p>
+                                            <p id="modalPickup" class="font-medium text-gray-800">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- @dd($bookings) --}}
+                            <!-- Status -->
+                            <div class="bg-white p-4 rounded-lg border border-gray-200">
+                                <p class="text-sm text-gray-500 mb-2">Status Pemesanan</p>
+                                <div class="flex items-center gap-2">
+                                    <span id="modalStatus"
+                                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold capitalize bg-blue-100 text-blue-800">
+                                        <span class="w-2 h-2 rounded-full bg-blue-600 mr-2"></span>
+                                        -
+                                    </span>
+                                    <p id="modalStatusDescription" class="text-sm text-gray-600">Pemesanan sedang diproses
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -430,7 +485,8 @@
                         <div class="space-y-6">
                             <!-- Dropdown Motor -->
                             <div>
-                                <label for="motor_id" class="block text-gray-700 font-semibold mb-1">Pilih Motor <span class="text-red-500">*</span></label>
+                                <label for="motor_id" class="block text-gray-700 font-semibold mb-1">Pilih Motor <span
+                                        class="text-red-500">*</span></label>
                                 <select name="motor_id" id="motor_id"
                                     class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500">
                                     <option value="">-- Pilih Motor --</option>
@@ -469,15 +525,25 @@
 
                             <!-- Durasi -->
                             <div>
-                                <label for="duration" class="block text-gray-700 font-semibold mb-1">Durasi (hari) <span class="text-red-500">*</span></label>
+                                <label for="duration" class="block text-gray-700 font-semibold mb-1">Durasi (hari) <span
+                                        class="text-red-500">*</span></label>
                                 <input type="number" name="duration" id="duration"
-                                    class="w-full p-3 border rounded-lg" min="1" value="1">
+                                    class="w-full p-3 border rounded-lg" min="1" placeholder="cth : 1">
                                 <small class="error-message text-red-500" data-field="duration"></small>
                             </div>
+
                         </div>
 
                         <!-- Kolom Kanan - Upload File -->
                         <div class="space-y-6">
+                            <!-- Tujuan Booking (Baru Ditambahkan) -->
+                            <div>
+                                <label for="purpose" class="block text-gray-700 font-semibold mb-1">Tujuan Booking <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" name="booking_purpose" id="booking_purpose"
+                                    placeholder="cth : Liburan, Tour, dll" class="w-full p-3 border rounded-lg">
+                                <small class="error-message text-red-500" data-field="booking_purpose"></small>
+                            </div>
                             <!-- Foto Diri -->
                             <div>
                                 <label for="photo_id" class="block text-gray-700 font-semibold mb-1">Foto Pelanggan
@@ -488,7 +554,8 @@
                                 </div>
                                 <small class="error-message text-red-500" data-field="photo_id"></small>
                                 <div id="photo_preview" class="mt-2 hidden">
-                                    <img src="/placeholder.svg" alt="Preview Foto" class="w-32 h-32 object-cover rounded">
+                                    <img src="/placeholder.svg" alt="Preview Foto"
+                                        class="w-32 h-32 object-cover rounded">
                                 </div>
                             </div>
 
@@ -513,14 +580,16 @@
                         <div>
                             <label for="pickup_location" class="block text-gray-700 font-semibold mb-1">Lokasi
                                 Pengambilan <span class="text-red-500">*</span></label>
-                            <textarea name="pickup_location" id="pickup_location" rows="3" class="w-full p-3 border rounded-lg"></textarea>
+                            <textarea name="pickup_location" id="pickup_location" rows="3" class="w-full p-3 border rounded-lg"
+                                placeholder="cth : Balige, Porsea, Laguboti, dll.."></textarea>
                             <small class="error-message text-red-500" data-field="pickup_location"></small>
                         </div>
 
                         <div>
                             <label for="dropoff_location" class="block text-gray-700 font-semibold mb-1">Lokasi
                                 Penjemputan (Opsional)</label>
-                            <textarea name="dropoff_location" id="dropoff_location" rows="3" class="w-full p-3 border rounded-lg"></textarea>
+                            <textarea name="dropoff_location" id="dropoff_location" rows="3" class="w-full p-3 border rounded-lg"
+                                placeholder="cth : Balige, Porsea, Laguboti, dll.."></textarea>
                             <small class="error-message text-red-500" data-field="dropoff_location"></small>
                         </div>
                     </div>
@@ -622,20 +691,20 @@
                 if (m) {
                     m.classList.remove('hidden');
                     document.body.style.overflow = 'hidden';
-                    
+
                     // Jika modal yang dibuka adalah modal tambah booking, muat data motor
                     if (id === 'addBookingModal') {
                         loadMotorData();
-                        
+
                         // Set tanggal default ke hari ini
-                        const today = new Date().toISOString().split('T')[0];
-                        document.getElementById('start_date_date').value = today;
-                        
+                        // const today = new Date().toISOString().split('T')[0];
+                        document.getElementById('start_date_date');
+
                         // Set waktu default ke jam sekarang
-                        const now = new Date();
-                        const hours = String(now.getHours()).padStart(2, '0');
-                        const minutes = String(now.getMinutes()).padStart(2, '0');
-                        document.getElementById('start_date_time').value = `${hours}:${minutes}`;
+                        // const now = new Date();
+                        // const hours = String(now.getHours()).padStart(2, '0');
+                        // const minutes = String(now.getMinutes()).padStart(2, '0');
+                        // document.getElementById('start_date_time').value = `${hours}:${minutes}`;
                     }
                 }
             }
@@ -646,7 +715,7 @@
                     m.classList.add('hidden');
                     document.body.style.overflow = 'auto';
                     m.querySelectorAll('.error-message').forEach(e => e.textContent = '');
-                    
+
                     // Reset form jika modal booking
                     if (id === 'addBookingModal') {
                         document.getElementById('manualBookingForm').reset();
@@ -727,29 +796,29 @@
                         console.log("Token:", "{{ session('token') }}");
 
                         fetch(url, {
-                            method: 'PUT',
-                            headers: {
-                                "Authorization": "Bearer {{ session('token') }}",
-                                "Content-Type": "application/json"
-                            }
-                        })
-                        .then(response => {
-                            console.log("Status:", response.status);
-                            return response.json();
-                        })
-                        .then(data => {
-                            console.log("Response Data:", data);
-                            if (data.message) {
-                                showSuccessAlert(data.message);
-                            } else {
-                                showSuccessAlert('Berhasil memperbarui status.');
-                            }
-                            setTimeout(() => location.reload(), 1500);
-                        })
-                        .catch(err => {
-                            console.error("Fetch Error:", err);
-                            showErrorAlert('Terjadi kesalahan: ' + err.message);
-                        });
+                                method: 'PUT',
+                                headers: {
+                                    "Authorization": "Bearer {{ session('token') }}",
+                                    "Content-Type": "application/json"
+                                }
+                            })
+                            .then(response => {
+                                console.log("Status:", response.status);
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log("Response Data:", data);
+                                if (data.message) {
+                                    showSuccessAlert(data.message);
+                                } else {
+                                    showSuccessAlert('Berhasil memperbarui status.');
+                                }
+                                setTimeout(() => location.reload(), 1500);
+                            })
+                            .catch(err => {
+                                console.error("Fetch Error:", err);
+                                showErrorAlert('Terjadi kesalahan: ' + err.message);
+                            });
                     });
             }
 
@@ -799,6 +868,12 @@
 
                         // Set teks-teks lain...
                         document.getElementById('modalCustomerName').textContent = data.customer_name ||
+                            '-';
+                        document.getElementById('modalCustomerEmail').textContent = data
+                            .customer_email ||
+                            '-';
+                        document.getElementById('modalCustomerPhone').textContent = data
+                            .customer_phone ||
                             '-';
                         document.getElementById('modalBookingDate').textContent = formatDateTime(data
                             .booking_date);
@@ -878,10 +953,10 @@
                 if (form) {
                     form.addEventListener('submit', function(e) {
                         e.preventDefault();
-                        
+
                         // Clear previous errors
                         form.querySelectorAll('.error-message').forEach(el => el.textContent = '');
-                        
+
                         // Validasi form
                         const errors = validateForm(form);
                         if (Object.keys(errors).length > 0) {
@@ -892,129 +967,169 @@
                             }
                             return;
                         }
-                        
+
                         // Tampilkan loading
                         const submitBtn = document.getElementById('submitBtn');
                         const originalText = submitBtn.textContent;
                         submitBtn.disabled = true;
                         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
-                        
+
                         // Submit form
                         const formData = new FormData(form);
-                        
-                        // Debug
-                        console.log('Form data:');
-                        for (const [key, value] of formData.entries()) {
-                            console.log(`${key}: ${value}`);
-                        }
-                        
+
                         // Kirim ke server
                         fetch(form.action, {
-                            method: 'POST',
-                            body: formData,
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || form.querySelector('input[name="_token"]').value
-                            }
-                        })
-                        .then(async response => {
-                            console.log('Response status:', response.status);
-                            
-                            const contentType = response.headers.get('content-type');
-                            let data;
-                            
-                            if (contentType && contentType.includes('application/json')) {
-                                data = await response.json();
-                            } else {
-                                data = { error: 'Response tidak dalam format JSON' };
-                            }
-                            
-                            console.log('Response data:', data);
-                            
-                            if (response.ok && data.message && !data.error) {
-                                // Sukses
-                                showSuccessAlert(data.message);
-                                closeModal('addBookingModal');
-                                setTimeout(() => location.reload(), 1500);
-                            } else {
-                                // Error - prioritaskan error dari API
-                                if (data.error) {
-                                    showErrorAlert(data.error);
-                                } else if (data.errors) {
-                                    // Validation errors
-                                    let errorMessages = [];
-                                    for (const [field, messages] of Object.entries(data.errors)) {
-                                        const errorEl = form.querySelector(`.error-message[data-field="${field}"]`);
-                                        if (errorEl) {
-                                            errorEl.textContent = Array.isArray(messages) ? messages[0] : messages;
-                                        }
-                                        errorMessages.push(Array.isArray(messages) ? messages[0] : messages);
-                                    }
-                                    if (errorMessages.length > 0) {
-                                        showErrorAlert('Terdapat kesalahan pada form: ' + errorMessages.join(', '));
-                                    }
-                                } else if (data.message) {
-                                    showErrorAlert(data.message);
-                                } else {
-                                    showErrorAlert('Terjadi kesalahan saat menyimpan booking');
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                        ?.getAttribute('content') ||
+                                        form.querySelector('input[name="_token"]').value
                                 }
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Network Error:', error);
-                            showErrorAlert('Terjadi kesalahan jaringan: ' + error.message);
-                        })
-                        .finally(() => {
-                            // Reset button
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = originalText;
-                        });
+                            })
+                            .then(async response => {
+                                const contentType = response.headers.get('content-type');
+                                let data;
+
+                                if (contentType && contentType.includes('application/json')) {
+                                    data = await response.json();
+                                } else {
+                                    data = {
+                                        error: 'Response tidak dalam format JSON'
+                                    };
+                                }
+
+                                if (response.ok && data.message && !data.error) {
+                                    // Sukses
+                                    showSuccessAlert(data.message);
+                                    closeModal('addBookingModal');
+                                    setTimeout(() => location.reload(), 1500);
+                                } else {
+                                    // Error - prioritaskan error dari API
+                                    if (data.error) {
+                                        showErrorAlert(data.error);
+                                    } else if (data.errors) {
+                                        // Validation errors
+                                        let errorMessages = [];
+                                        for (const [field, messages] of Object.entries(data.errors)) {
+                                            const errorEl = form.querySelector(
+                                                `.error-message[data-field="${field}"]`);
+                                            if (errorEl) {
+                                                errorEl.textContent = Array.isArray(messages) ?
+                                                    messages[0] : messages;
+                                            }
+                                            errorMessages.push(Array.isArray(messages) ? messages[0] :
+                                                messages);
+                                        }
+                                        if (errorMessages.length > 0) {
+                                            showErrorAlert('Terdapat kesalahan pada form: ' +
+                                                errorMessages.join(', '));
+                                        }
+                                    } else if (data.message) {
+                                        showErrorAlert(data.message);
+                                    } else {
+                                        showErrorAlert('Terjadi kesalahan saat menyimpan booking');
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Network Error:', error);
+                                showErrorAlert('Terjadi kesalahan jaringan: ' + error.message);
+                            })
+                            .finally(() => {
+                                // Reset button
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalText;
+                            });
                     });
                 }
-
-                // Close modal when clicking outside
-                document.querySelectorAll('.modal').forEach(modal => {
-                    modal.addEventListener('click', e => {
-                        if (e.target === modal) {
-                            closeModal(modal.id);
-                        }
-                    });
-                });
             });
 
             // Validasi form
             function validateForm(form) {
                 const errors = {};
-                
+
                 // Validasi field wajib
-                const requiredFields = [
-                    { name: 'motor_id', label: 'Motor' },
-                    { name: 'customer_name', label: 'Nama Pelanggan' },
-                    { name: 'start_date_date', label: 'Tanggal Mulai' },
-                    { name: 'start_date_time', label: 'Jam Mulai' },
-                    { name: 'duration', label: 'Durasi' },
-                    { name: 'pickup_location', label: 'Lokasi Pengambilan' }
+                const requiredFields = [{
+                        name: 'motor_id',
+                        label: 'Motor'
+                    },
+                    {
+                        name: 'customer_name',
+                        label: 'Nama Pelanggan'
+                    },
+                    {
+                        name: 'booking_purpose',
+                        label: 'Tujuan Booking'
+                    },
+                    {
+                        name: 'start_date_date',
+                        label: 'Tanggal Mulai'
+                    },
+                    {
+                        name: 'start_date_time',
+                        label: 'Jam Mulai'
+                    },
+                    {
+                        name: 'duration',
+                        label: 'Durasi'
+                    },
+                    {
+                        name: 'pickup_location',
+                        label: 'Lokasi Pengambilan'
+                    }
                 ];
-                
+
                 requiredFields.forEach(field => {
                     const value = form[field.name].value.trim();
                     if (!value) {
                         errors[field.name] = `${field.label} harus diisi`;
                     }
                 });
-                
-                // Validasi nama pelanggan
+
+                // Validasi tambahan
+                const purpose = form.booking_purpose.value.trim();
+                if (purpose && purpose.length < 5) {
+                    errors.booking_purpose = 'Tujuan booking minimal 5 karakter';
+                }
+
                 const customerName = form.customer_name.value.trim();
                 if (customerName && customerName.length < 3) {
                     errors.customer_name = 'Nama minimal 3 karakter';
                 }
-                
-                // Validasi durasi
-                const duration = parseInt(form.duration.value);
-                if (isNaN(duration) || duration <= 0) {
-                    errors.duration = 'Durasi harus lebih dari 0';
+
+                const durationRaw = form.duration.value.trim();
+                if (!durationRaw) {
+                    errors.duration = 'Durasi harus diisi';
+                } else {
+                    const duration = parseInt(durationRaw);
+                    if (isNaN(duration) || duration <= 0) {
+                        errors.duration = 'Durasi harus lebih dari 0';
+                    }
                 }
-                
+
+
+                const startDateValue = form.start_date_date.value.trim();
+                const startTimeValue = form.start_date_time.value.trim();
+
+                if (!startDateValue) {
+                    errors.start_date_date = 'Tanggal mulai harus diisi';
+                } else {
+                    const startDate = new Date(startDateValue);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (startDate < today) {
+                        errors.start_date_date = 'Tanggal tidak boleh kurang dari hari ini';
+                    }
+                }
+
+                if (!startTimeValue) {
+                    errors.start_date_time = 'Jam mulai harus diisi';
+                }
+
+
+
                 // Validasi file
                 ['photo_id', 'ktp_id'].forEach(fieldName => {
                     const file = form[fieldName]?.files[0];
@@ -1027,7 +1142,7 @@
                         }
                     }
                 });
-                
+
                 return errors;
             }
 
@@ -1047,7 +1162,7 @@
                     }
 
                     const result = await response.json();
-                    
+
                     if (result.data && Array.isArray(result.data)) {
                         populateMotorDropdown(result.data);
                     } else {
@@ -1063,26 +1178,25 @@
             // Fungsi untuk mengisi dropdown motor
             function populateMotorDropdown(motors) {
                 const motorSelect = document.getElementById('motor_id');
-                
+
                 // Hapus opsi yang ada kecuali opsi default
                 motorSelect.innerHTML = '<option value="">-- Pilih Motor --</option>';
-                
-                // Tambahkan opsi motor - tampilkan semua motor
+
+                // Tambahkan opsi motor
                 motors.forEach(motor => {
                     const option = document.createElement('option');
                     option.value = motor.id;
-                    
-                    // Tambahkan indikator status motor
+
                     const statusText = motor.status === 'available' ? '' : ` (${motor.status})`;
-                    option.textContent = `${motor.name} - ${motor.brand} (${motor.year}) - Rp ${motor.price.toLocaleString('id-ID')}/hari - ${motor.platmotor}${statusText}`;
+                    option.textContent =
+                        `${motor.name} - ${motor.brand} (${motor.year}) - Rp ${motor.price.toLocaleString('id-ID')}/hari - ${motor.platmotor}${statusText}`;
                     option.setAttribute('data-motor', JSON.stringify(motor));
-                    
-                    // Tambahkan class untuk styling berdasarkan status
+
                     if (motor.status !== 'available') {
-                        option.style.color = '#6B7280'; // gray-500
+                        option.style.color = '#6B7280';
                         option.style.fontStyle = 'italic';
                     }
-                    
+
                     motorSelect.appendChild(option);
                 });
             }

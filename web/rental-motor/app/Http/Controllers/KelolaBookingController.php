@@ -192,6 +192,7 @@ class KelolaBookingController extends Controller
 public function addManualBooking(Request $request)
 {
     try {
+        // Cek token login
         $token = session()->get('token');
         if (!$token) {
             if ($request->ajax()) {
@@ -200,23 +201,24 @@ public function addManualBooking(Request $request)
             return redirect()->back()->with('error', 'Anda harus login terlebih dahulu.');
         }
 
-        // Validasi input (tanpa end_date, pakai duration)
+        // Validasi input (gunakan aturan validasi yang sudah ditentukan)
         $validated = $request->validate([
             'motor_id' => 'required|integer',
             'customer_name' => 'required|string|min:3',
             'start_date_date' => 'required|date_format:Y-m-d',
             'start_date_time' => 'required|date_format:H:i',
             'duration' => 'required|integer|min:1',
+            'booking_purpose' => 'required|string',
             'pickup_location' => 'required|string',
             'dropoff_location' => 'nullable|string',
             'photo_id' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
             'ktp_id' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        // Gabungkan input tanggal dan waktu
+        // Gabungkan tanggal dan waktu menjadi string ISO8601
         $startDateInput = $validated['start_date_date'] . 'T' . $validated['start_date_time'] . ':00';
 
-        // Buat Carbon date dan validasi tidak di masa lalu
+        // Buat Carbon instance timezone Asia/Jakarta dan validasi agar tidak di masa lalu
         $carbonStartDate = \Carbon\Carbon::createFromFormat('Y-m-d\TH:i:s', $startDateInput, 'Asia/Jakarta');
         if ($carbonStartDate->lt(\Carbon\Carbon::now('Asia/Jakarta'))) {
             $errorMessage = 'Tanggal dan jam mulai tidak boleh kurang dari waktu saat ini.';
@@ -226,18 +228,19 @@ public function addManualBooking(Request $request)
             return redirect()->back()->with('error', $errorMessage);
         }
 
-        // Format ISO8601
+        // Format ISO8601 dengan timezone offset, misal 2025-05-31T14:30:00+07:00
         $startDate = $carbonStartDate->format('Y-m-d\TH:i:sP');
 
-        // Multipart data
+        // Siapkan data multipart untuk request ke API
         $multipart = [
             ['name' => 'motor_id', 'contents' => $validated['motor_id']],
             ['name' => 'customer_name', 'contents' => trim($validated['customer_name'])],
             ['name' => 'start_date', 'contents' => $startDate],
             ['name' => 'duration', 'contents' => $validated['duration']],
+            ['name' => 'booking_purpose', 'contents' => $validated['booking_purpose']],
             ['name' => 'pickup_location', 'contents' => $validated['pickup_location']],
-            ['name' => 'type', 'contents' => 'manual'],
-            ['name' => 'status', 'contents' => 'confirmed'],
+            ['name' => 'type', 'contents' => 'manual'],      // Menandai booking manual
+            ['name' => 'status', 'contents' => 'confirmed'], // Status langsung confirmed
         ];
 
         // Tambahkan dropoff_location jika ada
@@ -245,7 +248,7 @@ public function addManualBooking(Request $request)
             $multipart[] = ['name' => 'dropoff_location', 'contents' => $validated['dropoff_location']];
         }
 
-        // File upload opsional
+        // Tambahkan file photo_id jika ada
         if ($request->hasFile('photo_id')) {
             $photo = $request->file('photo_id');
             $multipart[] = [
@@ -254,6 +257,8 @@ public function addManualBooking(Request $request)
                 'filename' => $photo->getClientOriginalName()
             ];
         }
+
+        // Tambahkan file ktp_id jika ada
         if ($request->hasFile('ktp_id')) {
             $ktp = $request->file('ktp_id');
             $multipart[] = [
@@ -263,6 +268,7 @@ public function addManualBooking(Request $request)
             ];
         }
 
+        // Log data request untuk debugging
         Log::info("Manual Booking Request:", [
             'start_date' => $startDate,
             'duration' => $validated['duration'],
@@ -270,12 +276,13 @@ public function addManualBooking(Request $request)
             'customer_name' => $validated['customer_name']
         ]);
 
-        // Kirim request ke API
+        // Kirim request POST multipart ke API eksternal dengan token otentikasi
         $response = Http::withToken($token)
             ->timeout(30)
             ->asMultipart()
             ->post(config('api.base_url') . '/vendor/manual/bookings', $multipart);
 
+        // Log response API untuk debugging
         Log::info("API Response:", [
             'status' => $response->status(),
             'headers' => $response->headers(),
@@ -285,7 +292,7 @@ public function addManualBooking(Request $request)
         if ($response->successful()) {
             $responseData = $response->json();
             $successMessage = $responseData['message'] ?? 'Booking manual berhasil dibuat';
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'message' => $successMessage,
@@ -294,27 +301,25 @@ public function addManualBooking(Request $request)
             }
             return redirect()->back()->with('message', $successMessage);
         } else {
-            // Handle error response dari API
+            // Jika gagal, ambil pesan error dari response API
             $errorMessage = 'Gagal menambahkan booking manual.';
             $statusCode = $response->status();
-            
+
             Log::error("API Error Response:", [
                 'status' => $statusCode,
                 'body' => $response->body(),
                 'headers' => $response->headers()
             ]);
 
-            // Coba parse response sebagai JSON
+            // Parsing response JSON untuk mendapatkan pesan error spesifik
             try {
                 $errorData = $response->json();
-                
-                // Prioritaskan error message dari API
+
                 if (isset($errorData['error'])) {
                     $errorMessage = $errorData['error'];
                 } elseif (isset($errorData['message'])) {
                     $errorMessage = $errorData['message'];
                 } elseif (isset($errorData['errors'])) {
-                    // Handle validation errors
                     if (is_array($errorData['errors'])) {
                         $errorMessages = [];
                         foreach ($errorData['errors'] as $field => $messages) {
@@ -327,21 +332,19 @@ public function addManualBooking(Request $request)
                         $errorMessage = implode('; ', $errorMessages);
                     }
                 }
-                
+
                 if ($request->ajax()) {
                     return response()->json([
                         'error' => $errorMessage,
                         'errors' => $errorData['errors'] ?? null
                     ], $statusCode);
                 }
-                
             } catch (\Exception $parseError) {
-                // Jika tidak bisa parse JSON, gunakan response body langsung
                 $responseBody = $response->body();
                 if (!empty($responseBody)) {
                     $errorMessage = $responseBody;
                 }
-                
+
                 Log::error("Failed to parse API error response:", [
                     'parse_error' => $parseError->getMessage(),
                     'response_body' => $responseBody
@@ -353,10 +356,9 @@ public function addManualBooking(Request $request)
             }
             return redirect()->back()->with('error', $errorMessage);
         }
-
     } catch (\Illuminate\Validation\ValidationException $e) {
         Log::error("Validation Error:", ['errors' => $e->errors()]);
-        
+
         if ($request->ajax()) {
             return response()->json([
                 'error' => 'Data yang dimasukkan tidak valid.',
@@ -364,21 +366,19 @@ public function addManualBooking(Request $request)
             ], 422);
         }
         return redirect()->back()->withErrors($e->errors())->withInput();
-        
     } catch (\Exception $e) {
         Log::error("Exception in addManualBooking:", [
             'message' => $e->getMessage(),
             'trace' => $e->getTraceAsString()
         ]);
-        
+
         $errorMessage = 'Terjadi kesalahan sistem: ' . $e->getMessage();
-        
+
         if ($request->ajax()) {
             return response()->json(['error' => $errorMessage], 500);
         }
         return redirect()->back()->with('error', $errorMessage);
     }
 }
-
 
 }

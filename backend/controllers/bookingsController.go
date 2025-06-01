@@ -383,26 +383,33 @@ func GetVendorBookings(c *gin.Context) {
 
 	var bookings []models.Booking
 
-	// Query bookings berdasarkan vendor_id dan preload relasi Motor
+	// Query bookings berdasarkan vendor_id dan preload relasi Motor & Customer
 	query := config.DB.Where("vendor_id = ?", vendor.ID).
-		Preload("Motor")
+		Preload("Motor").
+		Preload("Customer")
 
 	if err := query.Find(&bookings).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mendapatkan booking"})
 		return
 	}
 
-	// Base URL untuk gambar
-
-	// Format respons
 	var response []map[string]interface{}
 	for _, booking := range bookings {
-		// Ambil langsung dari kolom customer_name di tabel bookings
+		// Default customer info
 		customerName := booking.CustomerName
+		customerEmail := "Tidak tersedia"
+		customerPhone := "Tidak tersedia"
 
-		// Data motor
+		// Jika relasi Customer tidak nil, gunakan datanya
+		if booking.Customer != nil {
+			customerName = booking.Customer.Name
+			customerEmail = booking.Customer.Email
+			customerPhone = booking.Customer.Phone
+		}
+
+		// Default motor data
 		motorData := map[string]interface{}{
-			"id":            nil, // Default jika motor tidak ada
+			"id":            nil,
 			"name":          "Tidak tersedia",
 			"brand":         "Tidak tersedia",
 			"year":          0,
@@ -411,43 +418,47 @@ func GetVendorBookings(c *gin.Context) {
 			"image":         "https://via.placeholder.com/150",
 		}
 
+		// Jika Motor tidak nil, ambil datanya
 		if booking.Motor != nil {
-			motorData = map[string]interface{}{
-				"id":         booking.Motor.ID,
-				"name":       booking.Motor.Name,
-				"brand":      booking.Motor.Brand,
-				"color":      booking.Motor.Color,
-				"year":       booking.Motor.Year,
-				"plat_motor": booking.Motor.PlatMotor,
+			imageURL := "https://via.placeholder.com/150"
+			if booking.Motor.Image != "" {
+				if strings.HasPrefix(booking.Motor.Image, "http") {
+					imageURL = booking.Motor.Image
+				} else {
+					imageURL = booking.Motor.Image // Sesuaikan jika perlu tambahkan prefix domain
+				}
+			}
 
+			motorData = map[string]interface{}{
+				"id":            booking.Motor.ID,
+				"name":          booking.Motor.Name,
+				"brand":         booking.Motor.Brand,
+				"color":         booking.Motor.Color,
+				"year":          booking.Motor.Year,
+				"plat_motor":    booking.Motor.PlatMotor,
 				"price_per_day": booking.Motor.Price,
 				"total_price":   booking.Motor.Price * float64(booking.GetDurationDays()),
-				"image": func() string {
-					if booking.Motor.Image != "" {
-						if strings.HasPrefix(booking.Motor.Image, "http") {
-							return booking.Motor.Image
-						}
-						return booking.Motor.Image
-					}
-					return "https://via.placeholder.com/150"
-				}(),
+				"image":         imageURL,
 			}
 		}
 
 		bookingData := map[string]interface{}{
-			"id":              booking.ID,
-			"customer_name":   customerName,
-			"customer_id":     booking.CustomerID,
-			"booking_date":    booking.BookingDate,
-			"start_date":      booking.StartDate,
-			"end_date":        booking.EndDate,
-			"booking_purpose": booking.BookingPurpose,
-			"status":          booking.Status,
-			"message":         "Booking berhasil diambil",
-			"pickup_location": booking.PickupLocation,
-			"motor":           motorData,
-			"ktpid":           booking.KtpID,
-			"potoid":          booking.PhotoID,
+			"id":               booking.ID,
+			"customer_id":      booking.CustomerID,
+			"customer_name":    customerName,
+			"customer_email":   customerEmail,
+			"customer_phone":   customerPhone,
+			"booking_date":     booking.BookingDate,
+			"start_date":       booking.StartDate,
+			"end_date":         booking.EndDate,
+			"booking_purpose":  booking.BookingPurpose,
+			"status":           booking.Status,
+			"pickup_location":  booking.PickupLocation,
+			"dropoff_location": booking.DropoffLocation,
+			"ktpid":            booking.KtpID,
+			"potoid":           booking.PhotoID,
+			"motor":            motorData,
+			"message":          "Booking berhasil diambil",
 		}
 
 		response = append(response, bookingData)
@@ -455,6 +466,7 @@ func GetVendorBookings(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+
 
 // GetBookingByIDForVendor mengambil detail booking berdasarkan ID oleh vendor
 func GetBookingByIDForVendor(c *gin.Context) {
@@ -570,6 +582,7 @@ func CreateManualBooking(c *gin.Context) {
 	durationStr := c.PostForm("duration")
 	pickupLocation := c.PostForm("pickup_location")
 	dropoffLocation := c.PostForm("dropoff_location")
+	booking_purpose := c.PostForm("booking_purpose")
 
 	// Konversi motor_id ke uint64
 	motorID, err := strconv.ParseUint(motorIDStr, 10, 64)
@@ -669,6 +682,7 @@ func CreateManualBooking(c *gin.Context) {
 		PickupLocation:  pickupLocation,
 		DropoffLocation: dropoffLocation,
 		Status:          "confirmed",
+		BookingPurpose:  booking_purpose,
 	}
 
 	// Upload photo_id
@@ -711,6 +725,7 @@ func CreateManualBooking(c *gin.Context) {
 		"end_date":         booking.EndDate,
 		"pickup_location":  booking.PickupLocation,
 		"dropoff_location": booking.DropoffLocation,
+		"booking_purpose":  booking.BookingPurpose,
 		"status":           booking.Status,
 		"motor": gin.H{
 			"id":            motor.ID,
