@@ -256,9 +256,10 @@
     @foreach (collect($extens)->sortByDesc('requested_at') as $extension)
         @php
             $booking = collect($bookings)->firstWhere('id', $extension['booking_id']);
-            $customerPhotoPath = $booking['ktpid'] ?? ($booking['potoid'] ?? null);
-            $customerPhotoUrl = $customerPhotoPath
-                ? rtrim($apiBaseUrl, '/') . '/' . ltrim($customerPhotoPath, '/')
+            // @dd($bookings);
+            // Menggunakan foto profil customer jika ada, jika tidak gunakan placeholder
+            $customerPhotoUrl = $booking['potoid']
+                ? rtrim($apiBaseUrl, '/') . '/' . ltrim($booking['potoid'], '/')
                 : asset('img/user-placeholder.png');
 
             // Status classes and labels
@@ -421,15 +422,15 @@
                                         class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold capitalize {{ $statusClasses[$status] ?? 'bg-gray-100 text-gray-800' }}">
                                         <span
                                             class="w-2 h-2 rounded-full 
-                                        @if ($status === 'pending') bg-yellow-500
-                                        @elseif($status === 'confirmed') bg-blue-500
-                                        @elseif($status === 'in transit') bg-indigo-500
-                                        @elseif($status === 'in use') bg-purple-500
-                                        @elseif($status === 'awaiting return') bg-orange-500
-                                        @elseif($status === 'completed') bg-green-500
-                                        @elseif($status === 'rejected') bg-red-500
-                                        @else bg-gray-500 @endif
-                                        mr-2"></span>
+                                    @if ($status === 'pending') bg-yellow-500
+                                    @elseif($status === 'confirmed') bg-blue-500
+                                    @elseif($status === 'in transit') bg-indigo-500
+                                    @elseif($status === 'in use') bg-purple-500
+                                    @elseif($status === 'awaiting return') bg-orange-500
+                                    @elseif($status === 'completed') bg-green-500
+                                    @elseif($status === 'rejected') bg-red-500
+                                    @else bg-gray-500 @endif
+                                    mr-2"></span>
                                         {{ $statusLabels[$status] ?? ucfirst($status) }}
                                     </span>
                                     <p class="text-sm text-gray-600">

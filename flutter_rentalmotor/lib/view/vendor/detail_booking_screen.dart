@@ -43,6 +43,8 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
     setState(() => isLoading = true);
     try {
       final token = await storage.read(key: 'auth_token');
+      debugPrint('TOKEN: $token');
+
       final response = await http.get(
         Uri.parse('$baseUrl/vendor/bookings/${widget.bookingId}'),
         headers: {'Authorization': 'Bearer $token'},
@@ -81,6 +83,21 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
     }
   }
 
+  String _translateMotorType(String? type) {
+    switch (type) {
+      case 'automatic':
+        return 'Matic';
+      case 'manual':
+        return 'Manual';
+      case 'clutch':
+        return 'Kopling';
+      case 'vespa':
+        return 'Vespa';
+      default:
+        return '-';
+    }
+  }
+
   Color getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -88,11 +105,11 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
       case 'confirmed':
         return accentColor;
       case 'in transit':
-        return const Color(0xFFB794F4); // Purple
+        return const Color(0xFFB794F4);
       case 'in use':
-        return const Color(0xFF4299E1); // Blue
+        return const Color(0xFF4299E1);
       case 'awaiting return':
-        return const Color(0xFFED8936); // Orange
+        return const Color(0xFFED8936);
       case 'completed':
         return successColor;
       case 'rejected':
@@ -288,6 +305,48 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
     );
   }
 
+  void _showRejectConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: dangerColor),
+              const SizedBox(width: 10),
+              Text('Tolak Pesanan', style: TextStyle(color: dangerColor)),
+            ],
+          ),
+          content: const Text('Apakah Anda yakin ingin menolak pesanan ini?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: textSecondaryColor,
+              ),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _rejectBooking();
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dangerColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Ya, Tolak Pesanan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _performAction(String status) async {
     try {
       switch (status) {
@@ -340,6 +399,38 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
     }
   }
 
+  Future<void> _rejectBooking() async {
+    try {
+      await kelolaBookingService.rejectBooking(widget.bookingId.toString());
+      fetchBookingDetail();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 10),
+              Text('Pesanan berhasil ditolak!'),
+            ],
+          ),
+          backgroundColor: successColor,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: dangerColor,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
+  }
+
   Widget buildActionButton(String status) {
     if (status == 'completed' || status == 'rejected') {
       return Container();
@@ -347,10 +438,13 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
 
     Color buttonColor;
     IconData buttonIcon;
+    Color textColor = Colors.white; // Warna teks tetap putih
+    Color iconColor = Colors.white; // Warna icon putih
 
     switch (status.toLowerCase()) {
       case 'pending':
-        buttonColor = successColor;
+        buttonColor =
+            successColor; // Warna hijau dari variabel successColor Anda
         buttonIcon = Icons.check_circle;
         break;
       case 'confirmed':
@@ -371,50 +465,95 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
         buttonIcon = Icons.check_circle;
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 20),
-      width: double.infinity,
-      height: 55,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [buttonColor, buttonColor.withOpacity(0.8)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: buttonColor.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return Column(
+      children: [
+        // Tombol utama (Konfirmasi Pesanan/Ubah Status)
+        Container(
+          width: double.infinity,
+          height: 55,
+          decoration: BoxDecoration(
+            color: buttonColor, // Background warna solid
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: buttonColor.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showActionConfirmationDialog(status),
-          borderRadius: BorderRadius.circular(15),
-          child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(buttonIcon, color: Colors.white, size: 22),
-                const SizedBox(width: 10),
-                Text(
-                  _getActionButtonText(status),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _showActionConfirmationDialog(status),
+              borderRadius: BorderRadius.circular(15),
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(buttonIcon, color: iconColor, size: 22), // Icon putih
+                    const SizedBox(width: 10),
+                    Text(
+                      _getActionButtonText(status),
+                      style: TextStyle(
+                        color: textColor, // Teks putih
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+
+        // Tombol Tolak Pesanan (hanya untuk status pending)
+        if (status.toLowerCase() == 'pending') ...[
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            height: 55,
+            decoration: BoxDecoration(
+              color: dangerColor,
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: dangerColor.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _showRejectConfirmationDialog,
+                borderRadius: BorderRadius.circular(15),
+                child: Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.cancel, color: Colors.white, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Tolak Pesanan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -535,17 +674,19 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                         children: [
                           buildInfoRow(
                             'Nama',
-                            bookingData!['customer']?['name'],
+                            bookingData!['customer_name'] ?? '-',
                             icon: Icons.person_outline,
                           ),
                           buildInfoRow(
                             'Telepon',
-                            bookingData!['customer']?['phone'],
+                            bookingData!['customer']?['phone'] ??
+                                'Tidak tersedia',
                             icon: Icons.phone_outlined,
                           ),
                           buildInfoRow(
                             'Alamat',
-                            bookingData!['customer']?['address'],
+                            bookingData!['customer']?['address'] ??
+                                'Tidak tersedia',
                             icon: Icons.location_on_outlined,
                           ),
                         ],
@@ -663,7 +804,7 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                           ),
                           buildInfoRow(
                             'Tipe',
-                            bookingData!['motor']?['type'],
+                            _translateMotorType(bookingData!['motor']?['type']),
                             icon: Icons.category,
                           ),
                           if (bookingData!['motor']?['description'] != null)
@@ -740,6 +881,7 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                             ],
                           ),
                         ),
+                      const SizedBox(height: 16),
 
                       // Action Button
                       buildActionButton(bookingData!['status']),

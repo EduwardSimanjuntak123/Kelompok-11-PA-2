@@ -39,7 +39,6 @@
                 {{ session('error') }}
             </div>
         @endif
-        {{-- @dd($transactions) --}}
         @if ($transactions->count())
             <div class="space-y-4">
                 @foreach ($transactions as $t)
@@ -116,103 +115,167 @@
 
     </div>
     <div id="printModal" class="fixed inset-0 hidden bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-lg w-11/12 md:w-1/3 p-6">
-            <h2 class="text-2xl font-bold mb-4">🖨️ Cetak Laporan Transaksi Bulanan</h2>
-            @php
-                $bulan = [
-                    1 => 'Januari',
-                    2 => 'Februari',
-                    3 => 'Maret',
-                    4 => 'April',
-                    5 => 'Mei',
-                    6 => 'Juni',
-                    7 => 'Juli',
-                    8 => 'Agustus',
-                    9 => 'September',
-                    10 => 'Oktober',
-                    11 => 'November',
-                    12 => 'Desember',
-                ];
-            @endphp
-            <form action="{{ route('vendor.transactions.export') }}" method="GET">
-                <div class="mb-4">
-                    <label for="month" class="block text-gray-700 font-semibold mb-2">
-                        Pilih Bulan & Tahun
-                    </label>
-                    <div class="flex space-x-4">
-                        <select name="month" id="month" class="border rounded px-2 py-1 w-1/2" required>
-                            @for ($m = 1; $m <= 12; $m++)
-                                <option value="{{ $m }}">
-                                    {{ $bulan[$m] }}
-                                </option>
-                            @endfor
-                        </select>
-                        <select name="year" id="year" class="border rounded px-2 py-1 w-1/2" required>
-                            @for ($y = now()->year; $y >= now()->year - 5; $y--)
-                                <option value="{{ $y }}">{{ $y }}</option>
-                            @endfor
-                        </select>
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-2 mt-6">
-                    <button type="button" onclick="closeModal('printModal')"
-                        class="px-4 py-2 bg-gray-500 text-white rounded">Batal</button>
-                    <button type="submit" onclick="exportAlert()"
-                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                        Export Excel
+        <div class="bg-white rounded-lg shadow-xl overflow-hidden w-11/12 md:w-1/2 lg:w-1/3">
+            <!-- Header dengan background biru -->
+            <div class="bg-blue-600 text-white p-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl md:text-2xl font-bold flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Cetak Laporan Transaksi Bulanan
+                    </h2>
+                    <button onclick="closeModal('printModal')" class="text-white hover:text-gray-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
-            </form>
+                <p class="text-blue-100 text-sm mt-1">Pilih periode laporan yang ingin dicetak</p>
+            </div>
 
-            <script>
-                function exportAlert() {
-                    setTimeout(() => {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: 'Laporan transaksi berhasil diunduh.',
-                            confirmButtonText: 'OK'
-                        });
-                    }, 1000);
-                }
+            <!-- Body Form -->
+            <div class="p-6">
+                @php
+                    $bulan = [
+                        1 => 'Januari',
+                        2 => 'Februari',
+                        3 => 'Maret',
+                        4 => 'April',
+                        5 => 'Mei',
+                        6 => 'Juni',
+                        7 => 'Juli',
+                        8 => 'Agustus',
+                        9 => 'September',
+                        10 => 'Oktober',
+                        11 => 'November',
+                        12 => 'Desember',
+                    ];
+                @endphp
+                <form action="{{ route('vendor.transactions.export') }}" method="GET">
+                    <div class="mb-6">
+                        <label for="month" class="block text-gray-700 font-medium mb-2">
+                            Pilih Bulan & Tahun
+                        </label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="relative">
+                                <select name="month" id="month"
+                                    class="block appearance-none w-full bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    required>
+                                    <option value="" disabled selected>Pilih Bulan</option>
+                                    @for ($m = 1; $m <= 12; $m++)
+                                        <option value="{{ $m }}">{{ $bulan[$m] }}</option>
+                                    @endfor
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20">
+                                        <path
+                                            d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <select name="year" id="year"
+                                    class="block appearance-none w-full bg-gray-50 border border-gray-300 text-gray-700 py-2 px-4 pr-8 rounded-lg leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    required>
+                                    <option value="" disabled selected>Pilih Tahun</option>
+                                    @for ($y = now()->year; $y >= now()->year - 5; $y--)
+                                        <option value="{{ $y }}">{{ $y }}</option>
+                                    @endfor
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20">
+                                        <path
+                                            d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                function openModal(id) {
-                    document.getElementById(id).classList.remove('hidden');
-                    document.body.style.overflow = 'hidden';
-                }
+                    <div class="flex justify-end space-x-3 mt-8">
+                        <button type="button" onclick="closeModal('printModal')"
+                            class="px-5 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-200 font-medium">
+                            Batal
+                        </button>
+                        <button type="submit" onclick="exportAlert()"
+                            class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 font-medium flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export Excel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
-                function closeModal(id) {
-                    document.getElementById(id).classList.add('hidden');
-                    document.body.style.overflow = '';
-                }
+    <script>
+        function exportAlert() {
+            setTimeout(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Laporan transaksi berhasil diunduh.',
+                    confirmButtonText: 'OK'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Tutup modal dan reset form
+                        closeModal('printModal');
+                        document.querySelector('#printModal form').reset();
+                    }
+                });
+            }, 1000);
+        }
 
-                function renderItem(label, value) {
-                    return `
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function renderItem(label, value) {
+            return `
                         <div class="flex flex-col">
                             <span class="text-gray-500 text-sm">${label}</span>
                             <span class="text-base font-semibold text-gray-900">${value}</span>
                         </div>`;
-                }
+        }
 
-                // Fungsi translate status ke Bahasa Indonesia
-                function translateStatus(status) {
-                    if (!status) return '-';
-                    const map = {
-                        completed: 'Pesanan Selesai'
-                    };
-                    return map[status.toLowerCase()] || status;
-                }
+        // Fungsi translate status ke Bahasa Indonesia
+        function translateStatus(status) {
+            if (!status) return '-';
+            const map = {
+                completed: 'Pesanan Selesai'
+            };
+            return map[status.toLowerCase()] || status;
+        }
 
-                function showTransactionDetails(transaction) {
-                    // Hanya completed yang punya warna khusus
-                    const statusColor = {
-                        completed: "bg-green-100 text-green-700"
-                    };
-                    const raw = (transaction.status || '').toLowerCase();
-                    const statusClass = statusColor[raw] || "bg-gray-100 text-gray-700";
-                    const statusText = translateStatus(raw);
+        function showTransactionDetails(transaction) {
+            // Hanya completed yang punya warna khusus
+            const statusColor = {
+                completed: "bg-green-100 text-green-700"
+            };
+            const raw = (transaction.status || '').toLowerCase();
+            const statusClass = statusColor[raw] || "bg-gray-100 text-gray-700";
+            const statusText = translateStatus(raw);
 
-                    const detailTransaksi = `
+            const detailTransaksi = `
                         <div class="w-full sm:w-1/2 px-4">
                             <h3 class="text-md font-semibold mb-3 text-blue-600 flex items-center gap-2">
                                 <!-- icon -->
@@ -234,7 +297,7 @@
                             </div>
                         </div>`;
 
-                    const detailMotor = transaction.motor ? `
+            const detailMotor = transaction.motor ? `
                         <div class="w-full sm:w-1/2 px-4 mt-8 sm:mt-0">
                             <h3 class="text-md font-semibold mb-3 text-indigo-600 flex items-center gap-2">
                                 <!-- icon -->
@@ -244,18 +307,18 @@
                                 ${renderItem("Nama", transaction.motor.name)}
                                 ${renderItem("Merek", transaction.motor.brand)}
                                 ${renderItem("Tahun", transaction.motor.year)}
-                                ${renderItem("Plat Motor", transaction.motor.plat_motor)}
+                                ${renderItem("Plat Motor", transaction.motor.platmotor)}
                                 ${renderItem("Harga / Hari", `Rp ${transaction.motor.price_per_day.toLocaleString('id-ID')}`)}
                             </div>
                         </div>` : "";
 
-                    document.getElementById('transactionDetailContent').innerHTML =
-                        `<div class="flex flex-col sm:flex-row bg-white rounded-xl p-6 max-w-4xl shadow-xl w-full">
+            document.getElementById('transactionDetailContent').innerHTML =
+                `<div class="flex flex-col sm:flex-row bg-white rounded-xl p-6 max-w-4xl shadow-xl w-full">
                             ${detailTransaksi}
                             ${detailMotor}
                         </div>`;
 
-                    openModal('transactionDetailModal');
-                }
-            </script>
-        @endsection
+            openModal('transactionDetailModal');
+        }
+    </script>
+@endsection
