@@ -227,6 +227,9 @@ public function addManualBooking(Request $request)
             }
             return redirect()->back()->with('error', $errorMessage);
         }
+        Log::info('Carbon Start Date:', ['start' => $carbonStartDate->toIso8601String()]);
+
+
 
         // Format ISO8601 dengan timezone offset, misal 2025-05-31T14:30:00+07:00
         $startDate = $carbonStartDate->format('Y-m-d\TH:i:sP');

@@ -39,7 +39,10 @@ class BookingService {
 
       request.headers['Authorization'] = "Bearer $token";
       request.fields['motor_id'] = motorId.toString();
-      request.fields['start_date'] = startDate;
+      request.fields['start_date'] =
+          DateTime.parse(startDate).toUtc().toIso8601String();
+// atau jika Anda ingin tetap mengirim sebagai WIB, beri tahu backend // tanpa .toUtc()
+
       request.fields['duration'] = duration;
       request.fields['pickup_location'] = pickupLocation;
 
@@ -65,11 +68,23 @@ class BookingService {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         print("✅ Booking sukses: $responseBody");
+        final data = json.decode(responseBody);
+
+        // Konversi start_date dari UTC ke waktu lokal
+        String utcStartDateStr = data['booking']['start_date'];
+        DateTime utcTime = DateTime.parse(utcStartDateStr);
+        DateTime localTime = utcTime.toLocal();
+
+        // Jika Anda ingin mengganti nilainya di dalam response:
+        data['booking']['start_date_local'] = localTime.toIso8601String();
+
         return {
           "success": true,
           "message": "Booking berhasil dibuat",
           "motorData": motorData,
           "isGuest": isGuest,
+          "booking":
+              data['booking'], // include booking data with local start_date
         };
       } else {
         print("❌ Error ${response.statusCode}: $responseBody");
