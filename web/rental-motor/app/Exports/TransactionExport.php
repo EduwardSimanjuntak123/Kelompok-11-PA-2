@@ -53,9 +53,9 @@ class TransactionExport implements
                 'ID Transaksi'    => $transaction['id'],
                 'Nama Pelanggan'  => $transaction['customer_name'],
                 'Motor'           => $transaction['motor']['name'] ?? '-',
-                'Tanggal Booking' => Carbon::parse($transaction['booking_date'])->format('d-m-Y'),
-                'Tanggal Mulai'   => Carbon::parse($transaction['start_date'])->format('d-m-Y'),
-                'Tanggal Selesai' => Carbon::parse($transaction['end_date'])->format('d-m-Y'),
+                'Tanggal Booking' => Carbon::parse($transaction['booking_date'])->locale('id')->translatedFormat('j F Y'),
+'Tanggal Mulai'   => Carbon::parse($transaction['start_date'])->locale('id')->translatedFormat('j F Y'),
+'Tanggal Selesai' => Carbon::parse($transaction['end_date'])->locale('id')->translatedFormat('j F Y'),
                 'Total Harga'     => $transaction['total_price'],
                 'Status'          => ucfirst($transaction['status']),
             ];

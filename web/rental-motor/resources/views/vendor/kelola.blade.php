@@ -75,16 +75,16 @@
             </div>
         @else
             <!-- Desktop Table View -->
-            <div class="hidden lg:block overflow-x-auto">
+            <div class="hidden lg:block overflow-x-auto ">
                 <table class="min-w-full bg-white shadow-md rounded-lg table-fixed">
                     <thead>
-                        <tr class="bg-gray-200 text-gray-600 text-sm leading-normal">
-                            <th class="py-3 px-4 text-center w-[5%]">No</th>
-                            <th class="py-3 px-4 text-left align-top w-[28%]">Detail Pemesanan</th>
-                            <th class="py-3 px-4 text-left align-top w-[20%]">Detail Motor</th>
-                            <th class="py-3 px-4 text-center w-[17%]">Gambar</th>
-                            <th class="py-3 px-4 text-center w-[10%]">Status</th>
-                            <th class="py-3 px-4 text-center w-[15%]">Aksi</th>
+                        <tr class="bg-blue-600 text-white text-sm leading-normal">
+                            <th class="py-3 px-4 text-center w-[5%]">NO</th>
+                            <th class="py-3 px-4 text-left align-top w-[28%]">DETAIL PEMESANAN</th>
+                            <th class="py-3 px-4 text-left align-top w-[20%]">DETAIL MOTOR</th>
+                            <th class="py-3 px-4 text-center w-[17%]">GAMBAR</th>
+                            <th class="py-3 px-4 text-center w-[10%]">STATUS</th>
+                            <th class="py-3 px-4 text-center w-[15%]">AKSI</th>
                         </tr>
                     </thead>
                     <tbody class="text-gray-600 text-sm font-light">
@@ -101,7 +101,7 @@
                                         <span class="italic">lihat data pemesan &gt;</span>
                                     </a>
                                 </td>
-                                
+
 
                                 <!-- Detail Motor -->
                                 <td class="py-3 px-4 text-left align-middle">
@@ -208,11 +208,12 @@
                         <!-- Header Card -->
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-1">
-                                <a href="javascript:void(0)" class="open-booking-modal text-blue-600 font-semibold text-lg"
+                                <a href="javascript:void(0)"
+                                    class="open-booking-modal group text-blue-600 font-reguler underline hover:underline cursor-pointer flex items-center"
                                     data-booking='@json(array_merge($pesanan, ['potoid' => $pesanan['potoid'] ? config('api.base_url') . $pesanan['potoid'] : null]),
-                                        JSON_UNESCAPED_SLASHES)'>
-                                    <i class="fas fa-info-circle mr-1"></i>
-                                    {{ $pesanan['customer_name'] }}
+                                        JSON_UNESCAPED_SLASHES)'
+                                    title="Klik untuk melihat detail pemesanan">
+                                    <span class="italic text-xs">lihat data pemesan &gt;</span>
                                 </a>
                                 <div class="text-sm text-gray-500 mt-1">Pesanan #{{ $loop->iteration }}</div>
                             </div>

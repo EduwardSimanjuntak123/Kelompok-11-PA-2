@@ -32,21 +32,34 @@
             </div>
         @else
             <!-- Desktop Table View -->
-            <div class="hidden xl:block overflow-x-auto">
-                <table class="min-w-full bg-white border rounded-lg shadow-sm">
-                    <thead class="bg-gray-100 text-sm font-semibold text-gray-600">
+            <div class="hidden xl:block overflow-x-auto rounded-lg shadow-sm">
+                <table class="min-w-full bg-white border-collapse">
+                    <thead class="bg-blue-600">
                         <tr>
-                            <th class="py-3 px-4 text-left">Customer</th>
-                            {{-- <th class="py-3 px-4 text-left">Motor & Plat Motor</th> --}}
-                            <th class="py-3 px-4 text-left">Tanggal Diminta</th>
-                            <th class="py-3 px-2 text-left w-1/12">Tanggal Perpanjangan</th>
-                            <th class="py-3 px-2 text-left w-1/12">Harga Tambahan</th>
-                            <th class="py-3 px-4 text-left">Status</th>
-                            <th class="py-3 px-4 text-left">Foto Motor</th>
-                            <th class="py-3 px-4 text-left">Aksi</th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                Customer
+                            </th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                Tanggal Diminta
+                            </th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                Perpanjangan
+                            </th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                Harga
+                            </th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                Foto Motor
+                            </th>
+                            <th class="py-3 px-4 text-left text-xs font-medium text-white uppercase tracking-wider">
+                                Aksi
+                            </th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-200">
                         @foreach (collect($extens)->sortByDesc('requested_at') as $extension)
                             @php
                                 $booking = collect($bookings)->firstWhere('id', $extension['booking_id']);
@@ -60,8 +73,8 @@
                                     ? rtrim($apiBaseUrl, '/') . '/' . ltrim($motorPath, '/')
                                     : asset('img/placeholder.png');
                             @endphp
-                            <tr class="border-t hover:bg-gray-50 transition">
-                                <td class="py-3 px-4 text-left align-middle">
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-3 px-4 text-sm text-gray-800">
                                     <a href="javascript:void(0)"
                                         class="open-modal group text-blue-600 font-reguler underline hover:underline cursor-pointer"
                                         data-modal-id="modal-{{ $booking['id'] }}"
@@ -69,55 +82,56 @@
                                         <span class="italic">lihat data pemesan &gt;</span>
                                     </a>
                                 </td>
-                                {{-- <td class="py-3 px-4">{{ $extension['motor_name'] }} & {{ $platmotor }}</td> --}}
-                                <td class="py-3 px-4 text-sm text-gray-700">
-                                    {{ \Carbon\Carbon::parse($extension['requested_at'])->format('d-m-Y H:i') }}
+                                <td class="py-3 px-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-medium text-gray-800">
+                                            {{ \Carbon\Carbon::parse($extension['requested_at'])->locale('id')->translatedFormat('j F Y') }}
+                                        </span>
+                                        <span class="text-xs text-gray-500 mt-0.5">
+                                            Pukul
+                                            {{ \Carbon\Carbon::parse($extension['requested_at'])->translatedFormat('H:i') }}
+                                            WIB
+                                        </span>
+                                    </div>
                                 </td>
-                                <td class="py-3 px-2">
-                                    <span
-                                        class="inline-block bg-blue-100 text-blue-800 text-sm font-medium px-2 py-1 rounded">
-                                        {{ \Carbon\Carbon::parse($extension['requested_end_date'])->format('d-m-Y') }}
-                                    </span>
+                                <td class="py-3 px-4 text-sm font-medium text-gray-800">
+                                    {{ \Carbon\Carbon::parse($extension['requested_end_date'])->locale('id')->translatedFormat('j F Y') }}
                                 </td>
-                                <td class="py-3 px-2">
-                                    <span
-                                        class="inline-block bg-green-100 text-green-800 text-sm font-semibold px-2 py-1 rounded">
-                                        Rp {{ number_format($extension['additional_price'], 0, ',', '.') }}
-                                    </span>
+                                <td class="py-3 px-4 text-sm text-gray-800">
+                                    Rp {{ number_format($extension['additional_price'], 0, ',', '.') }}
                                 </td>
                                 <td class="py-3 px-4">
                                     @php
                                         $status = $extension['status'];
                                         if ($status === 'approved') {
                                             $statusText = 'Disetujui';
-                                            $badgeClasses = 'bg-green-100 text-green-700';
+                                            $badgeClasses = 'bg-green-100 text-green-800';
                                         } elseif ($status === 'rejected') {
                                             $statusText = 'Ditolak';
-                                            $badgeClasses = 'bg-red-100 text-red-700';
+                                            $badgeClasses = 'bg-red-100 text-red-800';
                                         } elseif ($status === 'pending') {
-                                            $statusText = 'Menunggu Konfirmasi';
-                                            $badgeClasses = 'bg-yellow-100 text-yellow-700';
+                                            $statusText = 'Menunggu';
+                                            $badgeClasses = 'bg-yellow-100 text-yellow-800';
                                         } else {
                                             $statusText = ucfirst($status);
-                                            $badgeClasses = 'bg-gray-100 text-gray-700';
+                                            $badgeClasses = 'bg-gray-100 text-gray-800';
                                         }
                                     @endphp
-                                    <span
-                                        class="inline-flex justify-center items-center px-2 py-1 rounded text-xs font-medium {{ $badgeClasses }}">
+                                    <span class="px-2 py-1 text-xs rounded-full {{ $badgeClasses }}">
                                         {{ $statusText }}
                                     </span>
                                 </td>
                                 <td class="py-3 px-4">
-                                    <img src="{{ $motorUrl }}" alt="Gambar {{ $extension['motor_name'] }}"
-                                        class="w-20 h-14 object-cover rounded shadow-sm">
+                                    <img src="{{ $motorUrl }}" alt="Gambar motor"
+                                        class="w-16 h-12 object-cover rounded border border-gray-200">
                                 </td>
                                 <td class="py-3 px-4">
                                     @if (in_array($extension['status'], ['pending', 'requested']))
-                                        <div class="flex gap-2">
+                                        <div class="flex space-x-2">
                                             <button type="button"
-                                                class="btn-approve px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150"
+                                                class="btn-approve px-3 py-1.5 bg-green-600 text-white text-xs rounded shadow hover:bg-green-700"
                                                 data-form-id="approve-form-{{ $extension['extension_id'] }}">
-                                                <i class="fas fa-check mr-1"></i> Setujui
+                                                Setujui
                                             </button>
                                             <form id="approve-form-{{ $extension['extension_id'] }}"
                                                 action="{{ route('vendor.approveExtension', ['extension_id' => $extension['extension_id']]) }}"
@@ -125,9 +139,9 @@
                                                 @csrf
                                             </form>
                                             <button type="button"
-                                                class="btn-reject px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-shadow duration-150"
+                                                class="btn-reject px-3 py-1.5 bg-red-600 text-white text-xs rounded shadow hover:bg-red-700"
                                                 data-form-id="reject-form-{{ $extension['extension_id'] }}">
-                                                <i class="fas fa-times mr-1"></i> Tolak
+                                                Tolak
                                             </button>
                                             <form id="reject-form-{{ $extension['extension_id'] }}"
                                                 action="{{ route('vendor.rejectExtension', ['extension_id' => $extension['extension_id']]) }}"
@@ -136,7 +150,7 @@
                                             </form>
                                         </div>
                                     @else
-                                        <span class="text-gray-400 text-sm">—</span>
+                                        <span class="text-gray-400 text-xs">-</span>
                                     @endif
                                 </td>
                             </tr>
@@ -179,10 +193,10 @@
                         <!-- Header -->
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex-1">
-                                <a href="#" class="open-modal text-blue-600 font-semibold text-lg"
-                                    data-modal-id="modal-{{ $booking['id'] }}">
-                                    <i class="fas fa-info-circle mr-1"></i>
-                                    {{ $extension['customer_name'] }}
+                                <a href="javascript:void(0)"
+                                    class="open-modal group text-blue-600 font-reguler underline hover:underline cursor-pointer"
+                                    data-modal-id="modal-{{ $booking['id'] }}" title="Klik untuk melihat detail pemesanan">
+                                    <span class="italic text-xs">lihat data pemesan &gt;</span>
                                 </a>
                                 <p class="text-sm text-gray-600 mt-1">
                                     {{ $extension['motor_name'] }} • {{ $platmotor }}
@@ -201,52 +215,57 @@
                             <div class="flex-1 space-y-2 text-sm">
                                 <div>
                                     <span class="font-medium text-gray-600">Diminta:</span>
-                                    <span
-                                        class="text-gray-800">{{ \Carbon\Carbon::parse($extension['requested_at'])->format('d/m/Y H:i') }}</span>
-                                </div>
-                                <div>
-                                    <span class="font-medium text-gray-600">Perpanjang sampai:</span>
-                                    <span
-                                        class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded ml-1">
-                                        {{ \Carbon\Carbon::parse($extension['requested_end_date'])->format('d/m/Y') }}
+                                    <span class="text-sm font-medium text-gray-800">
+                                        {{ \Carbon\Carbon::parse($extension['requested_at'])->locale('id')->translatedFormat('j F Y') }}
                                     </span>
-                                </div>
-                                <div>
-                                    <span class="font-medium text-gray-600">Biaya tambahan:</span>
-                                    <span
-                                        class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded ml-1">
-                                        Rp {{ number_format($extension['additional_price'], 0, ',', '.') }}
+                                    <span class="text-xs text-gray-500 mt-0.5">
+                                        Pukul
+                                        {{ \Carbon\Carbon::parse($extension['requested_at'])->translatedFormat('H:i') }}
+                                        WIB
                                     </span>
+                                    <div>
+                                        <span class="font-medium text-gray-600">Perpanjang sampai:</span>
+                                        <span
+                                            class="inline-block bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded ml-1">
+                                            {{ \Carbon\Carbon::parse($extension['requested_end_date'])->locale('id')->translatedFormat('j F Y') }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="font-medium text-gray-600">Biaya tambahan:</span>
+                                        <span
+                                            class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded ml-1">
+                                            Rp {{ number_format($extension['additional_price'], 0, ',', '.') }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Action Buttons -->
-                        @if (in_array($extension['status'], ['pending', 'requested']))
-                            <div class="flex flex-col sm:flex-row gap-2">
-                                <button type="button"
-                                    class="btn-approve flex-1 px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg hover:bg-green-700 transition-colors"
-                                    data-form-id="approve-form-{{ $extension['extension_id'] }}">
-                                    <i class="fas fa-check mr-1"></i> Setujui
-                                </button>
-                                <form id="approve-form-{{ $extension['extension_id'] }}"
-                                    action="{{ route('vendor.approveExtension', ['extension_id' => $extension['extension_id']]) }}"
-                                    method="POST" class="hidden">
-                                    @csrf
-                                </form>
-                                <button type="button"
-                                    class="btn-reject flex-1 px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg hover:bg-red-700 transition-colors"
-                                    data-form-id="reject-form-{{ $extension['extension_id'] }}">
-                                    <i class="fas fa-times mr-1"></i> Tolak
-                                </button>
-                                <form id="reject-form-{{ $extension['extension_id'] }}"
-                                    action="{{ route('vendor.rejectExtension', ['extension_id' => $extension['extension_id']]) }}"
-                                    method="POST" class="hidden">
-                                    @csrf
-                                </form>
-                            </div>
-                        @endif
-                    </div>
+                            <!-- Action Buttons -->
+                            @if (in_array($extension['status'], ['pending', 'requested']))
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <button type="button"
+                                        class="btn-approve flex-1 px-4 py-2 bg-green-600 text-white font-medium text-sm rounded-lg hover:bg-green-700 transition-colors"
+                                        data-form-id="approve-form-{{ $extension['extension_id'] }}">
+                                        <i class="fas fa-check mr-1"></i> Setujui
+                                    </button>
+                                    <form id="approve-form-{{ $extension['extension_id'] }}"
+                                        action="{{ route('vendor.approveExtension', ['extension_id' => $extension['extension_id']]) }}"
+                                        method="POST" class="hidden">
+                                        @csrf
+                                    </form>
+                                    <button type="button"
+                                        class="btn-reject flex-1 px-4 py-2 bg-red-600 text-white font-medium text-sm rounded-lg hover:bg-red-700 transition-colors"
+                                        data-form-id="reject-form-{{ $extension['extension_id'] }}">
+                                        <i class="fas fa-times mr-1"></i> Tolak
+                                    </button>
+                                    <form id="reject-form-{{ $extension['extension_id'] }}"
+                                        action="{{ route('vendor.rejectExtension', ['extension_id' => $extension['extension_id']]) }}"
+                                        method="POST" class="hidden">
+                                        @csrf
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
                 @endforeach
             </div>
         @endif
@@ -363,20 +382,27 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
                                     <p class="text-sm text-blue-600 font-medium">Tanggal Booking</p>
-                                    <p class="text-lg font-semibold text-blue-800">
-                                        {{ \Carbon\Carbon::parse($booking['booking_date'])->format('d-m-Y H:i') }}
-                                    </p>
+                                    <div class="flex flex-col">
+                                        <p class="text-lg font-semibold text-blue-800">
+                                            {{ \Carbon\Carbon::parse($booking['booking_date'])->locale('id')->translatedFormat('j F Y') }}
+                                        </p>
+                                        <p class="text-sm text-blue-600">
+                                            Pukul
+                                            {{ \Carbon\Carbon::parse($booking['booking_date'])->translatedFormat('H:i') }}
+                                            WIB
+                                        </p>
+                                    </div>
                                 </div>
                                 <div class="bg-green-50 p-4 rounded-lg border border-green-100">
                                     <p class="text-sm text-green-600 font-medium">Mulai Sewa</p>
                                     <p class="text-lg font-semibold text-green-800">
-                                        {{ \Carbon\Carbon::parse($booking['start_date'])->format('d-m-Y') }}
+                                        {{ \Carbon\Carbon::parse($booking['start_date'])->locale('id')->translatedFormat('j F Y') }}
                                     </p>
                                 </div>
                                 <div class="bg-red-50 p-4 rounded-lg border border-red-100">
                                     <p class="text-sm text-red-600 font-medium">Akhir Sewa</p>
                                     <p class="text-lg font-semibold text-red-800">
-                                        {{ \Carbon\Carbon::parse($booking['end_date'])->format('d-m-Y') }}
+                                        {{ \Carbon\Carbon::parse($booking['end_date'])->locale('id')->translatedFormat('j F Y') }}
                                     </p>
                                 </div>
                             </div>

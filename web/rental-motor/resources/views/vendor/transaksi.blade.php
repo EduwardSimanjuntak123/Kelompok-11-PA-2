@@ -62,8 +62,16 @@
                                 </span>
                             </h3>
 
-                            <p class="text-sm text-gray-500">
-                                📅 Booking: {{ \Carbon\Carbon::parse($t['booking_date'])->format('Y-m-d H:i:s') }}
+                            <p class="text-sm text-gray-500 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Booking:
+                                {{ \Carbon\Carbon::parse($t['booking_date'])->locale('id')->translatedFormat('j F Y') }}
+                                <span class="ml-1">• Pukul
+                                    {{ \Carbon\Carbon::parse($t['booking_date'])->translatedFormat('H:i') }} WIB</span>
                             </p>
                         </div>
                         <div class="text-green-700 font-bold">
@@ -283,9 +291,14 @@
                             </h3>
                             <div class="flex flex-col gap-3">
                                 ${renderItem("Nama Customer", transaction.customer_name)}
-                                ${renderItem("Tanggal Booking", new Date(transaction.booking_date).toLocaleString('id-ID'))}
-                                ${renderItem("Tanggal Mulai", new Date(transaction.start_date).toLocaleDateString('id-ID'))}
-                                ${renderItem("Tanggal Selesai", new Date(transaction.end_date).toLocaleDateString('id-ID'))}
+                                ${renderItem("Tanggal Booking", formatTanggalDenganJam(transaction.booking_date))}
+${renderItem("Tanggal Mulai", new Date(transaction.start_date).toLocaleDateString('id-ID', {
+    day: 'numeric', month: 'long', year: 'numeric'
+}))}
+${renderItem("Tanggal Selesai", new Date(transaction.end_date).toLocaleDateString('id-ID', {
+    day: 'numeric', month: 'long', year: 'numeric'
+}))}
+
                                 ${renderItem("Lokasi Jemput", transaction.pickup_location)}
                                 <div class="flex flex-col">
                                     <span class="text-gray-500 text-sm">Status</span>
@@ -319,6 +332,22 @@
                         </div>`;
 
             openModal('transactionDetailModal');
+        }
+
+        function formatTanggalDenganJam(dateString) {
+            const date = new Date(dateString);
+            const tanggal = date.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            const jam = date.toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            }).replace('.', ':'); // Optional, kalau format jamnya misal 21.42 → 21:42
+
+            return `${tanggal}, Pukul ${jam} WIB`;
         }
     </script>
 @endsection
