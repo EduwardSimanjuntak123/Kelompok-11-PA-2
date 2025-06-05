@@ -30,6 +30,7 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
 
   File? _profileImage;
   bool _isLoading = false;
+  bool _isFormValid = false;
   int? _selectedKecamatanId;
   DateTime? _selectedDate;
   bool _obscurePassword = true;
@@ -68,7 +69,16 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error mengambil data kecamatan: $e')),
+        SnackBar(
+          content: Text('Error mengambil data kecamatan: $e'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          margin: const EdgeInsets.all(16.0),
+          duration: const Duration(seconds: 3),
+        ),
       );
     }
   }
@@ -79,6 +89,7 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
     if (pickedFile != null) {
       setState(() {
         _profileImage = File(pickedFile.path);
+        _checkFormValidity();
       });
     }
   }
@@ -106,51 +117,81 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
       setState(() {
         _selectedDate = picked;
         _birthDateController.text = DateFormat('dd/MM/yyyy').format(picked);
+        _checkFormValidity();
       });
     }
   }
 
-  Future<void> _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
-      // Check if image is uploaded
-      if (_profileImage == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Foto profil wajib diunggah'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+  void _checkFormValidity() {
+    final isValid = _formKey.currentState?.validate() ?? false;
+    final isImageSelected = _profileImage != null;
+    final isKecamatanSelected = _selectedKecamatanId != null;
+    setState(() {
+      _isFormValid = isValid && isImageSelected && isKecamatanSelected;
+    });
+  }
 
-      // Check if passwords match
+  Future<void> _handleRegister() async {
+    if (_profileImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Foto profil wajib diunggah'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          margin: const EdgeInsets.all(16.0),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedKecamatanId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Pilih kecamatan terlebih dahulu'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          margin: const EdgeInsets.all(16.0),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    if (_formKey.currentState!.validate()) {
       if (_passwordController.text != _confirmPasswordController.text) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password dan konfirmasi tidak cocok'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Password dan konfirmasi tidak cocok'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            margin: const EdgeInsets.all(16.0),
+            duration: const Duration(seconds: 3),
           ),
         );
         return;
       }
 
-      // Check if date of birth is selected
       if (_selectedDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tanggal lahir wajib diisi'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      // Check if kecamatan is selected
-      if (_selectedKecamatanId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pilih kecamatan terlebih dahulu'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Tanggal lahir wajib diisi'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            margin: const EdgeInsets.all(16.0),
+            duration: const Duration(seconds: 3),
           ),
         );
         return;
@@ -160,45 +201,63 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
         _isLoading = true;
       });
 
-      // Format date of birth as YYYY-MM-DD string
-      String formattedBirthDate =
-          DateFormat('yyyy-MM-dd').format(_selectedDate!);
+      try {
+        String formattedBirthDate = DateFormat('yyyy-MM-dd').format(_selectedDate!);
 
-      AuthService authService = AuthService();
-      final response = await authService.registerVendor(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        phone: _phoneController.text.trim(),
-        shopName: _shopNameController.text.trim(),
-        shopAddress: _shopAddressController.text.trim(),
-        shopDescription: _shopDescriptionController.text.trim(),
-        kecamatanId: _selectedKecamatanId!,
-        birthDate:
-            formattedBirthDate, // Use birthDate parameter name to match the method signature
-        profileImage: _profileImage,
-      );
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (response["success"]) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OTPVerificationScreen(
-              email: _emailController.text.trim(),
-            ),
-          ),
+        AuthService authService = AuthService();
+        final response = await authService.registerVendor(
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          phone: _phoneController.text.trim(),
+          shopName: _shopNameController.text.trim(),
+          shopAddress: _shopAddressController.text.trim(),
+          shopDescription: _shopDescriptionController.text.trim(),
+          kecamatanId: _selectedKecamatanId!,
+          birthDate: formattedBirthDate,
+          profileImage: _profileImage,
         );
-      } else {
+
+        if (response["success"]) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OTPVerificationScreen(
+                email: _emailController.text.trim(),
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response["message"] ?? "Pendaftaran gagal"),
+              backgroundColor: Colors.red.shade700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              margin: const EdgeInsets.all(16.0),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response["message"] ?? "Pendaftaran gagal"),
-            backgroundColor: Colors.red,
+            content: Text('Terjadi kesalahan: $e'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            margin: const EdgeInsets.all(16.0),
+            duration: const Duration(seconds: 3),
           ),
         );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -352,20 +411,53 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                   title: 'Informasi Pribadi',
                   children: [
                     _buildEnhancedTextField(
-                        _nameController, 'Nama Lengkap', Icons.person),
+                      _nameController,
+                      'Nama Lengkap',
+                      Icons.person,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Masukkan Nama Lengkap';
+                        }
+                        if (value.trim().length < 3) {
+                          return 'Nama harus minimal 3 karakter';
+                        }
+                        return null;
+                      },
+                    ),
                     _buildEnhancedTextField(
-                        _emailController, 'Email', Icons.email,
-                        keyboardType: TextInputType.emailAddress),
-
-                    // Password field with visibility toggle
+                      _emailController,
+                      'Email',
+                      Icons.email,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Masukkan Email';
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
+                          return 'Masukkan email yang valid';
+                        }
+                        return null;
+                      },
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Wajib diisi'
-                            : null,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Masukkan Kata Sandi';
+                          }
+                          if (value.length < 8) {
+                            return 'Kata sandi harus minimal 8 karakter';
+                          }
+                          if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$')
+                              .hasMatch(value)) {
+                            return 'Kata sandi harus mengandung huruf dan angka';
+                          }
+                          return null;
+                        },
                         decoration: InputDecoration(
                           prefixIcon: Icon(Icons.lock, color: primaryColor),
                           suffixIcon: IconButton(
@@ -378,6 +470,7 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
+                                _checkFormValidity();
                               });
                             },
                           ),
@@ -390,11 +483,18 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade300),
                           ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+                          ),
                         ),
+                        onChanged: (value) => _checkFormValidity(),
                       ),
                     ),
-
-                    // Confirm Password field with visibility toggle
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: TextFormField(
@@ -402,10 +502,10 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                         obscureText: _obscureConfirmPassword,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Wajib diisi';
+                            return 'Masukkan Konfirmasi Kata Sandi';
                           }
                           if (value != _passwordController.text) {
-                            return 'Password tidak cocok';
+                            return 'Kata sandi tidak cocok';
                           }
                           return null;
                         },
@@ -423,6 +523,7 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                               setState(() {
                                 _obscureConfirmPassword =
                                     !_obscureConfirmPassword;
+                                _checkFormValidity();
                               });
                             },
                           ),
@@ -435,15 +536,40 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(color: Colors.grey.shade300),
                           ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+                          ),
                         ),
+                        onChanged: (value) => _checkFormValidity(),
                       ),
                     ),
-
                     _buildEnhancedTextField(
-                        _phoneController, 'No. Telepon', Icons.phone,
-                        keyboardType: TextInputType.phone),
-
-                    // Date of Birth field
+                      _phoneController,
+                      'No. Telepon',
+                      Icons.phone,
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Masukkan Nomor Telepon';
+                        }
+                        final phone = value.trim();
+                        if (!RegExp(r'^\d+$').hasMatch(phone)) {
+                          return 'Nomor telepon hanya boleh berisi angka';
+                        }
+                        if (phone.length != 11 && phone.length != 13) {
+                          return 'Nomor telepon harus 11 atau 13 digit';
+                        }
+                        if (!phone.startsWith('08')) {
+                          return 'Nomor telepon harus dimulai dengan 08';
+                        }
+                        return null;
+                      },
+                    ),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: GestureDetector(
@@ -451,9 +577,20 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                         child: AbsorbPointer(
                           child: TextFormField(
                             controller: _birthDateController,
-                            validator: (value) => _selectedDate == null
-                                ? 'Tanggal lahir wajib diisi'
-                                : null,
+                            validator: (value) {
+                              if (_selectedDate == null) {
+                                return 'Tanggal lahir wajib diisi';
+                              }
+                              final selectedDate = DateFormat('dd/MM/yyyy').parse(value!);
+                              if (selectedDate.isAfter(DateTime.now())) {
+                                return 'Tanggal lahir tidak boleh di masa depan';
+                              }
+                              final age = DateTime.now().difference(selectedDate).inDays ~/ 365;
+                              if (age < 17) {
+                                return 'Anda harus berusia minimal 17 tahun';
+                              }
+                              return null;
+                            },
                             decoration: InputDecoration(
                               prefixIcon: Icon(Icons.calendar_today,
                                   color: primaryColor),
@@ -466,6 +603,14 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide:
                                     BorderSide(color: Colors.grey.shade300),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: Colors.red.shade700, width: 2),
                               ),
                             ),
                           ),
@@ -481,14 +626,48 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                   title: 'Informasi Toko',
                   children: [
                     _buildEnhancedTextField(
-                        _shopNameController, 'Nama Toko', Icons.store),
-                    _buildEnhancedTextField(_shopAddressController,
-                        'Alamat Toko', Icons.location_on),
-                    _buildEnhancedTextField(_shopDescriptionController,
-                        'Deskripsi Toko', Icons.description),
+                      _shopNameController,
+                      'Nama Toko',
+                      Icons.store,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Masukkan Nama Toko';
+                        }
+                        if (value.trim().length < 3) {
+                          return 'Nama toko harus minimal 3 karakter';
+                        }
+                        return null;
+                      },
+                    ),
+                    _buildEnhancedTextField(
+                      _shopAddressController,
+                      'Alamat Toko',
+                      Icons.location_on,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Masukkan Alamat Toko';
+                        }
+                        if (value.trim().length < 5) {
+                          return 'Alamat toko harus minimal 5 karakter';
+                        }
+                        return null;
+                      },
+                    ),
+                    _buildEnhancedTextField(
+                      _shopDescriptionController,
+                      'Deskripsi Toko',
+                      Icons.description,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Masukkan Deskripsi Toko';
+                        }
+                        if (value.trim().length < 10) {
+                          return 'Deskripsi toko harus minimal 10 karakter';
+                        }
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 16),
-
-                    // Dropdown kecamatan
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
@@ -514,8 +693,10 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                                 style: TextStyle(color: darkTextColor)),
                           );
                         }).toList(),
-                        onChanged: (value) =>
-                            setState(() => _selectedKecamatanId = value),
+                        onChanged: (value) => setState(() {
+                          _selectedKecamatanId = value;
+                          _checkFormValidity();
+                        }),
                         validator: (value) =>
                             value == null ? 'Pilih kecamatan' : null,
                         icon: Icon(Icons.arrow_drop_down, color: primaryColor),
@@ -533,7 +714,7 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                   height: 55,
                   margin: const EdgeInsets.only(top: 10, bottom: 20),
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleRegister,
+                    onPressed: _isFormValid && !_isLoading ? _handleRegister : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentColor,
                       shape: RoundedRectangleBorder(
@@ -541,6 +722,7 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                       elevation: 5,
                       shadowColor: primaryColor.withOpacity(0.3),
                       padding: const EdgeInsets.symmetric(vertical: 15),
+                      disabledBackgroundColor: Colors.grey.shade300,
                     ),
                     child: _isLoading
                         ? Row(
@@ -627,15 +809,15 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
   Widget _buildEnhancedTextField(
       TextEditingController controller, String label, IconData icon,
       {bool obscureText = false,
-      TextInputType keyboardType = TextInputType.text}) {
+      TextInputType keyboardType = TextInputType.text,
+      String? Function(String?)? validator}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
         keyboardType: keyboardType,
-        validator: (value) =>
-            value == null || value.isEmpty ? 'Wajib diisi' : null,
+        validator: validator,
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: primaryColor),
           labelText: label,
@@ -647,8 +829,31 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Colors.grey.shade300),
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+          ),
         ),
+        onChanged: (value) => _checkFormValidity(),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    _shopNameController.dispose();
+    _shopAddressController.dispose();
+    _shopDescriptionController.dispose();
+    _birthDateController.dispose();
+    super.dispose();
   }
 }
