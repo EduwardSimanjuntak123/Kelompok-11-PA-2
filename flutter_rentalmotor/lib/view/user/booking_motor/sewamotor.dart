@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
@@ -17,7 +16,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 class SewaMotorPage extends StatefulWidget {
   final Map<String, dynamic> motor;
   final bool isGuest;
-  
 
   SewaMotorPage({required this.motor, required this.isGuest});
 
@@ -54,7 +52,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   // Define timeout duration
   final Duration _apiTimeout = Duration(seconds: 15);
 
-
   @override
   void initState() {
     super.initState();
@@ -88,8 +85,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     _durationController.dispose();
     _pickupLocationController.dispose();
     _dropoffLocationController.dispose();
-    _bookingPurposeController
-        .dispose(); // Tambahkan dispose untuk booking purpose
+    _bookingPurposeController.dispose();
     _removeOverlay(true);
     _removeOverlay(false);
     super.dispose();
@@ -115,7 +111,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
       print('🌐 Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        // Process data in a separate isolate
         final jsonData = response.body;
         await compute<String, List<Map<String, dynamic>>>(
                 _parseLocationData, jsonData)
@@ -151,7 +146,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     }
   }
 
-  // Parse location data in a separate isolate
   static List<Map<String, dynamic>> _parseLocationData(String jsonData) {
     return List<Map<String, dynamic>>.from(json.decode(jsonData));
   }
@@ -259,7 +253,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
           .timeout(_apiTimeout);
 
       if (response.statusCode == 200) {
-        // Process data in a separate isolate
         final jsonData = response.body;
         await compute<String, List<DateTime>>(_parseBookedDates, jsonData)
             .then((result) {
@@ -290,7 +283,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     }
   }
 
-  // Parse booked dates in a separate isolate
   static List<DateTime> _parseBookedDates(String jsonData) {
     List<dynamic> bookings = json.decode(jsonData);
     List<DateTime> disabled = [];
@@ -333,7 +325,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   DateTime _getInitialAvailableDate() {
     DateTime today = DateTime.now();
 
-    // Cek mulai dari hari ini sampai ke depan
     for (int i = 0; i < 365; i++) {
       DateTime checkDate = today.add(Duration(days: i));
       bool isDisabled = _disabledDates.any((d) =>
@@ -344,7 +335,6 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
         return checkDate;
       }
     }
-    // Kalau semua tanggal ke-disable (tidak mungkin sih), fallback
     return today;
   }
 
@@ -433,20 +423,20 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                     CalendarFormat.month: 'Bulan',
                   },
                   onDaySelected: (selected, focused) {
-  bool isDisabled = _disabledDates.any((d) =>
-      d.year == selected.year &&
-      d.month == selected.month &&
-      d.day == selected.day);
+                    bool isDisabled = _disabledDates.any((d) =>
+                        d.year == selected.year &&
+                        d.month == selected.month &&
+                        d.day == selected.day);
 
-  if (!isDisabled) {
-    setState(() {
-      _selectedDate = selected; // <-- simpan tanggal terpilih
-      _dateController.text =
-          DateFormat('dd/MM/yyyy').format(selected);
-    });
-    Navigator.pop(context);
-  }
-},
+                    if (!isDisabled) {
+                      setState(() {
+                        _selectedDate = selected;
+                        _dateController.text =
+                            DateFormat('dd/MM/yyyy').format(selected);
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
                   calendarBuilders: CalendarBuilders(
                     defaultBuilder: (context, day, focusedDay) {
                       bool isDisabled = _disabledDates.any((d) =>
@@ -522,67 +512,63 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     );
   }
 
-Future<void> _selectTime(BuildContext context) async {
-  TimeOfDay nowTime = TimeOfDay.now();
+  Future<void> _selectTime(BuildContext context) async {
+    TimeOfDay nowTime = TimeOfDay.now();
 
-  TimeOfDay? pickedTime = await showTimePicker(
-    context: context,
-    initialTime: nowTime,
-    helpText: 'Pilih Jam',
-    builder: (context, child) {
-      return Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.light(
-            primary: primaryBlue,
-            onPrimary: Colors.white,
-            onSurface: Colors.black,
-          ),
-          textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(
-              foregroundColor: primaryBlue,
+    TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: nowTime,
+      helpText: 'Pilih Jam',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: primaryBlue,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: primaryBlue,
+              ),
             ),
           ),
-        ),
-        child: child!,
-      );
-    },
-  );
-
-  if (pickedTime != null) {
-    final now = DateTime.now();
-
-    // Ambil tanggal dari date controller atau logika kamu
-    // Misalnya kamu sudah punya _selectedDate, gunakan itu
-    final selectedDate = _selectedDate ?? DateTime.now(); // fallback ke hari ini
-
-    final selectedDateTime = DateTime(
-      selectedDate.year,
-      selectedDate.month,
-      selectedDate.day,
-      pickedTime.hour,
-      pickedTime.minute,
+          child: child!,
+        );
+      },
     );
 
-    final bool isToday = selectedDate.year == now.year &&
-                         selectedDate.month == now.month &&
-                         selectedDate.day == now.day;
-
-    if (isToday && selectedDateTime.isBefore(now.add(Duration(minutes: 30)))) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Silakan pilih waktu setidaknya 30 menit dari sekarang.'),
-          backgroundColor: Colors.orange,
-        ),
+    if (pickedTime != null) {
+      final now = DateTime.now();
+      final selectedDate = _selectedDate ?? DateTime.now();
+      final selectedDateTime = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+        pickedTime.hour,
+        pickedTime.minute,
       );
-    } else {
-      String formattedTime =
-          "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
-      setState(() {
-        _timeController.text = formattedTime;
-      });
+
+      final bool isToday = selectedDate.year == now.year &&
+          selectedDate.month == now.month &&
+          selectedDate.day == now.day;
+
+      if (isToday && selectedDateTime.isBefore(now.add(Duration(minutes: 30)))) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Silakan pilih waktu setidaknya 30 menit dari sekarang.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else {
+        String formattedTime =
+            "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
+        setState(() {
+          _timeController.text = formattedTime;
+        });
+      }
     }
   }
-}
 
   String _convertToISO8601(String dateStr, String timeStr) {
     DateTime parsedDate = DateFormat('dd/MM/yyyy').parse(dateStr);
@@ -619,11 +605,10 @@ Future<void> _selectTime(BuildContext context) async {
         debugPrint("⚠ Tidak ada gambar yang dipilih.");
       }
     } catch (e) {
-      debugPrint("❌ Gagal memilih gambar: $e");
+      debugPrint("❌ Gagal memilih gambar: $e");
     }
   }
 
-  // Process image in a separate isolate
   static File _processImage(String path) {
     return File(path);
   }
@@ -667,7 +652,7 @@ Future<void> _selectTime(BuildContext context) async {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Tutup dialog
+              Navigator.pop(context);
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -685,13 +670,123 @@ Future<void> _selectTime(BuildContext context) async {
     );
   }
 
+  // New validation methods
+  String? _validateDate(String date) {
+    if (date.isEmpty) {
+      return 'Tanggal harus diisi';
+    }
+    try {
+      DateFormat('dd/MM/yyyy').parseStrict(date);
+      return null;
+    } catch (e) {
+      return 'Format tanggal tidak valid (DD/MM/YYYY)';
+    }
+  }
+
+  String? _validateTime(String time) {
+    if (time.isEmpty) {
+      return 'Jam harus diisi';
+    }
+    final regex = RegExp(r'^\d{2}:\d{2}$');
+    if (!regex.hasMatch(time)) {
+      return 'Format jam tidak valid (HH:MM)';
+    }
+    return null;
+  }
+
+  String? _validateDuration(String duration) {
+    if (duration.isEmpty) {
+      return 'Durasi harus diisi';
+    }
+    final regex = RegExp(r'^\d+$');
+    if (!regex.hasMatch(duration)) {
+      return 'Durasi harus berupa angka';
+    }
+    final days = int.tryParse(duration);
+    if (days == null || days <= 0) {
+      return 'Durasi harus lebih dari 0 hari';
+    }
+    if (days > 30) {
+      return 'Durasi maksimal 30 hari';
+    }
+    return null;
+  }
+
+  String? _validateLocation(String location) {
+    if (location.isEmpty) {
+      return 'Lokasi pengambilan harus diisi';
+    }
+    if (!_locationSuggestions.any((loc) =>
+        loc['place'].toString().toLowerCase() == location.toLowerCase())) {
+      return 'Lokasi pengambilan tidak valid';
+    }
+    return null;
+  }
+
+  String? _validateDropoffLocation(String location) {
+    if (location.isNotEmpty &&
+        !_locationSuggestions.any((loc) =>
+            loc['place'].toString().toLowerCase() == location.toLowerCase())) {
+      return 'Lokasi pengembalian tidak valid';
+    }
+    return null;
+  }
+
+  String? _validateBookingPurpose(String purpose) {
+    if (purpose.isNotEmpty && purpose.length < 3) {
+      return 'Tujuan minimal 3 karakter';
+    }
+    if (purpose.length > 200) {
+      return 'Tujuan maksimal 200 karakter';
+    }
+    return null;
+  }
+
+  String? _validatePhotoId(File? photo) {
+    if (photo == null) {
+      return 'Foto diri harus diunggah';
+    }
+    final fileSize = photo.lengthSync();
+    if (fileSize > 5 * 1024 * 1024) { // 5MB limit
+      return 'Ukuran foto terlalu besar (maks 5MB)';
+    }
+    return null;
+  }
+
   Future<void> _submitRental() async {
-    if (_dateController.text.isEmpty ||
-        _timeController.text.isEmpty ||
-        _durationController.text.isEmpty ||
-        _pickupLocationController.text.isEmpty ||
-        _photoId == null) {
-      _showErrorDialog('Harap isi semua kolom yang bertanda *');
+    // Validate all fields
+    final dateError = _validateDate(_dateController.text);
+    final timeError = _validateTime(_timeController.text);
+    final durationError = _validateDuration(_durationController.text);
+    final pickupLocationError = _validateLocation(_pickupLocationController.text);
+    final dropoffLocationError =
+        _validateDropoffLocation(_dropoffLocationController.text);
+    final bookingPurposeError =
+        _validateBookingPurpose(_bookingPurposeController.text);
+    final photoIdError = _validatePhotoId(_photoId);
+
+    // Collect all errors
+    final errors = <String>[];
+    if (dateError != null) errors.add(dateError);
+    if (timeError != null) errors.add(timeError);
+    if (durationError != null) errors.add(durationError);
+    if (pickupLocationError != null) errors.add(pickupLocationError);
+    if (dropoffLocationError != null) errors.add(dropoffLocationError);
+    if (bookingPurposeError != null) errors.add(bookingPurposeError);
+    if (photoIdError != null) errors.add(photoIdError);
+
+    if (errors.isNotEmpty) {
+      _showErrorDialog('Harap perbaiki kesalahan berikut:\n- ${errors.join('\n- ')}');
+      return;
+    }
+
+    // Additional date validation against disabled dates
+    final selectedDate = DateFormat('dd/MM/yyyy').parse(_dateController.text);
+    if (_disabledDates.any((d) =>
+        d.year == selectedDate.year &&
+        d.month == selectedDate.month &&
+        d.day == selectedDate.day)) {
+      _showErrorDialog('Tanggal yang dipilih sudah dibooking');
       return;
     }
 
@@ -704,7 +799,7 @@ Future<void> _selectTime(BuildContext context) async {
     final duration = _durationController.text;
     final pickupLocation = _pickupLocationController.text;
     final dropoffLocation = _dropoffLocationController.text;
-    final bookingPurpose = _bookingPurposeController.text; // Tambahkan ini
+    final bookingPurpose = _bookingPurposeController.text;
     final photoId = _photoId!;
 
     try {
@@ -715,7 +810,7 @@ Future<void> _selectTime(BuildContext context) async {
         duration: duration,
         pickupLocation: pickupLocation,
         dropoffLocation: dropoffLocation,
-        bookingPurpose: bookingPurpose, // Tambahkan parameter ini
+        bookingPurpose: bookingPurpose,
         photoId: photoId,
         motorData: widget.motor,
         isGuest: widget.isGuest,
@@ -748,7 +843,6 @@ Future<void> _selectTime(BuildContext context) async {
       imageUrl = "$baseUrl$imageUrl";
     }
 
-    // Calculate price
     String formattedPrice = "Harga tidak tersedia";
     if (widget.motor["price"] != null) {
       try {
@@ -758,9 +852,7 @@ Future<void> _selectTime(BuildContext context) async {
           symbol: 'Rp ',
           decimalDigits: 0,
         ).format(price);
-      } catch (e) {
-        // Use default value if parsing fails
-      }
+      } catch (e) {}
     }
 
     return Scaffold(
@@ -801,7 +893,6 @@ Future<void> _selectTime(BuildContext context) async {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Motor Image and Info
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -922,14 +1013,11 @@ Future<void> _selectTime(BuildContext context) async {
                     ],
                   ),
                 ),
-
-                // Form Section
                 Container(
                   padding: EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Panduan pengisian form
                       if (_showGuidance)
                         Container(
                           padding: EdgeInsets.all(15),
@@ -993,7 +1081,6 @@ Future<void> _selectTime(BuildContext context) async {
                             ],
                           ),
                         ),
-
                       Container(
                         padding: EdgeInsets.all(15),
                         decoration: BoxDecoration(
@@ -1052,8 +1139,6 @@ Future<void> _selectTime(BuildContext context) async {
                               ],
                             ),
                             Divider(height: 25, thickness: 1),
-
-                            // Date and Time Fields
                             Row(
                               children: [
                                 Expanded(
@@ -1091,7 +1176,6 @@ Future<void> _selectTime(BuildContext context) async {
                                       const Color.fromARGB(255, 253, 46, 46)),
                             ),
                             const SizedBox(height: 12),
-
                             _buildTextField(
                               _durationController,
                               "Durasi (hari) *",
@@ -1101,8 +1185,6 @@ Future<void> _selectTime(BuildContext context) async {
                               keyboardType: TextInputType.number,
                               accentColor: primaryBlue,
                             ),
-
-                            // Tambahkan field booking purpose dengan styling yang konsisten
                             _buildTextField(
                               _bookingPurposeController,
                               "Tujuan/Keperluan Booking",
@@ -1149,16 +1231,12 @@ Future<void> _selectTime(BuildContext context) async {
                               ],
                             ),
                             Divider(height: 25, thickness: 1),
-
-                            // --- Lokasi Pengambilan ---
                             TypeAheadField<Map<String, dynamic>>(
                               suggestionsCallback: (pattern) async {
                                 return _locationSuggestions
-                                    // 1. Filter berdasarkan kecamatan
                                     .where((loc) =>
                                         loc['kecamatan']['id_kecamatan'] ==
                                             selectedKecamatanId &&
-                                        // 2. Filter berdasarkan teks input
                                         loc['place']
                                             .toString()
                                             .toLowerCase()
@@ -1224,10 +1302,7 @@ Future<void> _selectTime(BuildContext context) async {
                                 );
                               },
                             ),
-
                             SizedBox(height: 10),
-
-                            // --- Lokasi Pengembalian ---
                             TypeAheadField<Map<String, dynamic>>(
                               suggestionsCallback: (pattern) async {
                                 return _locationSuggestions
@@ -1334,8 +1409,6 @@ Future<void> _selectTime(BuildContext context) async {
                               ],
                             ),
                             Divider(height: 25, thickness: 1),
-
-                            // Photo ID Section
                             Text(
                               "Foto Diri *",
                               style: TextStyle(
@@ -1435,7 +1508,6 @@ Future<void> _selectTime(BuildContext context) async {
               ],
             ),
           ),
-          // Global loading overlay
           if (_isLoading)
             Container(
               color: Colors.black.withOpacity(0.3),
