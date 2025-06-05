@@ -2,12 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/view/user/registrasi/otp_verification.dart';
-import 'package:flutter_rentalmotor/signin.dart';
+import 'package:flutter_rentalmotor/signIn.dart'; // Assumes this defines SignInScreen
 import 'package:intl/intl.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_rentalmotor/services/autentifikasi/auth_service.dart';
 
-// Define theme colors based on #225378
+// Theme colors based on #225378
 class AppTheme {
   static const Color primaryColor = Color(0xFF225378);
   static const Color primaryLightColor = Color(0xFF3A6A8E);
@@ -18,10 +18,10 @@ class AppTheme {
 }
 
 class SignUpCustomer extends StatefulWidget {
-  const SignUpCustomer({Key? key}) : super(key: key);
+  const SignUpCustomer({super.key});
 
   @override
-  _SignUpCustomerState createState() => _SignUpCustomerState();
+  State<SignUpCustomer> createState() => _SignUpCustomerState();
 }
 
 class _SignUpCustomerState extends State<SignUpCustomer>
@@ -59,6 +59,15 @@ class _SignUpCustomerState extends State<SignUpCustomer>
       ),
     );
     _animationController.forward();
+
+    // Add listeners for real-time validation
+    _fullNameController.addListener(_checkFormValidity);
+    _addressController.addListener(_checkFormValidity);
+    _phoneController.addListener(_checkFormValidity);
+    _emailController.addListener(_checkFormValidity);
+    _passwordController.addListener(_checkFormValidity);
+    _confirmPasswordController.addListener(_checkFormValidity);
+    _dateOfBirthController.addListener(_checkFormValidity);
   }
 
   @override
@@ -75,11 +84,32 @@ class _SignUpCustomerState extends State<SignUpCustomer>
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await ImagePicker().pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 70,
+        maxWidth: 1000,
+        maxHeight: 1000,
+      );
+      if (pickedFile != null && mounted) {
+        setState(() {
+          _image = File(pickedFile.path);
+          _checkFormValidity();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memilih gambar: ${e.toString()}'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -89,15 +119,15 @@ class _SignUpCustomerState extends State<SignUpCustomer>
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: const BorderRadius.only(
+          borderRadius: BorderRadius.only(
             topLeft: Radius.circular(25),
             topRight: Radius.circular(25),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black26,
               blurRadius: 10,
               spreadRadius: 0,
             ),
@@ -194,8 +224,10 @@ class _SignUpCustomerState extends State<SignUpCustomer>
   }
 
   void _checkFormValidity() {
+    final isValid = _formKey.currentState?.validate() ?? false;
+    final isImageSelected = _image != null;
     setState(() {
-      _isFormValid = _formKey.currentState?.validate() ?? false;
+      _isFormValid = isValid && isImageSelected;
     });
   }
 
@@ -203,13 +235,13 @@ class _SignUpCustomerState extends State<SignUpCustomer>
       BuildContext context, TextEditingController controller) async {
     DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: DateTime.now().subtract(const Duration(days: 365 * 17)),
       firstDate: DateTime(1900),
-      lastDate: DateTime(2100),
+      lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppTheme.primaryColor,
               onPrimary: Colors.white,
               onSurface: Colors.black,
@@ -224,7 +256,7 @@ class _SignUpCustomerState extends State<SignUpCustomer>
         );
       },
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         controller.text = DateFormat('yyyy-MM-dd').format(picked);
         _checkFormValidity();
@@ -232,65 +264,81 @@ class _SignUpCustomerState extends State<SignUpCustomer>
     }
   }
 
-  // Fungsi untuk melakukan registrasi ke backend
   Future<void> _registerUser() async {
-    if (_formKey.currentState!.validate()) {
-      // Validasi tambahan: cek apakah password dan confirm password sama
-      if (_passwordController.text != _confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                const Text("Kata Sandi dan Konfirmasi Kata Sandi tidak sama"),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
+    if (_image == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Silakan pilih foto profil"),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
-        );
-        return;
-      }
+        ),
+      );
+      return;
+    }
 
+    if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      AuthService authService = AuthService();
-      final response = await authService.registerCustomer(
-        name: _fullNameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        phone: _phoneController.text.trim(),
-        address: _addressController.text.trim(),
-        birthDate: _dateOfBirthController.text.trim(),
-        profileImage: _image, // Kirim file gambar jika ada
-      );
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (response["success"]) {
-        // Setelah registrasi berhasil, arahkan ke halaman verifikasi OTP
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => OTPVerificationScreen(
-              email: _emailController.text.trim(),
-            ),
-          ),
+      try {
+        final authService = AuthService();
+        final response = await authService.registerCustomer(
+          name: _fullNameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          phone: _phoneController.text.trim(),
+          address: _addressController.text.trim(),
+          birthDate: _dateOfBirthController.text.trim(),
+          profileImage: _image,
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response["message"]),
-            backgroundColor: Colors.red.shade700,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          if (response["success"]) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OTPVerificationScreen(
+                  email: _emailController.text.trim(),
+                ),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(response["message"] ?? "Registrasi gagal"),
+                backgroundColor: Colors.red.shade700,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Terjadi kesalahan: ${e.toString()}'),
+              backgroundColor: Colors.red.shade700,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
     }
   }
@@ -299,15 +347,12 @@ class _SignUpCustomerState extends State<SignUpCustomer>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.lightBlue,
-              Colors.white,
-            ],
-            stops: const [0.0, 0.4],
+            colors: [AppTheme.lightBlue, Colors.white],
+            stops: [0.0, 0.4],
           ),
         ),
         child: SafeArea(
@@ -321,29 +366,28 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Back button and title with improved styling
                       Row(
                         children: [
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
+                              boxShadow: const [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
+                                  color: Colors.black12,
                                   blurRadius: 8,
                                   spreadRadius: 1,
                                 ),
                               ],
                             ),
                             child: IconButton(
-                              icon: Icon(Icons.arrow_back_ios,
+                              icon: const Icon(Icons.arrow_back_ios,
                                   color: AppTheme.primaryColor),
                               onPressed: () => Navigator.pop(context),
                             ),
                           ),
                           const SizedBox(width: 15),
-                          Text(
+                          const Text(
                             "Buat Akun",
                             style: TextStyle(
                               fontSize: 26,
@@ -355,8 +399,6 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                         ],
                       ),
                       const SizedBox(height: 15),
-
-                      // Subtitle with improved styling
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 15, vertical: 10),
@@ -365,17 +407,13 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: AppTheme.primaryColor.withOpacity(0.2),
-                            width: 1,
                           ),
                         ),
-                        child: Row(
+                        child: const Row(
                           children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: AppTheme.primaryColor,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
+                            Icon(Icons.info_outline,
+                                color: AppTheme.primaryColor, size: 20),
+                            SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 "Bergabunglah dengan komunitas kami dan mulai menyewa motor",
@@ -390,8 +428,6 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                         ),
                       ),
                       const SizedBox(height: 30),
-
-                      // Profile image picker with improved styling
                       Center(
                         child: Stack(
                           children: [
@@ -417,8 +453,7 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                                   backgroundImage: _image != null
                                       ? FileImage(_image!)
                                       : const AssetImage(
-                                              "assets/default_avatar.png")
-                                          as ImageProvider,
+                                          "assets/default_avatar.png"),
                                   child: _image == null
                                       ? Container(
                                           decoration: BoxDecoration(
@@ -434,16 +469,13 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                                               ],
                                             ),
                                           ),
-                                          child: Column(
+                                          child: const Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
-                                              Icon(
-                                                Icons.camera_alt,
-                                                size: 32,
-                                                color: Colors.white,
-                                              ),
-                                              const SizedBox(height: 8),
+                                              Icon(Icons.camera_alt,
+                                                  size: 32, color: Colors.white),
+                                              SizedBox(height: 8),
                                               Text(
                                                 "Tambah Foto",
                                                 style: TextStyle(
@@ -452,25 +484,13 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                              const SizedBox(height: 5),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 10,
-                                                        vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white
-                                                      .withOpacity(0.3),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: const Text(
-                                                  'Tap untuk memilih',
-                                                  style: TextStyle(
-                                                    fontSize: 10,
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
+                                              SizedBox(height: 5),
+                                              Text(
+                                                'Tap untuk memilih',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                             ],
@@ -493,19 +513,16 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                           color: Colors.white, width: 2),
-                                      boxShadow: [
+                                      boxShadow: const [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(0.2),
+                                          color: Colors.black26,
                                           blurRadius: 5,
                                           spreadRadius: 1,
                                         ),
                                       ],
                                     ),
-                                    child: const Icon(
-                                      Icons.edit,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
+                                    child: const Icon(Icons.edit,
+                                        color: Colors.white, size: 20),
                                   ),
                                 ),
                               ),
@@ -513,8 +530,6 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                         ),
                       ),
                       const SizedBox(height: 30),
-
-                      // Form fields in a card with improved styling
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
@@ -541,11 +556,11 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                                         AppTheme.primaryColor.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: Icon(Icons.person,
+                                  child: const Icon(Icons.person,
                                       color: AppTheme.primaryColor, size: 24),
                                 ),
                                 const SizedBox(width: 12),
-                                Text(
+                                const Text(
                                   "Informasi Personal",
                                   style: TextStyle(
                                     fontSize: 18,
@@ -556,50 +571,148 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                               ],
                             ),
                             const SizedBox(height: 20),
-                            _buildEnhancedTextField('Nama Lengkap',
-                                _fullNameController, Icons.person_outline),
-                            _buildEnhancedTextField('Alamat',
-                                _addressController, Icons.home_outlined),
                             _buildEnhancedTextField(
-                                'Nomor Telepon',
-                                _phoneController,
-                                Icons.phone_outlined,
-                                TextInputType.phone),
+                              'Nama Lengkap',
+                              _fullNameController,
+                              Icons.person_outline,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Masukkan Nama Lengkap';
+                                }
+                                if (value.trim().length < 3) {
+                                  return 'Nama harus minimal 3 karakter';
+                                }
+                                return null;
+                              },
+                            ),
                             _buildEnhancedTextField(
-                                'Email',
-                                _emailController,
-                                Icons.email_outlined,
-                                TextInputType.emailAddress),
+                              'Alamat',
+                              _addressController,
+                              Icons.home_outlined,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Masukkan Alamat';
+                                }
+                                if (value.trim().length < 5) {
+                                  return 'Alamat harus minimal 5 karakter';
+                                }
+                                return null;
+                              },
+                            ),
+                            _buildEnhancedTextField(
+                              'Nomor Telepon',
+                              _phoneController,
+                              Icons.phone_outlined,
+                              keyboardType: TextInputType.phone,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Masukkan Nomor Telepon';
+                                }
+                                final phone = value.trim();
+                                if (!RegExp(r'^\d+$').hasMatch(phone)) {
+                                  return 'Nomor telepon hanya boleh berisi angka';
+                                }
+                                if (phone.length != 11 && phone.length != 13) {
+                                  return 'Nomor telepon harus 11 atau 13 digit';
+                                }
+                                if (!phone.startsWith('08')) {
+                                  return 'Nomor telepon harus dimulai dengan 08';
+                                }
+                                return null;
+                              },
+                            ),
+                            _buildEnhancedTextField(
+                              'Email',
+                              _emailController,
+                              Icons.email_outlined,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Masukkan Email';
+                                }
+                                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                    .hasMatch(value.trim())) {
+                                  return 'Masukkan email yang valid';
+                                }
+                                return null;
+                              },
+                            ),
                             _buildEnhancedDateField(
-                                'Tanggal Lahir', _dateOfBirthController),
-                            _buildEnhancedPasswordField('Kata Sandi',
-                                _passwordController, _obscurePassword, () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            }),
+                              'Tanggal Lahir',
+                              _dateOfBirthController,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Masukkan Tanggal Lahir';
+                                }
+                                try {
+                                  final selectedDate =
+                                      DateFormat('yyyy-MM-dd').parse(value.trim());
+                                  if (selectedDate.isAfter(DateTime.now())) {
+                                    return 'Tanggal lahir tidak boleh di masa depan';
+                                  }
+                                  final age = DateTime.now()
+                                          .difference(selectedDate)
+                                          .inDays ~/
+                                      365;
+                                  if (age < 17) {
+                                    return 'Anda harus berusia minimal 17 tahun';
+                                  }
+                                } catch (e) {
+                                  return 'Format tanggal tidak valid';
+                                }
+                                return null;
+                              },
+                            ),
                             _buildEnhancedPasswordField(
-                                'Konfirmasi Kata Sandi',
-                                _confirmPasswordController,
-                                _obscureConfirmPassword, () {
-                              setState(() {
+                              'Kata Sandi',
+                              _passwordController,
+                              _obscurePassword,
+                              () => setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              }),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Masukkan Kata Sandi';
+                                }
+                                if (value.length < 8) {
+                                  return 'Kata sandi harus minimal 8 karakter';
+                                }
+                                if (!RegExp(
+                                        r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$')
+                                    .hasMatch(value)) {
+                                  return 'Kata sandi harus mengandung huruf dan angka';
+                                }
+                                return null;
+                              },
+                            ),
+                            _buildEnhancedPasswordField(
+                              'Konfirmasi Kata Sandi',
+                              _confirmPasswordController,
+                              _obscureConfirmPassword,
+                              () => setState(() {
                                 _obscureConfirmPassword =
                                     !_obscureConfirmPassword;
-                              });
-                            }),
+                              }),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Masukkan Konfirmasi Kata Sandi';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'Kata sandi tidak cocok';
+                                }
+                                return null;
+                              },
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 30),
-
-                      // Register button with improved styling
                       SizedBox(
                         width: double.infinity,
                         height: 55,
                         child: ElevatedButton(
-                          onPressed: _isFormValid && !_isLoading
-                              ? _registerUser
-                              : null,
+                          onPressed:
+                              _isFormValid && !_isLoading ? _registerUser : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,
                             foregroundColor: Colors.white,
@@ -612,14 +725,16 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                           ),
                           child: _isLoading
                               ? const SpinKitFadingCircle(
-                                  color: Colors.white, size: 30.0)
-                              : Row(
+                                  color: Colors.white,
+                                  size: 30.0,
+                                )
+                              : const Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(Icons.app_registration,
                                         size: 20, color: Colors.white),
-                                    const SizedBox(width: 10),
-                                    const Text(
+                                    SizedBox(width: 10),
+                                    Text(
                                       "BUAT AKUN",
                                       style: TextStyle(
                                         fontSize: 16,
@@ -632,17 +747,15 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      // Sign in option with improved styling
                       Container(
                         padding: const EdgeInsets.symmetric(
                             vertical: 15, horizontal: 20),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: Colors.black12,
                               blurRadius: 10,
                               spreadRadius: 1,
                             ),
@@ -660,10 +773,12 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                             ),
                             GestureDetector(
                               onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => LoginScreen())),
-                              child: Text(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LoginScreen(),
+                                ),
+                              ),
+                              child: const Text(
                                 "Masuk",
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
@@ -687,14 +802,18 @@ class _SignUpCustomerState extends State<SignUpCustomer>
     );
   }
 
-  // Enhanced field methods with the new theme
   Widget _buildEnhancedTextField(
-      String label, TextEditingController controller, IconData icon,
-      [TextInputType? keyboardType]) {
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
         controller: controller,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: AppTheme.primaryColor.withOpacity(0.8)),
@@ -709,23 +828,35 @@ class _SignUpCustomerState extends State<SignUpCustomer>
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+            borderSide: const BorderSide(
+              color: AppTheme.primaryColor,
+              width: 2,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
           contentPadding:
               const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),
-        keyboardType: keyboardType,
-        validator: (value) =>
-            (value == null || value.isEmpty) ? 'Masukkan $label' : null,
-        onChanged: (value) => _checkFormValidity(),
+        validator: validator,
+        onChanged: (_) => _checkFormValidity(),
       ),
     );
   }
 
   Widget _buildEnhancedDateField(
-      String label, TextEditingController controller) {
+    String label,
+    TextEditingController controller, {
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
@@ -734,7 +865,7 @@ class _SignUpCustomerState extends State<SignUpCustomer>
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: AppTheme.primaryColor.withOpacity(0.8)),
-          prefixIcon: Icon(Icons.calendar_today, color: AppTheme.primaryColor),
+          prefixIcon: const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
           suffixIcon: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -742,7 +873,7 @@ class _SignUpCustomerState extends State<SignUpCustomer>
               borderRadius: BorderRadius.circular(8),
             ),
             child: IconButton(
-              icon: Icon(Icons.event, color: AppTheme.primaryColor),
+              icon: const Icon(Icons.event, color: AppTheme.primaryColor),
               onPressed: () => _selectDate(context, controller),
             ),
           ),
@@ -756,7 +887,18 @@ class _SignUpCustomerState extends State<SignUpCustomer>
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+            borderSide: const BorderSide(
+              color: AppTheme.primaryColor,
+              width: 2,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
@@ -764,12 +906,19 @@ class _SignUpCustomerState extends State<SignUpCustomer>
               const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),
         onTap: () => _selectDate(context, controller),
+        validator: validator,
+        onChanged: (_) => _checkFormValidity(),
       ),
     );
   }
 
-  Widget _buildEnhancedPasswordField(String label,
-      TextEditingController controller, bool obscure, VoidCallback onToggle) {
+  Widget _buildEnhancedPasswordField(
+    String label,
+    TextEditingController controller,
+    bool obscure,
+    VoidCallback onToggle, {
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextFormField(
@@ -778,7 +927,7 @@ class _SignUpCustomerState extends State<SignUpCustomer>
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: AppTheme.primaryColor.withOpacity(0.8)),
-          prefixIcon: Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+          prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.primaryColor),
           suffixIcon: Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -803,16 +952,26 @@ class _SignUpCustomerState extends State<SignUpCustomer>
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+            borderSide: const BorderSide(
+              color: AppTheme.primaryColor,
+              width: 2,
+            ),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.red.shade700, width: 2),
           ),
           filled: true,
           fillColor: Colors.grey.shade50,
           contentPadding:
               const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         ),
-        validator: (value) =>
-            (value == null || value.isEmpty) ? 'Masukkan $label' : null,
-        onChanged: (value) => _checkFormValidity(),
+        validator: validator,
+        onChanged: (_) => _checkFormValidity(),
       ),
     );
   }
