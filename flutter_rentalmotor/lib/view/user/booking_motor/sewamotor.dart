@@ -17,6 +17,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 class SewaMotorPage extends StatefulWidget {
   final Map<String, dynamic> motor;
   final bool isGuest;
+  
 
   SewaMotorPage({required this.motor, required this.isGuest});
 
@@ -33,6 +34,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
   TextEditingController _bookingPurposeController = TextEditingController();
   List<DateTime> _disabledDates = [];
   File? _photoId;
+  DateTime? _selectedDate;
   bool _isLoading = false;
   bool _isSubmitting = false;
   bool _isLoadingLocations = false;
@@ -51,6 +53,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
 
   // Define timeout duration
   final Duration _apiTimeout = Duration(seconds: 15);
+
 
   @override
   void initState() {
@@ -430,19 +433,20 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
                     CalendarFormat.month: 'Bulan',
                   },
                   onDaySelected: (selected, focused) {
-                    bool isDisabled = _disabledDates.any((d) =>
-                        d.year == selected.year &&
-                        d.month == selected.month &&
-                        d.day == selected.day);
+  bool isDisabled = _disabledDates.any((d) =>
+      d.year == selected.year &&
+      d.month == selected.month &&
+      d.day == selected.day);
 
-                    if (!isDisabled) {
-                      setState(() {
-                        _dateController.text =
-                            DateFormat('dd/MM/yyyy').format(selected);
-                      });
-                      Navigator.pop(context);
-                    }
-                  },
+  if (!isDisabled) {
+    setState(() {
+      _selectedDate = selected; // <-- simpan tanggal terpilih
+      _dateController.text =
+          DateFormat('dd/MM/yyyy').format(selected);
+    });
+    Navigator.pop(context);
+  }
+},
                   calendarBuilders: CalendarBuilders(
                     defaultBuilder: (context, day, focusedDay) {
                       bool isDisabled = _disabledDates.any((d) =>
@@ -518,61 +522,67 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
     );
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    TimeOfDay nowTime = TimeOfDay.now();
+Future<void> _selectTime(BuildContext context) async {
+  TimeOfDay nowTime = TimeOfDay.now();
 
-    TimeOfDay? pickedTime = await showTimePicker(
-      context: context,
-      initialTime: nowTime,
-      helpText: 'Pilih Jam',
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryBlue,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: primaryBlue,
-              ),
+  TimeOfDay? pickedTime = await showTimePicker(
+    context: context,
+    initialTime: nowTime,
+    helpText: 'Pilih Jam',
+    builder: (context, child) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: primaryBlue,
+            onPrimary: Colors.white,
+            onSurface: Colors.black,
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+              foregroundColor: primaryBlue,
             ),
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      );
+    },
+  );
+
+  if (pickedTime != null) {
+    final now = DateTime.now();
+
+    // Ambil tanggal dari date controller atau logika kamu
+    // Misalnya kamu sudah punya _selectedDate, gunakan itu
+    final selectedDate = _selectedDate ?? DateTime.now(); // fallback ke hari ini
+
+    final selectedDateTime = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
     );
 
-    if (pickedTime != null) {
-      final now = DateTime.now();
-      final selectedDateTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        pickedTime.hour,
-        pickedTime.minute,
+    final bool isToday = selectedDate.year == now.year &&
+                         selectedDate.month == now.month &&
+                         selectedDate.day == now.day;
+
+    if (isToday && selectedDateTime.isBefore(now.add(Duration(minutes: 30)))) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Silakan pilih waktu setidaknya 30 menit dari sekarang.'),
+          backgroundColor: Colors.orange,
+        ),
       );
-
-      final minSelectableTime = now.add(Duration(minutes: 30));
-
-      if (selectedDateTime.isBefore(minSelectableTime)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('Silakan pilih waktu setidaknya 30 menit dari sekarang.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      } else {
-        String formattedTime =
-            "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
-        setState(() {
-          _timeController.text = formattedTime;
-        });
-      }
+    } else {
+      String formattedTime =
+          "${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')}";
+      setState(() {
+        _timeController.text = formattedTime;
+      });
     }
   }
+}
 
   String _convertToISO8601(String dateStr, String timeStr) {
     DateTime parsedDate = DateFormat('dd/MM/yyyy').parse(dateStr);
