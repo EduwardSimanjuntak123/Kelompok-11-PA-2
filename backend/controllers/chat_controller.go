@@ -296,55 +296,65 @@ func GetOrCreateChatRoom(c *gin.Context) {
 		return
 	}
 
-	// Cek apakah vendor_id ada dalam tabel users
-	var vendor models.User
+	// Validasi user
+	var vendor, customer models.User
 	if err := config.DB.First(&vendor, req.VendorID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Vendor tidak ditemukan"})
 		return
 	}
-
-	// Cek apakah customer_id ada dalam tabel users
-	var customer models.User
 	if err := config.DB.First(&customer, req.CustomerID).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Customer tidak ditemukan"})
 		return
 	}
 
-	// Cek apakah chat room sudah ada
+	// Cari chat room berdasarkan kombinasi ID yang benar
 	var room models.ChatRoom
 	err := config.DB.
 		Preload("Customer").
 		Preload("Vendor").
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {
-			return db.Order("sent_at ASC") // urutkan pesan lama ke baru
+			return db.Order("sent_at ASC")
 		}).
-		Preload("Messages.Sender"). // preload sender info tiap message
+		Preload("Messages.Sender").
 		Where("customer_id = ? AND vendor_id = ?", req.CustomerID, req.VendorID).
 		First(&room).Error
 
+	// Jika ditemukan, kembalikan langsung
 	if err == nil {
-		// Hitung jumlah pesan yang belum dibaca untuk customer dan vendor
 		var unreadForCustomer, unreadForVendor int64
 		config.DB.Model(&models.Message{}).
 			Where("chat_room_id = ? AND is_read = false AND sender_id != ?", room.ID, req.CustomerID).
 			Count(&unreadForCustomer)
-		
 		config.DB.Model(&models.Message{}).
 			Where("chat_room_id = ? AND is_read = false AND sender_id != ?", room.ID, req.VendorID).
 			Count(&unreadForVendor)
 
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Chat room ditemukan", 
+			"message":   "Chat room ditemukan",
 			"chat_room": room,
 			"unread_stats": gin.H{
 				"unread_for_customer": unreadForCustomer,
-				"unread_for_vendor": unreadForVendor,
+				"unread_for_vendor":   unreadForVendor,
 			},
 		})
 		return
 	}
 
-	// Room belum ada, buat baru
+	// ❗ Tambahan: jika ada kombinasi ID terbalik, kembalikan error
+	var reverseRoom models.ChatRoom
+	reverseErr := config.DB.
+		Where("customer_id = ? AND vendor_id = ?", req.VendorID, req.CustomerID).
+		First(&reverseRoom).Error
+
+	if reverseErr == nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error":         "Chat room sudah ada dengan kombinasi terbalik. Periksa pengiriman ID.",
+			"existing_room": reverseRoom,
+		})
+		return
+	}
+
+	// Buat room baru jika belum ada
 	newRoom := models.ChatRoom{
 		CustomerID: req.CustomerID,
 		VendorID:   req.VendorID,
@@ -354,7 +364,7 @@ func GetOrCreateChatRoom(c *gin.Context) {
 		return
 	}
 
-	// Setelah buat baru, preload juga semua relasi
+	// Preload data
 	if err := config.DB.
 		Preload("Customer").
 		Preload("Vendor").
@@ -368,11 +378,11 @@ func GetOrCreateChatRoom(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Chat room berhasil dibuat", 
+		"message":   "Chat room berhasil dibuat",
 		"chat_room": newRoom,
 		"unread_stats": gin.H{
 			"unread_for_customer": 0,
-			"unread_for_vendor": 0,
+			"unread_for_vendor":   0,
 		},
 	})
 }
@@ -439,13 +449,13 @@ func GetUserChatRooms(c *gin.Context) {
 
 		result = append(result, map[string]interface{}{
 			"chat_room": map[string]interface{}{
-				"id":           room.ID,
-				"customer_id":  room.CustomerID,
-				"vendor_id":    room.VendorID,
-				"last_message": room.LastMessage,
-				"last_sent_at": room.LastSentAt,
-				"last_message_is_read": room.LastMessageIsRead,
-				"last_message_sender_id":   room.LastMessageSenderID,
+				"id":                     room.ID,
+				"customer_id":            room.CustomerID,
+				"vendor_id":              room.VendorID,
+				"last_message":           room.LastMessage,
+				"last_sent_at":           room.LastSentAt,
+				"last_message_is_read":   room.LastMessageIsRead,
+				"last_message_sender_id": room.LastMessageSenderID,
 			},
 			"unread_count": unreadCount,
 			"other_user_info": map[string]interface{}{
@@ -478,7 +488,7 @@ func GetUnreadMessageCount(c *gin.Context) {
 	var totalUnread int64
 	if err := config.DB.Model(&models.Message{}).
 		Joins("JOIN chat_rooms ON messages.chat_room_id = chat_rooms.id").
-		Where("(chat_rooms.customer_id = ? OR chat_rooms.vendor_id = ?) AND messages.is_read = false AND messages.sender_id != ?", 
+		Where("(chat_rooms.customer_id = ? OR chat_rooms.vendor_id = ?) AND messages.is_read = false AND messages.sender_id != ?",
 			userID, userID, userID).
 		Count(&totalUnread).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung pesan yang belum dibaca"})
@@ -526,7 +536,7 @@ func GetUnreadMessageCount(c *gin.Context) {
 // DeleteChatRoom menghapus chat room dan semua pesannya
 func DeleteChatRoom(c *gin.Context) {
 	chatRoomID := c.Param("id")
-	
+
 	// Validasi chat room ada
 	var chatRoom models.ChatRoom
 	if err := config.DB.First(&chatRoom, chatRoomID).Error; err != nil {
@@ -570,7 +580,7 @@ func SearchChatMessages(c *gin.Context) {
 		Preload("Sender").
 		Preload("ChatRoom").
 		Joins("JOIN chat_rooms ON messages.chat_room_id = chat_rooms.id").
-		Where("(chat_rooms.customer_id = ? OR chat_rooms.vendor_id = ?) AND messages.message LIKE ?", 
+		Where("(chat_rooms.customer_id = ? OR chat_rooms.vendor_id = ?) AND messages.message LIKE ?",
 			userID, userID, "%"+keyword+"%").
 		Order("messages.sent_at DESC").
 		Find(&messages).Error; err != nil {

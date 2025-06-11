@@ -2,20 +2,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 class ChatService {
   static Future<Map<String, dynamic>?> getOrCreateChatRoom({
+    required int customerId,
     required int vendorId,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final customerId = prefs.getInt('user_id');
-
-    if (customerId == null) {
-      print("User belum login");
-      return null; // Belum login
-    }
-
     final url = Uri.parse('${ApiConfig.baseUrl}/chat/room');
+
     final response = await http.post(
       url,
       headers: {

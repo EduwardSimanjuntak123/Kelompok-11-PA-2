@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_rentalmotor/services/customer/chat_services.dart';
 import 'dart:convert';
+import 'package:flutter_rentalmotor/view/vendor/chat_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/services/vendor/kelola_booking_service.dart';
@@ -689,6 +692,54 @@ class _DetailBookingPageState extends State<DetailBookingPage> {
                                 'Tidak tersedia',
                             icon: Icons.location_on_outlined,
                           ),
+
+                          SizedBox(height: 8),
+    if (bookingData != null)
+      ElevatedButton.icon(
+        onPressed: () async {
+          final prefs = await SharedPreferences.getInstance();
+          final vendorId = prefs.getInt('user_id');
+
+          final customerId = bookingData?['customer_id'];
+          final customerName = bookingData?['customer_name'];
+
+          if (customerId != null && customerName != null && vendorId != null) {
+            final chatRoom = await ChatService.getOrCreateChatRoom(
+              customerId: customerId,
+              vendorId: vendorId,
+            );
+
+            if (chatRoom != null) {
+              final chatRoomId = chatRoom['id'];
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChatPage(
+                    chatRoomId: chatRoomId,
+                    receiverId: customerId,
+                    receiverName: customerName,
+                  ),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Gagal memuat ruang obrolan")),
+              );
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Data pelanggan/vendor tidak lengkap")),
+            );
+          }
+        },
+        icon: Icon(Icons.chat),
+        label: Text("Hubungi Pelanggan"),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+        ),
+      ),
                         ],
                       ),
 

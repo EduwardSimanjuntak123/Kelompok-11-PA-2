@@ -798,44 +798,47 @@ class ChatVendorButton extends StatelessWidget {
     required this.vendorData,
   }) : super(key: key);
 
-  Future<void> _startChat(BuildContext context) async {
-    try {
-      final chatRoom =
-          await ChatService.getOrCreateChatRoom(vendorId: vendorId);
+ Future<void> _startChat(BuildContext context) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final customerId = prefs.getInt('user_id'); // ambil user login (customer)
 
-      if (chatRoom != null) {
-        final prefs = await SharedPreferences.getInstance();
-        final customerId = prefs.getInt('user_id');
-
-        if (customerId != null) {
-          final receiverId = vendorData?['user_id'] ?? vendorData?['id'] ?? 0;
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ChatPage(
-                chatRoomId: chatRoom['id'],
-                receiverId: receiverId,
-                receiverName: vendorData?['shop_name'] ?? 'Nama Penerima',
-              ),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Silakan masuk untuk mulai chat')),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memulai chat')),
-        );
-      }
-    } catch (e) {
+    if (customerId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('Silakan masuk untuk mulai chat')),
+      );
+      return;
+    }
+
+    final chatRoom = await ChatService.getOrCreateChatRoom(
+      customerId: customerId,
+      vendorId: vendorId,
+    );
+
+    if (chatRoom != null) {
+      final receiverId = vendorData?['user_id'] ?? vendorData?['id'] ?? 0;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatPage(
+            chatRoomId: chatRoom['id'],
+            receiverId: receiverId,
+            receiverName: vendorData?['shop_name'] ?? 'Nama Penerima',
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memulai chat')),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
