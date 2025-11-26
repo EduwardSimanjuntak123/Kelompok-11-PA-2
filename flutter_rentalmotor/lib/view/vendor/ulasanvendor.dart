@@ -3,7 +3,7 @@ import 'package:flutter_rentalmotor/services/vendor/vendor_review_api.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class UlasanVendorScreen extends StatefulWidget {
-  const UlasanVendorScreen({Key? key}) : super(key: key);
+  const UlasanVendorScreen({super.key});
 
   @override
   State<UlasanVendorScreen> createState() => _UlasanVendorScreenState();
@@ -61,7 +61,7 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
           final id = review['id'].toString();
           final reply = review['vendor_reply'];
           _controllers[id] = TextEditingController(
-            text: reply != null ? reply : '',
+            text: reply ?? '',
           );
         }
       });
@@ -1248,7 +1248,7 @@ class _UlasanVendorScreenState extends State<UlasanVendorScreen> {
                   top: 0,
                   left: 0,
                   right: 0,
-                  child: Container(
+                  child: SizedBox(
                     height: 4,
                     child: LinearProgressIndicator(
                       backgroundColor: Colors.transparent,

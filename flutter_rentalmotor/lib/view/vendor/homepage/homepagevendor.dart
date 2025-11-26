@@ -256,23 +256,13 @@ class _DashboardState extends State<HomepageVendor> {
     try {
       // Load data vendor
       final vendorData = await _apiService.getVendorProfile();
-      if (vendorData == null) {
-        throw Exception("Gagal memuat data vendor");
-      }
 
       // Load data dashboard
       final dashboardDataResponse = await _dashboardService.getDashboardData();
-      if (dashboardDataResponse == null) {
-        throw Exception("Gagal memuat data dashboard");
-      }
 
       // Pengecekan tipe sebelum menetapkan
-      if (dashboardDataResponse is DashboardData) {
-        dashboardData = dashboardDataResponse;
-      } else {
-        throw Exception("Tipe data tidak sesuai untuk dashboard");
-      }
-
+      dashboardData = dashboardDataResponse;
+    
       setState(() {
         // Set data vendor dengan pengecekan null
         vendorId = vendorData['vendorId'];

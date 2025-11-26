@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_rentalmotor/config/api_config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 class ChatService {
   static Future<Map<String, dynamic>?> getOrCreateChatRoom({
     required int customerId,

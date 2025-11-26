@@ -10,11 +10,11 @@ class BookingItem extends StatelessWidget {
   final Color primaryBlue;
 
   const BookingItem({
-    Key? key,
+    super.key,
     required this.item,
     required this.animation,
     required this.primaryBlue,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -11,6 +11,8 @@ import 'package:flutter_rentalmotor/view/user/pesanan/daftar_pesanan/components/
 import 'package:flutter_rentalmotor/view/user/pesanan/daftar_pesanan/components/loading_skeleton.dart';
 
 class DetailPesanan extends StatefulWidget {
+  const DetailPesanan({super.key});
+
   @override
   _DetailPesananState createState() => _DetailPesananState();
 }
@@ -19,7 +21,7 @@ class _DetailPesananState extends State<DetailPesanan>
     with SingleTickerProviderStateMixin {
   final storage = FlutterSecureStorage();
   final DaftarPesananService _pesananService = DaftarPesananService();
-  int _selectedIndex = 1;
+  final int _selectedIndex = 1;
   List<dynamic> bookings = [];
   bool isLoading = true;
 

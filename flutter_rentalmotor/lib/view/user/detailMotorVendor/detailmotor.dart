@@ -20,10 +20,10 @@ class DetailMotorPage extends StatefulWidget {
   final String baseUrl = ApiConfig.baseUrl;
 
   const DetailMotorPage({
-    Key? key,
+    super.key,
     required this.motorId,
     this.isGuest = false,
-  }) : super(key: key);
+  });
 
   @override
   _DetailMotorPageState createState() => _DetailMotorPageState();
@@ -45,7 +45,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
     with SingleTickerProviderStateMixin {
   Map<String, dynamic>? motor;
   bool _isLoadingMotor = true;
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   final Color primaryBlue = Color(0xFF2C567E);
   final Color accentColor = Color(0xFFFF9800);
 
@@ -275,7 +275,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Gambar motor
-                Container(
+                SizedBox(
                   height: 350,
                   width: double.infinity,
                   child: Stack(
@@ -384,7 +384,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                                 Icon(Icons.star, color: Colors.amber, size: 18),
                                 SizedBox(width: 4),
                                 Text(
-                                  "${motor != null ? (motor!["rating"] != null ? motor!["rating"].toString() : "0") : "0"}",
+                                  motor != null ? (motor!["rating"] != null ? motor!["rating"].toString() : "0") : "0",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -529,11 +529,11 @@ class _DetailMotorPageState extends State<DetailMotorPage>
                       ? NetworkImage(
                           '${ApiConfig.baseUrl}${review['customer']['profile_image']}')
                       : null,
+                  radius: 20,
                   child: review['customer'] == null ||
                           review['customer']['profile_image'] == null
                       ? Icon(Icons.person, size: 24, color: Colors.white)
                       : null,
-                  radius: 20,
                 ),
                 SizedBox(width: 12),
                 Text(
@@ -651,7 +651,7 @@ class _DetailMotorPageState extends State<DetailMotorPage>
         children: [
           _buildInfoBox(
               Icons.star,
-              "${motor != null ? (motor!["rating"] != null ? motor!["rating"].toString() : "0") : "0"}",
+              motor != null ? (motor!["rating"] != null ? motor!["rating"].toString() : "0") : "0",
               "Rating",
               Colors.amber),
           _buildInfoBox(

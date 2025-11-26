@@ -5,10 +5,10 @@ class PesananHeader extends StatelessWidget {
   final VoidCallback onRefresh;
 
   const PesananHeader({
-    Key? key,
+    super.key,
     required this.primaryBlue,
     required this.onRefresh,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

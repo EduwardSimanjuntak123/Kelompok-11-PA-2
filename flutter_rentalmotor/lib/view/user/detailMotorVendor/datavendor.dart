@@ -19,10 +19,10 @@ class DataVendor extends StatefulWidget {
   final bool isGuest;
 
   const DataVendor({
-    Key? key,
+    super.key,
     required this.vendorId,
     this.isGuest = false,
-  }) : super(key: key);
+  });
 
   @override
   _DataVendorState createState() => _DataVendorState();
@@ -30,7 +30,7 @@ class DataVendor extends StatefulWidget {
 
 class _DataVendorState extends State<DataVendor>
     with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   Map<String, dynamic>? _vendorData;
   List<Map<String, dynamic>> _motorList = [];
   List<Map<String, dynamic>> _reviewList = [];
@@ -246,7 +246,7 @@ class _DataVendorState extends State<DataVendor>
                 )
               : Column(
                   children: [
-                    Container(
+                    SizedBox(
                       height: 300,
                       width: double.infinity,
                       child: Stack(
@@ -571,10 +571,10 @@ class _DataVendorState extends State<DataVendor>
                       ? NetworkImage(
                           '${ApiConfig.baseUrl}${review['customer']['profile_image']}')
                       : null,
+                  radius: 20,
                   child: review['customer']['profile_image'] == null
                       ? Icon(Icons.person, size: 24, color: Colors.white)
                       : null,
-                  radius: 20,
                 ),
                 SizedBox(width: 12),
                 Text(
@@ -793,10 +793,10 @@ class ChatVendorButton extends StatelessWidget {
   final Map<String, dynamic>? vendorData;
 
   const ChatVendorButton({
-    Key? key,
+    super.key,
     required this.vendorId,
     required this.vendorData,
-  }) : super(key: key);
+  });
 
  Future<void> _startChat(BuildContext context) async {
   try {

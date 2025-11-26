@@ -46,7 +46,7 @@ class KelolaBookingService {
       }
     } catch (e) {
       print('❌ Error updating booking status: $e');
-      throw e; // Re-throw the exception to handle it in the UI
+      rethrow; // Re-throw the exception to handle it in the UI
     }
   }
 }

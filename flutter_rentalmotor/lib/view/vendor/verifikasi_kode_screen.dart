@@ -49,9 +49,9 @@ class VerifikasiKodevScreen extends StatefulWidget {
   final String email;
 
   const VerifikasiKodevScreen({
-    Key? key,
+    super.key,
     required this.email,
-  }) : super(key: key);
+  });
 
   @override
   State<VerifikasiKodevScreen> createState() => _VerifikasiKodevScreenState();

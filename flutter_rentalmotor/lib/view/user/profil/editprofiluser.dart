@@ -20,13 +20,13 @@ class EditProfileuser extends StatefulWidget {
   final String profileImage;
 
   const EditProfileuser({
-    Key? key,
+    super.key,
     required this.name,
     required this.email,
     required this.phone,
     required this.address,
     required this.profileImage,
-  }) : super(key: key);
+  });
 
   @override
   State<EditProfileuser> createState() => _EditProfileuserState();

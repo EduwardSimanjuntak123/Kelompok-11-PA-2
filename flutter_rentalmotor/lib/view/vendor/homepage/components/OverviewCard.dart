@@ -8,12 +8,12 @@ class OverviewCard extends StatelessWidget {
   final Color color;
 
   const OverviewCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.icon,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -71,13 +71,13 @@ class OverviewCards extends StatelessWidget {
   final NumberFormat currencyFormatter;
 
   const OverviewCards({
-    Key? key,
+    super.key,
     required this.totalBookings,
     required this.activeBookings,
     required this.pendingBookings,
     required this.currentMonthRevenue,
     required this.currencyFormatter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -11,14 +11,14 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Akun extends StatefulWidget {
   final bool isGuest;
-  const Akun({Key? key, this.isGuest = false}) : super(key: key);
+  const Akun({super.key, this.isGuest = false});
 
   @override
   State<Akun> createState() => _AkunState();
 }
 
 class _AkunState extends State<Akun> {
-  int _selectedIndex = 2;
+  final int _selectedIndex = 2;
   final Color primaryBlue = const Color(0xFF2C567E);
   final Color lightBlue = const Color(0xFFE3F2FD);
   final Color accentBlue = const Color(0xFF64B5F6);

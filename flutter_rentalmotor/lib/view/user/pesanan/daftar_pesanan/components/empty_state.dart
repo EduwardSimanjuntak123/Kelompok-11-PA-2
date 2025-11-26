@@ -6,11 +6,11 @@ class EmptyState extends StatelessWidget {
   final bool isFilteredEmpty;
 
   const EmptyState({
-    Key? key,
+    super.key,
     required this.primaryBlue,
     required this.onActionPressed,
     this.isFilteredEmpty = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -6,6 +6,8 @@ import 'package:flutter_rentalmotor/view/vendor/CreateMotorScreen.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
 class KelolaMotorScreen extends StatefulWidget {
+  const KelolaMotorScreen({super.key});
+
   @override
   _KelolaMotorScreenState createState() => _KelolaMotorScreenState();
 }
@@ -482,7 +484,7 @@ class _KelolaMotorScreenState extends State<KelolaMotorScreen>
               // Motor Image
               Stack(
                 children: [
-                  Container(
+                  SizedBox(
                     height: 200,
                     width: double.infinity,
                     child: motor.image != null

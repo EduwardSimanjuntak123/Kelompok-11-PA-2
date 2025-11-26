@@ -8,7 +8,7 @@ import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomListPage extends StatefulWidget {
-  const ChatRoomListPage({Key? key}) : super(key: key);
+  const ChatRoomListPage({super.key});
 
   @override
   _ChatRoomListPageState createState() => _ChatRoomListPageState();
@@ -102,7 +102,7 @@ class _ChatRoomListPageState extends State<ChatRoomListPage> {
       // Coba reconnect setelah error
       Future.delayed(const Duration(seconds: 5), () {
         if (mounted) {
-          _connectToNotificationWebSocket(userId!);
+          _connectToNotificationWebSocket(userId);
         }
       });
     }

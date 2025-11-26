@@ -7,10 +7,10 @@ class BookingItem extends StatelessWidget {
   final NumberFormat currencyFormatter;
 
   const BookingItem({
-    Key? key,
+    super.key,
     required this.booking,
     required this.currencyFormatter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -183,10 +183,10 @@ class BookingList extends StatelessWidget {
   final NumberFormat currencyFormatter;
 
   const BookingList({
-    Key? key,
+    super.key,
     required this.bookings,
     required this.currencyFormatter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

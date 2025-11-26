@@ -7,19 +7,19 @@ class PesananHeader extends StatelessWidget {
   final String imageUrl;
 
   const PesananHeader({
-    Key? key,
+    super.key,
     required this.motorName,
     required this.motorBrand,
     required this.motorModel,
     required this.imageUrl,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         // Motor Image
-        Container(
+        SizedBox(
           height: 240,
           width: double.infinity,
           child: Image.network(

@@ -6,7 +6,7 @@ import 'package:flutter_rentalmotor/widgets/custom_bottom_navbar.dart';
 class ReviewPage extends StatefulWidget {
   final int bookingId;
 
-  const ReviewPage({Key? key, required this.bookingId}) : super(key: key);
+  const ReviewPage({super.key, required this.bookingId});
 
   @override
   _ReviewPageState createState() => _ReviewPageState();

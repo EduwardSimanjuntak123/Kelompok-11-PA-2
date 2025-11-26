@@ -7,9 +7,9 @@ class KataSandiBaruScreen extends StatefulWidget {
   final String email;
 
   const KataSandiBaruScreen({
-    Key? key,
+    super.key,
     required this.email,
-  }) : super(key: key);
+  });
 
   @override
   State<KataSandiBaruScreen> createState() => _KataSandiBaruScreenState();

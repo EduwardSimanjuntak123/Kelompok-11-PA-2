@@ -9,6 +9,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class TransactionReportScreen extends StatefulWidget {
+  const TransactionReportScreen({super.key});
+
   @override
   _TransactionReportScreenState createState() =>
       _TransactionReportScreenState();
@@ -204,9 +206,9 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
 
     // Find max count for better scaling
     double maxCount = 0;
-    dailyData.values.forEach((data) {
+    for (var data in dailyData.values) {
       if (data['count'] > maxCount) maxCount = data['count'].toDouble();
-    });
+    }
 
     // Scale factor for count to make it visible alongside revenue
     double countScaleFactor = maxCount > 0 ? 100000 / maxCount : 100000;
@@ -311,7 +313,7 @@ class _TransactionReportScreenState extends State<TransactionReportScreen>
       );
     }
 
-    return Container(
+    return SizedBox(
       height: 200,
       width: MediaQuery.of(context).size.width - 32,
       child: Padding(

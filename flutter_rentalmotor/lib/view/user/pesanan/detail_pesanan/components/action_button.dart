@@ -8,13 +8,13 @@ class ActionButton extends StatelessWidget {
   final IconData icon;
 
   const ActionButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.bgColor,
     required this.textColor,
     required this.onPressed,
     required this.icon,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

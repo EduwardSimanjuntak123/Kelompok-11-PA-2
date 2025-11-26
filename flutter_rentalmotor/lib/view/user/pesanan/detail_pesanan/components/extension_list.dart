@@ -7,11 +7,11 @@ class ExtensionList extends StatelessWidget {
   final Color primaryBlue;
 
   const ExtensionList({
-    Key? key,
+    super.key,
     required this.extensions,
     required this.isLoading,
     required this.primaryBlue,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

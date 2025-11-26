@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter_rentalmotor/view/user/homepageuser.dart';
 
 class WelcomeSignupCustomerPage extends StatefulWidget {
-  const WelcomeSignupCustomerPage({Key? key}) : super(key: key);
+  const WelcomeSignupCustomerPage({super.key});
 
   @override
   State<WelcomeSignupCustomerPage> createState() => _WelcomeSignupCustomerPageState();

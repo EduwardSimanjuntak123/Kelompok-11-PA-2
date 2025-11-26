@@ -1,8 +1,8 @@
 // services/vendor_service.dart
 import 'dart:convert';
-import 'dart\:io';
+import 'dart:io';
 import 'package:mime/mime.dart';
-import 'package\:http\_parser/http\_parser.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../config/api_config.dart';
@@ -114,8 +114,9 @@ class VendorService {
       if (shopName != null) request.fields['shop_name'] = shopName;
       if (phone != null) request.fields['phone'] = phone;
       if (address != null) request.fields['address'] = address;
-      if (kecamatanId != null)
+      if (kecamatanId != null) {
         request.fields['id_kecamatan'] = kecamatanId.toString();
+      }
 
       if (imageFile != null) {
         final mimeType =

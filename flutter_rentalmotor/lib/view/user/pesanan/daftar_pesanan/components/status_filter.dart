@@ -7,11 +7,11 @@ class StatusFilter extends StatelessWidget {
   final Color primaryBlue;
 
   const StatusFilter({
-    Key? key,
+    super.key,
     required this.selectedStatus,
     required this.onStatusChanged,
     required this.primaryBlue,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -55,16 +55,16 @@ class StatusFilter extends StatelessWidget {
               if (selectedStatus != 'Semua')
                 TextButton(
                   onPressed: () => onStatusChanged('Semua'),
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size(0, 0),
+                  ),
                   child: Text(
                     'Reset',
                     style: TextStyle(
                       color: primaryBlue,
                       fontSize: 12,
                     ),
-                  ),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size(0, 0),
                   ),
                 ),
             ],

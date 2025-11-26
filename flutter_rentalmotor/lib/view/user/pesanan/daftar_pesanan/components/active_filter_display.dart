@@ -5,9 +5,9 @@ class ActiveFilterDisplay extends StatelessWidget {
   final String selectedStatus;
 
   const ActiveFilterDisplay({
-    Key? key,
+    super.key,
     required this.selectedStatus,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

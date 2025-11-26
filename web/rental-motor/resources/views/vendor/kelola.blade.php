@@ -18,6 +18,7 @@
             <!-- Form Filter Status -->
             <form method="GET"
                 class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
+                @csrf
                 <label for="status" class="text-sm font-medium text-gray-700 whitespace-nowrap">Filter Status:</label>
                 <div class="relative w-full sm:w-60">
                     <!-- Icon di kiri -->

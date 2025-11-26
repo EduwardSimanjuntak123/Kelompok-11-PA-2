@@ -11,7 +11,7 @@ import 'package:flutter_rentalmotor/view/user/homepageuser.dart';
 class VendorListPage extends StatefulWidget {
   final bool isGuest;
 
-  const VendorListPage({Key? key, required this.isGuest}) : super(key: key);
+  const VendorListPage({super.key, required this.isGuest});
 
   @override
   _VendorListPageState createState() => _VendorListPageState();
@@ -306,7 +306,7 @@ class _VendorListPageState extends State<VendorListPage>
                   Column(
                     children: [
                       Text(
-                        '${_minRating.toStringAsFixed(1)}',
+                        _minRating.toStringAsFixed(1),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

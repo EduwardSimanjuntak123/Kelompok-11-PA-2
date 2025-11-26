@@ -546,7 +546,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                           DropdownButtonFormField<String>(
                             decoration: _buildInputDecoration(
                                 'Tipe Motor', Icons.category, null),
-                            value: _type,
+                            initialValue: _type,
                             items: const [
                               DropdownMenuItem(
                                   value: 'automatic', child: Text('Matic')),
@@ -640,7 +640,7 @@ class _CreateMotorScreenState extends State<CreateMotorScreen> {
                 top: 0,
                 left: 0,
                 right: 0,
-                child: Container(
+                child: SizedBox(
                   height: 4,
                   child: const LinearProgressIndicator(
                     backgroundColor: Colors.transparent,

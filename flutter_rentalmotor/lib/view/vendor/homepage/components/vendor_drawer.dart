@@ -21,7 +21,7 @@ class VendorDrawer extends StatefulWidget {
   final VoidCallback onProfileUpdated;
 
   const VendorDrawer({
-    Key? key,
+    super.key,
     required this.fullImageUrl,
     required this.vendorId,
     required this.businessName,
@@ -30,7 +30,7 @@ class VendorDrawer extends StatefulWidget {
     required this.vendorImagePath,
     required this.onLogout,
     required this.onProfileUpdated,
-  }) : super(key: key);
+  });
 
   @override
   _VendorDrawerState createState() => _VendorDrawerState();

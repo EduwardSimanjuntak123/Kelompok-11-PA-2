@@ -4,6 +4,8 @@ import 'package:flutter_rentalmotor/view/vendor/homepage/homepagevendor.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }

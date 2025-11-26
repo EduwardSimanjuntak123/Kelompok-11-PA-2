@@ -140,7 +140,7 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
           motorData.firstWhere((motor) => motor['id'] == this.motor.id);
 
       setState(() {
-        this.motor = MotorModel.fromJson(updatedMotor);
+        motor = MotorModel.fromJson(updatedMotor);
         isLoading = false;
       });
 
@@ -456,7 +456,7 @@ class _MotorDetailScreenState extends State<MotorDetailScreen>
           : Stack(
               children: [
                 // Hero image with gradient overlay
-                Container(
+                SizedBox(
                   height: MediaQuery.of(context).size.height * 0.45,
                   width: double.infinity,
                   child: imageUrl != null

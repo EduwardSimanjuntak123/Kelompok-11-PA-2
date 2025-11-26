@@ -7,11 +7,11 @@ class CustomBottomNavBar extends StatelessWidget {
   final bool isGuest;
 
   const CustomBottomNavBar({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTap,
     required this.isGuest,
-  }) : super(key: key);
+  });
 
   void _showLoginAlert(BuildContext context) {
     showDialog(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CancelConfirmationDialog extends StatelessWidget {
-  const CancelConfirmationDialog({Key? key}) : super(key: key);
+  const CancelConfirmationDialog({super.key});
 
   @override
   Widget build(BuildContext context) {

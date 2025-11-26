@@ -5,10 +5,10 @@ class BookingDetailsCard extends StatelessWidget {
   final Color primaryBlue;
 
   const BookingDetailsCard({
-    Key? key,
+    super.key,
     required this.booking,
     required this.primaryBlue,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

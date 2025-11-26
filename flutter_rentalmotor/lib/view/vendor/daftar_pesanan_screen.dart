@@ -8,7 +8,7 @@ import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:flutter_rentalmotor/view/vendor/detail_booking_screen.dart';
 
 class DaftarPesananVendorScreen extends StatefulWidget {
-  const DaftarPesananVendorScreen({Key? key}) : super(key: key);
+  const DaftarPesananVendorScreen({super.key});
 
   @override
   State<DaftarPesananVendorScreen> createState() =>
@@ -17,7 +17,7 @@ class DaftarPesananVendorScreen extends StatefulWidget {
 
 class _DaftarPesananVendorScreenState extends State<DaftarPesananVendorScreen> {
   final storage = const FlutterSecureStorage();
-  final String baseUrl = '${ApiConfig.baseUrl}';
+  final String baseUrl = ApiConfig.baseUrl;
   bool isLoading = true;
   List<dynamic> bookings = [];
   String selectedStatus = 'Semua';

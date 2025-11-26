@@ -55,12 +55,19 @@
                                 $statusText = $statusMap[$raw] ?? ucfirst($raw);
                             @endphp
 
-                            <h3 class="text-lg font-semibold">
+                            {{-- <h3 class="text-lg font-semibold">
                                 {{ $t['customer_name'] }} –
                                 <span class="text-blue-700 font-bold">
                                     {{ $statusText }}
                                 </span>
+                            </h3> --}}
+                            <h3 class="text-lg font-semibold">
+                                {{ $t['customer_name'] ?? '—' }} –
+                                <span class="text-blue-700 font-bold">
+                                    {{ $statusText ?? 'Unknown' }}
+                                </span>
                             </h3>
+
 
                             <p class="text-sm text-gray-500 flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"

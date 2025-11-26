@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
 class LoadingSkeleton extends StatelessWidget {
-  const LoadingSkeleton({Key? key}) : super(key: key);
+  const LoadingSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {

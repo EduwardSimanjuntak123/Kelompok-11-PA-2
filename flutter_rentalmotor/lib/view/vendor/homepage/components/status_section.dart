@@ -7,12 +7,12 @@ class StatusCard extends StatelessWidget {
   final Color color;
 
   const StatusCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.count,
     required this.icon,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +55,9 @@ class StatusSection extends StatelessWidget {
   final Map<String, int> statusCounts;
 
   const StatusSection({
-    Key? key,
+    super.key,
     required this.statusCounts,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

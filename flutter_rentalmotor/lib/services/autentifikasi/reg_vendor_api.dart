@@ -4,7 +4,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_rentalmotor/config/api_config.dart';
 
-const String baseUrl = '${ApiConfig.baseUrl}';
+const String baseUrl = ApiConfig.baseUrl;
 
 // Fetch data kecamatan
 Future<List<Map<String, dynamic>>?> fetchKecamatan() async {
@@ -63,7 +63,7 @@ Future<String> registerVendor(Map<String, dynamic> data, XFile profileImage) asy
       return errorResponse['error'] ?? 'Gagal mendaftar, coba lagi';
     } else {
       var responseBody = await response.stream.bytesToString();
-      return 'Gagal mendaftar: ${responseBody}';
+      return 'Gagal mendaftar: $responseBody';
     }
   } catch (e) {
     return 'Kesalahan jaringan, coba lagi.';

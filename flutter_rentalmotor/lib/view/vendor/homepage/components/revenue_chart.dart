@@ -8,20 +8,17 @@ class RevenueChart extends StatelessWidget {
   final NumberFormat currencyFormatter;
 
   const RevenueChart({
-    Key? key,
+    super.key,
     required this.monthlyRevenue,
     required this.currencyFormatter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Find max value for chart scaling
     final double maxRevenue = monthlyRevenue.isEmpty
         ? 1000000
-        : monthlyRevenue.map((e) => e.revenue).reduce((a, b) => a > b ? a : b) *
-            1.2;
+        : monthlyRevenue.map((e) => e.revenue).reduce((a, b) => a > b ? a : b) * 1.2;
 
-    // Current month index
     final int currentMonthIndex = monthlyRevenue.isEmpty
         ? -1
         : monthlyRevenue.indexWhere((e) =>
@@ -71,8 +68,7 @@ class RevenueChart extends StatelessWidget {
                                   toY: monthlyRevenue[i].revenue,
                                   color: i == currentMonthIndex
                                       ? const Color(0xFF1A567D)
-                                      : const Color(0xFF1A567D)
-                                          .withOpacity(0.5),
+                                      : const Color(0xFF1A567D).withOpacity(0.5),
                                   width: 16,
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(4),
@@ -89,16 +85,15 @@ class RevenueChart extends StatelessWidget {
                             bottomTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                getTitlesWidget:
-                                    (double value, TitleMeta meta) {
+                                reservedSize: 30,
+                                getTitlesWidget: (double value, TitleMeta meta) {
                                   final int index = value.toInt();
-                                  if (index >= 0 &&
-                                      index < monthlyRevenue.length) {
+                                  if (index >= 0 && index < monthlyRevenue.length) {
                                     final bool isCurrentMonth =
                                         index == currentMonthIndex;
 
                                     return SideTitleWidget(
-                                      meta: meta,
+                                      axisSide: meta.axisSide,
                                       space: 8,
                                       child: Text(
                                         monthlyRevenue[index].monthName,
@@ -116,14 +111,13 @@ class RevenueChart extends StatelessWidget {
                                   }
                                   return const SizedBox();
                                 },
-                                reservedSize: 30,
                               ),
                             ),
                             leftTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                getTitlesWidget:
-                                    (double value, TitleMeta meta) {
+                                reservedSize: 60,
+                                getTitlesWidget: (double value, TitleMeta meta) {
                                   String text = '';
                                   if (value == 0) {
                                     text = '0';
@@ -146,7 +140,7 @@ class RevenueChart extends StatelessWidget {
                                   }
 
                                   return SideTitleWidget(
-                                    meta: meta, // ✅ gunakan ini
+                                    axisSide: meta.axisSide,
                                     space: 8,
                                     child: Text(
                                       text,
@@ -157,7 +151,6 @@ class RevenueChart extends StatelessWidget {
                                     ),
                                   );
                                 },
-                                reservedSize: 60,
                               ),
                             ),
                             topTitles: AxisTitles(

@@ -7,7 +7,7 @@ import 'package:flutter_rentalmotor/config/api_config.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoomListPage extends StatefulWidget {
-  const ChatRoomListPage({Key? key}) : super(key: key);
+  const ChatRoomListPage({super.key});
 
   @override
   _ChatRoomListPageState createState() => _ChatRoomListPageState();
@@ -16,7 +16,7 @@ class ChatRoomListPage extends StatefulWidget {
 class _ChatRoomListPageState extends State<ChatRoomListPage> {
   List<dynamic> chatRooms = [];
   int? userId;
-  bool _isConnected = false;
+  final bool _isConnected = false;
   bool _isLoading = true;
   int _totalUnreadMessages = 0;
   final Color _themeColor = const Color(0xFF225378);

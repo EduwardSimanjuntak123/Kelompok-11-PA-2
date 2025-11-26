@@ -8,12 +8,12 @@ class ExtendRequestDialog extends StatefulWidget {
   final bool cannotExtend;
 
   const ExtendRequestDialog({
-    Key? key,
+    super.key,
     required this.booking,
     required this.unavailableDates,
     required this.onSubmit,
     this.cannotExtend = false,
-  }) : super(key: key);
+  });
 
   @override
   _ExtendRequestDialogState createState() => _ExtendRequestDialogState();

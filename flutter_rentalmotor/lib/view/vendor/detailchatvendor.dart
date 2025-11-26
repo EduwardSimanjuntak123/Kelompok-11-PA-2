@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ChatPagev extends StatefulWidget {
-  const ChatPagev({Key? key}) : super(key: key);
+  const ChatPagev({super.key});
 
   @override
   State<ChatPagev> createState() => _ChatPageState();

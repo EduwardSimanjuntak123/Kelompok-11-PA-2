@@ -11,7 +11,7 @@ import 'package:flutter_rentalmotor/view/user/homepageuser.dart';
 class MotorListPage extends StatefulWidget {
   final bool isGuest;
 
-  const MotorListPage({Key? key, required this.isGuest}) : super(key: key);
+  const MotorListPage({super.key, required this.isGuest});
 
   @override
   _MotorListPageState createState() => _MotorListPageState();
@@ -32,7 +32,7 @@ class _MotorListPageState extends State<MotorListPage>
   String _selectedKecamatan = 'Semua';
   List<String> _kecamatanList = ['Semua'];
   String _selectedStatus = 'Semua';
-  List<String> _statusList = ['Semua', 'Tersedia', 'Tidak Tersedia'];
+  final List<String> _statusList = ['Semua', 'Tersedia', 'Tidak Tersedia'];
 
   @override
   void initState() {

@@ -7,8 +7,7 @@ import 'dart:async';
 class OTPVerificationScreen extends StatefulWidget {
   final String email;
 
-  const OTPVerificationScreen({Key? key, required this.email})
-      : super(key: key);
+  const OTPVerificationScreen({super.key, required this.email});
 
   @override
   _OTPVerificationScreenState createState() => _OTPVerificationScreenState();

@@ -5,7 +5,7 @@ import 'package:flutter_rentalmotor/services/customer/change_password_api.dart';
 
 class LupaKataSandiScreen extends StatefulWidget {
   final String email;
-  const LupaKataSandiScreen({Key? key, required this.email}) : super(key: key);
+  const LupaKataSandiScreen({super.key, required this.email});
 
   @override
   State<LupaKataSandiScreen> createState() => _LupaKataSandiScreenState();

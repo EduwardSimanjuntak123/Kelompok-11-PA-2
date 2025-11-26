@@ -8,10 +8,10 @@ class ChatVendorButton extends StatelessWidget {
   final Map<String, dynamic>? vendorData;
 
   const ChatVendorButton({
-    Key? key,
+    super.key,
     required this.vendorId,
     required this.vendorData,
-  }) : super(key: key);
+  });
 Future<void> _startChat(BuildContext context) async {
   try {
     print("Vendor ID: $vendorId");

@@ -17,23 +17,23 @@ class SewaMotorPage extends StatefulWidget {
   final Map<String, dynamic> motor;
   final bool isGuest;
 
-  SewaMotorPage({required this.motor, required this.isGuest});
+  const SewaMotorPage({super.key, required this.motor, required this.isGuest});
 
   @override
   _SewaMotorPageState createState() => _SewaMotorPageState();
 }
 
 class _SewaMotorPageState extends State<SewaMotorPage> {
-  TextEditingController _dateController = TextEditingController();
-  TextEditingController _timeController = TextEditingController();
-  TextEditingController _durationController = TextEditingController();
-  TextEditingController _pickupLocationController = TextEditingController();
-  TextEditingController _dropoffLocationController = TextEditingController();
-  TextEditingController _bookingPurposeController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _durationController = TextEditingController();
+  final TextEditingController _pickupLocationController = TextEditingController();
+  final TextEditingController _dropoffLocationController = TextEditingController();
+  final TextEditingController _bookingPurposeController = TextEditingController();
   List<DateTime> _disabledDates = [];
   File? _photoId;
   DateTime? _selectedDate;
-  bool _isLoading = false;
+  final bool _isLoading = false;
   bool _isSubmitting = false;
   bool _isLoadingLocations = false;
   bool _isLoadingDates = false;
@@ -406,7 +406,7 @@ class _SewaMotorPageState extends State<SewaMotorPage> {
           title: Text('Pilih Tanggal',
               style:
                   TextStyle(color: primaryBlue, fontWeight: FontWeight.bold)),
-          content: Container(
+          content: SizedBox(
             width: double.maxFinite,
             child: Column(
               mainAxisSize: MainAxisSize.min,

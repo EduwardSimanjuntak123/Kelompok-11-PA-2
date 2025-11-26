@@ -7,10 +7,10 @@ class TransactionItem extends StatelessWidget {
   final NumberFormat currencyFormatter;
 
   const TransactionItem({
-    Key? key,
+    super.key,
     required this.transaction,
     required this.currencyFormatter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -122,10 +122,10 @@ class TransactionList extends StatelessWidget {
   final NumberFormat currencyFormatter;
 
   const TransactionList({
-    Key? key,
+    super.key,
     required this.transactions,
     required this.currencyFormatter,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

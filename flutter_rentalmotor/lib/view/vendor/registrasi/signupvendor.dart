@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
 class SignUpVendorScreen extends StatefulWidget {
-  const SignUpVendorScreen({Key? key}) : super(key: key);
+  const SignUpVendorScreen({super.key});
 
   @override
   _SignUpVendorScreenState createState() => _SignUpVendorScreenState();
@@ -50,7 +50,7 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
   }
 
   Future<void> _fetchKecamatan() async {
-    final String baseUrl = '${ApiConfig.baseUrl}';
+    final String baseUrl = ApiConfig.baseUrl;
 
     try {
       final response = await http.get(Uri.parse('$baseUrl/kecamatan'));
@@ -685,7 +685,7 @@ class _SignUpVendorScreenState extends State<SignUpVendorScreen> {
                           prefixIcon:
                               Icon(Icons.location_city, color: primaryColor),
                         ),
-                        value: _selectedKecamatanId,
+                        initialValue: _selectedKecamatanId,
                         items: _kecamatanList.map((kecamatan) {
                           return DropdownMenuItem<int>(
                             value: kecamatan['id'],

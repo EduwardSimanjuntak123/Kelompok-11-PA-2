@@ -671,7 +671,7 @@ class _EdittokovendorState extends State<Edittokovendor> {
                                           errorStyle: const TextStyle(
                                               color: Colors.red),
                                         ),
-                                        value: _selectedKecamatanId,
+                                        initialValue: _selectedKecamatanId,
                                         hint: const Text('Pilih Kecamatan'),
                                         isExpanded: true,
                                         items: _kecamatanList.map((kecamatan) {

@@ -25,7 +25,7 @@ import 'package:http/http.dart' as http;
 const Color primaryBlue = Color(0xFF2C567E);
 
 class HomePageUser extends StatefulWidget {
-  const HomePageUser({Key? key}) : super(key: key);
+  const HomePageUser({super.key});
 
   @override
   _HomePageUserState createState() => _HomePageUserState();

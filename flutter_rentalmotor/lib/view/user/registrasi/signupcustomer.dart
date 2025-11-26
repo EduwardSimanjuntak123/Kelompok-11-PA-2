@@ -448,57 +448,52 @@ class _SignUpCustomerState extends State<SignUpCustomer>
                               child: GestureDetector(
                                 onTap: _showImageSourceOptions,
                                 child: CircleAvatar(
-                                  radius: 65,
-                                  backgroundColor: AppTheme.lightBlue,
-                                  backgroundImage: _image != null
-                                      ? FileImage(_image!)
-                                      : const AssetImage(
-                                          "assets/default_avatar.png"),
-                                  child: _image == null
-                                      ? Container(
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            gradient: LinearGradient(
-                                              begin: Alignment.topLeft,
-                                              end: Alignment.bottomRight,
-                                              colors: [
-                                                AppTheme.primaryLightColor
-                                                    .withOpacity(0.7),
-                                                AppTheme.primaryColor
-                                                    .withOpacity(0.8),
-                                              ],
-                                            ),
-                                          ),
-                                          child: const Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.camera_alt,
-                                                  size: 32, color: Colors.white),
-                                              SizedBox(height: 8),
-                                              Text(
-                                                "Tambah Foto",
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              SizedBox(height: 5),
-                                              Text(
-                                                'Tap untuk memilih',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                              ),
+  radius: 65,
+  backgroundColor: AppTheme.lightBlue,
+  backgroundImage:
+      _image != null ? FileImage(File(_image!.path)) : null,
+  child: _image == null
+      ? Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryLightColor.withOpacity(0.7),
+                AppTheme.primaryColor.withOpacity(0.8),
+              ],
+            ),
+          ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.camera_alt,
+                  size: 32, color: Colors.white),
+              SizedBox(height: 8),
+              Text(
+                "Tambah Foto",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 5),
+              Text(
+                'Tap untuk memilih',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        )
+      : null,
+)
+ ),
                             ),
                             if (_image != null)
                               Positioned(

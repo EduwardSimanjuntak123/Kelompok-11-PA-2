@@ -5,10 +5,10 @@ class CalendarExtension extends StatelessWidget {
   final Map<String, dynamic> booking;
 
   const CalendarExtension({
-    Key? key,
+    super.key,
     required this.unavailableDates,
     required this.booking,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

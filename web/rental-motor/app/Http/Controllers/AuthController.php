@@ -19,49 +19,61 @@ class AuthController extends Controller
     }
 
     public function login(Request $request)
-{
-    Log::info('Request login masuk:', $request->except('password'));
+    {
+        Log::info('Request login masuk:', $request->except('password'));
 
-    $validator = Validator::make($request->all(), [
-        'email' => 'required|email',
-        'password' => 'required|min:6',
-    ]);
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|min:6',
+        ]);
 
-    if ($validator->fails()) {
-        return redirect()->route('login')
-            ->withErrors($validator)
-            ->withInput();
+        if ($validator->fails()) {
+            return redirect()->route('login')
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            $response = $this->authService->login($request->email, $request->password);
+        } catch (Exception $e) {
+            Log::error("Kesalahan koneksi ke backend: " . $e->getMessage());
+            return redirect()->route('login')->with('alert', 'Tidak bisa terhubung ke server, silakan coba lagi.');
+        }
+
+        // Periksa apakah respons mengindikasikan kesalahan login
+        if (isset($response['error'])) {
+            // return redirect()->route('login')->with('error', 'Incorrect username or password.');
+            return redirect()->route('login')->with('error', 'username atau password tidak sesuai');
+        }
+
+        // Pastikan respons memiliki struktur yang benar
+        if (!isset($response['token']) || !isset($response['user'])) {
+            return redirect()->route('login')->with('alert', 'Login gagal. Backend tidak mengembalikan data yang diharapkan.');
+        }
+
+        // Simpan session
+        session()->put('token', $response['token']);
+        cookie()->queue(cookie(
+            'api_token',
+            $response['token'],
+            60, // durasi menit
+            null,
+            null,
+            true, // secure
+            true, // httpOnly
+            false,
+            'Strict'
+        ));
+        session()->put('role', $response['user']['role'] ?? 'guest');
+        session()->put('user_id', $response['user']['id'] ?? null);
+        session()->put('user', $response['user']);
+        session()->save();
+
+        Log::info("Session setelah login:", session()->all());
+
+        // Redirect sesuai role
+        return redirect()->route($this->redirectByRole($response['user']['role'] ?? 'guest'));
     }
-
-    try {
-        $response = $this->authService->login($request->email, $request->password);
-    } catch (Exception $e) {
-        Log::error("Kesalahan koneksi ke backend: " . $e->getMessage());
-        return redirect()->route('login')->with('alert', 'Tidak bisa terhubung ke server, silakan coba lagi.');
-    }
-
-    // Periksa apakah respons mengindikasikan kesalahan login
-    if (isset($response['error'])) {
-        return redirect()->route('login')->with('error', 'Incorrect username or password.');
-    }
-
-    // Pastikan respons memiliki struktur yang benar
-    if (!isset($response['token']) || !isset($response['user'])) {
-        return redirect()->route('login')->with('alert', 'Login gagal. Backend tidak mengembalikan data yang diharapkan.');
-    }
-
-    // Simpan session
-    session()->put('token', $response['token']);
-    session()->put('role', $response['user']['role'] ?? 'guest');
-    session()->put('user_id', $response['user']['id'] ?? null);
-    session()->put('user', $response['user']);
-    session()->save();
-
-    Log::info("Session setelah login:", session()->all());
-
-    // Redirect sesuai role
-    return redirect()->route($this->redirectByRole($response['user']['role'] ?? 'guest'));
-}
 
 
     public function logout()

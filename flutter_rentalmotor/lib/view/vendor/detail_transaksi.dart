@@ -4,8 +4,7 @@ import 'package:intl/intl.dart';
 class TransactionDetailScreen extends StatelessWidget {
   final Map<String, dynamic> transaction;
 
-  const TransactionDetailScreen({Key? key, required this.transaction})
-      : super(key: key);
+  const TransactionDetailScreen({super.key, required this.transaction});
 
   // Theme colors
   final Color primaryColor = const Color(0xFF1A567D); // Modern indigo

@@ -501,7 +501,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
                             child: DropdownButtonFormField<String>(
                               decoration: _buildInputDecoration(
                                   'Tipe Motor', Icons.category),
-                              value: motorType,
+                              initialValue: motorType,
                               items: const [
                                 DropdownMenuItem(
                                     value: 'automatic', child: Text('Matic')),
@@ -698,7 +698,7 @@ class _EditMotorScreenState extends State<EditMotorScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: DropdownButtonFormField<String>(
-        value: initialValue,
+        initialValue: initialValue,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: primaryColor),

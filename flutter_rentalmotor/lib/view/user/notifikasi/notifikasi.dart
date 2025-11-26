@@ -7,7 +7,7 @@ import 'dart:convert';
 
 class NotifikasiPage extends StatefulWidget {
   final int userId;
-  const NotifikasiPage({Key? key, required this.userId}) : super(key: key);
+  const NotifikasiPage({super.key, required this.userId});
 
   @override
   _NotifikasiPageState createState() => _NotifikasiPageState();

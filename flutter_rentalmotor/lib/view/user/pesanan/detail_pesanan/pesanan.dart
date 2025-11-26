@@ -17,16 +17,16 @@ import 'package:flutter_rentalmotor/view/user/pesanan/detail_pesanan/components/
 class PesananPage extends StatefulWidget {
   final Map<String, dynamic> booking;
 
-  const PesananPage({Key? key, required this.booking}) : super(key: key);
+  const PesananPage({super.key, required this.booking});
 
   @override
   _PesananPageState createState() => _PesananPageState();
 }
 
 class _PesananPageState extends State<PesananPage> {
-  int _selectedIndex = 1;
+  final int _selectedIndex = 1;
   bool _isCancelling = false;
-  bool _hasReviewed = false;
+  final bool _hasReviewed = false;
   List<dynamic> _extensions = [];
   bool _loadingExt = true;
 

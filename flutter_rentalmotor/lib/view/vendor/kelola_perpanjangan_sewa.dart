@@ -7,7 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shimmer/shimmer.dart';
 
 class KelolaPerpanjnganSewa extends StatefulWidget {
-  const KelolaPerpanjnganSewa({Key? key}) : super(key: key);
+  const KelolaPerpanjnganSewa({super.key});
 
   @override
   State<KelolaPerpanjnganSewa> createState() => _KelolaPerpanjnganSewaState();
@@ -474,7 +474,7 @@ class _KelolaPerpanjnganSewaState extends State<KelolaPerpanjnganSewa>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Container(
+            child: SizedBox(
               height: 200,
               width: double.infinity,
             ),

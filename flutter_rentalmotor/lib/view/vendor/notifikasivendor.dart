@@ -43,7 +43,7 @@ class AppNotification {
 
 class NotifikasiPagev extends StatefulWidget {
   final int userId;
-  const NotifikasiPagev({Key? key, required this.userId}) : super(key: key);
+  const NotifikasiPagev({super.key, required this.userId});
 
   @override
   State<NotifikasiPagev> createState() => _NotifikasiPagevState();
@@ -54,9 +54,9 @@ class _NotifikasiPagevState extends State<NotifikasiPagev>
   List<AppNotification> _notifications = [];
   bool _isLoading = true;
   List<Map<String, dynamic>> _bookings = [];
-  int _vendorId = 0;
+  final int _vendorId = 0;
   final storage = FlutterSecureStorage();
-  final String baseUrl = '${ApiConfig.baseUrl}';
+  final String baseUrl = ApiConfig.baseUrl;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -543,12 +543,12 @@ class _NotifikasiPagevState extends State<NotifikasiPagev>
           );
         },
         backgroundColor: primaryColor,
+        tooltip: 'Refresh Data',
+        elevation: 4,
         child: const Icon(
           Icons.refresh,
           color: Colors.white,
         ),
-        tooltip: 'Refresh Data',
-        elevation: 4,
       ),
     );
   }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rentalmotor/signin.dart'; 
 
 class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
+
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
 }
